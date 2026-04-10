@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Honeycomb Ads Dashboard</title>
+
+  <!--
+    Honeycomb Ads Intelligence Dashboard
+    ————————————————————————————————————
+    Single-file React SPA. Loads React, Recharts, Tailwind, and
+    Babel from CDN so the file can be opened directly in a
+    browser, served from any static host (Vercel, Netlify,
+    GitHub Pages), or embedded in Apps Script HtmlService.
+
+    Data source:
+    - Reads from the Apps Script Web App deployed from
+      /webapp/apps-script-api.gs
+    - If no API URL is configured, uses in-memory mock data
+      so the dashboard is usable out-of-the-box for preview.
+
+    Setup:
+    1. Open this file in a browser (or deploy the folder).
+    2. Click "Connect API" and paste the Apps Script /exec URL.
+    3. The URL is saved to localStorage; subsequent visits
+       reconnect automatically.
+  -->
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/prop-types@15/prop-types.min.js"></script>
+  <script crossorigin src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    .narrative-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body class="bg-stone-50 text-stone-900">
+  <div id="root"></div>
+
+  <script type="text/babel" data-presets="env,react">
+    const { useState, useEffect, useMemo, useCallback } = React;
+    const {
+      LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
+      ResponsiveContainer, BarChart, Bar
+    } = Recharts;
+
+    const STORAGE_KEY = 'honeycomb_api_url';
+
+
+    // ─── FORMATTING HELPERS ───────────────────────────────
+
+    const fmtCurrency = n => {
+      if (n == null || isNaN(n)) return '—';
+      return '$' + Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 });
+    };
+
+    const fmtCurrencyCents = n => {
+      if (n == null || isNaN(n)) return '—';
+      return '$' + Number(n).toLocaleString(undefined, {
+        minimumFractionDigits: 2, maximumFractionDigits: 2
+      });
+    };
+
+    const fmtNumber = (n, digits = 0) => {
+      if (n == null || isNaN(n)) return '—';
+      return Number(n).toLocaleString(undefined, { maximumFractionDigits: digits });
+    };
+
+    const fmtPct = (n, digits = 2) => {
+      if (n == null || isNaN(n)) return '—';
+      return Number(n).toFixed(digits) + '%';
+    };
+
+    const daysAgo = n => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return d.toISOString().substring(0, 10);
+    };
+
+    const today = () => new Date().toISOString().substring(0, 10);
+
+
+    // ─── DATA LAYER ───────────────────────────────────────
+    // When apiUrl is set, fetches from the Apps Script /exec
+    // endpoint. When empty, returns generated mock data so
+    // the dashboard renders immediately on first open.
+
+    function generateMockData() {
+      const campaigns = [
+        { name: 'Restaurant ICPs — Q2 2026',  baseline: 210, conv: 2.4 },
+        { name: 'Brewery Leads — National',   baseline: 145, conv: 1.6 },
+        { name: 'Gym/Fitness — Metro Test',   baseline: 165, conv: 1.1 },
+        { name: 'Salon & Spa — Local',        baseline:  95, conv: 1.3 },
+        { name: 'Bakery/Cafe — Midwest',      baseline: 120, conv: 1.8 },
+      ];
+
+      const daily = [];
+      const end = new Date();
+      for (let i = 90; i >= 0; i--) {
+        const d = new Date(end);
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().substring(0, 10);
+        campaigns.forEach((c, idx) => {
+          // Seeded wobble so the mock looks realistic but stable-ish within a day
+          const seed = (i * 7 + idx * 13) % 100 / 100;
+          const wobble = 0.82 + (seed * 0.36);
+          const spend = Math.round(c.baseline * wobble);
+          const conv = Math.max(0, Math.round(c.conv * wobble * (0.7 + (seed * 0.6))));
+          const impr = Math.round(spend * 42 * (0.9 + seed * 0.2));
+          const clicks = Math.round(impr * 0.013 * (0.85 + seed * 0.3));
+          const reach = Math.round(impr / 2.3);
+          daily.push({
+            date: dateStr,
+            month: d.toLocaleString('en-US', { month: 'long' }),
+            week: Math.ceil(d.getDate() / 7),
+            campaign_name: c.name,
+            campaign_id: c.name.replace(/[^a-z0-9]+/gi, '_').toLowerCase(),
+            impressions: impr,
+            clicks: clicks,
+            spend: spend,
+            reach: reach,
+            conversions: conv,
+            frequency: Math.round((impr / reach) * 100) / 100,
+            cpl: conv > 0 ? Math.round((spend / conv) * 100) / 100 : null
+          });
+        });
+      }
+
+      const mappings = campaigns.map(c => ({
+        campaign_name: c.name,
+        utm_campaign: c.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+      }));
+
+      const weekStart = new Date();
+      weekStart.setDate(weekStart.getDate() - weekStart.getDay() - 6);
+      const narrative = {
+        generated_at: new Date().toISOString(),
+        reporting_week: weekStart.toISOString().substring(0, 10),
+        total_spend: 4725,
+        total_icps: 48,
+        overall_cpicp: '98.44',
+        narrative:
+          'OVERALL\n' +
+          'Solid week. $4,725 spend produced 48 estimated ICPs at $98 CPICP, a 4% improvement WoW. Attribution quality held above 60%.\n\n' +
+          'SEGMENTS\n' +
+          '- restaurant_icps_q2_2026: $82 CPICP, 18 ICPs\n' +
+          '- bakery_cafe_midwest: $91 CPICP, 11 ICPs\n' +
+          '- brewery_leads_national: $108 CPICP, 9 ICPs\n' +
+          '- salon_spa_local: $115 CPICP, 6 ICPs\n' +
+          '- gym_fitness_metro_test: $142 CPICP, 4 ICPs\n' +
+          '- Zero ICPs: none\n\n' +
+          'WATCH\n' +
+          '- Gym/Fitness frequency trending to 3.2, approaching saturation threshold\n' +
+          '- Brewery CPICP up 9% WoW — review creative rotation\n\n' +
+          'ACTION\n' +
+          '- Hold current budgets through Wednesday check-in\n' +
+          '- Refresh Brewery creative assets before Friday optimizer run\n' +
+          '- Flag Gym/Fitness for review if frequency crosses 3.5'
+      };
+
+      return { daily, mappings, narrative };
+    }
+
+    const MOCK = generateMockData();
+
+    async function fetchAction(apiUrl, action, params = {}) {
+      if (!apiUrl) {
+        // Offline / mock mode
+        if (action === 'daily') {
+          const s = params.start || '1900-01-01';
+          const e = params.end   || '2999-12-31';
+          return MOCK.daily.filter(r => r.date >= s && r.date <= e);
+        }
+        if (action === 'mappings')  return MOCK.mappings;
+        if (action === 'narrative') return MOCK.narrative;
+        return [];
+      }
+
+      const qs = new URLSearchParams({ action, ...params }).toString();
+      const resp = await fetch(`${apiUrl}?${qs}`);
+      if (!resp.ok) {
+        throw new Error(`API error: ${action} → HTTP ${resp.status}`);
+      }
+      const json = await resp.json();
+      if (json && json.error) {
+        throw new Error(`API error: ${json.error}`);
+      }
+      return json;
+    }
+
+
+    // ─── PRESENTATIONAL COMPONENTS ────────────────────────
+
+    function Header({ apiUrl, onConfigure, onRefresh, loading }) {
+      return (
+        <header className="bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md">
+          <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="text-3xl">🐝</div>
+              <div>
+                <h1 className="text-2xl font-bold tracking-tight">Honeycomb Ads Dashboard</h1>
+                <p className="text-amber-50 text-sm">Meta campaign intelligence layer</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={onRefresh}
+                disabled={loading}
+                className="bg-white/15 hover:bg-white/25 px-3 py-2 rounded text-sm font-medium disabled:opacity-50"
+              >
+                {loading ? 'Loading…' : 'Refresh'}
+              </button>
+              <button
+                onClick={onConfigure}
+                className="bg-white/15 hover:bg-white/25 px-3 py-2 rounded text-sm font-medium"
+              >
+                {apiUrl ? 'Settings' : 'Connect API'}
+              </button>
+            </div>
+          </div>
+        </header>
+      );
+    }
+
+    function ConfigModal({ open, current, onSave, onClose }) {
+      const [url, setUrl] = useState(current || '');
+      useEffect(() => { if (open) setUrl(current || ''); }, [open, current]);
+
+      if (!open) return null;
+      return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-lg w-full p-6 shadow-xl">
+            <h2 className="text-lg font-semibold mb-2">Connect Apps Script API</h2>
+            <p className="text-sm text-stone-600 mb-4">
+              Paste the Apps Script Web App URL (ends with <code className="bg-stone-100 px-1 rounded">/exec</code>).
+              Leave empty to use mock data.
+            </p>
+            <input
+              type="text"
+              value={url}
+              onChange={e => setUrl(e.target.value)}
+              placeholder="https://script.google.com/macros/s/…/exec"
+              className="w-full border border-stone-300 rounded px-3 py-2 mb-4 text-sm font-mono"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onSave(url.trim())}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded font-medium"
+              >
+                Save
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    function DateRangeBar({ preset, setPreset, customStart, customEnd, setCustomStart, setCustomEnd, useCustom, setUseCustom, presets }) {
+      return (
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200 flex flex-wrap items-center gap-3">
+          <span className="text-sm font-semibold text-stone-700 mr-1">Date range:</span>
+          {presets.map((p, i) => (
+            <button
+              key={p.label}
+              onClick={() => { setUseCustom(false); setPreset(i); }}
+              className={`px-3 py-1.5 rounded text-sm transition ${
+                !useCustom && preset === i
+                  ? 'bg-amber-500 text-white shadow-sm'
+                  : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+          <div className="flex items-center gap-2 ml-auto">
+            <input
+              type="date"
+              value={customStart}
+              onChange={e => { setCustomStart(e.target.value); setUseCustom(true); }}
+              className="border border-stone-300 rounded px-2 py-1 text-sm"
+            />
+            <span className="text-stone-400">→</span>
+            <input
+              type="date"
+              value={customEnd}
+              onChange={e => { setCustomEnd(e.target.value); setUseCustom(true); }}
+              className="border border-stone-300 rounded px-2 py-1 text-sm"
+            />
+          </div>
+        </div>
+      );
+    }
+
+    function SummaryCards({ daily }) {
+      const totals = useMemo(() => {
+        const t = { spend: 0, conversions: 0, clicks: 0, impressions: 0 };
+        daily.forEach(r => {
+          t.spend       += Number(r.spend) || 0;
+          t.conversions += Number(r.conversions) || 0;
+          t.clicks      += Number(r.clicks) || 0;
+          t.impressions += Number(r.impressions) || 0;
+        });
+        return t;
+      }, [daily]);
+
+      const cpl = totals.conversions > 0 ? totals.spend / totals.conversions : null;
+      const ctr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : null;
+
+      const cards = [
+        { label: 'Total Spend',       value: fmtCurrency(totals.spend),       accent: 'text-amber-600' },
+        { label: 'Meta Conversions',  value: fmtNumber(totals.conversions),   accent: 'text-cyan-700' },
+        { label: 'Avg CPL',           value: fmtCurrencyCents(cpl),           accent: 'text-stone-800' },
+        { label: 'Click-Through Rate', value: fmtPct(ctr),                    accent: 'text-stone-800' },
+      ];
+
+      return (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {cards.map(c => (
+            <div key={c.label} className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
+              <div className="text-xs text-stone-500 uppercase tracking-wide font-medium">{c.label}</div>
+              <div className={`text-2xl font-bold mt-1 ${c.accent}`}>{c.value}</div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
+    function SpendConversionsChart({ daily }) {
+      const data = useMemo(() => {
+        const map = {};
+        daily.forEach(r => {
+          if (!map[r.date]) map[r.date] = { date: r.date, spend: 0, conversions: 0 };
+          map[r.date].spend       += Number(r.spend) || 0;
+          map[r.date].conversions += Number(r.conversions) || 0;
+        });
+        return Object.values(map)
+          .sort((a, b) => a.date.localeCompare(b.date))
+          .map(r => ({ ...r, spend: Math.round(r.spend) }));
+      }, [daily]);
+
+      return (
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-semibold text-stone-700">
+              Daily Spend &amp; Conversions
+            </h3>
+            <span className="text-xs text-stone-500">{data.length} days</span>
+          </div>
+          {data.length === 0 ? (
+            <p className="text-stone-500 text-sm py-16 text-center">No data in selected range</p>
+          ) : (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={data} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={30} />
+                <YAxis
+                  yAxisId="left"
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={v => '$' + v}
+                />
+                <YAxis
+                  yAxisId="right"
+                  orientation="right"
+                  tick={{ fontSize: 11 }}
+                />
+                <Tooltip
+                  formatter={(value, name) =>
+                    name === 'Spend' ? ['$' + value, name] : [value, name]
+                  }
+                />
+                <Legend />
+                <Line
+                  yAxisId="left"
+                  type="monotone"
+                  dataKey="spend"
+                  stroke="#f59e0b"
+                  name="Spend"
+                  strokeWidth={2}
+                  dot={false}
+                />
+                <Line
+                  yAxisId="right"
+                  type="monotone"
+                  dataKey="conversions"
+                  stroke="#0891b2"
+                  name="Conversions"
+                  strokeWidth={2}
+                  dot={false}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+      );
+    }
+
+    function CampaignTable({ daily }) {
+      const [sortKey, setSortKey] = useState('spend');
+      const [sortDir, setSortDir] = useState('desc');
+
+      const rows = useMemo(() => {
+        const byCampaign = {};
+        daily.forEach(r => {
+          const key = r.campaign_name;
+          if (!byCampaign[key]) {
+            byCampaign[key] = {
+              campaign: key,
+              spend: 0,
+              impressions: 0,
+              clicks: 0,
+              conversions: 0,
+              freqSum: 0,
+              freqDays: 0,
+              lastActive: r.date,
+            };
+          }
+          const c = byCampaign[key];
+          c.spend       += Number(r.spend) || 0;
+          c.impressions += Number(r.impressions) || 0;
+          c.clicks      += Number(r.clicks) || 0;
+          c.conversions += Number(r.conversions) || 0;
+          if (r.frequency > 0) { c.freqSum += r.frequency; c.freqDays += 1; }
+          if (r.date > c.lastActive) c.lastActive = r.date;
+        });
+
+        const dormantThreshold = daysAgo(3);
+        return Object.values(byCampaign).map(c => ({
+          ...c,
+          cpl:  c.conversions > 0 ? c.spend / c.conversions : null,
+          ctr:  c.impressions > 0 ? (c.clicks / c.impressions) * 100 : 0,
+          freq: c.freqDays > 0 ? c.freqSum / c.freqDays : 0,
+          status: c.lastActive >= dormantThreshold ? 'active' : 'dormant',
+        }));
+      }, [daily]);
+
+      const sorted = useMemo(() => {
+        const copy = [...rows];
+        copy.sort((a, b) => {
+          const av = a[sortKey];
+          const bv = b[sortKey];
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          if (typeof av === 'string') {
+            return sortDir === 'asc' ? av.localeCompare(bv) : bv.localeCompare(av);
+          }
+          return sortDir === 'asc' ? av - bv : bv - av;
+        });
+        return copy;
+      }, [rows, sortKey, sortDir]);
+
+      const toggleSort = k => {
+        if (sortKey === k) setSortDir(sortDir === 'asc' ? 'desc' : 'asc');
+        else { setSortKey(k); setSortDir('desc'); }
+      };
+
+      const Th = ({ k, children, align = 'left' }) => (
+        <th
+          onClick={() => toggleSort(k)}
+          className={`px-3 py-2 text-${align} cursor-pointer hover:bg-stone-100 select-none font-semibold`}
+        >
+          {children}
+          <span className="ml-1 text-stone-400">
+            {sortKey === k ? (sortDir === 'asc' ? '▲' : '▼') : ''}
+          </span>
+        </th>
+      );
+
+      return (
+        <div className="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-stone-200">
+            <h3 className="text-sm font-semibold text-stone-700">Campaign Performance</h3>
+            <span className="text-xs text-stone-500">{rows.length} campaigns</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-stone-50 text-xs uppercase text-stone-600">
+                <tr>
+                  <Th k="campaign">Campaign</Th>
+                  <Th k="spend" align="right">Spend</Th>
+                  <Th k="conversions" align="right">Conv.</Th>
+                  <Th k="cpl" align="right">CPL</Th>
+                  <Th k="ctr" align="right">CTR</Th>
+                  <Th k="freq" align="right">Freq</Th>
+                  <Th k="status" align="center">Status</Th>
+                </tr>
+              </thead>
+              <tbody>
+                {sorted.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-10 text-stone-500">
+                      No campaigns in range
+                    </td>
+                  </tr>
+                ) : sorted.map(r => (
+                  <tr key={r.campaign} className="border-t border-stone-100 hover:bg-stone-50">
+                    <td className="px-3 py-2 font-medium text-stone-900">{r.campaign}</td>
+                    <td className="px-3 py-2 text-right">{fmtCurrency(r.spend)}</td>
+                    <td className="px-3 py-2 text-right">{fmtNumber(r.conversions)}</td>
+                    <td className="px-3 py-2 text-right">{r.cpl != null ? fmtCurrencyCents(r.cpl) : '—'}</td>
+                    <td className="px-3 py-2 text-right">{r.ctr.toFixed(2)}%</td>
+                    <td className={`px-3 py-2 text-right ${r.freq > 3.5 ? 'text-red-600 font-semibold' : ''}`}>
+                      {r.freq.toFixed(2)}
+                    </td>
+                    <td className="px-3 py-2 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                        r.status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-stone-200 text-stone-600'
+                      }`}>
+                        {r.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+    function NarrativePanel({ narrative }) {
+      return (
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
+          <h3 className="text-sm font-semibold text-stone-700 mb-2">
+            Latest Weekly Narrative
+          </h3>
+          {narrative ? (
+            <>
+              <div className="text-xs text-stone-500 mb-3">
+                Week of <span className="font-semibold">{narrative.reporting_week}</span>
+                {narrative.generated_at && (
+                  <> · Generated {String(narrative.generated_at).substring(0, 10)}</>
+                )}
+                {narrative.total_spend && (
+                  <> · Spend {fmtCurrency(narrative.total_spend)}</>
+                )}
+                {narrative.total_icps != null && (
+                  <> · ICPs {fmtNumber(narrative.total_icps, 1)}</>
+                )}
+              </div>
+              <pre className="narrative-text text-stone-800 whitespace-pre-wrap leading-relaxed">
+                {narrative.narrative || '(empty)'}
+              </pre>
+            </>
+          ) : (
+            <p className="text-sm text-stone-500">No narrative available yet.</p>
+          )}
+        </div>
+      );
+    }
+
+    function MappingsTable({ mappings }) {
+      return (
+        <div className="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-stone-200">
+            <h3 className="text-sm font-semibold text-stone-700">Campaign UTM Mappings</h3>
+            <span className="text-xs text-stone-500">{mappings.length} campaigns</span>
+          </div>
+          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-stone-50 text-xs uppercase text-stone-600 sticky top-0">
+                <tr>
+                  <th className="px-3 py-2 text-left font-semibold">Campaign Name</th>
+                  <th className="px-3 py-2 text-left font-semibold">utm_campaign</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mappings.length === 0 ? (
+                  <tr>
+                    <td colSpan={2} className="text-center py-8 text-stone-500">
+                      No mappings loaded
+                    </td>
+                  </tr>
+                ) : mappings.map((m, i) => (
+                  <tr key={i} className="border-t border-stone-100">
+                    <td className="px-3 py-2 text-stone-900">{m.campaign_name}</td>
+                    <td className="px-3 py-2 font-mono text-xs text-amber-700">{m.utm_campaign}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      );
+    }
+
+
+    // ─── APP ROOT ─────────────────────────────────────────
+
+    const DATE_PRESETS = [
+      { label: 'Last 7 days',  start: () => daysAgo(7),  end: today },
+      { label: 'Last 14 days', start: () => daysAgo(14), end: today },
+      { label: 'Last 30 days', start: () => daysAgo(30), end: today },
+      { label: 'Last 90 days', start: () => daysAgo(90), end: today },
+      { label: 'Year to date', start: () => new Date().getFullYear() + '-01-01', end: today },
+    ];
+
+    function App() {
+      const [apiUrl, setApiUrl] = useState(() => localStorage.getItem(STORAGE_KEY) || '');
+      const [configOpen, setConfigOpen] = useState(false);
+
+      const [preset, setPreset] = useState(2); // Last 30 days default
+      const [useCustom, setUseCustom] = useState(false);
+      const [customStart, setCustomStart] = useState(daysAgo(30));
+      const [customEnd, setCustomEnd] = useState(today());
+
+      const [daily, setDaily] = useState([]);
+      const [mappings, setMappings] = useState([]);
+      const [narrative, setNarrative] = useState(null);
+      const [loading, setLoading] = useState(false);
+      const [error, setError] = useState(null);
+
+      const { start, end } = useCustom
+        ? { start: customStart, end: customEnd }
+        : { start: DATE_PRESETS[preset].start(), end: DATE_PRESETS[preset].end() };
+
+      const load = useCallback(async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const [d, m, n] = await Promise.all([
+            fetchAction(apiUrl, 'daily', { start, end }),
+            fetchAction(apiUrl, 'mappings'),
+            fetchAction(apiUrl, 'narrative'),
+          ]);
+          setDaily(Array.isArray(d) ? d : []);
+          setMappings(Array.isArray(m) ? m : []);
+          // narrative may come back as a single object or null
+          setNarrative(Array.isArray(n) ? (n[n.length - 1] || null) : n);
+        } catch (err) {
+          console.error(err);
+          setError(err.message);
+          setDaily([]);
+          setMappings([]);
+          setNarrative(null);
+        }
+        setLoading(false);
+      }, [apiUrl, start, end]);
+
+      useEffect(() => { load(); }, [load]);
+
+      const saveApiUrl = url => {
+        setApiUrl(url);
+        if (url) localStorage.setItem(STORAGE_KEY, url);
+        else localStorage.removeItem(STORAGE_KEY);
+        setConfigOpen(false);
+      };
+
+      return (
+        <div className="min-h-screen">
+          <Header
+            apiUrl={apiUrl}
+            onConfigure={() => setConfigOpen(true)}
+            onRefresh={load}
+            loading={loading}
+          />
+
+          <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
+            {!apiUrl && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                <strong>Preview mode.</strong> Showing generated mock data.
+                Click <strong>Connect API</strong> to link your Apps Script Web App.
+              </div>
+            )}
+
+            <DateRangeBar
+              preset={preset}
+              setPreset={setPreset}
+              customStart={customStart}
+              customEnd={customEnd}
+              setCustomStart={setCustomStart}
+              setCustomEnd={setCustomEnd}
+              useCustom={useCustom}
+              setUseCustom={setUseCustom}
+              presets={DATE_PRESETS}
+            />
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-900">
+                <strong>Error:</strong> {error}
+              </div>
+            )}
+
+            <SummaryCards daily={daily} />
+            <SpendConversionsChart daily={daily} />
+            <CampaignTable daily={daily} />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <NarrativePanel narrative={narrative} />
+              <MappingsTable mappings={mappings} />
+            </div>
+
+            <footer className="text-xs text-stone-500 text-center pt-4 pb-2 space-y-1">
+              <div>
+                Honeycomb Credit · Marketing Intelligence Dashboard
+              </div>
+              <div>
+                Data source: {apiUrl
+                  ? <span className="text-green-700">● Apps Script Web App</span>
+                  : <span className="text-amber-700">● Mock data (preview)</span>}
+                {' · '}
+                Range: {start} → {end}
+              </div>
+              <div className="text-stone-400">
+                Investing involves risk. All data shown is internal marketing performance only.
+              </div>
+            </footer>
+          </main>
+
+          <ConfigModal
+            open={configOpen}
+            current={apiUrl}
+            onSave={saveApiUrl}
+            onClose={() => setConfigOpen(false)}
+          />
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>
