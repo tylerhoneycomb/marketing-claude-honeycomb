@@ -2,40 +2,82 @@
 // HONEYCOMB ADS DASHBOARD — APPS SCRIPT API LAYER
 // ============================================================
 //
-// This file extends the existing doGet() in
-// honeycomb_ads_intelligence_final.js with JSON API endpoints
-// consumed by the webapp dashboard in /webapp/index.html.
+// Adds JSON API endpoints to the existing Apps Script project
+// so the webapp dashboard in /webapp/index.html can read from
+// the Google Sheet. No existing functions are changed or
+// overwritten. The budget approve/reject flow keeps working
+// exactly as it does today.
 //
-// HOW TO INSTALL:
-// 1. Open the Apps Script project (the link in the handoff).
-// 2. Replace the existing doGet() function with the version
-//    below. The budget approve/reject logic is preserved by
-//    delegating to handleBudgetApproval_().
-// 3. Paste the remaining helpers (handleDashboardApi_,
-//    sheetToObjects_, getDailyData_, etc.) at the bottom of
-//    the file.
-// 4. Redeploy the web app: Deploy → Manage deployments →
-//    select the existing deployment → pencil icon → New
-//    version → Deploy. The /exec URL stays the same.
-// 5. Test in the browser:
-//      <WEB_APP_URL>?action=mappings
-//    Should return a JSON array.
+// ─── HOW TO INSTALL (≈90 seconds, two steps) ────────────────
 //
-// SECURITY NOTES:
-// - Deployment access controls who can call these endpoints.
-//   For internal-only use, set "Who has access" to "Anyone
-//   within <workspace>". For sharing with an external
-//   agency, use "Anyone with the link" — the data exposed
-//   is aggregate ad performance only (no PII).
-// - No data is written by these endpoints. They are read-only.
+// STEP 1 — PASTE THIS FILE AT THE BOTTOM OF YOUR SCRIPT
+//   a. Open the Apps Script editor.
+//   b. Scroll to the very bottom of honeycomb_ads_intelligence_final.js
+//      (or whichever file holds the existing doGet function).
+//   c. Copy EVERYTHING in this file below the "──── BEGIN PASTE ────"
+//      marker and paste it at the bottom.
+//   d. Press Cmd+S (Mac) or Ctrl+S (Windows) to save.
+//
+// STEP 2 — ADD TWO LINES TO THE EXISTING doGet FUNCTION
+//   a. In the same Apps Script file, press Cmd+F / Ctrl+F and
+//      search for:    function doGet(e)
+//   b. Immediately inside the opening curly brace, add these
+//      two lines as the very first thing the function does:
+//
+//        var dashboardResponse = handleDashboardApi_(e);
+//        if (dashboardResponse) return dashboardResponse;
+//
+//      The result should look like this:
+//
+//        function doGet(e) {
+//          var dashboardResponse = handleDashboardApi_(e);
+//          if (dashboardResponse) return dashboardResponse;
+//
+//          // ... all the existing approve/reject code stays here,
+//          //     completely untouched ...
+//        }
+//
+//   c. Save again (Cmd+S / Ctrl+S).
+//
+// STEP 3 — REDEPLOY THE WEB APP
+//   a. Click the blue "Deploy" button in the top-right.
+//   b. Choose "Manage deployments".
+//   c. Click the pencil icon on the existing deployment.
+//   d. Under "Version", pick "New version".
+//   e. Click "Deploy".
+//   f. Copy the "Web app URL" shown (ends in /exec). This is
+//      the same URL your Slack approve/reject links already
+//      use — it does not change.
+//
+// STEP 4 — CONNECT THE DASHBOARD
+//   a. Open the dashboard in your browser.
+//   b. Click "Connect API" in the top-right corner.
+//   c. Paste the /exec URL you just copied.
+//   d. Click "Save". The dashboard switches from mock data
+//      to real data instantly.
+//
+// ─── TESTING ────────────────────────────────────────────────
+// After Step 3 you can sanity-check by visiting this URL in
+// your browser (replacing WEB_APP_URL with the /exec URL):
+//     WEB_APP_URL?action=mappings
+// You should see a JSON list of your campaign mappings.
+//
+// ─── SAFETY / ROLLBACK ──────────────────────────────────────
+// Apps Script keeps version history automatically. If anything
+// behaves oddly, go to File → See version history and restore
+// the previous version. None of the changes below modify data
+// — every new function here is read-only.
 // ============================================================
 
 
-// ─── ENTRY POINT ────────────────────────────────────────────
-// Replaces the existing doGet(). Routes dashboard API calls
-// to handleDashboardApi_() and everything else (approve,
-// reject) to handleBudgetApproval_().
-function doGet(e) {
+// ──────────────────────────── BEGIN PASTE ────────────────────────────
+
+
+// ─── DASHBOARD API ROUTER ───────────────────────────────────
+// Returns a Response object for dashboard actions, or null
+// for anything else (so the existing doGet can keep handling
+// approve/reject links unchanged).
+function handleDashboardApi_(e) {
   var action = e && e.parameter && e.parameter.action;
 
   var dashboardActions = {
@@ -43,20 +85,10 @@ function doGet(e) {
     narrative: true, summary: true, campaigns: true
   };
 
-  if (action && dashboardActions[action]) {
-    return handleDashboardApi_(e);
-  }
+  if (!action || !dashboardActions[action]) return null;
 
-  return handleBudgetApproval_(e);
-}
-
-
-// ─── DASHBOARD API ROUTER ───────────────────────────────────
-function handleDashboardApi_(e) {
   try {
-    var action = e.parameter.action;
     var result;
-
     switch (action) {
       case 'rollup':
         result = sheetToObjects_(ROLLUP_SHEET);
@@ -76,10 +108,7 @@ function handleDashboardApi_(e) {
       case 'campaigns':
         result = getCampaignList_();
         break;
-      default:
-        result = { error: 'Unknown action: ' + action };
     }
-
     return jsonResponse_(result);
 
   } catch (err) {
@@ -195,9 +224,8 @@ function getLatestNarrative_() {
 
 // ─── SUMMARY (aggregated totals for a date range) ───────────
 // Server-side aggregation so the client can show topline
-// numbers without pulling every row. The client also
-// computes totals itself from /daily, so this is optional
-// but cheap.
+// numbers without pulling every row. The client also computes
+// totals itself from /daily, so this is optional but cheap.
 function getSummary_(start, end) {
   var tz = Session.getScriptTimeZone();
   if (!end)   end   = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
@@ -251,53 +279,4 @@ function getCampaignList_() {
 }
 
 
-// ─── BUDGET APPROVAL HANDLER (unchanged behavior) ───────────
-// This is the existing doGet() body, renamed. It handles the
-// ?action=approve and ?action=reject links from the weekly
-// budget proposal Slack message.
-function handleBudgetApproval_(e) {
-  var action = e && e.parameter && e.parameter.action;
-  var token  = e && e.parameter && e.parameter.token;
-
-  if (!token || !action) {
-    return HtmlService.createHtmlOutput(
-      '<h2>Invalid link.</h2><p>Missing action or token parameter.</p>');
-  }
-
-  var pendingToken = PROPS.getProperty('BUDGET_PENDING_TOKEN');
-
-  if (!pendingToken) {
-    return HtmlService.createHtmlOutput(
-      '<h2>No pending budget proposal.</h2>' +
-      '<p>This proposal may have already been actioned or expired.</p>');
-  }
-
-  if (token !== pendingToken) {
-    return HtmlService.createHtmlOutput(
-      '<h2>Token mismatch.</h2>' +
-      '<p>This link is invalid or has already been used.</p>');
-  }
-
-  var user = Session.getActiveUser().getEmail() || 'unknown user';
-
-  if (action === 'approve') {
-    PROPS.setProperty('BUDGET_APPROVED_TOKEN', token);
-    postToSlack_('*Honeycomb Budget* ✅ Approved by ' + user +
-                 '. Changes will execute tonight at 3:00 AM.');
-    return HtmlService.createHtmlOutput(
-      '<h2>✅ Budget changes approved.</h2>' +
-      '<p>Changes will execute tonight at 3:00 AM. ' +
-      'You\'ll receive a Slack confirmation when complete.</p>');
-  }
-
-  if (action === 'reject') {
-    PROPS.setProperty('BUDGET_REJECTED_TOKEN', token);
-    postToSlack_('*Honeycomb Budget* ❌ Rejected by ' + user +
-                 '. No changes will be applied this cycle.');
-    return HtmlService.createHtmlOutput(
-      '<h2>❌ Budget changes rejected.</h2>' +
-      '<p>No budget changes will be made this cycle.</p>');
-  }
-
-  return HtmlService.createHtmlOutput('<h2>Unknown action.</h2>');
-}
+// ───────────────────────────── END PASTE ─────────────────────────────
