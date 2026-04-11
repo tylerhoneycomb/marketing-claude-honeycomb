@@ -2229,6 +2229,10 @@
       const [sessions, setSessions]       = useState(() => loadChatSessions());
       const [selectedId, setSelectedId]   = useState('');
       const [saveHint, setSaveHint]       = useState('');
+      // Minimized = panel collapsed to a compact header-only
+      // bar in the corner. User can click to re-expand. The
+      // conversation state is preserved the whole time.
+      const [minimized, setMinimized]     = useState(false);
       const messagesEndRef                = React.useRef(null);
 
       // Auto-scroll to the latest message.
@@ -2265,18 +2269,24 @@
 
         setLoading(true);
         try {
-          const body = new URLSearchParams();
-          body.append('action', 'chat');
-          body.append('message', userMessage.content);
-          // Send the prior turns (not the just-added one — the
-          // server appends it as the new user message).
-          body.append('history', JSON.stringify(messages));
+          // Use GET instead of POST. Apps Script's POST
+          // responses go through a cross-origin 302 redirect
+          // that many browsers refuse to follow, which
+          // surfaces as "Failed to fetch" on the client.
+          // GET requests don't have that problem — the same
+          // transport the dashboard's read endpoints use.
+          //
+          // The trade-off is URL length. We cap the history
+          // to the last 6 turns to stay well under common
+          // URL length limits.
+          const historyForTransport = messages.slice(-6);
+          const qs = new URLSearchParams({
+            action:  'chat',
+            message: userMessage.content,
+            history: JSON.stringify(historyForTransport),
+          }).toString();
 
-          const resp = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: body.toString(),
-          });
+          const resp = await fetch(apiUrl + '?' + qs);
           if (!resp.ok) throw new Error('HTTP ' + resp.status);
           const json = await resp.json();
           if (json && json.error) throw new Error(json.error);
@@ -2336,6 +2346,34 @@
 
       if (!open) return null;
 
+      // Collapsed state: show a compact header-only bar.
+      // Clicking anywhere on it restores the full panel.
+      if (minimized) {
+        return (
+          <div
+            onClick={() => setMinimized(false)}
+            className="fixed bottom-24 right-6 w-72 bg-amber-500 text-white rounded-lg shadow-2xl z-[9998] cursor-pointer hover:bg-amber-600 transition-colors"
+            role="button"
+            aria-label="Expand Hive Mind chat"
+          >
+            <div className="p-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="text-xl">🐝</span>
+                <div>
+                  <div className="font-semibold text-sm">Hive Mind</div>
+                  <div className="text-[10px] text-amber-50">
+                    {messages.length > 0
+                      ? messages.length + ' message' + (messages.length !== 1 ? 's' : '') + ' · click to expand'
+                      : 'click to expand'}
+                  </div>
+                </div>
+              </div>
+              <span className="text-xs bg-white/20 rounded px-2 py-0.5">▢</span>
+            </div>
+          </div>
+        );
+      }
+
       return (
         <div className="fixed bottom-24 right-6 w-96 h-[560px] bg-white rounded-lg shadow-2xl border border-stone-300 flex flex-col z-[9998]">
           {/* Header */}
@@ -2347,14 +2385,24 @@
                 <p className="text-[10px] text-amber-50">Ask Claude about your campaign data</p>
               </div>
             </div>
-            <button
-              onClick={onClose}
-              className="text-white hover:bg-white/20 rounded p-1 text-sm leading-none"
-              title="Close"
-              aria-label="Close chat"
-            >
-              ✕
-            </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => setMinimized(true)}
+                className="text-white hover:bg-white/20 rounded p-1 text-sm leading-none"
+                title="Minimize"
+                aria-label="Minimize chat"
+              >
+                −
+              </button>
+              <button
+                onClick={onClose}
+                className="text-white hover:bg-white/20 rounded p-1 text-sm leading-none"
+                title="Close"
+                aria-label="Close chat"
+              >
+                ✕
+              </button>
+            </div>
           </div>
 
           {/* Session controls */}

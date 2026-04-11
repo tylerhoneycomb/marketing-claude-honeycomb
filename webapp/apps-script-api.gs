@@ -103,10 +103,18 @@ function handleDashboardApi_(e) {
 
   var dashboardActions = {
     rollup: true, daily: true, mappings: true,
-    narrative: true, summary: true, campaigns: true
+    narrative: true, summary: true, campaigns: true,
+    chat: true
   };
 
   if (!action || !dashboardActions[action]) return null;
+
+  // Chat returns its own Response object (HTML or JSON with
+  // the assistant reply). The rest of the actions return
+  // plain data which we wrap via jsonResponse_ below.
+  if (action === 'chat') {
+    return handleChatRequest_(e);
+  }
 
   try {
     var result;
