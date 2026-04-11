@@ -103,10 +103,18 @@ function handleDashboardApi_(e) {
 
   var dashboardActions = {
     rollup: true, daily: true, mappings: true,
-    narrative: true, summary: true, campaigns: true
+    narrative: true, summary: true, campaigns: true,
+    chat: true
   };
 
   if (!action || !dashboardActions[action]) return null;
+
+  // Chat returns its own Response object (HTML or JSON with
+  // the assistant reply). The rest of the actions return
+  // plain data which we wrap via jsonResponse_ below.
+  if (action === 'chat') {
+    return handleChatRequest_(e);
+  }
 
   try {
     var result;
@@ -333,20 +341,30 @@ function handleChatRequest_(e) {
   try {
     if (!ANTHROPIC_API_KEY) {
       return jsonResponse_({
-        error: 'ANTHROPIC_API_KEY not set in Script Properties.'
+        error: 'ANTHROPIC_API_KEY is not set in Script Properties. Open Project Settings → Script Properties and add it.'
       });
     }
 
-    var userMessage = String(e.parameter.message || '').trim();
+    var userMessage = String((e && e.parameter && e.parameter.message) || '').trim();
     if (!userMessage) {
-      return jsonResponse_({ error: 'Empty message.' });
+      return jsonResponse_({
+        error: 'Empty message. Type something before sending.'
+      });
+    }
+    // Guard against abuse/runaway payloads.
+    if (userMessage.length > 4000) {
+      return jsonResponse_({
+        error: 'Message too long (over 4,000 characters). Try breaking it into smaller questions.'
+      });
     }
 
-    var historyRaw = e.parameter.history || '[]';
+    var historyRaw = (e && e.parameter && e.parameter.history) || '[]';
     var history;
     try {
       history = JSON.parse(historyRaw);
     } catch (parseErr) {
+      Logger.log('handleChatRequest_: malformed history JSON, ignoring. Raw: ' +
+                 String(historyRaw).substring(0, 200));
       history = [];
     }
     if (!Array.isArray(history)) history = [];
@@ -437,20 +455,66 @@ function handleChatRequest_(e) {
     }
 
     if (code !== 200) {
-      var msg = (json && json.error && json.error.message) || 'HTTP ' + code;
-      return jsonResponse_({ error: 'Anthropic API error: ' + msg });
+      // Classify the error so the frontend's
+      // classifyFetchFailure() helper can match it to a
+      // specific user-facing message with actionable advice.
+      var apiMsg = (json && json.error && json.error.message) || 'HTTP ' + code;
+      var apiType = (json && json.error && json.error.type) || '';
+
+      if (code === 401 || code === 403 || /authentication|invalid.?api.?key/i.test(apiMsg)) {
+        return jsonResponse_({
+          error: 'Anthropic API authentication failed: ' + apiMsg +
+                 '. Check ANTHROPIC_API_KEY in Script Properties.'
+        });
+      }
+      if (code === 429 || apiType === 'rate_limit_error' || /rate.?limit/i.test(apiMsg)) {
+        return jsonResponse_({
+          error: 'Anthropic rate limit hit: ' + apiMsg +
+                 '. Wait a moment and try again.'
+        });
+      }
+      if (code === 400 || apiType === 'invalid_request_error') {
+        return jsonResponse_({
+          error: 'Anthropic rejected the request (HTTP 400): ' + apiMsg +
+                 '. This usually means the conversation history is too long or malformed.'
+        });
+      }
+      if (code >= 500) {
+        return jsonResponse_({
+          error: 'Anthropic server error (HTTP ' + code + '): ' + apiMsg +
+                 '. Try again in a moment — this is usually transient.'
+        });
+      }
+      return jsonResponse_({ error: 'Anthropic API error (HTTP ' + code + '): ' + apiMsg });
     }
 
     var reply = json && json.content && json.content[0] && json.content[0].text;
     if (!reply) {
-      return jsonResponse_({ error: 'No reply content in Anthropic response.' });
+      return jsonResponse_({
+        error: 'Anthropic returned no content. Response shape: ' +
+               JSON.stringify(json).substring(0, 200)
+      });
     }
 
     return jsonResponse_({ reply: reply });
 
   } catch (err) {
     Logger.log('handleChatRequest_ exception: ' + err.message + '\n' + err.stack);
-    return jsonResponse_({ error: err.message });
+    // Apps Script's UrlFetchApp can throw on network/timeout
+    // failures. Classify the common ones.
+    var errMsg = String(err.message || err);
+    if (/timeout/i.test(errMsg)) {
+      return jsonResponse_({
+        error: 'Request to Anthropic timed out. Apps Script has a 60-second URL fetch limit. ' +
+               'Try asking a shorter question or clearing conversation history.'
+      });
+    }
+    if (/DNS|address/i.test(errMsg)) {
+      return jsonResponse_({
+        error: 'Could not reach the Anthropic API. This is usually transient — try again.'
+      });
+    }
+    return jsonResponse_({ error: 'Chat backend error: ' + errMsg });
   }
 }
 
