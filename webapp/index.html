@@ -654,12 +654,23 @@
     }
 
 
-    function Header({ apiUrl, onConfigure, onRefresh, loading }) {
+    function Header({ apiUrl, onConfigure, onRefresh, loading, onBeeClick }) {
       return (
         <header className="bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md">
           <div className="max-w-7xl mx-auto px-6 py-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="text-3xl">🐝</div>
+              {/* 🐝 is intentionally NOT styled as a button — no
+                  cursor change, no tooltip, no hover state. The
+                  whole point is that the chat module is invisible
+                  until someone clicks the bee 5 times in the
+                  current session. */}
+              <div
+                className="text-3xl select-none"
+                onClick={onBeeClick}
+                aria-hidden="true"
+              >
+                🐝
+              </div>
               <div>
                 <h1 className="text-2xl font-bold tracking-tight">Honeycomb Ads Dashboard</h1>
                 <p className="text-amber-50 text-sm">Meta campaign intelligence layer</p>
@@ -2037,9 +2048,349 @@
       { label: 'Year to date', start: () => new Date().getFullYear() + '-01-01', end: today },
     ];
 
+
+    // ─── CHAT SESSION STORAGE (localStorage) ───────────────
+    // Saved chat sessions DO persist across refreshes. Only
+    // the "unlocked" state of the chat itself is session-only.
+    const CHAT_SESSIONS_KEY = 'honeycomb_chat_sessions';
+
+    function loadChatSessions() {
+      try {
+        const raw = localStorage.getItem(CHAT_SESSIONS_KEY);
+        if (!raw) return [];
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) ? parsed : [];
+      } catch (e) {
+        return [];
+      }
+    }
+
+    function persistChatSessions(sessions) {
+      try {
+        localStorage.setItem(CHAT_SESSIONS_KEY, JSON.stringify(sessions));
+      } catch (e) {
+        // Quota or storage disabled. Silently ignore.
+      }
+    }
+
+    // Build a human-readable title from the first user message.
+    // Falls back to a timestamp if there's no user message yet.
+    function titleForMessages(messages) {
+      const firstUser = messages.find(m => m.role === 'user');
+      const now = new Date();
+      const stamp = now.toLocaleString(undefined, {
+        month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+      });
+      if (!firstUser) return 'Untitled — ' + stamp;
+      const snippet = String(firstUser.content).trim().replace(/\s+/g, ' ').slice(0, 40);
+      return (snippet || 'Untitled') + ' — ' + stamp;
+    }
+
+
+    // ─── HIDDEN CHAT MODULE ────────────────────────────────
+    // The whole thing is an easter egg. Nothing is visible in
+    // the UI until the user clicks the 🐝 in the header 5
+    // times in a single page session. On refresh or tab
+    // close, the unlock state resets — they have to click the
+    // bee 5 more times to bring the module back. Saved chat
+    // sessions (below) DO persist because they're explicitly
+    // stored in localStorage.
+    function AIChatPanel({ apiUrl, open, onClose }) {
+      const [messages, setMessages]       = useState([]);
+      const [input, setInput]             = useState('');
+      const [loading, setLoading]         = useState(false);
+      const [error, setError]             = useState(null);
+      const [sessions, setSessions]       = useState(() => loadChatSessions());
+      const [selectedId, setSelectedId]   = useState('');
+      const [saveHint, setSaveHint]       = useState('');
+      const messagesEndRef                = React.useRef(null);
+
+      // Auto-scroll to the latest message.
+      useEffect(() => {
+        if (messagesEndRef.current) {
+          messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, [messages, loading]);
+
+      // Clear the transient "Saved!" hint after a beat.
+      useEffect(() => {
+        if (!saveHint) return;
+        const t = setTimeout(() => setSaveHint(''), 1800);
+        return () => clearTimeout(t);
+      }, [saveHint]);
+
+      const send = async () => {
+        const trimmed = input.trim();
+        if (!trimmed || loading) return;
+
+        const userMessage = { role: 'user', content: trimmed };
+        const newMessages = [...messages, userMessage];
+        setMessages(newMessages);
+        setInput('');
+        setError(null);
+
+        if (!apiUrl) {
+          setMessages([...newMessages, {
+            role: 'assistant',
+            content: 'I need the Apps Script backend to answer this — click "Connect API" in the top-right, paste your /exec URL, then come back.',
+          }]);
+          return;
+        }
+
+        setLoading(true);
+        try {
+          const body = new URLSearchParams();
+          body.append('action', 'chat');
+          body.append('message', userMessage.content);
+          // Send the prior turns (not the just-added one — the
+          // server appends it as the new user message).
+          body.append('history', JSON.stringify(messages));
+
+          const resp = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: body.toString(),
+          });
+          if (!resp.ok) throw new Error('HTTP ' + resp.status);
+          const json = await resp.json();
+          if (json && json.error) throw new Error(json.error);
+
+          setMessages([...newMessages, {
+            role: 'assistant',
+            content: json.reply || '(empty reply)',
+          }]);
+        } catch (err) {
+          setError(err.message || String(err));
+        }
+        setLoading(false);
+      };
+
+      const saveSession = () => {
+        if (messages.length === 0) {
+          setSaveHint('Nothing to save yet');
+          return;
+        }
+        const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+        const entry = {
+          id,
+          title: titleForMessages(messages),
+          savedAt: new Date().toISOString(),
+          messages: messages.slice(),
+        };
+        const next = [entry, ...sessions];
+        setSessions(next);
+        persistChatSessions(next);
+        setSelectedId(id);
+        setSaveHint('Saved ✓');
+      };
+
+      const loadSession = (id) => {
+        setSelectedId(id);
+        if (!id) return;
+        const found = sessions.find(s => s.id === id);
+        if (found) {
+          setMessages(found.messages.slice());
+          setError(null);
+        }
+      };
+
+      const deleteSelectedSession = () => {
+        if (!selectedId) return;
+        const next = sessions.filter(s => s.id !== selectedId);
+        setSessions(next);
+        persistChatSessions(next);
+        setSelectedId('');
+      };
+
+      const startNew = () => {
+        setMessages([]);
+        setError(null);
+        setSelectedId('');
+      };
+
+      if (!open) return null;
+
+      return (
+        <div className="fixed bottom-24 right-6 w-96 h-[560px] bg-white rounded-lg shadow-2xl border border-stone-300 flex flex-col z-[9998]">
+          {/* Header */}
+          <div className="bg-amber-500 text-white p-3 rounded-t-lg flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🐝</span>
+              <div>
+                <h4 className="font-semibold text-sm">Hive Mind</h4>
+                <p className="text-[10px] text-amber-50">Ask Claude about your campaign data</p>
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="text-white hover:bg-white/20 rounded p-1 text-sm leading-none"
+              title="Close"
+              aria-label="Close chat"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Session controls */}
+          <div className="px-3 py-2 border-b border-stone-200 bg-stone-50 flex-shrink-0 space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <select
+                value={selectedId}
+                onChange={e => loadSession(e.target.value)}
+                className="flex-1 text-[11px] border border-stone-300 rounded bg-white px-2 py-1 text-stone-700"
+              >
+                <option value="">— Load saved session —</option>
+                {sessions.map(s => (
+                  <option key={s.id} value={s.id}>{s.title}</option>
+                ))}
+              </select>
+              {selectedId && (
+                <button
+                  onClick={deleteSelectedSession}
+                  className="text-[11px] px-1.5 py-1 text-red-600 hover:bg-red-50 rounded"
+                  title="Delete this saved session"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={saveSession}
+                disabled={messages.length === 0}
+                className="text-[11px] px-2 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Save current
+              </button>
+              <button
+                onClick={startNew}
+                className="text-[11px] px-2 py-1 bg-stone-200 hover:bg-stone-300 text-stone-700 rounded font-medium"
+              >
+                New chat
+              </button>
+              {saveHint && (
+                <span className="text-[11px] text-emerald-700 font-medium ml-auto">{saveHint}</span>
+              )}
+            </div>
+          </div>
+
+          {/* Messages */}
+          <div className="flex-1 overflow-y-auto p-3 space-y-3 bg-stone-50">
+            {messages.length === 0 && (
+              <div className="text-center text-xs text-stone-500 mt-4 px-2">
+                <p className="mb-2">👋 I know your dashboard data and I know CPICP is the metric that matters. Try asking:</p>
+                <ul className="space-y-1 text-left bg-white rounded p-3 border border-stone-200 text-stone-600 mt-2">
+                  <li>• "Which campaign has the best CPICP this month?"</li>
+                  <li>• "What's trending in the wrong direction and why?"</li>
+                  <li>• "Summarize last week for our Monday exec meeting"</li>
+                  <li>• "Which campaigns should I consider pausing?"</li>
+                  <li>• "Explain the attribution rate on Brewery Leads"</li>
+                </ul>
+              </div>
+            )}
+            {messages.map((m, i) => (
+              <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                <div
+                  className={`max-w-[85%] rounded-lg px-3 py-2 text-xs ${
+                    m.role === 'user'
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-white border border-stone-200 text-stone-800'
+                  }`}
+                >
+                  <pre className="whitespace-pre-wrap font-sans leading-relaxed break-words">{m.content}</pre>
+                </div>
+              </div>
+            ))}
+            {loading && (
+              <div className="flex justify-start">
+                <div className="bg-white border border-stone-200 rounded-lg px-3 py-2 text-xs text-stone-500 italic">
+                  Hive Mind is thinking…
+                </div>
+              </div>
+            )}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-800">
+                Error: {error}
+              </div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <div className="p-3 border-t border-stone-200 flex gap-2 flex-shrink-0">
+            <input
+              type="text"
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  send();
+                }
+              }}
+              placeholder={apiUrl ? 'Ask about your campaigns…' : 'Connect API first'}
+              disabled={loading}
+              className="flex-1 border border-stone-300 rounded px-3 py-2 text-xs disabled:bg-stone-100 focus:outline-none focus:ring-2 focus:ring-amber-400"
+            />
+            <button
+              onClick={send}
+              disabled={loading || !input.trim()}
+              className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-2 rounded text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Session-only floating button. Only rendered after the
+    // user has completed the 5-click unlock; gone on refresh.
+    function AIChatLauncher({ open, onToggle }) {
+      return (
+        <button
+          onClick={onToggle}
+          className={`fixed bottom-6 right-6 w-14 h-14 rounded-full shadow-xl flex items-center justify-center text-2xl z-[9997] transition-transform hover:scale-110 ${
+            open ? 'bg-stone-800 text-white' : 'bg-amber-500 text-white'
+          }`}
+          title={open ? 'Hide Hive Mind' : 'Open Hive Mind'}
+          aria-label={open ? 'Hide AI chat' : 'Open AI chat'}
+        >
+          {open ? '✕' : '🐝'}
+        </button>
+      );
+    }
+
+
     function App() {
       const [apiUrl, setApiUrl] = useState(() => localStorage.getItem(STORAGE_KEY) || '');
       const [configOpen, setConfigOpen] = useState(false);
+
+      // Hidden chat module state. Deliberately NOT persisted
+      // to localStorage — on page refresh this resets to
+      // locked, and the 5-click unlock sequence must be
+      // repeated. Saved chat sessions DO persist separately.
+      const [beeClicks, setBeeClicks]   = useState(0);
+      const [chatUnlocked, setChatUnlocked] = useState(false);
+      const [chatOpen, setChatOpen]     = useState(false);
+
+      const handleBeeClick = useCallback(() => {
+        if (chatUnlocked) {
+          // After unlock, clicks on the bee reopen the chat
+          // as a convenience.
+          setChatOpen(true);
+          return;
+        }
+        setBeeClicks(prev => {
+          const next = prev + 1;
+          if (next >= 5) {
+            setChatUnlocked(true);
+            setChatOpen(true);
+            return 0;
+          }
+          return next;
+        });
+      }, [chatUnlocked]);
 
       const [preset, setPreset] = useState(2); // Last 30 days default
       const [useCustom, setUseCustom] = useState(false);
@@ -2099,6 +2450,7 @@
             onConfigure={() => setConfigOpen(true)}
             onRefresh={load}
             loading={loading}
+            onBeeClick={handleBeeClick}
           />
 
           <main className="max-w-7xl mx-auto px-6 py-6 space-y-6">
@@ -2205,6 +2557,23 @@
             onSave={saveApiUrl}
             onClose={() => setConfigOpen(false)}
           />
+
+          {/* Hidden chat module — nothing below renders unless
+              the user has clicked the 🐝 in the header 5 times
+              during this page session. Refresh clears it. */}
+          {chatUnlocked && (
+            <React.Fragment>
+              <AIChatLauncher
+                open={chatOpen}
+                onToggle={() => setChatOpen(o => !o)}
+              />
+              <AIChatPanel
+                apiUrl={apiUrl}
+                open={chatOpen}
+                onClose={() => setChatOpen(false)}
+              />
+            </React.Fragment>
+          )}
         </div>
       );
     }
