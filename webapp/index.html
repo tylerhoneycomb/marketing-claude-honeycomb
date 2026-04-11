@@ -1559,34 +1559,118 @@
             </ResponsiveContainer>
           )}
 
-          {/* Campaign toggle legend — per-campaign only */}
-          {!isPortfolio && campaignSummary.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {campaignSummary.map(c => {
-                const isVisible = visible.has(c.name);
-                return (
-                  <button
-                    key={c.name}
-                    onClick={() => toggleCampaign(c.name)}
-                    className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs border transition ${
-                      isVisible
-                        ? 'bg-white border-stone-300 text-stone-800'
-                        : 'bg-stone-50 border-stone-200 text-stone-400'
-                    }`}
-                    title={`${fmtCurrency(c.totalSpend)} total spend in range`}
-                  >
-                    <span
-                      className="inline-block w-3 h-3 rounded-sm"
-                      style={{
-                        backgroundColor: isVisible ? colorMap[c.name] : '#d6d3d1'
-                      }}
-                    />
-                    <span className="truncate max-w-[180px]">{c.name}</span>
-                  </button>
-                );
-              })}
-            </div>
-          )}
+          {/* ── Key row ───────────────────────────────────
+              Shows an explicit legend below the chart so it's
+              obvious which line represents which metric /
+              campaign. Per-campaign mode: each entry is a
+              clickable toggle. Portfolio mode: display-only
+              key with left/right axis indicators. Both modes
+              show the most recent value per line. */}
+          {(() => {
+            // Find the most recent non-null value for a given
+            // series key across the chart data.
+            const lastValueForKey = (k) => {
+              for (let i = chartDataWithTrends.length - 1; i >= 0; i--) {
+                const v = chartDataWithTrends[i][k];
+                if (v != null && !isNaN(v)) return v;
+              }
+              return null;
+            };
+
+            if (isPortfolio) {
+              const primaryLatest = lastValueForKey(primaryMetric.label);
+              const comparisonLatest = comparisonMetric
+                ? lastValueForKey(comparisonMetric.label)
+                : null;
+              return (
+                <div className="mt-4 pt-3 border-t border-stone-100">
+                  <div className="text-[11px] font-semibold text-stone-600 uppercase tracking-wide mb-2">
+                    Key
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <div className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-xs">
+                      <span
+                        className="inline-block w-3.5 h-3.5 rounded-sm flex-shrink-0"
+                        style={{ backgroundColor: primaryMetric.color }}
+                      />
+                      <span className="font-semibold text-stone-800">{primaryMetric.label}</span>
+                      <span className="text-stone-500">
+                        {primaryLatest != null
+                          ? 'latest: ' + primaryMetric.formatValue(primaryLatest)
+                          : 'no data'}
+                      </span>
+                      <span className="text-[9px] text-stone-400 uppercase tracking-wide border border-stone-300 rounded px-1 py-0.5">
+                        Left axis
+                      </span>
+                    </div>
+                    {comparisonMetric && (
+                      <div className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-xs">
+                        <span
+                          className="inline-block w-3.5 h-3.5 rounded-sm flex-shrink-0"
+                          style={{ backgroundColor: comparisonMetric.color }}
+                        />
+                        <span className="font-semibold text-stone-800">{comparisonMetric.label}</span>
+                        <span className="text-stone-500">
+                          {comparisonLatest != null
+                            ? 'latest: ' + comparisonMetric.formatValue(comparisonLatest)
+                            : 'no data'}
+                        </span>
+                        <span className="text-[9px] text-stone-400 uppercase tracking-wide border border-stone-300 rounded px-1 py-0.5">
+                          Right axis
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            }
+
+            // Per-campaign key — also acts as visibility toggles
+            if (campaignSummary.length === 0) return null;
+            return (
+              <div className="mt-4 pt-3 border-t border-stone-100">
+                <div className="text-[11px] font-semibold text-stone-600 uppercase tracking-wide mb-2 flex items-center gap-2">
+                  <span>Key · {primaryMetric.label}</span>
+                  <span className="text-[10px] text-stone-400 font-normal normal-case tracking-normal">
+                    click a chip to toggle its line
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {campaignSummary.map(c => {
+                    const isVisible = visible.has(c.name);
+                    const latest = isVisible ? lastValueForKey(c.name) : null;
+                    return (
+                      <button
+                        key={c.name}
+                        onClick={() => toggleCampaign(c.name)}
+                        className={`flex items-center gap-1.5 px-2 py-1 rounded text-xs border transition ${
+                          isVisible
+                            ? 'bg-white border-stone-300 text-stone-800 shadow-sm'
+                            : 'bg-stone-50 border-stone-200 text-stone-400'
+                        }`}
+                        title={`${fmtCurrency(c.totalSpend)} total spend in range${
+                          isVisible ? ' · click to hide' : ' · click to show'
+                        }`}
+                      >
+                        <span
+                          className="inline-block w-3 h-3 rounded-sm flex-shrink-0"
+                          style={{
+                            backgroundColor: isVisible ? colorMap[c.name] : '#d6d3d1'
+                          }}
+                        />
+                        <span className="truncate max-w-[180px]">{c.name}</span>
+                        {isVisible && latest != null && (
+                          <span className="text-stone-500 font-medium">
+                            {primaryMetric.formatValue(latest)}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
         </div>
       );
     }
@@ -1606,6 +1690,10 @@
           .map(r => ({ ...r, spend: Math.round(r.spend) }));
       }, [daily]);
 
+      // Most recent non-null values for the key.
+      const latestSpend = data.length > 0 ? data[data.length - 1].spend : null;
+      const latestConv  = data.length > 0 ? data[data.length - 1].conversions : null;
+
       return (
         <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
           <div className="flex items-center justify-between mb-3">
@@ -1617,46 +1705,84 @@
           {data.length === 0 ? (
             <p className="text-stone-500 text-sm py-16 text-center">No data in selected range</p>
           ) : (
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={data} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={30} />
-                <YAxis
-                  yAxisId="left"
-                  tick={{ fontSize: 11 }}
-                  tickFormatter={v => '$' + v}
-                />
-                <YAxis
-                  yAxisId="right"
-                  orientation="right"
-                  tick={{ fontSize: 11 }}
-                />
-                <Tooltip
-                  formatter={(value, name) =>
-                    name === 'Spend' ? ['$' + value, name] : [value, name]
-                  }
-                />
-                <Legend />
-                <Line
-                  yAxisId="left"
-                  type="monotone"
-                  dataKey="spend"
-                  stroke="#f59e0b"
-                  name="Spend"
-                  strokeWidth={2}
-                  dot={false}
-                />
-                <Line
-                  yAxisId="right"
-                  type="monotone"
-                  dataKey="conversions"
-                  stroke="#0891b2"
-                  name="Conversions"
-                  strokeWidth={2}
-                  dot={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+            <>
+              <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={data} margin={{ top: 5, right: 30, left: 10, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11 }} minTickGap={30} />
+                  <YAxis
+                    yAxisId="left"
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={v => '$' + v}
+                  />
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 11 }}
+                  />
+                  <Tooltip
+                    formatter={(value, name) =>
+                      name === 'Spend' ? ['$' + value, name] : [value, name]
+                    }
+                  />
+                  <Line
+                    yAxisId="left"
+                    type="monotone"
+                    dataKey="spend"
+                    stroke="#f59e0b"
+                    name="Spend"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    yAxisId="right"
+                    type="monotone"
+                    dataKey="conversions"
+                    stroke="#0891b2"
+                    name="Conversions"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+
+              {/* Custom key — matches the style used by the
+                  primary MetricTrendChart so all charts on
+                  the page feel consistent. */}
+              <div className="mt-4 pt-3 border-t border-stone-100">
+                <div className="text-[11px] font-semibold text-stone-600 uppercase tracking-wide mb-2">
+                  Key
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <div className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-xs">
+                    <span
+                      className="inline-block w-3.5 h-3.5 rounded-sm flex-shrink-0"
+                      style={{ backgroundColor: '#f59e0b' }}
+                    />
+                    <span className="font-semibold text-stone-800">Spend</span>
+                    <span className="text-stone-500">
+                      {latestSpend != null ? 'latest: ' + fmtCurrency(latestSpend) : 'no data'}
+                    </span>
+                    <span className="text-[9px] text-stone-400 uppercase tracking-wide border border-stone-300 rounded px-1 py-0.5">
+                      Left axis
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 bg-stone-50 border border-stone-200 rounded px-2.5 py-1.5 text-xs">
+                    <span
+                      className="inline-block w-3.5 h-3.5 rounded-sm flex-shrink-0"
+                      style={{ backgroundColor: '#0891b2' }}
+                    />
+                    <span className="font-semibold text-stone-800">Conversions</span>
+                    <span className="text-stone-500">
+                      {latestConv != null ? 'latest: ' + fmtNumber(latestConv) : 'no data'}
+                    </span>
+                    <span className="text-[9px] text-stone-400 uppercase tracking-wide border border-stone-300 rounded px-1 py-0.5">
+                      Right axis
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </>
           )}
         </div>
       );
