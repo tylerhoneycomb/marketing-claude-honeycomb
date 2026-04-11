@@ -286,7 +286,130 @@
     }
 
 
+    // ─── SHARED CAMPAIGN AGGREGATION ─────────────────────
+    // Rolls a weekly rollup dataset up to per-campaign totals
+    // inside a date range. Used by the leaderboard component
+    // AND conceptually by the weekly performance table (which
+    // has its own inline version). Keep the two in sync if
+    // you change what's being summed.
+    function aggregateCampaigns(rollup, rangeStart, rangeEnd) {
+      const inRange = rollup.filter(r => {
+        const ws = String(r.week_start).substring(0, 10);
+        return ws >= rangeStart && ws <= rangeEnd;
+      });
+
+      const byCampaign = {};
+      inRange.forEach(r => {
+        const key = r.campaign_name;
+        if (!byCampaign[key]) {
+          byCampaign[key] = {
+            campaign_name: key,
+            utm_campaign: r.utm_campaign,
+            spend: 0,
+            impressions: 0,
+            clicks: 0,
+            meta_conversions: 0,
+            estimated_icps: 0,
+            icps_attributed: 0,
+            weekCount: 0,
+          };
+        }
+        const c = byCampaign[key];
+        c.spend            += Number(r.spend) || 0;
+        c.impressions      += Number(r.impressions) || 0;
+        c.clicks           += Number(r.clicks) || 0;
+        c.meta_conversions += Number(r.meta_conversions) || 0;
+        c.estimated_icps   += Number(r.estimated_icps) || 0;
+        c.icps_attributed  += Number(r.icps_attributed) || 0;
+        c.weekCount++;
+      });
+
+      return Object.values(byCampaign).map(c => ({
+        ...c,
+        cpicp_blended:    c.estimated_icps > 0 ? c.spend / c.estimated_icps : null,
+        cpl:              c.meta_conversions > 0 ? c.spend / c.meta_conversions : null,
+        ctr:              c.impressions > 0 ? c.clicks / c.impressions : null,
+        attribution_rate: c.estimated_icps > 0 ? (c.icps_attributed / c.estimated_icps) * 100 : null,
+      }));
+    }
+
+    // ─── LEADERBOARD METRIC CATALOG ──────────────────────
+    // Each entry defines one metric you can rank campaigns
+    // by in the Top/Bottom 3 leaderboards, plus how to
+    // format its value and which direction is "better".
+    const LEADERBOARD_METRICS = [
+      {
+        key: 'cpicp_blended',
+        label: 'Blended CPICP',
+        lowerIsBetter: true,
+        format: (v) => fmtCurrencyCents(v),
+        tooltip: 'Cost per ICP using hybrid attribution. Total spend divided by estimated ICPs over the selected range. Lower is better.',
+      },
+      {
+        key: 'estimated_icps',
+        label: 'Estimated ICPs',
+        lowerIsBetter: false,
+        format: (v) => fmtNumber(v, 1),
+        tooltip: 'Total estimated ICPs attributed to each campaign (hard UTM matches plus a proportional share of unattributed ICPs). Higher is better.',
+      },
+      {
+        key: 'attribution_rate',
+        label: 'Attribution Rate',
+        lowerIsBetter: false,
+        format: (v) => v != null ? v.toFixed(0) + '%' : '—',
+        tooltip: 'Share of each campaign\u2019s estimated ICPs that came with a matching UTM tag. Higher means cleaner tracking. Below 50% means most credit is coming from the unattributed pool.',
+      },
+      {
+        key: 'cpl',
+        label: 'CPL (Meta)',
+        lowerIsBetter: true,
+        format: (v) => fmtCurrencyCents(v),
+        tooltip: 'Cost per Lead based on Meta-reported conversions. Useful as an efficiency signal, but CPICP is generally more accurate because it uses HubSpot\u2019s actual decision data.',
+      },
+      {
+        key: 'ctr',
+        label: 'CTR',
+        lowerIsBetter: false,
+        format: (v) => v != null ? (v * 100).toFixed(2) + '%' : '—',
+        tooltip: 'Click-Through Rate. Share of ad impressions that resulted in a click. Higher usually indicates stronger creative.',
+      },
+      {
+        key: 'spend',
+        label: 'Total Spend',
+        lowerIsBetter: false,
+        format: (v) => fmtCurrency(v),
+        tooltip: 'Total spend in the selected range. Not a performance metric on its own, but useful context for which campaigns are absorbing the biggest share of budget.',
+      },
+    ];
+
+
     // ─── PRESENTATIONAL COMPONENTS ────────────────────────
+
+    // Small hover tooltip attached to a "?" icon. Used to
+    // annotate non-obvious metric labels throughout the
+    // dashboard. CSS-only — the tooltip appears on hover of
+    // the parent span via Tailwind's `group-hover` utility.
+    function InfoTip({ text, side = 'top' }) {
+      const pos = side === 'top'
+        ? 'bottom-full left-1/2 -translate-x-1/2 mb-1.5'
+        : 'top-full left-1/2 -translate-x-1/2 mt-1.5';
+      return (
+        <span className="relative inline-block group align-middle ml-1">
+          <span
+            className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-stone-300 text-stone-600 text-[9px] font-bold cursor-help leading-none select-none"
+            aria-label="More info"
+          >
+            ?
+          </span>
+          <span
+            className={`absolute ${pos} z-50 invisible group-hover:visible w-64 bg-stone-900 text-white text-xs rounded-md px-3 py-2 shadow-lg pointer-events-none leading-relaxed whitespace-normal font-normal normal-case text-left`}
+          >
+            {text}
+          </span>
+        </span>
+      );
+    }
+
 
     function Header({ apiUrl, onConfigure, onRefresh, loading }) {
       return (
@@ -394,53 +517,149 @@
       );
     }
 
+    // Renders the "go-forward trend" line that sits below
+    // each top card's value. Runs linear regression across
+    // weekly points and expresses the slope as a per-week
+    // change rate with an arrow and directional color.
+    //
+    // For "neutral" metrics (like total spend), we don't
+    // know if up or down is "better," so the color stays
+    // gray regardless of direction.
+    function GoForwardTrend({ weeklySeries, formatDelta, lowerIsBetter, neutral }) {
+      const points = weeklySeries
+        .map((y, i) => ({ x: i, y: (y == null || isNaN(y)) ? null : y }))
+        .filter(p => p.y != null);
+      if (points.length < 2) {
+        return <div className="text-[11px] text-stone-400 mt-1">Not enough weeks for a trend</div>;
+      }
+      const reg = linearRegression(points);
+      if (!reg || isNaN(reg.slope)) {
+        return <div className="text-[11px] text-stone-400 mt-1">No trend</div>;
+      }
+      const slope = reg.slope;
+      // Deadband: tiny movements aren't called trends.
+      const intercept = reg.intercept || 1;
+      const pctPerWk = Math.abs((slope / intercept) * 100);
+      if (pctPerWk < 0.5) {
+        return <div className="text-[11px] text-stone-400 mt-1">→ roughly flat</div>;
+      }
+      const arrow = slope > 0 ? '↗' : '↘';
+      const sign = slope > 0 ? '+' : '−';
+      const absDelta = Math.abs(slope);
+      let color = 'text-stone-400';
+      if (!neutral) {
+        const improving = lowerIsBetter ? slope < 0 : slope > 0;
+        color = improving ? 'text-emerald-600' : 'text-red-500';
+      }
+      return (
+        <div className={`text-[11px] ${color} mt-1`}>
+          {arrow} {sign}{formatDelta(absDelta)}/wk go-forward trend
+        </div>
+      );
+    }
+
     // Primary ICP-focused cards. Reads from weekly rollup
     // (which is the source of truth for ICP counts and
     // blended attribution). This is the headline section of
     // the dashboard.
+    //
+    // Each card now carries:
+    //  - A hover tooltip on the label explaining the metric
+    //  - The topline value
+    //  - A short hint describing how it's computed
+    //  - A de-emphasized "go-forward trend" line showing the
+    //    direction and pace of change, from linear regression
+    //    across the weeks in the current date range.
     function ICPSummaryCards({ rollup }) {
-      const totals = useMemo(() => {
-        const t = {
-          spend: 0, estimatedIcps: 0, attributedIcps: 0, metaConversions: 0
-        };
+      // Per-week aggregates (used both for totals and for
+      // the go-forward trend regression).
+      const weeklyTotals = useMemo(() => {
+        const byWeek = {};
         rollup.forEach(r => {
-          t.spend           += Number(r.spend) || 0;
-          t.estimatedIcps   += Number(r.estimated_icps) || 0;
-          t.attributedIcps  += Number(r.icps_attributed) || 0;
-          t.metaConversions += Number(r.meta_conversions) || 0;
+          const week = String(r.week_start).substring(0, 10);
+          if (!byWeek[week]) {
+            byWeek[week] = { week, spend: 0, estIcps: 0, attribIcps: 0 };
+          }
+          byWeek[week].spend      += Number(r.spend) || 0;
+          byWeek[week].estIcps    += Number(r.estimated_icps) || 0;
+          byWeek[week].attribIcps += Number(r.icps_attributed) || 0;
+        });
+        return Object.values(byWeek).sort((a, b) => a.week.localeCompare(b.week));
+      }, [rollup]);
+
+      const totals = useMemo(() => {
+        const t = { spend: 0, estimatedIcps: 0, attributedIcps: 0 };
+        weeklyTotals.forEach(w => {
+          t.spend          += w.spend;
+          t.estimatedIcps  += w.estIcps;
+          t.attributedIcps += w.attribIcps;
         });
         return t;
-      }, [rollup]);
+      }, [weeklyTotals]);
 
       const blendedCpicp = totals.estimatedIcps > 0
         ? totals.spend / totals.estimatedIcps : null;
       const attributionRate = totals.estimatedIcps > 0
         ? (totals.attributedIcps / totals.estimatedIcps) * 100 : null;
 
+      // Per-week series for each metric — fed to GoForwardTrend.
+      const spendSeries = weeklyTotals.map(w => w.spend);
+      const icpsSeries  = weeklyTotals.map(w => w.estIcps);
+      const cpicpSeries = weeklyTotals.map(w =>
+        w.estIcps > 0 ? w.spend / w.estIcps : null
+      );
+      const attribSeries = weeklyTotals.map(w =>
+        w.estIcps > 0 ? (w.attribIcps / w.estIcps) * 100 : null
+      );
+
       const cards = [
         {
           label: 'Total Spend',
           value: fmtCurrency(totals.spend),
           accent: 'text-stone-800',
-          hint: `${rollup.length} weekly rows`
+          hint: `${weeklyTotals.length} weekly rows`,
+          tooltip: 'Total Meta ad spend across all campaigns, summed over the weekly rollup rows in the selected date range.',
+          trend: {
+            weeklySeries: spendSeries,
+            formatDelta: (v) => fmtCurrency(v),
+            neutral: true,
+          },
         },
         {
           label: 'Estimated ICPs',
           value: fmtNumber(totals.estimatedIcps, 1),
           accent: 'text-amber-600',
-          hint: `${fmtNumber(totals.attributedIcps)} UTM-matched`
+          hint: `${fmtNumber(totals.attributedIcps)} UTM-matched`,
+          tooltip: 'Total ICPs credited to campaigns using hybrid attribution: hard UTM matches plus a proportional share of unattributed ICPs (distributed by each campaign\u2019s Meta conversion volume). ICP = HubSpot contact decisioned as investment_crowdfunding.',
+          trend: {
+            weeklySeries: icpsSeries,
+            formatDelta: (v) => fmtNumber(v, 1),
+            lowerIsBetter: false,
+          },
         },
         {
           label: 'Blended CPICP',
           value: fmtCurrencyCents(blendedCpicp),
           accent: 'text-cyan-700',
-          hint: 'Spend ÷ Est. ICPs'
+          hint: 'Spend ÷ Est. ICPs',
+          tooltip: 'Cost Per ICP using hybrid attribution. This is the primary efficiency metric for the marketing team. Lower is better.',
+          trend: {
+            weeklySeries: cpicpSeries,
+            formatDelta: (v) => fmtCurrencyCents(v),
+            lowerIsBetter: true,
+          },
         },
         {
           label: 'Attribution Rate',
           value: fmtPct(attributionRate, 1),
           accent: 'text-emerald-700',
-          hint: 'UTM-matched share'
+          hint: 'UTM-matched share',
+          tooltip: 'Share of estimated ICPs that were matched to a campaign via utm_campaign. Higher means cleaner tracking. Below 50% means most credit is coming from the unattributed pool (allocation by Meta conversion share).',
+          trend: {
+            weeklySeries: attribSeries,
+            formatDelta: (v) => v.toFixed(1) + ' pp',
+            lowerIsBetter: false,
+          },
         },
       ];
 
@@ -448,13 +667,101 @@
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {cards.map(c => (
             <div key={c.label} className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
-              <div className="text-xs text-stone-500 uppercase tracking-wide font-medium">
-                {c.label}
+              <div className="text-xs text-stone-500 uppercase tracking-wide font-medium flex items-center">
+                <span>{c.label}</span>
+                <InfoTip text={c.tooltip} side="bottom" />
               </div>
               <div className={`text-2xl font-bold mt-1 ${c.accent}`}>{c.value}</div>
               <div className="text-xs text-stone-400 mt-1">{c.hint}</div>
+              <GoForwardTrend {...c.trend} />
             </div>
           ))}
+        </div>
+      );
+    }
+
+    // ── Top/Bottom 3 performer tile ────────────────────
+    // Ranks campaigns by a dropdown-selectable metric.
+    // "Top" honors the metric's natural direction (lowest
+    // CPICP = top, highest CTR = top, etc.). "Bottom" is
+    // the reverse. Ties broken by spend (bigger spender
+    // first) so zero-ICP or zero-CTR campaigns don't crowd
+    // the leaderboard with noise.
+    function PerformanceLeaderboard({ rollup, rangeStart, rangeEnd, direction }) {
+      const [metricKey, setMetricKey] = useState('cpicp_blended');
+      const metric = LEADERBOARD_METRICS.find(m => m.key === metricKey) || LEADERBOARD_METRICS[0];
+      const isBest = direction === 'best';
+
+      const ranked = useMemo(() => {
+        const agg = aggregateCampaigns(rollup, rangeStart, rangeEnd);
+        const valid = agg.filter(c => c[metricKey] != null && !isNaN(c[metricKey]));
+        // ascending = lowest first
+        const ascending = (isBest && metric.lowerIsBetter) || (!isBest && !metric.lowerIsBetter);
+        valid.sort((a, b) => {
+          const diff = ascending ? a[metricKey] - b[metricKey] : b[metricKey] - a[metricKey];
+          if (diff !== 0) return diff;
+          // Tiebreak: bigger spender first (more meaningful signal).
+          return b.spend - a.spend;
+        });
+        return valid.slice(0, 3);
+      }, [rollup, rangeStart, rangeEnd, metricKey, isBest, metric.lowerIsBetter]);
+
+      const titleColor = isBest ? 'text-emerald-700' : 'text-red-700';
+      const frameColor = isBest
+        ? 'bg-emerald-50 border-emerald-200'
+        : 'bg-red-50 border-red-200';
+      const badgeColor = isBest ? 'bg-emerald-600' : 'bg-red-600';
+
+      return (
+        <div className={`rounded-lg border ${frameColor} p-4`}>
+          <div className="flex items-center justify-between mb-3 gap-2">
+            <h3 className={`text-sm font-semibold ${titleColor} flex items-center`}>
+              <span>{isBest ? 'Top 3 Performers' : 'Bottom 3 Performers'}</span>
+              <InfoTip
+                text={isBest
+                  ? 'The three campaigns ranking highest on the selected metric, using its natural direction (e.g. lowest CPICP, highest CTR). Ties broken by total spend.'
+                  : 'The three campaigns ranking lowest on the selected metric. Useful for spotting laggards. Campaigns with no data for the chosen metric are excluded.'}
+                side="bottom"
+              />
+            </h3>
+            <select
+              value={metricKey}
+              onChange={e => setMetricKey(e.target.value)}
+              className="text-xs border border-stone-300 rounded bg-white px-2 py-1 font-medium text-stone-700 cursor-pointer"
+              title={metric.tooltip}
+            >
+              {LEADERBOARD_METRICS.map(m => (
+                <option key={m.key} value={m.key}>{m.label}</option>
+              ))}
+            </select>
+          </div>
+          <ul className="space-y-2">
+            {ranked.length === 0 ? (
+              <li className="text-sm text-stone-500 py-2 text-center bg-white rounded">
+                No campaigns with data in range
+              </li>
+            ) : ranked.map((c, i) => (
+              <li key={c.campaign_name} className="flex items-center gap-3 bg-white rounded p-2 border border-stone-100">
+                <div className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold text-white ${badgeColor}`}>
+                  {i + 1}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-sm font-medium text-stone-900 truncate" title={c.campaign_name}>
+                    {c.campaign_name}
+                  </div>
+                  <div className="text-[11px] text-stone-500">
+                    {fmtCurrency(c.spend)} spend · {fmtNumber(c.estimated_icps, 1)} ICPs
+                  </div>
+                </div>
+                <div className="flex-shrink-0 text-right">
+                  <div className="text-sm font-bold text-stone-900">{metric.format(c[metricKey])}</div>
+                  <div className="text-[9px] text-stone-400 uppercase tracking-wide">
+                    {metric.label}
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
       );
     }
@@ -480,17 +787,36 @@
       const ctr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : null;
 
       const cards = [
-        { label: 'Daily-range Spend',  value: fmtCurrency(totals.spend) },
-        { label: 'Meta Conversions',   value: fmtNumber(totals.conversions) },
-        { label: 'Avg CPL (Meta)',     value: fmtCurrencyCents(cpl) },
-        { label: 'CTR',                value: fmtPct(ctr) },
+        {
+          label: 'Daily-range Spend',
+          value: fmtCurrency(totals.spend),
+          tooltip: 'Total Meta ad spend across all campaigns over the daily rows in the selected date range. Matches the topline Spend card when the range is the same.',
+        },
+        {
+          label: 'Meta Conversions',
+          value: fmtNumber(totals.conversions),
+          tooltip: 'Conversions as reported by Meta (lead events from the pixel or lead ads). These are Meta\u2019s own count and can disagree with HubSpot\u2019s ICP count — CPICP is generally the more reliable efficiency metric.',
+        },
+        {
+          label: 'Avg CPL (Meta)',
+          value: fmtCurrencyCents(cpl),
+          tooltip: 'Cost Per Lead from Meta-reported conversions. Total spend ÷ Meta conversions. Useful as a cross-check against CPICP, but CPICP is typically the truer efficiency signal because it uses HubSpot\u2019s actual decision data.',
+        },
+        {
+          label: 'CTR',
+          value: fmtPct(ctr),
+          tooltip: 'Click-Through Rate. Share of impressions that resulted in a click. Roughly a creative quality signal — higher CTR often means the ad copy/creative is resonating with the audience.',
+        },
       ];
 
       return (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {cards.map(c => (
             <div key={c.label} className="bg-white p-3 rounded-lg border border-stone-200">
-              <div className="text-xs text-stone-500 uppercase tracking-wide">{c.label}</div>
+              <div className="text-xs text-stone-500 uppercase tracking-wide flex items-center">
+                <span>{c.label}</span>
+                <InfoTip text={c.tooltip} side="bottom" />
+              </div>
               <div className="text-lg font-semibold text-stone-800 mt-0.5">{c.value}</div>
             </div>
           ))}
@@ -562,10 +888,51 @@
 
       const [visible, setVisible] = useState(defaultVisible);
       const [showTrendlines, setShowTrendlines] = useState(true);
+      // 'per_campaign' = one line per campaign (default)
+      // 'portfolio'    = a single aggregate line for all
+      //                  campaigns combined (total spend ÷
+      //                  total estimated ICPs per week)
+      const [chartMode, setChartMode] = useState('per_campaign');
 
       // Reset visible set whenever the data changes
       // (e.g. user switches date range).
       useEffect(() => { setVisible(defaultVisible); }, [defaultVisible]);
+
+      // ── Portfolio-wide weekly series ─────────────────
+      // Aggregate across all campaigns (not filtered by the
+      // per-campaign toggles) so "portfolio-wide" means what
+      // it says — everything, all at once.
+      const portfolioData = useMemo(() => {
+        const byWeek = {};
+        rowsInRange.forEach(r => {
+          const week = String(r.week_start).substring(0, 10);
+          if (!byWeek[week]) {
+            byWeek[week] = { week_start: week, spend: 0, icps: 0 };
+          }
+          byWeek[week].spend += Number(r.spend) || 0;
+          byWeek[week].icps  += Number(r.estimated_icps) || 0;
+        });
+        const series = Object.values(byWeek)
+          .sort((a, b) => a.week_start.localeCompare(b.week_start))
+          .map(w => ({
+            week_start: w.week_start,
+            'Portfolio-wide CPICP': w.icps > 0
+              ? Math.round((w.spend / w.icps) * 100) / 100 : null,
+          }));
+        // Overlay a single trendline for the portfolio line.
+        const points = series
+          .map((r, i) => ({ x: i, y: r['Portfolio-wide CPICP'] }))
+          .filter(p => p.y != null);
+        const reg = linearRegression(points);
+        if (reg) {
+          series.forEach((r, i) => {
+            r['Portfolio-wide CPICP__trend'] = Math.round(
+              (reg.slope * i + reg.intercept) * 100
+            ) / 100;
+          });
+        }
+        return series;
+      }, [rowsInRange]);
 
       // Shape the data for Recharts: one row per week, with
       // one key per visible campaign (plus one per trendline).
@@ -623,18 +990,55 @@
         return m;
       }, [campaignSummary]);
 
+      const isPortfolio = chartMode === 'portfolio';
+      const activeData = isPortfolio ? portfolioData : chartData;
+      const hasData = activeData.length > 0 && (
+        isPortfolio
+          ? activeData.some(r => r['Portfolio-wide CPICP'] != null)
+          : true
+      );
+
       return (
         <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
           <div className="flex items-start justify-between mb-3 gap-4 flex-wrap">
             <div>
-              <h3 className="text-base font-semibold text-stone-800">
-                CPICP by Campaign — Weekly
+              <h3 className="text-base font-semibold text-stone-800 flex items-center">
+                <span>CPICP — Weekly</span>
+                <InfoTip
+                  text="Blended Cost Per ICP over time. Lower is better. Toggle between per-campaign lines and a single portfolio-wide aggregate. Dashed lines are linear-regression trendlines."
+                  side="bottom"
+                />
               </h3>
               <p className="text-xs text-stone-500 mt-0.5">
-                Blended cost per ICP, hybrid attribution. Lower is better. Dashed lines are linear trendlines.
+                {isPortfolio
+                  ? 'Single aggregate line: total spend ÷ total estimated ICPs per week.'
+                  : 'One line per campaign. Dashed lines are linear trendlines.'}
               </p>
             </div>
-            <div className="flex items-center gap-3 text-xs">
+            <div className="flex items-center gap-3 text-xs flex-wrap justify-end">
+              {/* Mode toggle: per-campaign vs portfolio-wide */}
+              <div className="inline-flex rounded border border-stone-300 overflow-hidden">
+                <button
+                  onClick={() => setChartMode('per_campaign')}
+                  className={`px-2.5 py-1 ${
+                    !isPortfolio
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-white text-stone-700 hover:bg-stone-100'
+                  }`}
+                >
+                  By campaign
+                </button>
+                <button
+                  onClick={() => setChartMode('portfolio')}
+                  className={`px-2.5 py-1 border-l border-stone-300 ${
+                    isPortfolio
+                      ? 'bg-amber-500 text-white'
+                      : 'bg-white text-stone-700 hover:bg-stone-100'
+                  }`}
+                >
+                  Portfolio-wide
+                </button>
+              </div>
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -644,21 +1048,23 @@
                 />
                 <span className="text-stone-700">Trendlines</span>
               </label>
-              <div className="flex items-center gap-1">
-                <button onClick={showTop5} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">Top 5</button>
-                <button onClick={showAll} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">All</button>
-                <button onClick={showNone} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">None</button>
-              </div>
+              {!isPortfolio && (
+                <div className="flex items-center gap-1">
+                  <button onClick={showTop5} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">Top 5</button>
+                  <button onClick={showAll} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">All</button>
+                  <button onClick={showNone} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">None</button>
+                </div>
+              )}
             </div>
           </div>
 
-          {chartData.length === 0 ? (
+          {!hasData ? (
             <p className="text-stone-500 text-sm py-16 text-center">
               No weekly rollup data in selected range.
             </p>
           ) : (
             <ResponsiveContainer width="100%" height={380}>
-              <LineChart data={chartData} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
+              <LineChart data={activeData} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
                 <XAxis dataKey="week_start" tick={{ fontSize: 11 }} minTickGap={20} />
                 <YAxis
@@ -675,44 +1081,74 @@
                   }}
                   contentStyle={{ fontSize: 12 }}
                 />
-                {campaignSummary
-                  .filter(c => visible.has(c.name))
-                  .map(c => (
+                {isPortfolio ? (
+                  <>
                     <Line
-                      key={c.name}
                       type="monotone"
-                      dataKey={c.name}
-                      stroke={colorMap[c.name]}
-                      strokeWidth={2.5}
-                      dot={{ r: 3 }}
-                      activeDot={{ r: 5 }}
+                      dataKey="Portfolio-wide CPICP"
+                      stroke="#f59e0b"
+                      strokeWidth={3}
+                      dot={{ r: 4 }}
+                      activeDot={{ r: 6 }}
                       connectNulls
                     />
-                  ))}
-                {showTrendlines && campaignSummary
-                  .filter(c => visible.has(c.name))
-                  .map(c => (
-                    <Line
-                      key={`${c.name}__trend`}
-                      type="linear"
-                      dataKey={`${c.name}__trend`}
-                      stroke={colorMap[c.name]}
-                      strokeWidth={1.5}
-                      strokeDasharray="6 4"
-                      dot={false}
-                      activeDot={false}
-                      legendType="none"
-                      opacity={0.6}
-                      connectNulls
-                    />
-                  ))}
+                    {showTrendlines && (
+                      <Line
+                        type="linear"
+                        dataKey="Portfolio-wide CPICP__trend"
+                        stroke="#f59e0b"
+                        strokeWidth={2}
+                        strokeDasharray="6 4"
+                        dot={false}
+                        activeDot={false}
+                        legendType="none"
+                        opacity={0.6}
+                        connectNulls
+                      />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    {campaignSummary
+                      .filter(c => visible.has(c.name))
+                      .map(c => (
+                        <Line
+                          key={c.name}
+                          type="monotone"
+                          dataKey={c.name}
+                          stroke={colorMap[c.name]}
+                          strokeWidth={2.5}
+                          dot={{ r: 3 }}
+                          activeDot={{ r: 5 }}
+                          connectNulls
+                        />
+                      ))}
+                    {showTrendlines && campaignSummary
+                      .filter(c => visible.has(c.name))
+                      .map(c => (
+                        <Line
+                          key={`${c.name}__trend`}
+                          type="linear"
+                          dataKey={`${c.name}__trend`}
+                          stroke={colorMap[c.name]}
+                          strokeWidth={1.5}
+                          strokeDasharray="6 4"
+                          dot={false}
+                          activeDot={false}
+                          legendType="none"
+                          opacity={0.6}
+                          connectNulls
+                        />
+                      ))}
+                  </>
+                )}
               </LineChart>
             </ResponsiveContainer>
           )}
 
-          {/* Campaign toggle legend below the chart — so 18
-              campaigns don't pollute Recharts' legend. */}
-          {campaignSummary.length > 0 && (
+          {/* Campaign toggle legend — only in per-campaign
+              mode. Portfolio-wide doesn't need it (one line). */}
+          {!isPortfolio && campaignSummary.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {campaignSummary.map(c => {
                 const isVisible = visible.has(c.name);
@@ -979,13 +1415,34 @@
                 <tr>
                   <Th k="campaign" defaultDir="asc">Campaign</Th>
                   <Th k="spend" align="right">Spend</Th>
-                  <Th k="estIcps" align="right">Est. ICPs</Th>
-                  <Th k="blendedCpicp" align="right" defaultDir="asc">Blended CPICP</Th>
-                  <Th k="latestCpicp" align="right" defaultDir="asc">Latest Wk</Th>
-                  <Th k="base4Avg" align="right" defaultDir="asc">4-wk Avg</Th>
-                  <Th k="wowPct" align="right" defaultDir="asc">WoW</Th>
-                  <Th k="trendSlope" align="center" defaultDir="asc">Trend</Th>
-                  <Th k="attribRate" align="right">Attr. %</Th>
+                  <Th k="estIcps" align="right">
+                    Est. ICPs
+                    <InfoTip text="Estimated ICPs attributed to this campaign using hybrid attribution (hard UTM matches plus proportional share of unattributed ICPs)." />
+                  </Th>
+                  <Th k="blendedCpicp" align="right" defaultDir="asc">
+                    Blended CPICP
+                    <InfoTip text="Range-total blended Cost Per ICP: total spend ÷ total estimated ICPs across all weeks in range. Lower is better." />
+                  </Th>
+                  <Th k="latestCpicp" align="right" defaultDir="asc">
+                    Latest Wk
+                    <InfoTip text="Blended CPICP for the most recent week in this campaign's series. Quick snapshot of current performance." />
+                  </Th>
+                  <Th k="base4Avg" align="right" defaultDir="asc">
+                    4-wk Avg
+                    <InfoTip text="Average blended CPICP across the 4 completed weeks before the latest week. A baseline for deciding whether the latest week is an outlier or part of a trend." />
+                  </Th>
+                  <Th k="wowPct" align="right" defaultDir="asc">
+                    WoW
+                    <InfoTip text="Week-over-week percentage change in CPICP from the prior completed week to the latest. Green means CPICP dropped (better); red means it rose (worse)." />
+                  </Th>
+                  <Th k="trendSlope" align="center" defaultDir="asc">
+                    Trend
+                    <InfoTip text="Linear-regression slope of this campaign's CPICP across the weeks in range. ↘ improving = CPICP trending down. ↗ worsening = CPICP trending up. → flat = no meaningful slope." />
+                  </Th>
+                  <Th k="attribRate" align="right">
+                    Attr. %
+                    <InfoTip text="Share of this campaign's estimated ICPs that came with a matching UTM tag. Higher = cleaner tracking. Below 50% means most credit comes from the unattributed pool." />
+                  </Th>
                 </tr>
               </thead>
               <tbody>
@@ -1194,6 +1651,22 @@
               const ws = String(r.week_start).substring(0, 10);
               return ws >= start && ws <= end;
             })} />
+
+            {/* ─── LEADERBOARDS: Top 3 / Bottom 3 tiles ───── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <PerformanceLeaderboard
+                rollup={rollup}
+                rangeStart={start}
+                rangeEnd={end}
+                direction="best"
+              />
+              <PerformanceLeaderboard
+                rollup={rollup}
+                rangeStart={start}
+                rangeEnd={end}
+                direction="worst"
+              />
+            </div>
 
             {/* ─── PRIMARY CHART: CPICP trends per campaign ─ */}
             <CPICPTrendChart rollup={rollup} rangeStart={start} rangeEnd={end} />
