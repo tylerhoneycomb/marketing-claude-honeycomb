@@ -309,6 +309,123 @@
 
     const MOCK = generateMockData();
 
+
+    // ─── ERROR CLASSIFICATION HELPERS ──────────────────────
+    // Turns a caught fetch error (or a non-OK Response) into
+    // a user-friendly, actionable message. Used by both the
+    // dashboard reads and the chat send path so error copy
+    // stays consistent.
+
+    // Read a Response safely: try JSON, fall back to text.
+    // Returns { json, text, contentType }.
+    async function readResponseSafely(resp) {
+      const contentType = resp.headers.get('content-type') || '';
+      let text = '';
+      try {
+        text = await resp.text();
+      } catch (_) {
+        text = '';
+      }
+      let json = null;
+      if (contentType.includes('application/json') || text.trim().startsWith('{') || text.trim().startsWith('[')) {
+        try { json = JSON.parse(text); } catch (_) { json = null; }
+      }
+      return { json, text, contentType };
+    }
+
+    // Normalize an unknown error into a user-facing string
+    // plus an "advice" line suggesting a concrete next step.
+    function classifyFetchFailure(err, context) {
+      // context: short string like "chat" or "daily" for
+      // labeling. Returns a multi-line string.
+      const label = context ? '[' + context + '] ' : '';
+
+      // Network-level failures (fetch itself rejected)
+      if (err && err.name === 'TypeError' && /fetch/i.test(err.message || '')) {
+        if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+          return label + 'You appear to be offline. Check your internet connection and try again.';
+        }
+        return label +
+          'Couldn\'t reach the Apps Script endpoint.\n' +
+          'Possible causes: the API URL is wrong or was changed, the deployment was deleted, ' +
+          'or CORS is blocking the request. Click Settings in the top-right and verify the /exec URL.';
+      }
+
+      // HTTP-level failures carry a status on the attached resp
+      if (err && err.status) {
+        if (err.status === 401 || err.status === 403) {
+          return label +
+            'Access denied (HTTP ' + err.status + ').\n' +
+            'The Apps Script deployment is probably set to "Only myself". In Apps Script, go to ' +
+            'Deploy → Manage deployments → pencil icon → change "Who has access" to "Anyone".';
+        }
+        if (err.status === 404) {
+          return label +
+            'Not found (HTTP 404).\n' +
+            'The /exec URL may be wrong, or the deployment was deleted. Check Settings.';
+        }
+        if (err.status === 429) {
+          return label +
+            'Rate limited (HTTP 429).\n' +
+            'Wait a moment and try again. If this keeps happening, the Anthropic API quota may be exhausted.';
+        }
+        if (err.status >= 500) {
+          return label +
+            'Server error (HTTP ' + err.status + ').\n' +
+            'The Apps Script backend crashed processing the request. ' +
+            'Check the Apps Script executions log for a stack trace.' +
+            (err.detail ? '\nDetail: ' + err.detail : '');
+        }
+        return label + 'HTTP ' + err.status + (err.detail ? ': ' + err.detail : '');
+      }
+
+      // The server returned HTML instead of JSON — usually
+      // a Google login redirect or a deployment error page
+      if (err && err.code === 'HTML_RESPONSE') {
+        return label +
+          'The server returned an HTML page instead of JSON.\n' +
+          'This usually means: (1) the Apps Script deployment access level is "Only myself" — ' +
+          'change it to "Anyone", or (2) the endpoint isn\'t installed yet — re-paste the ' +
+          'webapp/apps-script-api.gs block in the Apps Script editor and redeploy.';
+      }
+
+      // Anthropic-specific error patterns from backend JSON
+      if (err && err.code === 'ANTHROPIC_AUTH') {
+        return label +
+          'Anthropic API authentication failed.\n' +
+          'Check that ANTHROPIC_API_KEY is set correctly in Apps Script Project Settings → Script Properties.';
+      }
+      if (err && err.code === 'ANTHROPIC_RATE_LIMIT') {
+        return label +
+          'Anthropic rate limit hit.\n' +
+          'Wait a moment and try again, or check your Anthropic usage dashboard.';
+      }
+
+      // Generic fallback
+      return label + (err && err.message ? err.message : String(err || 'Unknown error'));
+    }
+
+    // Validate a pasted Apps Script web app URL before
+    // saving it. Returns null if OK, or a short message
+    // describing what's wrong.
+    function validateAppsScriptUrl(url) {
+      if (!url) return null; // empty = mock mode, OK
+      let u;
+      try { u = new URL(url); }
+      catch (_) { return 'That doesn\'t look like a valid URL.'; }
+      if (u.hostname !== 'script.google.com') {
+        return 'URL should be on script.google.com (not ' + u.hostname + ').';
+      }
+      if (!u.pathname.includes('/macros/s/')) {
+        return 'URL path should contain /macros/s/. Make sure you\'re using the Web App URL from Deploy → Manage deployments.';
+      }
+      if (!u.pathname.endsWith('/exec')) {
+        return 'URL should end in /exec (not /dev or other). Re-check the Web App URL in Deploy → Manage deployments.';
+      }
+      return null;
+    }
+
+
     async function fetchAction(apiUrl, action, params = {}) {
       if (!apiUrl) {
         // Offline / mock mode
@@ -324,15 +441,48 @@
       }
 
       const qs = new URLSearchParams({ action, ...params }).toString();
-      const resp = await fetch(`${apiUrl}?${qs}`);
+      let resp;
+      try {
+        resp = await fetch(`${apiUrl}?${qs}`);
+      } catch (netErr) {
+        // Network-level failure: rethrow with enough context
+        // for classifyFetchFailure to produce a good message.
+        throw netErr;
+      }
+
+      const parsed = await readResponseSafely(resp);
+
+      // HTML back = almost certainly a Google login redirect
+      // or a deployment error page. Explicit code so
+      // classifyFetchFailure can produce the right hint.
+      if (!parsed.json && parsed.contentType.includes('text/html')) {
+        const e = new Error('Server returned HTML instead of JSON');
+        e.code = 'HTML_RESPONSE';
+        throw e;
+      }
+
       if (!resp.ok) {
-        throw new Error(`API error: ${action} → HTTP ${resp.status}`);
+        // Try to surface a server-provided error message.
+        const detail = (parsed.json && parsed.json.error) ||
+                       (parsed.text ? parsed.text.substring(0, 200) : '');
+        const err = new Error('HTTP ' + resp.status);
+        err.status = resp.status;
+        err.detail = detail;
+        throw err;
       }
-      const json = await resp.json();
-      if (json && json.error) {
-        throw new Error(`API error: ${json.error}`);
+
+      if (parsed.json && parsed.json.error) {
+        // Backend returned 200 but with an explicit error
+        // payload (this is how handleChatRequest_ surfaces
+        // Anthropic-side failures). Classify common ones.
+        const msg = String(parsed.json.error);
+        const err = new Error(msg);
+        if (/anthropic.*(auth|api.?key)/i.test(msg)) err.code = 'ANTHROPIC_AUTH';
+        else if (/rate.?limit/i.test(msg))           err.code = 'ANTHROPIC_RATE_LIMIT';
+        throw err;
       }
-      return json;
+
+      return parsed.json;
     }
 
 
@@ -698,7 +848,22 @@
 
     function ConfigModal({ open, current, onSave, onClose }) {
       const [url, setUrl] = useState(current || '');
+      // Live validation — recomputed on every keystroke.
+      // Empty string is intentionally allowed (mock mode).
+      const validationError = useMemo(
+        () => validateAppsScriptUrl(url.trim()),
+        [url]
+      );
       useEffect(() => { if (open) setUrl(current || ''); }, [open, current]);
+
+      const handleSave = () => {
+        const trimmed = url.trim();
+        // Block save if the URL is clearly malformed. Empty
+        // is OK (clears the saved URL and drops back to
+        // mock data).
+        if (trimmed && validationError) return;
+        onSave(trimmed);
+      };
 
       if (!open) return null;
       return (
@@ -714,9 +879,23 @@
               value={url}
               onChange={e => setUrl(e.target.value)}
               placeholder="https://script.google.com/macros/s/…/exec"
-              className="w-full border border-stone-300 rounded px-3 py-2 mb-4 text-sm font-mono"
+              className={`w-full border rounded px-3 py-2 text-sm font-mono ${
+                url.trim() && validationError
+                  ? 'border-red-400 focus:ring-2 focus:ring-red-200'
+                  : 'border-stone-300 focus:ring-2 focus:ring-amber-200'
+              }`}
             />
-            <div className="flex justify-end gap-2">
+            {url.trim() && validationError && (
+              <p className="mt-2 text-xs text-red-700 leading-relaxed">
+                <strong>Invalid URL:</strong> {validationError}
+              </p>
+            )}
+            {!url.trim() && (
+              <p className="mt-2 text-xs text-stone-500 leading-relaxed">
+                Leaving this blank switches the dashboard to preview mode with generated mock data.
+              </p>
+            )}
+            <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={onClose}
                 className="px-4 py-2 text-stone-600 hover:bg-stone-100 rounded"
@@ -724,8 +903,9 @@
                 Cancel
               </button>
               <button
-                onClick={() => onSave(url.trim())}
-                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded font-medium"
+                onClick={handleSave}
+                disabled={!!(url.trim() && validationError)}
+                className="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded font-medium disabled:bg-stone-300 disabled:cursor-not-allowed"
               >
                 Save
               </button>
@@ -2273,30 +2453,30 @@
           // responses go through a cross-origin 302 redirect
           // that many browsers refuse to follow, which
           // surfaces as "Failed to fetch" on the client.
-          // GET requests don't have that problem — the same
-          // transport the dashboard's read endpoints use.
+          // GET requests don't have that problem.
           //
-          // The trade-off is URL length. We cap the history
-          // to the last 6 turns to stay well under common
-          // URL length limits.
+          // History is capped at the last 6 turns to stay
+          // well under common URL length limits.
           const historyForTransport = messages.slice(-6);
-          const qs = new URLSearchParams({
-            action:  'chat',
+          // fetchAction handles the full error classification
+          // (HTML responses, HTTP codes, Anthropic errors),
+          // so we just await it and rely on classifyFetchFailure
+          // to format any thrown error nicely.
+          const json = await fetchAction(apiUrl, 'chat', {
             message: userMessage.content,
             history: JSON.stringify(historyForTransport),
-          }).toString();
-
-          const resp = await fetch(apiUrl + '?' + qs);
-          if (!resp.ok) throw new Error('HTTP ' + resp.status);
-          const json = await resp.json();
-          if (json && json.error) throw new Error(json.error);
+          });
 
           setMessages([...newMessages, {
             role: 'assistant',
-            content: json.reply || '(empty reply)',
+            content: (json && json.reply) || '(empty reply — the assistant returned no content)',
           }]);
         } catch (err) {
-          setError(err.message || String(err));
+          // Classify the error for a friendly, actionable
+          // message. We also log the raw error to the
+          // console so advanced users can debug via devtools.
+          console.error('Hive Mind chat error:', err);
+          setError(classifyFetchFailure(err, 'chat'));
         }
         setLoading(false);
       };
@@ -2484,7 +2664,8 @@
             )}
             {error && (
               <div className="bg-red-50 border border-red-200 rounded p-2 text-xs text-red-800">
-                Error: {error}
+                <div className="font-semibold mb-0.5">Couldn't send message</div>
+                <pre className="whitespace-pre-wrap font-sans leading-relaxed">{error}</pre>
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -2598,8 +2779,11 @@
           // narrative may come back as a single object or null
           setNarrative(Array.isArray(n) ? (n[n.length - 1] || null) : n);
         } catch (err) {
-          console.error(err);
-          setError(err.message);
+          // Raw error still goes to the console for devtools
+          // debugging; the on-screen banner gets a friendly,
+          // actionable message via the shared classifier.
+          console.error('Dashboard load error:', err);
+          setError(classifyFetchFailure(err, 'dashboard'));
           setDaily([]);
           setRollup([]);
           setMappings([]);
@@ -2649,7 +2833,14 @@
 
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-900">
-                <strong>Error:</strong> {error}
+                <div className="font-semibold mb-1">Something went wrong loading the dashboard:</div>
+                <pre className="whitespace-pre-wrap font-sans text-red-900 leading-relaxed">{error}</pre>
+                <button
+                  onClick={load}
+                  className="mt-2 text-xs bg-red-100 hover:bg-red-200 text-red-900 px-2 py-1 rounded border border-red-300"
+                >
+                  Retry
+                </button>
               </div>
             )}
 
