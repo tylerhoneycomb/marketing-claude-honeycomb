@@ -90,6 +90,56 @@
 
     const today = () => new Date().toISOString().substring(0, 10);
 
+    // ── Period helpers ──
+    // Today's data is considered incomplete (the day hasn't
+    // ended and the daily pipeline runs at 7am for "yesterday's
+    // data"), so every date-range helper below excludes today.
+    const yesterdayStr = () => {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      return d.toISOString().substring(0, 10);
+    };
+
+    // Returns the start date such that [start, yesterday] is
+    // exactly n days long.
+    //   priorNDays(7)  → 7 days ending yesterday
+    //   priorNDays(30) → 30 days ending yesterday
+    const priorNDays = (n) => {
+      const d = new Date();
+      d.setDate(d.getDate() - n);
+      return d.toISOString().substring(0, 10);
+    };
+
+    const startOfMonthStr = () => {
+      const d = new Date();
+      return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().substring(0, 10);
+    };
+
+    const startOfQuarterStr = () => {
+      const d = new Date();
+      const q = Math.floor(d.getMonth() / 3);
+      return new Date(d.getFullYear(), q * 3, 1).toISOString().substring(0, 10);
+    };
+
+    const startOfYearStr = () => {
+      const d = new Date();
+      return new Date(d.getFullYear(), 0, 1).toISOString().substring(0, 10);
+    };
+
+    // Monday-of-ISO-week for a given date string (yyyy-MM-dd).
+    // Used to aggregate daily rows into weekly buckets.
+    const isoWeekStart = (dateStr) => {
+      const [y, m, d] = dateStr.substring(0, 10).split('-').map(Number);
+      const dt = new Date(y, m - 1, d);
+      const day = dt.getDay() || 7; // Mon=1..Sun=7
+      dt.setDate(dt.getDate() - (day - 1));
+      return dt.toISOString().substring(0, 10);
+    };
+
+    // First-of-month key for a given date string (yyyy-MM).
+    // Used to aggregate rollup rows into monthly buckets.
+    const monthKey = (dateStr) => dateStr.substring(0, 7);
+
 
     // ─── MATH HELPERS ─────────────────────────────────────
 
@@ -333,6 +383,156 @@
       }));
     }
 
+    // ─── CHART METRIC CATALOG ────────────────────────────
+    // Metrics the MetricTrendChart can display. Each metric
+    // defines:
+    //  - key / label / shortLabel: identity + display
+    //  - color: default stroke color
+    //  - lowerIsBetter / neutral: direction semantics for
+    //    coloring trend summaries (not directly used in chart)
+    //  - availableAt: which granularities this metric supports
+    //  - source: which dataset to read at each granularity
+    //     ('daily' = rolling_data, 'rollup' = weekly_rollup)
+    //  - formatValue: long format for tooltips
+    //  - formatAxis: short format for Y axis ticks
+    //  - aggregateRows: how to combine an array of rows into
+    //    a single value for a time bucket (week/month) or a
+    //    campaign total. Handles the "ratio metric" problem
+    //    correctly (e.g. CPICP is not a simple average).
+    //  - tooltip: plain-English explanation shown via InfoTip
+    const METRIC_CATALOG = [
+      {
+        key: 'cpicp_blended',
+        label: 'Blended CPICP',
+        shortLabel: 'CPICP',
+        color: '#0891b2',
+        lowerIsBetter: true,
+        availableAt: { day: false, week: true, month: true },
+        source: { week: 'rollup', month: 'rollup' },
+        formatValue: (v) => fmtCurrencyCents(v),
+        formatAxis:  (v) => '$' + v,
+        aggregateRows: (rows) => {
+          const s = rows.reduce((a, r) => a + (Number(r.spend) || 0), 0);
+          const i = rows.reduce((a, r) => a + (Number(r.estimated_icps) || 0), 0);
+          return i > 0 ? Math.round((s / i) * 100) / 100 : null;
+        },
+        tooltip: 'Blended Cost Per ICP. Total spend divided by estimated ICPs (hybrid attribution). Lower is better.',
+      },
+      {
+        key: 'estimated_icps',
+        label: 'Estimated ICPs',
+        shortLabel: 'Est. ICPs',
+        color: '#10b981',
+        lowerIsBetter: false,
+        availableAt: { day: false, week: true, month: true },
+        source: { week: 'rollup', month: 'rollup' },
+        formatValue: (v) => fmtNumber(v, 1),
+        formatAxis:  (v) => v,
+        aggregateRows: (rows) =>
+          Math.round(rows.reduce((s, r) => s + (Number(r.estimated_icps) || 0), 0) * 10) / 10,
+        tooltip: 'Estimated ICPs using hybrid attribution (UTM-matched plus proportional share of unattributed).',
+      },
+      {
+        key: 'attribution_rate',
+        label: 'Attribution Rate',
+        shortLabel: 'Attr %',
+        color: '#8b5cf6',
+        lowerIsBetter: false,
+        availableAt: { day: false, week: true, month: true },
+        source: { week: 'rollup', month: 'rollup' },
+        formatValue: (v) => (v == null ? '—' : v.toFixed(1) + '%'),
+        formatAxis:  (v) => v + '%',
+        aggregateRows: (rows) => {
+          const e = rows.reduce((s, r) => s + (Number(r.estimated_icps) || 0), 0);
+          const a = rows.reduce((s, r) => s + (Number(r.icps_attributed) || 0), 0);
+          return e > 0 ? Math.round((a / e) * 1000) / 10 : null;
+        },
+        tooltip: 'Share of estimated ICPs that were hard-matched to a campaign via utm_campaign. Higher means cleaner tracking.',
+      },
+      {
+        key: 'spend',
+        label: 'Spend',
+        shortLabel: 'Spend',
+        color: '#f59e0b',
+        lowerIsBetter: false,
+        neutral: true,
+        availableAt: { day: true, week: true, month: true },
+        source: { day: 'daily', week: 'rollup', month: 'rollup' },
+        formatValue: (v) => fmtCurrency(v),
+        formatAxis:  (v) => '$' + v,
+        aggregateRows: (rows) =>
+          Math.round(rows.reduce((s, r) => s + (Number(r.spend) || 0), 0)),
+        tooltip: 'Total Meta ad spend in this bucket.',
+      },
+      {
+        key: 'meta_conversions',
+        label: 'Meta Conversions',
+        shortLabel: 'Conv.',
+        color: '#ef4444',
+        lowerIsBetter: false,
+        availableAt: { day: true, week: true, month: true },
+        source: { day: 'daily', week: 'rollup', month: 'rollup' },
+        formatValue: (v) => fmtNumber(v),
+        formatAxis:  (v) => v,
+        aggregateRows: (rows) =>
+          rows.reduce((s, r) => s + (Number(r.conversions) || Number(r.meta_conversions) || 0), 0),
+        tooltip: 'Conversions as reported by Meta (pixel or lead ads). CPICP is usually a more accurate efficiency signal.',
+      },
+      {
+        key: 'cpl',
+        label: 'CPL (Meta)',
+        shortLabel: 'CPL',
+        color: '#06b6d4',
+        lowerIsBetter: true,
+        availableAt: { day: true, week: true, month: true },
+        source: { day: 'daily', week: 'rollup', month: 'rollup' },
+        formatValue: (v) => fmtCurrencyCents(v),
+        formatAxis:  (v) => '$' + v,
+        aggregateRows: (rows) => {
+          const s = rows.reduce((a, r) => a + (Number(r.spend) || 0), 0);
+          const c = rows.reduce((a, r) => a + (Number(r.conversions) || Number(r.meta_conversions) || 0), 0);
+          return c > 0 ? Math.round((s / c) * 100) / 100 : null;
+        },
+        tooltip: 'Cost per Lead using Meta-reported conversions. Spend ÷ Meta conversions. Lower is better.',
+      },
+      {
+        key: 'ctr',
+        label: 'CTR',
+        shortLabel: 'CTR',
+        color: '#22c55e',
+        lowerIsBetter: false,
+        availableAt: { day: true, week: true, month: true },
+        source: { day: 'daily', week: 'rollup', month: 'rollup' },
+        formatValue: (v) => (v == null ? '—' : (v * 100).toFixed(2) + '%'),
+        formatAxis:  (v) => (v * 100).toFixed(1) + '%',
+        aggregateRows: (rows) => {
+          const i = rows.reduce((s, r) => s + (Number(r.impressions) || 0), 0);
+          const c = rows.reduce((s, r) => s + (Number(r.clicks) || 0), 0);
+          return i > 0 ? Math.round((c / i) * 10000) / 10000 : null;
+        },
+        tooltip: 'Click-Through Rate. Clicks ÷ impressions. Higher usually means stronger creative.',
+      },
+      {
+        key: 'frequency',
+        label: 'Frequency',
+        shortLabel: 'Freq',
+        color: '#d946ef',
+        lowerIsBetter: true,
+        availableAt: { day: true, week: true, month: true },
+        source: { day: 'daily', week: 'rollup', month: 'rollup' },
+        formatValue: (v) => (v == null ? '—' : v.toFixed(2)),
+        formatAxis:  (v) => v,
+        aggregateRows: (rows) => {
+          // Weighted: total impressions ÷ total reach.
+          const i = rows.reduce((s, r) => s + (Number(r.impressions) || 0), 0);
+          const rch = rows.reduce((s, r) => s + (Number(r.reach) || 0), 0);
+          return rch > 0 ? Math.round((i / rch) * 100) / 100 : null;
+        },
+        tooltip: 'Average number of times each person in the reach saw the ad. Above 3.5 usually signals audience saturation.',
+      },
+    ];
+
+
     // ─── LEADERBOARD METRIC CATALOG ──────────────────────
     // Each entry defines one metric you can rank campaigns
     // by in the Top/Bottom 3 leaderboards, plus how to
@@ -387,26 +587,69 @@
 
     // Small hover tooltip attached to a "?" icon. Used to
     // annotate non-obvious metric labels throughout the
-    // dashboard. CSS-only — the tooltip appears on hover of
-    // the parent span via Tailwind's `group-hover` utility.
-    function InfoTip({ text, side = 'top' }) {
-      const pos = side === 'top'
-        ? 'bottom-full left-1/2 -translate-x-1/2 mb-1.5'
-        : 'top-full left-1/2 -translate-x-1/2 mt-1.5';
+    // dashboard.
+    //
+    // Uses JS-computed `position: fixed` (rather than
+    // CSS-only `position: absolute`) so that the tooltip
+    // escapes any overflow/scroll ancestors. This matters
+    // inside the campaign performance table, where the
+    // scrolling table wrapper would otherwise clip tooltips
+    // on the header row. The tooltip also flips below the
+    // trigger if there isn't enough room above it, and
+    // clamps horizontally to the viewport.
+    function InfoTip({ text }) {
+      const [open, setOpen] = useState(false);
+      const [style, setStyle] = useState({});
+      const triggerRef = React.useRef(null);
+
+      const show = () => {
+        if (!triggerRef.current) return;
+        const rect = triggerRef.current.getBoundingClientRect();
+        const TOOLTIP_WIDTH = 256; // matches Tailwind w-64
+        const GAP = 8;
+        const flipBelow = rect.top < 90; // not enough room above
+        const vw = window.innerWidth;
+
+        // Horizontally center on trigger, then clamp to viewport.
+        let left = rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2;
+        if (left < 8) left = 8;
+        if (left + TOOLTIP_WIDTH > vw - 8) left = vw - TOOLTIP_WIDTH - 8;
+
+        const top = flipBelow ? rect.bottom + GAP : rect.top - GAP;
+
+        setStyle({
+          position: 'fixed',
+          top: top + 'px',
+          left: left + 'px',
+          width: TOOLTIP_WIDTH + 'px',
+          transform: flipBelow ? 'none' : 'translateY(-100%)',
+          zIndex: 9999,
+        });
+        setOpen(true);
+      };
+
       return (
-        <span className="relative inline-block group align-middle ml-1">
+        <React.Fragment>
           <span
-            className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-stone-300 text-stone-600 text-[9px] font-bold cursor-help leading-none select-none"
+            ref={triggerRef}
+            onMouseEnter={show}
+            onMouseLeave={() => setOpen(false)}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-stone-300 text-stone-600 text-[9px] font-bold cursor-help leading-none select-none ml-1 align-middle"
             aria-label="More info"
           >
             ?
           </span>
-          <span
-            className={`absolute ${pos} z-50 invisible group-hover:visible w-64 bg-stone-900 text-white text-xs rounded-md px-3 py-2 shadow-lg pointer-events-none leading-relaxed whitespace-normal font-normal normal-case text-left`}
-          >
-            {text}
-          </span>
-        </span>
+          {open && (
+            <div
+              role="tooltip"
+              className="bg-stone-900 text-white text-xs rounded-md px-3 py-2 shadow-lg pointer-events-none leading-relaxed whitespace-normal font-normal normal-case text-left"
+              style={style}
+            >
+              {text}
+            </div>
+          )}
+        </React.Fragment>
       );
     }
 
@@ -824,152 +1067,183 @@
       );
     }
 
-    // ── PRIMARY CHART: CPICP by campaign over time ──
-    // Weekly CPICP trajectory for each campaign, with optional
-    // linear-regression trendlines overlaid. Users can toggle
-    // individual campaigns on/off and toggle all trendlines
-    // with a single checkbox.
-    function CPICPTrendChart({ rollup, rangeStart, rangeEnd }) {
-      // Filter rollup rows to the visible date range (weekly
-      // rows whose week_start falls within the range).
-      const rowsInRange = useMemo(() => {
-        return rollup
-          .filter(r => {
-            const ws = String(r.week_start).substring(0, 10);
-            return ws >= rangeStart && ws <= rangeEnd;
-          })
-          .filter(r => r.cpicp_blended != null && r.cpicp_blended > 0);
-      }, [rollup, rangeStart, rangeEnd]);
-
-      // Group by campaign to get spend totals (for ranking)
-      // and per-campaign week series.
-      const campaignSummary = useMemo(() => {
-        const byCampaign = {};
-        rowsInRange.forEach(r => {
-          const key = r.campaign_name;
-          if (!byCampaign[key]) {
-            byCampaign[key] = {
-              name: key,
-              totalSpend: 0,
-              totalEstIcps: 0,
-              weeks: []
-            };
-          }
-          byCampaign[key].totalSpend   += Number(r.spend) || 0;
-          byCampaign[key].totalEstIcps += Number(r.estimated_icps) || 0;
-          byCampaign[key].weeks.push({
-            week_start: String(r.week_start).substring(0, 10),
-            cpicp: Number(r.cpicp_blended) || null,
-            spend: Number(r.spend) || 0,
-            icps: Number(r.estimated_icps) || 0
-          });
-        });
-        // Sort each campaign's week series
-        Object.values(byCampaign).forEach(c => {
-          c.weeks.sort((a, b) => a.week_start.localeCompare(b.week_start));
-        });
-        // Return ordered by recent spend (biggest first)
-        return Object.values(byCampaign)
-          .sort((a, b) => b.totalSpend - a.totalSpend);
-      }, [rowsInRange]);
-
-      // Distinct sorted list of weeks across all campaigns —
-      // the x-axis ticks for the chart.
-      const allWeeks = useMemo(() => {
-        const set = new Set();
-        rowsInRange.forEach(r => set.add(String(r.week_start).substring(0, 10)));
-        return Array.from(set).sort();
-      }, [rowsInRange]);
-
-      // Default: show top 5 campaigns. User can toggle.
-      const defaultVisible = useMemo(() => {
-        return new Set(campaignSummary.slice(0, 5).map(c => c.name));
-      }, [campaignSummary]);
-
-      const [visible, setVisible] = useState(defaultVisible);
+    // ── PRIMARY CHART: multi-metric trend chart ──
+    // Renders a trend chart with:
+    //   - A metric dropdown (anything in METRIC_CATALOG)
+    //   - A granularity toggle (day / week / month)
+    //   - A mode toggle (per-campaign / portfolio-wide)
+    //   - An optional comparison metric (portfolio mode only,
+    //     rendered on a second right-hand Y axis)
+    //   - Linear-regression trendlines on/off
+    //   - Per-campaign toggles (per_campaign mode only)
+    //
+    // Data sources:
+    //   - Day granularity reads from the daily dataset
+    //     (rolling_data). ICP-derived metrics (CPICP, ICPs,
+    //     attribution rate) are NOT available at this
+    //     granularity because ICPs are attributed weekly.
+    //   - Week & Month granularities read from the weekly
+    //     rollup dataset. Month buckets are formed by grouping
+    //     weekly rollup rows by their first-of-month key.
+    function MetricTrendChart({ daily, rollup, rangeStart, rangeEnd }) {
+      const [granularity, setGranularity]     = useState('week');
+      const [chartMode, setChartMode]         = useState('per_campaign');
+      const [primaryKey, setPrimaryKey]       = useState('cpicp_blended');
+      const [comparisonKey, setComparisonKey] = useState(''); // '' = none
       const [showTrendlines, setShowTrendlines] = useState(true);
-      // 'per_campaign' = one line per campaign (default)
-      // 'portfolio'    = a single aggregate line for all
-      //                  campaigns combined (total spend ÷
-      //                  total estimated ICPs per week)
-      const [chartMode, setChartMode] = useState('per_campaign');
 
-      // Reset visible set whenever the data changes
-      // (e.g. user switches date range).
-      useEffect(() => { setVisible(defaultVisible); }, [defaultVisible]);
+      // Metrics available at the current granularity.
+      const availableMetrics = useMemo(
+        () => METRIC_CATALOG.filter(m => m.availableAt[granularity]),
+        [granularity]
+      );
 
-      // ── Portfolio-wide weekly series ─────────────────
-      // Aggregate across all campaigns (not filtered by the
-      // per-campaign toggles) so "portfolio-wide" means what
-      // it says — everything, all at once.
-      const portfolioData = useMemo(() => {
-        const byWeek = {};
-        rowsInRange.forEach(r => {
-          const week = String(r.week_start).substring(0, 10);
-          if (!byWeek[week]) {
-            byWeek[week] = { week_start: week, spend: 0, icps: 0 };
-          }
-          byWeek[week].spend += Number(r.spend) || 0;
-          byWeek[week].icps  += Number(r.estimated_icps) || 0;
-        });
-        const series = Object.values(byWeek)
-          .sort((a, b) => a.week_start.localeCompare(b.week_start))
-          .map(w => ({
-            week_start: w.week_start,
-            'Portfolio-wide CPICP': w.icps > 0
-              ? Math.round((w.spend / w.icps) * 100) / 100 : null,
-          }));
-        // Overlay a single trendline for the portfolio line.
-        const points = series
-          .map((r, i) => ({ x: i, y: r['Portfolio-wide CPICP'] }))
-          .filter(p => p.y != null);
-        const reg = linearRegression(points);
-        if (reg) {
-          series.forEach((r, i) => {
-            r['Portfolio-wide CPICP__trend'] = Math.round(
-              (reg.slope * i + reg.intercept) * 100
-            ) / 100;
+      // If the user switches granularity and the current
+      // metric isn't supported there, fall back to the first
+      // available metric. Same for comparison.
+      useEffect(() => {
+        if (!availableMetrics.find(m => m.key === primaryKey)) {
+          if (availableMetrics[0]) setPrimaryKey(availableMetrics[0].key);
+        }
+        if (comparisonKey && !availableMetrics.find(m => m.key === comparisonKey)) {
+          setComparisonKey('');
+        }
+      }, [granularity, availableMetrics, primaryKey, comparisonKey]);
+
+      const primaryMetric    = METRIC_CATALOG.find(m => m.key === primaryKey) || METRIC_CATALOG[0];
+      const comparisonMetric = comparisonKey
+        ? METRIC_CATALOG.find(m => m.key === comparisonKey) || null
+        : null;
+      const isPortfolio = chartMode === 'portfolio';
+
+      // ── Source rows filtered by global date range ──
+      const sourceRows = useMemo(() => {
+        if (granularity === 'day') {
+          // daily is already server-filtered; belt+suspenders.
+          return (daily || []).filter(r => {
+            const d = String(r.date).substring(0, 10);
+            return d >= rangeStart && d <= rangeEnd;
           });
         }
-        return series;
-      }, [rowsInRange]);
-
-      // Shape the data for Recharts: one row per week, with
-      // one key per visible campaign (plus one per trendline).
-      const chartData = useMemo(() => {
-        // Pre-compute trendline params per visible campaign.
-        const trendParams = {};
-        campaignSummary.forEach(c => {
-          if (!visible.has(c.name)) return;
-          const points = c.weeks
-            .map((w, i) => ({ x: i, y: w.cpicp }))
-            .filter(p => p.y != null);
-          trendParams[c.name] = linearRegression(points);
+        // Week & Month both read from the weekly rollup.
+        return (rollup || []).filter(r => {
+          const ws = String(r.week_start).substring(0, 10);
+          return ws >= rangeStart && ws <= rangeEnd;
         });
+      }, [daily, rollup, rangeStart, rangeEnd, granularity]);
 
-        return allWeeks.map((week, weekIdx) => {
-          const row = { week_start: week };
-          campaignSummary.forEach(c => {
-            if (!visible.has(c.name)) return;
-            const match = c.weeks.find(w => w.week_start === week);
-            if (match) row[c.name] = match.cpicp;
+      // Bucket key for X axis grouping.
+      const getBucketKey = useCallback((row) => {
+        if (granularity === 'day')   return String(row.date).substring(0, 10);
+        if (granularity === 'week')  return String(row.week_start).substring(0, 10);
+        // month: yyyy-MM
+        const base = String(row.week_start || row.date).substring(0, 10);
+        return monthKey(base);
+      }, [granularity]);
 
-            const trend = trendParams[c.name];
-            if (trend) {
-              // Use the position of this week within this
-              // campaign's series (not the global index) so
-              // the trendline fits the actual data points.
-              const pointIdx = c.weeks.findIndex(w => w.week_start === week);
-              if (pointIdx >= 0) {
-                row[`${c.name}__trend`] = Math.round(
-                  (trend.slope * pointIdx + trend.intercept) * 100
-                ) / 100;
-              }
+      // All distinct buckets in the source, sorted.
+      const allBuckets = useMemo(() => {
+        const s = new Set();
+        sourceRows.forEach(r => s.add(getBucketKey(r)));
+        return Array.from(s).sort();
+      }, [sourceRows, getBucketKey]);
+
+      // Per-campaign totals (used for ranking + toggle pills).
+      const campaignSummary = useMemo(() => {
+        const byCampaign = {};
+        sourceRows.forEach(r => {
+          const key = r.campaign_name;
+          if (!byCampaign[key]) {
+            byCampaign[key] = { name: key, totalSpend: 0 };
+          }
+          byCampaign[key].totalSpend += Number(r.spend) || 0;
+        });
+        return Object.values(byCampaign).sort((a, b) => b.totalSpend - a.totalSpend);
+      }, [sourceRows]);
+
+      // Default visible = top 5 by spend.
+      const defaultVisible = useMemo(
+        () => new Set(campaignSummary.slice(0, 5).map(c => c.name)),
+        [campaignSummary]
+      );
+      const [visible, setVisible] = useState(defaultVisible);
+      useEffect(() => { setVisible(defaultVisible); }, [defaultVisible]);
+
+      // Stable color per campaign (by spend rank).
+      const colorMap = useMemo(() => {
+        const m = {};
+        campaignSummary.forEach((c, i) => { m[c.name] = colorForCampaign(i); });
+        return m;
+      }, [campaignSummary]);
+
+      // Pre-index source rows by bucket + campaign to keep
+      // chartData aggregation fast.
+      const rowsByBucket = useMemo(() => {
+        const map = {};
+        sourceRows.forEach(r => {
+          const b = getBucketKey(r);
+          if (!map[b]) map[b] = [];
+          map[b].push(r);
+        });
+        return map;
+      }, [sourceRows, getBucketKey]);
+
+      // Chart data shaped for Recharts. In per_campaign mode
+      // each row has one entry per visible campaign; in
+      // portfolio mode each row has the primary + optional
+      // comparison metric.
+      const chartData = useMemo(() => {
+        return allBuckets.map(bucket => {
+          const bucketRows = rowsByBucket[bucket] || [];
+          const row = { bucket };
+
+          if (isPortfolio) {
+            row[primaryMetric.label] = primaryMetric.aggregateRows(bucketRows);
+            if (comparisonMetric) {
+              row[comparisonMetric.label] = comparisonMetric.aggregateRows(bucketRows);
             }
-          });
+          } else {
+            campaignSummary
+              .filter(c => visible.has(c.name))
+              .forEach(c => {
+                const campaignRows = bucketRows.filter(r => r.campaign_name === c.name);
+                if (campaignRows.length > 0) {
+                  row[c.name] = primaryMetric.aggregateRows(campaignRows);
+                }
+              });
+          }
+
           return row;
         });
-      }, [campaignSummary, visible, allWeeks]);
+      }, [allBuckets, rowsByBucket, isPortfolio, primaryMetric, comparisonMetric, campaignSummary, visible]);
+
+      // Overlay trendline values on each line.
+      const chartDataWithTrends = useMemo(() => {
+        if (!showTrendlines) return chartData;
+
+        const linesToTrend = isPortfolio
+          ? [primaryMetric.label, ...(comparisonMetric ? [comparisonMetric.label] : [])]
+          : campaignSummary.filter(c => visible.has(c.name)).map(c => c.name);
+
+        const trendParams = {};
+        linesToTrend.forEach(lineKey => {
+          const points = chartData
+            .map((r, i) => ({ x: i, y: r[lineKey] }))
+            .filter(p => p.y != null && !isNaN(p.y));
+          trendParams[lineKey] = linearRegression(points);
+        });
+
+        return chartData.map((row, i) => {
+          const out = { ...row };
+          linesToTrend.forEach(lineKey => {
+            const t = trendParams[lineKey];
+            if (t && !isNaN(t.slope)) {
+              out[`${lineKey}__trend`] = Math.round((t.slope * i + t.intercept) * 100) / 100;
+            }
+          });
+          return out;
+        });
+      }, [chartData, showTrendlines, isPortfolio, primaryMetric, comparisonMetric, campaignSummary, visible]);
 
       const toggleCampaign = (name) => {
         setVisible(prev => {
@@ -978,45 +1252,81 @@
           return next;
         });
       };
+      const showAll   = () => setVisible(new Set(campaignSummary.map(c => c.name)));
+      const showTop5  = () => setVisible(new Set(campaignSummary.slice(0, 5).map(c => c.name)));
+      const showNone  = () => setVisible(new Set());
 
-      const showAll = () => setVisible(new Set(campaignSummary.map(c => c.name)));
-      const showTop5 = () => setVisible(new Set(campaignSummary.slice(0, 5).map(c => c.name)));
-      const showNone = () => setVisible(new Set());
-
-      // Map campaign name → color (stable across renders).
-      const colorMap = useMemo(() => {
-        const m = {};
-        campaignSummary.forEach((c, i) => { m[c.name] = colorForCampaign(i); });
-        return m;
-      }, [campaignSummary]);
-
-      const isPortfolio = chartMode === 'portfolio';
-      const activeData = isPortfolio ? portfolioData : chartData;
-      const hasData = activeData.length > 0 && (
+      const hasData = chartData.length > 0 && (
         isPortfolio
-          ? activeData.some(r => r['Portfolio-wide CPICP'] != null)
-          : true
+          ? chartData.some(r => r[primaryMetric.label] != null)
+          : chartData.some(r => Object.keys(r).some(k => k !== 'bucket' && r[k] != null))
       );
+
+      // X axis label formatter: weekly/daily stay as-is,
+      // monthly gets prettier 2026-04 → "Apr '26"
+      const formatBucket = (b) => {
+        if (granularity === 'month' && /^\d{4}-\d{2}$/.test(b)) {
+          const [y, m] = b.split('-').map(Number);
+          const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          return `${names[m - 1]} '${String(y).slice(2)}`;
+        }
+        return b;
+      };
+
+      // A shared tooltip formatter that routes each series
+      // to its metric's formatter.
+      const tooltipFormatter = (value, name) => {
+        const nameStr = String(name);
+        const isTrend = nameStr.endsWith('__trend');
+        const cleanName = isTrend ? nameStr.replace('__trend', '') : nameStr;
+
+        if (isPortfolio) {
+          // name matches primaryMetric.label or comparisonMetric.label
+          const m = cleanName === primaryMetric.label
+            ? primaryMetric
+            : (comparisonMetric && cleanName === comparisonMetric.label ? comparisonMetric : null);
+          if (m) return [m.formatValue(value), cleanName + (isTrend ? ' (trend)' : '')];
+        } else {
+          // per-campaign; all lines use the primary metric's format
+          return [primaryMetric.formatValue(value), cleanName + (isTrend ? ' (trend)' : '')];
+        }
+        return [value, cleanName];
+      };
 
       return (
         <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
           <div className="flex items-start justify-between mb-3 gap-4 flex-wrap">
             <div>
               <h3 className="text-base font-semibold text-stone-800 flex items-center">
-                <span>CPICP — Weekly</span>
-                <InfoTip
-                  text="Blended Cost Per ICP over time. Lower is better. Toggle between per-campaign lines and a single portfolio-wide aggregate. Dashed lines are linear-regression trendlines."
-                  side="bottom"
-                />
+                <span>{primaryMetric.label} — {granularity === 'day' ? 'Daily' : granularity === 'week' ? 'Weekly' : 'Monthly'}</span>
+                <InfoTip text={primaryMetric.tooltip} />
               </h3>
               <p className="text-xs text-stone-500 mt-0.5">
                 {isPortfolio
-                  ? 'Single aggregate line: total spend ÷ total estimated ICPs per week.'
-                  : 'One line per campaign. Dashed lines are linear trendlines.'}
+                  ? 'Portfolio-wide aggregate. Use the comparison dropdown to overlay a second metric on the right axis.'
+                  : 'One line per campaign. Dashed lines are linear-regression trendlines.'}
               </p>
             </div>
+
             <div className="flex items-center gap-3 text-xs flex-wrap justify-end">
-              {/* Mode toggle: per-campaign vs portfolio-wide */}
+              {/* Granularity toggle */}
+              <div className="inline-flex rounded border border-stone-300 overflow-hidden" role="group">
+                {['day','week','month'].map(g => (
+                  <button
+                    key={g}
+                    onClick={() => setGranularity(g)}
+                    className={`px-2.5 py-1 capitalize ${
+                      granularity === g
+                        ? 'bg-stone-800 text-white'
+                        : 'bg-white text-stone-700 hover:bg-stone-100'
+                    } ${g !== 'day' ? 'border-l border-stone-300' : ''}`}
+                  >
+                    {g}
+                  </button>
+                ))}
+              </div>
+
+              {/* Mode toggle */}
               <div className="inline-flex rounded border border-stone-300 overflow-hidden">
                 <button
                   onClick={() => setChartMode('per_campaign')}
@@ -1039,6 +1349,7 @@
                   Portfolio-wide
                 </button>
               </div>
+
               <label className="flex items-center gap-1.5 cursor-pointer">
                 <input
                   type="checkbox"
@@ -1048,45 +1359,106 @@
                 />
                 <span className="text-stone-700">Trendlines</span>
               </label>
-              {!isPortfolio && (
-                <div className="flex items-center gap-1">
-                  <button onClick={showTop5} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">Top 5</button>
-                  <button onClick={showAll} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">All</button>
-                  <button onClick={showNone} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">None</button>
-                </div>
-              )}
             </div>
+          </div>
+
+          {/* Metric dropdowns row */}
+          <div className="flex items-center gap-4 mb-3 text-xs flex-wrap">
+            <div className="flex items-center gap-1.5">
+              <label className="text-stone-600 font-medium">Primary metric:</label>
+              <select
+                value={primaryKey}
+                onChange={e => setPrimaryKey(e.target.value)}
+                className="border border-stone-300 rounded bg-white px-2 py-1 text-stone-700 cursor-pointer"
+              >
+                {availableMetrics.map(m => (
+                  <option key={m.key} value={m.key}>{m.label}</option>
+                ))}
+              </select>
+              <InfoTip text={primaryMetric.tooltip} />
+            </div>
+
+            {isPortfolio && (
+              <div className="flex items-center gap-1.5">
+                <label className="text-stone-600 font-medium">Compare with:</label>
+                <select
+                  value={comparisonKey}
+                  onChange={e => setComparisonKey(e.target.value)}
+                  className="border border-stone-300 rounded bg-white px-2 py-1 text-stone-700 cursor-pointer"
+                >
+                  <option value="">(none)</option>
+                  {availableMetrics
+                    .filter(m => m.key !== primaryKey)
+                    .map(m => (
+                      <option key={m.key} value={m.key}>{m.label}</option>
+                    ))}
+                </select>
+                {comparisonMetric && <InfoTip text={comparisonMetric.tooltip} />}
+              </div>
+            )}
+
+            {!isPortfolio && (
+              <div className="flex items-center gap-1 ml-auto">
+                <button onClick={showTop5} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">Top 5</button>
+                <button onClick={showAll} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">All</button>
+                <button onClick={showNone} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">None</button>
+              </div>
+            )}
           </div>
 
           {!hasData ? (
             <p className="text-stone-500 text-sm py-16 text-center">
-              No weekly rollup data in selected range.
+              No data for {primaryMetric.label} at {granularity} granularity in the selected range.
             </p>
           ) : (
             <ResponsiveContainer width="100%" height={380}>
-              <LineChart data={activeData} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
+              <LineChart data={chartDataWithTrends} margin={{ top: 10, right: 30, left: 10, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e7e5e4" />
-                <XAxis dataKey="week_start" tick={{ fontSize: 11 }} minTickGap={20} />
-                <YAxis
+                <XAxis
+                  dataKey="bucket"
                   tick={{ fontSize: 11 }}
-                  tickFormatter={v => '$' + v}
-                  label={{ value: 'CPICP ($)', angle: -90, position: 'insideLeft', fontSize: 11, fill: '#78716c' }}
+                  minTickGap={20}
+                  tickFormatter={formatBucket}
                 />
-                <Tooltip
-                  formatter={(value, name) => {
-                    const display = String(name).endsWith('__trend')
-                      ? String(name).replace('__trend', '') + ' (trend)'
-                      : name;
-                    return ['$' + value, display];
+                <YAxis
+                  yAxisId="left"
+                  tick={{ fontSize: 11 }}
+                  tickFormatter={primaryMetric.formatAxis}
+                  label={{
+                    value: primaryMetric.label,
+                    angle: -90,
+                    position: 'insideLeft',
+                    fontSize: 11,
+                    fill: '#78716c',
                   }}
+                />
+                {isPortfolio && comparisonMetric && (
+                  <YAxis
+                    yAxisId="right"
+                    orientation="right"
+                    tick={{ fontSize: 11 }}
+                    tickFormatter={comparisonMetric.formatAxis}
+                    label={{
+                      value: comparisonMetric.label,
+                      angle: 90,
+                      position: 'insideRight',
+                      fontSize: 11,
+                      fill: '#78716c',
+                    }}
+                  />
+                )}
+                <Tooltip
+                  formatter={tooltipFormatter}
+                  labelFormatter={formatBucket}
                   contentStyle={{ fontSize: 12 }}
                 />
                 {isPortfolio ? (
                   <>
                     <Line
+                      yAxisId="left"
                       type="monotone"
-                      dataKey="Portfolio-wide CPICP"
-                      stroke="#f59e0b"
+                      dataKey={primaryMetric.label}
+                      stroke={primaryMetric.color}
                       strokeWidth={3}
                       dot={{ r: 4 }}
                       activeDot={{ r: 6 }}
@@ -1094,9 +1466,37 @@
                     />
                     {showTrendlines && (
                       <Line
+                        yAxisId="left"
                         type="linear"
-                        dataKey="Portfolio-wide CPICP__trend"
-                        stroke="#f59e0b"
+                        dataKey={`${primaryMetric.label}__trend`}
+                        stroke={primaryMetric.color}
+                        strokeWidth={2}
+                        strokeDasharray="6 4"
+                        dot={false}
+                        activeDot={false}
+                        legendType="none"
+                        opacity={0.6}
+                        connectNulls
+                      />
+                    )}
+                    {comparisonMetric && (
+                      <Line
+                        yAxisId="right"
+                        type="monotone"
+                        dataKey={comparisonMetric.label}
+                        stroke={comparisonMetric.color}
+                        strokeWidth={3}
+                        dot={{ r: 4 }}
+                        activeDot={{ r: 6 }}
+                        connectNulls
+                      />
+                    )}
+                    {showTrendlines && comparisonMetric && (
+                      <Line
+                        yAxisId="right"
+                        type="linear"
+                        dataKey={`${comparisonMetric.label}__trend`}
+                        stroke={comparisonMetric.color}
                         strokeWidth={2}
                         strokeDasharray="6 4"
                         dot={false}
@@ -1114,6 +1514,7 @@
                       .map(c => (
                         <Line
                           key={c.name}
+                          yAxisId="left"
                           type="monotone"
                           dataKey={c.name}
                           stroke={colorMap[c.name]}
@@ -1128,6 +1529,7 @@
                       .map(c => (
                         <Line
                           key={`${c.name}__trend`}
+                          yAxisId="left"
                           type="linear"
                           dataKey={`${c.name}__trend`}
                           stroke={colorMap[c.name]}
@@ -1146,8 +1548,7 @@
             </ResponsiveContainer>
           )}
 
-          {/* Campaign toggle legend — only in per-campaign
-              mode. Portfolio-wide doesn't need it (one line). */}
+          {/* Campaign toggle legend — per-campaign only */}
           {!isPortfolio && campaignSummary.length > 0 && (
             <div className="mt-3 flex flex-wrap gap-1.5">
               {campaignSummary.map(c => {
@@ -1161,7 +1562,7 @@
                         ? 'bg-white border-stone-300 text-stone-800'
                         : 'bg-stone-50 border-stone-200 text-stone-400'
                     }`}
-                    title={`${fmtCurrency(c.totalSpend)} spend, ${fmtNumber(c.totalEstIcps, 1)} est. ICPs`}
+                    title={`${fmtCurrency(c.totalSpend)} total spend in range`}
                   >
                     <span
                       className="inline-block w-3 h-3 rounded-sm"
@@ -1178,6 +1579,7 @@
         </div>
       );
     }
+
 
 
     function SpendConversionsChart({ daily }) {
@@ -1255,9 +1657,41 @@
     // range-total CPICP, latest week, WoW change, 4-week
     // baseline comparison, and a trend arrow from linear
     // regression over the visible weeks.
-    function WeeklyPerformanceTable({ rollup, rangeStart, rangeEnd }) {
+    // Period presets specific to the campaign performance
+    // table. All presets end at yesterday (today's data is
+    // incomplete because the daily pipeline runs at 7am for
+    // "yesterday's data"). Custom picker uses the same
+    // constraint — today's date is not selectable.
+    const TABLE_PERIOD_PRESETS = [
+      { key: '7d',  label: 'Prior 7 days',  start: () => priorNDays(7),  end: yesterdayStr },
+      { key: '14d', label: 'Prior 14 days', start: () => priorNDays(14), end: yesterdayStr },
+      { key: '30d', label: 'Prior 30 days', start: () => priorNDays(30), end: yesterdayStr },
+      { key: 'mtd', label: 'MTD',           start: startOfMonthStr,      end: yesterdayStr },
+      { key: 'qtd', label: 'QTD',           start: startOfQuarterStr,    end: yesterdayStr },
+      { key: 'ytd', label: 'YTD',           start: startOfYearStr,       end: yesterdayStr },
+    ];
+
+    function CampaignPerformanceTable({ rollup }) {
       const [sortKey, setSortKey] = useState('blendedCpicp');
       const [sortDir, setSortDir] = useState('asc'); // lowest CPICP first
+
+      // Period selector state — independent from the global
+      // dashboard date range. Default: prior 30 days.
+      const [presetKey, setPresetKey]   = useState('30d');
+      const [useCustom, setUseCustom]   = useState(false);
+      const [customStart, setCustomStart] = useState(priorNDays(30));
+      const [customEnd, setCustomEnd]     = useState(yesterdayStr());
+
+      const { rangeStart, rangeEnd } = useMemo(() => {
+        if (useCustom) {
+          return { rangeStart: customStart, rangeEnd: customEnd };
+        }
+        const preset = TABLE_PERIOD_PRESETS.find(p => p.key === presetKey) || TABLE_PERIOD_PRESETS[2];
+        return { rangeStart: preset.start(), rangeEnd: preset.end() };
+      }, [useCustom, presetKey, customStart, customEnd]);
+
+      // Max date for the custom picker. Yesterday, never today.
+      const maxDate = yesterdayStr();
 
       const rows = useMemo(() => {
         const inRange = rollup.filter(r => {
@@ -1399,15 +1833,62 @@
       };
 
       return (
-        <div className="bg-white rounded-lg shadow-sm border border-stone-200 overflow-hidden">
-          <div className="flex items-center justify-between p-4 border-b border-stone-200">
-            <div>
-              <h3 className="text-base font-semibold text-stone-800">Weekly Campaign Performance</h3>
-              <p className="text-xs text-stone-500 mt-0.5">
-                Sortable by any column. Arrows on CPICP-related columns are directional (lower = better).
-              </p>
+        <div className="bg-white rounded-lg shadow-sm border border-stone-200">
+          <div className="p-4 border-b border-stone-200">
+            <div className="flex items-start justify-between mb-3 flex-wrap gap-3">
+              <div>
+                <h3 className="text-base font-semibold text-stone-800 flex items-center">
+                  <span>Campaign Performance</span>
+                  <InfoTip text="Per-campaign totals over the selected period. Uses weekly rollup data filtered to weeks whose start date falls inside the period. Sortable by every column." />
+                </h3>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  {rangeStart} → {rangeEnd} · {rows.length} campaigns · Sortable by any column.
+                </p>
+              </div>
             </div>
-            <span className="text-xs text-stone-500">{rows.length} campaigns</span>
+
+            {/* Period selector — independent from the global date range */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs font-semibold text-stone-700 mr-1">Period:</span>
+              {TABLE_PERIOD_PRESETS.map(p => (
+                <button
+                  key={p.key}
+                  onClick={() => { setUseCustom(false); setPresetKey(p.key); }}
+                  className={`px-2.5 py-1 rounded text-xs transition ${
+                    !useCustom && presetKey === p.key
+                      ? 'bg-stone-800 text-white shadow-sm'
+                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+              <div className="flex items-center gap-1.5 ml-2">
+                <span className="text-xs text-stone-500">Custom:</span>
+                <input
+                  type="date"
+                  value={customStart}
+                  max={maxDate}
+                  onChange={e => {
+                    setCustomStart(e.target.value);
+                    setUseCustom(true);
+                  }}
+                  className="border border-stone-300 rounded px-2 py-1 text-xs"
+                />
+                <span className="text-stone-400 text-xs">→</span>
+                <input
+                  type="date"
+                  value={customEnd}
+                  max={maxDate}
+                  onChange={e => {
+                    setCustomEnd(e.target.value);
+                    setUseCustom(true);
+                  }}
+                  className="border border-stone-300 rounded px-2 py-1 text-xs"
+                />
+                <InfoTip text="Custom date range. Today's date is not selectable because today's data is incomplete — the daily pipeline runs at 7am for yesterday's data." />
+              </div>
+            </div>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -1668,11 +2149,21 @@
               />
             </div>
 
-            {/* ─── PRIMARY CHART: CPICP trends per campaign ─ */}
-            <CPICPTrendChart rollup={rollup} rangeStart={start} rangeEnd={end} />
+            {/* ─── PRIMARY CHART: multi-metric trend chart ─ */}
+            <MetricTrendChart
+              daily={daily}
+              rollup={rollup}
+              rangeStart={start}
+              rangeEnd={end}
+            />
 
-            {/* ─── PRIMARY TABLE: weekly performance ─────── */}
-            <WeeklyPerformanceTable rollup={rollup} rangeStart={start} rangeEnd={end} />
+            {/* ─── PRIMARY TABLE: campaign performance ────
+                Note: this table owns its OWN period selector
+                independent of the global date range at the
+                top. That's intentional — you can look at the
+                dashboard at one range while drilling into a
+                different period in the table. */}
+            <CampaignPerformanceTable rollup={rollup} />
 
             {/* ─── SECONDARY: daily operational view ───── */}
             <div className="pt-2 border-t border-stone-200">
