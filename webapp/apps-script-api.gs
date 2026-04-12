@@ -104,16 +104,73 @@ function handleDashboardApi_(e) {
   var dashboardActions = {
     rollup: true, daily: true, mappings: true,
     narrative: true, summary: true, campaigns: true,
-    chat: true
+    chat: true,
+    run_budget_analysis: true,
+    get_spend_goal: true,
+    set_spend_goal: true
   };
 
   if (!action || !dashboardActions[action]) return null;
 
-  // Chat returns its own Response object (HTML or JSON with
-  // the assistant reply). The rest of the actions return
-  // plain data which we wrap via jsonResponse_ below.
+  // Chat returns its own Response object.
   if (action === 'chat') {
     return handleChatRequest_(e);
+  }
+
+  // Budget analysis trigger — calls the existing
+  // runBudgetAnalysis() function from the intelligence
+  // layer. This is the same function the Wed/Fri cron
+  // trigger calls; we're just letting the dashboard
+  // invoke it on demand.
+  if (action === 'run_budget_analysis') {
+    try {
+      runBudgetAnalysis();
+      return jsonResponse_({
+        ok: true,
+        message: 'Budget analysis complete. Check Slack for the proposal.'
+      });
+    } catch (err) {
+      Logger.log('run_budget_analysis error: ' + err.message);
+      return jsonResponse_({
+        error: 'Budget analysis failed: ' + err.message
+      });
+    }
+  }
+
+  // Read the current spend goal + tolerance. These
+  // default to the hardcoded constants but can be
+  // overridden via Script Properties so the dashboard
+  // can adjust them without a code change.
+  if (action === 'get_spend_goal') {
+    var goalOverride      = PROPS.getProperty('DASHBOARD_TARGET_WEEKLY_SPEND');
+    var toleranceOverride = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
+    return jsonResponse_({
+      target_weekly_spend:    goalOverride      ? Number(goalOverride)      : TARGET_WEEKLY_SPEND,
+      weekly_spend_tolerance: toleranceOverride  ? Number(toleranceOverride) : WEEKLY_SPEND_TOLERANCE,
+      source: goalOverride ? 'script_property_override' : 'hardcoded_default'
+    });
+  }
+
+  // Write new spend goal + tolerance to Script Properties.
+  // Does NOT modify the code constants — stores overrides
+  // that the budget optimizer reads at runtime.
+  if (action === 'set_spend_goal') {
+    var newTarget    = e.parameter.target;
+    var newTolerance = e.parameter.tolerance;
+    if (newTarget != null && !isNaN(Number(newTarget)) && Number(newTarget) > 0) {
+      PROPS.setProperty('DASHBOARD_TARGET_WEEKLY_SPEND', String(Number(newTarget)));
+    }
+    if (newTolerance != null && !isNaN(Number(newTolerance)) && Number(newTolerance) >= 0) {
+      PROPS.setProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE', String(Number(newTolerance)));
+    }
+    // Read back the saved values to confirm.
+    var savedTarget    = PROPS.getProperty('DASHBOARD_TARGET_WEEKLY_SPEND');
+    var savedTolerance = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
+    return jsonResponse_({
+      ok: true,
+      target_weekly_spend:    savedTarget    ? Number(savedTarget)    : TARGET_WEEKLY_SPEND,
+      weekly_spend_tolerance: savedTolerance ? Number(savedTolerance) : WEEKLY_SPEND_TOLERANCE
+    });
   }
 
   try {
@@ -580,6 +637,26 @@ function buildDashboardContext_() {
   }
 
   return lines.join('\n');
+}
+
+
+// ─── SPEND GOAL RUNTIME OVERRIDE ──────────────────────────
+// Helper functions that let the budget optimizer read the
+// spend goal from Script Properties (if the dashboard has
+// set one) rather than the hardcoded constant. Call these
+// in place of the bare constants in computeRecommendations_
+// if you want dashboard-adjustable goals.
+//
+// If no override has been set, these return the original
+// hardcoded values, so behavior is unchanged by default.
+function getTargetWeeklySpend_() {
+  var override = PROPS.getProperty('DASHBOARD_TARGET_WEEKLY_SPEND');
+  return override ? Number(override) : TARGET_WEEKLY_SPEND;
+}
+
+function getWeeklySpendTolerance_() {
+  var override = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
+  return override ? Number(override) : WEEKLY_SPEND_TOLERANCE;
 }
 
 
