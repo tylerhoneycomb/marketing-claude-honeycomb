@@ -2412,6 +2412,346 @@
       );
     }
 
+    // ─── GOAL TRACKER ──────────────────────────────────
+    // User enters a target value, picks a metric and a time
+    // horizon, and the dashboard tells them whether the
+    // current trend puts them on or off track, plus the
+    // expected delta.
+    const GOAL_METRICS = [
+      { key: 'spend',          label: 'Total Spend',       fmt: fmtCurrency,      cumulative: true,  lowerIsBetter: false, neutral: true },
+      { key: 'estimated_icps', label: 'Estimated ICPs',    fmt: v => fmtNumber(v, 1), cumulative: true, lowerIsBetter: false },
+      { key: 'cpicp_blended',  label: 'Blended CPICP',    fmt: fmtCurrencyCents,  cumulative: false, lowerIsBetter: true },
+      { key: 'attribution_rate', label: 'Attribution Rate', fmt: v => v.toFixed(1) + '%', cumulative: false, lowerIsBetter: false },
+    ];
+
+    const GOAL_HORIZONS = [
+      { key: '7',  label: '7 days' },
+      { key: '14', label: '14 days' },
+      { key: '30', label: '30 days' },
+      { key: '60', label: '60 days' },
+      { key: '90', label: '90 days' },
+    ];
+
+    function GoalTracker({ rollup, daily }) {
+      const [targetValue, setTargetValue] = useState('');
+      const [metricKey, setMetricKey]     = useState('cpicp_blended');
+      const [horizonDays, setHorizonDays] = useState('30');
+
+      const metric = GOAL_METRICS.find(m => m.key === metricKey) || GOAL_METRICS[0];
+      const horizon = Number(horizonDays) || 30;
+
+      const result = useMemo(() => {
+        const target = Number(targetValue);
+        if (!target || isNaN(target) || target <= 0) return null;
+
+        // Use all available rollup for the regression.
+        const byWeek = {};
+        rollup.forEach(r => {
+          const wk = String(r.week_start).substring(0, 10);
+          if (!byWeek[wk]) byWeek[wk] = { spend: 0, icps: 0, attrib: 0, impressions: 0, clicks: 0, convs: 0 };
+          byWeek[wk].spend  += Number(r.spend) || 0;
+          byWeek[wk].icps   += Number(r.estimated_icps) || 0;
+          byWeek[wk].attrib += Number(r.icps_attributed) || 0;
+          byWeek[wk].convs  += Number(r.meta_conversions) || 0;
+        });
+        const weeks = Object.values(byWeek);
+        if (weeks.length < 2) return null;
+
+        // Build the per-week value series for the chosen metric.
+        let series;
+        if (metricKey === 'spend') {
+          series = weeks.map(w => w.spend);
+        } else if (metricKey === 'estimated_icps') {
+          series = weeks.map(w => w.icps);
+        } else if (metricKey === 'cpicp_blended') {
+          series = weeks.map(w => w.icps > 0 ? w.spend / w.icps : null);
+        } else if (metricKey === 'attribution_rate') {
+          series = weeks.map(w => w.icps > 0 ? (w.attrib / w.icps) * 100 : null);
+        } else {
+          series = weeks.map(() => null);
+        }
+
+        const points = series
+          .map((y, i) => ({ x: i, y }))
+          .filter(p => p.y != null && !isNaN(p.y));
+        if (points.length < 2) return null;
+
+        const reg = linearRegression(points);
+        if (!reg) return null;
+
+        const weeksForward = Math.max(1, Math.round(horizon / 7));
+        const lastValue = series[series.length - 1];
+        if (lastValue == null) return null;
+
+        let projected;
+        if (metric.cumulative) {
+          // Arithmetic series for cumulative metrics.
+          projected = weeksForward * lastValue +
+            reg.slope * weeksForward * (weeksForward + 1) / 2;
+        } else {
+          // Point extrapolation for ratio metrics.
+          projected = lastValue + reg.slope * weeksForward;
+        }
+
+        const delta = projected - target;
+        // "On track" = projected meets or exceeds target in
+        // the favourable direction.
+        let onTrack;
+        if (metric.neutral) {
+          onTrack = Math.abs(delta) / target < 0.05; // within 5%
+        } else if (metric.lowerIsBetter) {
+          onTrack = projected <= target;
+        } else {
+          onTrack = projected >= target;
+        }
+
+        return { projected, delta, onTrack, lastValue, slope: reg.slope };
+      }, [rollup, targetValue, metricKey, horizon, metric]);
+
+      return (
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
+          <h3 className="text-base font-semibold text-stone-800 flex items-center mb-3">
+            <span>Goal Tracker</span>
+            <InfoTip text="Enter a target value, pick a metric and a time horizon. The dashboard projects the current trend forward and tells you whether you're on or off track to hit your goal, plus the expected over/under." />
+          </h3>
+
+          <div className="flex flex-wrap items-end gap-3 mb-4">
+            <div>
+              <label className="text-[11px] text-stone-600 font-medium block mb-1">Target value</label>
+              <input
+                type="number"
+                value={targetValue}
+                onChange={e => setTargetValue(e.target.value)}
+                placeholder="e.g. 120"
+                className="border border-stone-300 rounded px-2 py-1.5 text-sm w-28"
+              />
+            </div>
+            <div>
+              <label className="text-[11px] text-stone-600 font-medium block mb-1">Metric</label>
+              <select
+                value={metricKey}
+                onChange={e => setMetricKey(e.target.value)}
+                className="border border-stone-300 rounded px-2 py-1.5 text-sm"
+              >
+                {GOAL_METRICS.map(m => (
+                  <option key={m.key} value={m.key}>{m.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[11px] text-stone-600 font-medium block mb-1">Horizon</label>
+              <select
+                value={horizonDays}
+                onChange={e => setHorizonDays(e.target.value)}
+                className="border border-stone-300 rounded px-2 py-1.5 text-sm"
+              >
+                {GOAL_HORIZONS.map(h => (
+                  <option key={h.key} value={h.key}>{h.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {result ? (
+            <div className={`rounded-lg p-4 border ${
+              result.onTrack
+                ? 'bg-emerald-50 border-emerald-200'
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <div className={`text-lg font-bold ${result.onTrack ? 'text-emerald-800' : 'text-red-800'}`}>
+                {result.onTrack ? 'On track' : 'Off track'}
+              </div>
+              <div className="text-sm text-stone-700 mt-1">
+                Projected {metric.label} in {horizonDays} days: <strong>{metric.fmt(result.projected)}</strong>
+              </div>
+              <div className="text-sm text-stone-700">
+                Target: <strong>{metric.fmt(Number(targetValue))}</strong>
+                {' · '}
+                Delta: <strong className={result.onTrack ? 'text-emerald-700' : 'text-red-700'}>
+                  {result.delta > 0 ? '+' : ''}{metric.fmt(result.delta)}
+                </strong>
+              </div>
+              <div className="text-xs text-stone-500 mt-2">
+                Current weekly trend: {result.slope > 0 ? '+' : ''}{metric.fmt(result.slope)}/wk · Current latest value: {metric.fmt(result.lastValue)}
+              </div>
+            </div>
+          ) : (
+            <div className="text-sm text-stone-500 py-3">
+              {!targetValue
+                ? 'Enter a target value to see whether you are on or off track.'
+                : 'Not enough data to compute a projection. Need at least 2 weeks of rollup data.'}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+
+    // ─── BUDGET OPTIMIZATION CONTROLS ──────────────────
+    // Two tools in one card:
+    //  1. Manual trigger for runBudgetAnalysis()
+    //  2. Spend goal + tolerance editor
+    function BudgetControls({ apiUrl }) {
+      // Manual trigger state
+      const [running, setRunning]     = useState(false);
+      const [triggerResult, setTriggerResult] = useState(null);
+
+      // Spend goal state
+      const [goalTarget, setGoalTarget]       = useState('');
+      const [goalTolerance, setGoalTolerance] = useState('');
+      const [goalSource, setGoalSource]       = useState('');
+      const [goalLoading, setGoalLoading]     = useState(false);
+      const [goalSaveResult, setGoalSaveResult] = useState('');
+
+      // Load current spend goal on mount
+      useEffect(() => {
+        if (!apiUrl) return;
+        fetchAction(apiUrl, 'get_spend_goal')
+          .then(data => {
+            if (data) {
+              setGoalTarget(String(data.target_weekly_spend || ''));
+              setGoalTolerance(String(data.weekly_spend_tolerance || ''));
+              setGoalSource(data.source || '');
+            }
+          })
+          .catch(() => {}); // silently fail if endpoint not installed yet
+      }, [apiUrl]);
+
+      const handleRunAnalysis = async () => {
+        if (!apiUrl || running) return;
+        setRunning(true);
+        setTriggerResult(null);
+        try {
+          const data = await fetchAction(apiUrl, 'run_budget_analysis');
+          setTriggerResult({
+            ok: true,
+            message: (data && data.message) || 'Analysis complete. Check Slack.'
+          });
+        } catch (err) {
+          setTriggerResult({
+            ok: false,
+            message: classifyFetchFailure(err, 'budget analysis')
+          });
+        }
+        setRunning(false);
+      };
+
+      const handleSaveGoal = async () => {
+        if (!apiUrl) return;
+        setGoalLoading(true);
+        setGoalSaveResult('');
+        try {
+          const data = await fetchAction(apiUrl, 'set_spend_goal', {
+            target: goalTarget,
+            tolerance: goalTolerance,
+          });
+          if (data && data.ok) {
+            setGoalTarget(String(data.target_weekly_spend || ''));
+            setGoalTolerance(String(data.weekly_spend_tolerance || ''));
+            setGoalSaveResult('Saved');
+            setTimeout(() => setGoalSaveResult(''), 2000);
+          }
+        } catch (err) {
+          setGoalSaveResult('Save failed: ' + (err.message || err));
+        }
+        setGoalLoading(false);
+      };
+
+      return (
+        <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
+          <h3 className="text-base font-semibold text-stone-800 flex items-center mb-4">
+            <span>Budget Controls</span>
+            <InfoTip text="Manually trigger the budget optimization process (same as the scheduled Wed/Fri run) and adjust the weekly spend goal and tolerance the optimizer aims at." />
+          </h3>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Manual trigger */}
+            <div className="border border-stone-200 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-stone-700 mb-2">Run Budget Optimization</h4>
+              <p className="text-xs text-stone-500 mb-3">
+                Triggers the same analysis the scheduled Wed/Fri cron runs. Produces a budget proposal and posts it to Slack with approve/reject links.
+              </p>
+              <button
+                onClick={handleRunAnalysis}
+                disabled={running || !apiUrl}
+                className="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {running ? 'Running…' : 'Run analysis now'}
+              </button>
+              {!apiUrl && (
+                <p className="text-xs text-stone-400 mt-2">Connect API first.</p>
+              )}
+              {triggerResult && (
+                <div className={`mt-2 text-xs rounded p-2 ${
+                  triggerResult.ok
+                    ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
+                    : 'bg-red-50 text-red-800 border border-red-200'
+                }`}>
+                  <pre className="whitespace-pre-wrap font-sans">{triggerResult.message}</pre>
+                </div>
+              )}
+            </div>
+
+            {/* Spend goal editor */}
+            <div className="border border-stone-200 rounded-lg p-3">
+              <h4 className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
+                <span>Weekly Spend Goal</span>
+                <InfoTip text="The optimizer aims to keep total weekly spend near this target. The tolerance is how far over or under the target is considered 'within range' before the optimizer applies a portfolio-level correction." />
+              </h4>
+              <div className="flex flex-wrap gap-3 mb-3">
+                <div>
+                  <label className="text-[11px] text-stone-600 font-medium block mb-1">
+                    Target ($/week)
+                  </label>
+                  <input
+                    type="number"
+                    value={goalTarget}
+                    onChange={e => setGoalTarget(e.target.value)}
+                    placeholder="10000"
+                    className="border border-stone-300 rounded px-2 py-1.5 text-sm w-28"
+                    disabled={!apiUrl}
+                  />
+                </div>
+                <div>
+                  <label className="text-[11px] text-stone-600 font-medium block mb-1">
+                    Tolerance ($/week)
+                  </label>
+                  <input
+                    type="number"
+                    value={goalTolerance}
+                    onChange={e => setGoalTolerance(e.target.value)}
+                    placeholder="500"
+                    className="border border-stone-300 rounded px-2 py-1.5 text-sm w-28"
+                    disabled={!apiUrl}
+                  />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleSaveGoal}
+                  disabled={goalLoading || !apiUrl}
+                  className="bg-stone-800 hover:bg-stone-900 text-white px-3 py-1.5 rounded text-xs font-medium disabled:opacity-50"
+                >
+                  {goalLoading ? 'Saving…' : 'Save'}
+                </button>
+                {goalSaveResult && (
+                  <span className={`text-xs font-medium ${
+                    goalSaveResult === 'Saved' ? 'text-emerald-700' : 'text-red-700'
+                  }`}>{goalSaveResult}</span>
+                )}
+                {goalSource && (
+                  <span className="text-[10px] text-stone-400 ml-auto">
+                    Source: {goalSource === 'hardcoded_default' ? 'default ($10,000 / $500)' : 'custom override'}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+
     function NarrativePanel({ narrative }) {
       return (
         <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
@@ -3028,6 +3368,12 @@
                 dashboard at one range while drilling into a
                 different period in the table. */}
             <CampaignPerformanceTable rollup={rollup} />
+
+            {/* ─── GOAL TRACKER + BUDGET CONTROLS ────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <GoalTracker rollup={rollup} daily={daily} />
+              <BudgetControls apiUrl={apiUrl} />
+            </div>
 
             {/* ─── SECONDARY: daily operational view ───── */}
             <div className="pt-2 border-t border-stone-200">
