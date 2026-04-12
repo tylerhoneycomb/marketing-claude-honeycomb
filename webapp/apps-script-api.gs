@@ -268,18 +268,22 @@ function getDailyData_(start, end) {
     if (!dateStr || dateStr < startStr || dateStr > endStr) continue;
 
     rows.push({
-      date:          dateStr,
-      month:         String(data[i][1] || ''),
-      week:          Number(data[i][2]) || 0,
-      campaign_name: String(data[i][3] || ''),
-      campaign_id:   String(data[i][4] || ''),
-      impressions:   Number(data[i][5]) || 0,
-      clicks:        Number(data[i][6]) || 0,
-      spend:         Number(data[i][7]) || 0,
-      reach:         Number(data[i][8]) || 0,
-      conversions:   Number(data[i][9]) || 0,
-      frequency:     Number(data[i][10]) || 0,
-      cpl:           (data[i][11] === '' || data[i][11] == null) ? null : Number(data[i][11])
+      date:           dateStr,
+      month:          String(data[i][1] || ''),
+      week:           Number(data[i][2]) || 0,
+      campaign_name:  String(data[i][3] || ''),
+      campaign_id:    String(data[i][4] || ''),
+      impressions:    Number(data[i][5]) || 0,
+      clicks:         Number(data[i][6]) || 0,
+      spend:          Number(data[i][7]) || 0,
+      reach:          Number(data[i][8]) || 0,
+      conversions:    Number(data[i][9]) || 0,
+      frequency:      Number(data[i][10]) || 0,
+      cpl:            (data[i][11] === '' || data[i][11] == null) ? null : Number(data[i][11]),
+      // IC Conversions live in column 12 (added in the IC
+      // conversion tracking change). Defaults to 0 for older
+      // rows that predate the column.
+      ic_conversions: Number(data[i][12]) || 0
     });
   }
   return rows;
@@ -451,6 +455,15 @@ function handleChatRequest_(e) {
       '                                     weighted by its share of Meta conversion volume)',
       '',
       'Why hybrid attribution: not every ICP comes through with a matching utm_campaign tag. Campaigns that do get UTM credit AND receive a proportional slice of the remainder, rewarding campaigns with strong tracking without abandoning the campaigns whose ICPs lost their UTM somewhere in the funnel.',
+      '',
+      'IC CONVERSIONS — DIRECT ICP COUNT FOR IC-OPTIMIZED CAMPAIGNS:',
+      'Some campaigns are optimized against a Meta custom conversion event called "Investment Crowdfunding Prequal Decision." When this event fires, Meta is telling us directly: this person became an ICP. The campaign_mapping sheet has a conversion_event column that flags which campaigns use this event.',
+      '',
+      'For these IC-optimized campaigns, the script now uses the direct IC conversion count (the ic_conversions column in weekly_rollup) as their estimated_icps value, REPLACING the hybrid attribution estimate. As a result, their blended CPICP is computed as spend ÷ ic_conversions — ground truth from Meta, not an estimate.',
+      '',
+      'Non-IC campaigns continue to use the hybrid attribution model. If an IC campaign happens to have zero IC conversions in the window, it falls back to the hybrid estimate so it doesn\'t look artificially infinite.',
+      '',
+      'When you look at CPICP for an IC-flagged campaign, treat it as more reliable than CPICP for a non-IC campaign.',
       '',
       'Lower CPICP is better. The team has a rough sense that CPICP under $120 is healthy and CPICP above $200 warrants investigation.',
       '',
