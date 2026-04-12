@@ -622,7 +622,21 @@
         formatAxis:  (v) => v,
         aggregateRows: (rows) =>
           Math.round(rows.reduce((s, r) => s + (Number(r.estimated_icps) || 0), 0) * 10) / 10,
-        tooltip: 'Estimated ICPs using hybrid attribution (UTM-matched plus proportional share of unattributed).',
+        tooltip: 'Estimated ICPs using hybrid attribution (UTM-matched plus proportional share of unattributed). For campaigns optimized against the IC custom conversion event, this value is replaced with the direct IC conversion count.',
+      },
+      {
+        key: 'ic_conversions',
+        label: 'IC Conversions',
+        shortLabel: 'IC Conv',
+        color: '#84cc16',
+        lowerIsBetter: false,
+        availableAt: { day: true, week: true, month: true },
+        source: { day: 'daily', week: 'rollup', month: 'rollup' },
+        formatValue: (v) => fmtNumber(v),
+        formatAxis:  (v) => v,
+        aggregateRows: (rows) =>
+          rows.reduce((s, r) => s + (Number(r.ic_conversions) || 0), 0),
+        tooltip: 'Direct IC (Investment Crowdfunding) conversions reported by Meta from the custom conversion event. For campaigns optimized against this event, this is the ground-truth ICP count and now drives blended CPICP directly (overriding hybrid attribution).',
       },
       {
         key: 'attribution_rate',
@@ -2177,13 +2191,15 @@
               spend: 0,
               estIcps: 0,
               attribIcps: 0,
+              icConversions: 0,
               weeks: [],
             };
           }
           const c = byCampaign[key];
-          c.spend      += Number(r.spend) || 0;
-          c.estIcps    += Number(r.estimated_icps) || 0;
-          c.attribIcps += Number(r.icps_attributed) || 0;
+          c.spend         += Number(r.spend) || 0;
+          c.estIcps       += Number(r.estimated_icps) || 0;
+          c.attribIcps    += Number(r.icps_attributed) || 0;
+          c.icConversions += Number(r.ic_conversions) || 0;
           c.weeks.push({
             week_start: String(r.week_start).substring(0, 10),
             cpicp: Number(r.cpicp_blended) || null,
@@ -2367,7 +2383,11 @@
                   <Th k="spend" align="right">Spend</Th>
                   <Th k="estIcps" align="right">
                     Est. ICPs
-                    <InfoTip text="Estimated ICPs attributed to this campaign using hybrid attribution (hard UTM matches plus proportional share of unattributed ICPs)." />
+                    <InfoTip text="Estimated ICPs attributed to this campaign using hybrid attribution (hard UTM matches plus proportional share of unattributed ICPs). For IC-optimized campaigns, this is overridden with the direct IC conversion count." />
+                  </Th>
+                  <Th k="icConversions" align="right">
+                    IC Conv
+                    <InfoTip text="Direct IC (Investment Crowdfunding) conversions reported by Meta from the custom conversion event. Non-zero only for campaigns optimized against this event. For those campaigns, blended CPICP is computed from this value directly rather than from the hybrid estimate." />
                   </Th>
                   <Th k="blendedCpicp" align="right" defaultDir="asc">
                     CPICP
@@ -2398,7 +2418,7 @@
               <tbody>
                 {sorted.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="text-center py-10 text-stone-500">
+                    <td colSpan={10} className="text-center py-10 text-stone-500">
                       No weekly rollup data in the selected range.
                     </td>
                   </tr>
@@ -2410,6 +2430,9 @@
                     </td>
                     <td className="px-3 py-2 text-right">{fmtCurrency(r.spend)}</td>
                     <td className="px-3 py-2 text-right">{fmtNumber(r.estIcps, 1)}</td>
+                    <td className={`px-3 py-2 text-right ${r.icConversions > 0 ? 'text-lime-700 font-semibold' : 'text-stone-300'}`}>
+                      {r.icConversions > 0 ? fmtNumber(r.icConversions) : '—'}
+                    </td>
                     <td className="px-3 py-2 text-right font-semibold text-cyan-700">
                       {fmtCurrencyCents(r.blendedCpicp)}
                     </td>
