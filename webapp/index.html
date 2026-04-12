@@ -578,7 +578,7 @@
     const METRIC_CATALOG = [
       {
         key: 'cpicp_blended',
-        label: 'Blended CPICP',
+        label: 'CPICP',
         shortLabel: 'CPICP',
         color: '#0891b2',
         lowerIsBetter: true,
@@ -591,7 +591,24 @@
           const i = rows.reduce((a, r) => a + (Number(r.estimated_icps) || 0), 0);
           return i > 0 ? Math.round((s / i) * 100) / 100 : null;
         },
-        tooltip: 'Blended Cost Per ICP. Total spend divided by estimated ICPs (hybrid attribution). Lower is better.',
+        tooltip: 'Cost Per ICP using hybrid attribution (blended). Total spend divided by estimated ICPs. This is the primary efficiency metric. Lower is better.',
+      },
+      {
+        key: 'cpicp_attributed',
+        label: 'CPICP (Attributed)',
+        shortLabel: 'CPICP Attr',
+        color: '#7c3aed',
+        lowerIsBetter: true,
+        availableAt: { day: false, week: true, month: true },
+        source: { week: 'rollup', month: 'rollup' },
+        formatValue: (v) => fmtCurrencyCents(v),
+        formatAxis:  (v) => '$' + v,
+        aggregateRows: (rows) => {
+          const s = rows.reduce((a, r) => a + (Number(r.spend) || 0), 0);
+          const a = rows.reduce((acc, r) => acc + (Number(r.icps_attributed) || 0), 0);
+          return a > 0 ? Math.round((s / a) * 100) / 100 : null;
+        },
+        tooltip: 'Cost Per ICP using only hard UTM-matched ICPs (no unattributed pool share). More conservative than blended CPICP — higher values because the denominator is smaller. Useful for comparing tracking-clean campaigns.',
       },
       {
         key: 'estimated_icps',
@@ -715,7 +732,7 @@
     const LEADERBOARD_METRICS = [
       {
         key: 'cpicp_blended',
-        label: 'Blended CPICP',
+        label: 'CPICP',
         lowerIsBetter: true,
         format: (v) => fmtCurrencyCents(v),
         tooltip: 'Cost per ICP using hybrid attribution. Total spend divided by estimated ICPs over the selected range. Lower is better.',
@@ -1186,7 +1203,7 @@
           ),
         },
         {
-          label: 'Blended CPICP',
+          label: 'CPICP',
           value: fmtCurrencyCents(blendedCpicp),
           accent: 'text-cyan-700',
           hint: 'Spend \u00f7 Est. ICPs',
@@ -2353,7 +2370,7 @@
                     <InfoTip text="Estimated ICPs attributed to this campaign using hybrid attribution (hard UTM matches plus proportional share of unattributed ICPs)." />
                   </Th>
                   <Th k="blendedCpicp" align="right" defaultDir="asc">
-                    Blended CPICP
+                    CPICP
                     <InfoTip text="Range-total blended Cost Per ICP: total spend ÷ total estimated ICPs across all weeks in range. Lower is better." />
                   </Th>
                   <Th k="latestCpicp" align="right" defaultDir="asc">
@@ -2420,7 +2437,7 @@
     const GOAL_METRICS = [
       { key: 'spend',          label: 'Total Spend',       fmt: fmtCurrency,      cumulative: true,  lowerIsBetter: false, neutral: true },
       { key: 'estimated_icps', label: 'Estimated ICPs',    fmt: v => fmtNumber(v, 1), cumulative: true, lowerIsBetter: false },
-      { key: 'cpicp_blended',  label: 'Blended CPICP',    fmt: fmtCurrencyCents,  cumulative: false, lowerIsBetter: true },
+      { key: 'cpicp_blended',  label: 'CPICP',             fmt: fmtCurrencyCents,  cumulative: false, lowerIsBetter: true },
       { key: 'attribution_rate', label: 'Attribution Rate', fmt: v => v.toFixed(1) + '%', cumulative: false, lowerIsBetter: false },
     ];
 
