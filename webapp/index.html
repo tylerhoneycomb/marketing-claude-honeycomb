@@ -2807,7 +2807,7 @@
             <h3 className="text-sm font-semibold text-stone-700">Campaign UTM Mappings</h3>
             <span className="text-xs text-stone-500">{mappings.length} campaigns</span>
           </div>
-          <div className="overflow-x-auto max-h-96 overflow-y-auto">
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-stone-50 text-xs uppercase text-stone-600 sticky top-0">
                 <tr>
@@ -3378,6 +3378,12 @@
               rangeEnd={end}
             />
 
+            {/* ─── GOAL TRACKER + BUDGET CONTROLS ────── */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <GoalTracker rollup={rollup} daily={daily} />
+              <BudgetControls apiUrl={apiUrl} />
+            </div>
+
             {/* ─── PRIMARY TABLE: campaign performance ────
                 Note: this table owns its OWN period selector
                 independent of the global date range at the
@@ -3385,23 +3391,6 @@
                 dashboard at one range while drilling into a
                 different period in the table. */}
             <CampaignPerformanceTable rollup={rollup} />
-
-            {/* ─── GOAL TRACKER + BUDGET CONTROLS ────── */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <GoalTracker rollup={rollup} daily={daily} />
-              <BudgetControls apiUrl={apiUrl} />
-            </div>
-
-            {/* ─── SECONDARY: daily operational view ───── */}
-            <div className="pt-2 border-t border-stone-200">
-              <h2 className="text-sm font-semibold text-stone-600 uppercase tracking-wide mb-3">
-                Daily operational view
-              </h2>
-              <div className="space-y-4">
-                <DailyOpsCards daily={daily} />
-                <SpendConversionsChart daily={daily} />
-              </div>
-            </div>
 
             {/* ─── NARRATIVE + MAPPINGS ──────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
