@@ -165,6 +165,31 @@
       return { slope, intercept };
     }
 
+    // Weighted linear regression. Same math as linearRegression
+    // but each point carries a weight. Used for the Total Spend
+    // projection so recent daily spend influences the forecast
+    // more than older days.
+    function weightedLinearRegression(points, weights) {
+      const valid = [];
+      for (let i = 0; i < points.length; i++) {
+        if (points[i].y != null && !isNaN(points[i].y)) {
+          valid.push({ x: points[i].x, y: points[i].y, w: weights[i] || 1 });
+        }
+      }
+      if (valid.length < 2) return null;
+      let sW = 0, sWX = 0, sWY = 0;
+      valid.forEach(p => { sW += p.w; sWX += p.w * p.x; sWY += p.w * p.y; });
+      const xBar = sWX / sW;
+      const yBar = sWY / sW;
+      let num = 0, den = 0;
+      valid.forEach(p => {
+        num += p.w * (p.x - xBar) * (p.y - yBar);
+        den += p.w * (p.x - xBar) * (p.x - xBar);
+      });
+      if (den === 0) return null;
+      return { slope: num / den, intercept: yBar - (num / den) * xBar };
+    }
+
     // Distinct, accessible palette for up to 18 campaigns.
     // Falls back to cycling through the list if more than 18.
     const CAMPAIGN_COLORS = [
@@ -955,58 +980,44 @@
     // each top card's value. Runs linear regression across
     // weekly points and expresses the slope as a per-week
     // change rate with an arrow and directional color.
+    // Primary ICP-focused cards with trend + projection.
     //
-    // For "neutral" metrics (like total spend), we don't
-    // know if up or down is "better," so the color stays
-    // gray regardless of direction.
-    function GoForwardTrend({ weeklySeries, formatDelta, lowerIsBetter, neutral }) {
-      const points = weeklySeries
-        .map((y, i) => ({ x: i, y: (y == null || isNaN(y)) ? null : y }))
-        .filter(p => p.y != null);
-      if (points.length < 2) {
-        return <div className="text-[11px] text-stone-400 mt-1">Not enough weeks for a trend</div>;
-      }
-      const reg = linearRegression(points);
-      if (!reg || isNaN(reg.slope)) {
-        return <div className="text-[11px] text-stone-400 mt-1">No trend</div>;
-      }
-      const slope = reg.slope;
-      // Deadband: tiny movements aren't called trends.
-      const intercept = reg.intercept || 1;
-      const pctPerWk = Math.abs((slope / intercept) * 100);
-      if (pctPerWk < 0.5) {
-        return <div className="text-[11px] text-stone-400 mt-1">→ roughly flat</div>;
-      }
-      const arrow = slope > 0 ? '↗' : '↘';
-      const sign = slope > 0 ? '+' : '−';
-      const absDelta = Math.abs(slope);
-      let color = 'text-stone-400';
-      if (!neutral) {
-        const improving = lowerIsBetter ? slope < 0 : slope > 0;
-        color = improving ? 'text-emerald-600' : 'text-red-500';
-      }
-      return (
-        <div className={`text-[11px] ${color} mt-1`}>
-          {arrow} {sign}{formatDelta(absDelta)}/wk go-forward trend
-        </div>
-      );
-    }
+    // Each card shows:
+    //  - The topline value (big number)
+    //  - A short context hint
+    //  - A trend line: weekly rate of change, colored by direction
+    //  - A projection line: the expected value at the end
+    //    of a forward period equal to the selected range.
+    //    For Total Spend, projection uses daily-weighted
+    //    regression so recent days count more.
+    //
+    // Props:
+    //  - rollup: weekly rollup rows, pre-filtered to range
+    //  - daily: daily rows, pre-filtered to range (used for
+    //    weighted spend projection)
+    //  - rangeStart, rangeEnd: yyyy-MM-dd strings defining
+    //    the currently selected period
+    function ICPSummaryCards({ rollup, daily, rangeStart, rangeEnd }) {
+      // ── Period math ──────────────────────────────────
+      const daysInPeriod = useMemo(() => {
+        if (!rangeStart || !rangeEnd) return 30;
+        const s = new Date(rangeStart + 'T00:00:00');
+        const e = new Date(rangeEnd + 'T00:00:00');
+        return Math.max(1, Math.round((e - s) / 86400000) + 1);
+      }, [rangeStart, rangeEnd]);
+      const weeksInPeriod = Math.max(1, daysInPeriod / 7);
 
-    // Primary ICP-focused cards. Reads from weekly rollup
-    // (which is the source of truth for ICP counts and
-    // blended attribution). This is the headline section of
-    // the dashboard.
-    //
-    // Each card now carries:
-    //  - A hover tooltip on the label explaining the metric
-    //  - The topline value
-    //  - A short hint describing how it's computed
-    //  - A de-emphasized "go-forward trend" line showing the
-    //    direction and pace of change, from linear regression
-    //    across the weeks in the current date range.
-    function ICPSummaryCards({ rollup }) {
-      // Per-week aggregates (used both for totals and for
-      // the go-forward trend regression).
+      // Human-readable forward horizon label.
+      const horizonLabel = daysInPeriod + ' days';
+
+      // Projection end date (today + daysInPeriod)
+      const projectionDate = useMemo(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + daysInPeriod);
+        return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      }, [daysInPeriod]);
+
+      // ── Weekly aggregates ────────────────────────────
       const weeklyTotals = useMemo(() => {
         const byWeek = {};
         rollup.forEach(r => {
@@ -1036,15 +1047,119 @@
       const attributionRate = totals.estimatedIcps > 0
         ? (totals.attributedIcps / totals.estimatedIcps) * 100 : null;
 
-      // Per-week series for each metric — fed to GoForwardTrend.
-      const spendSeries = weeklyTotals.map(w => w.spend);
-      const icpsSeries  = weeklyTotals.map(w => w.estIcps);
-      const cpicpSeries = weeklyTotals.map(w =>
-        w.estIcps > 0 ? w.spend / w.estIcps : null
-      );
-      const attribSeries = weeklyTotals.map(w =>
-        w.estIcps > 0 ? (w.attribIcps / w.estIcps) * 100 : null
-      );
+      // ── Daily spend series (for weighted projection) ──
+      const dailySpendData = useMemo(() => {
+        if (!daily || daily.length === 0) return [];
+        const byDate = {};
+        daily.forEach(r => {
+          const d = String(r.date).substring(0, 10);
+          byDate[d] = (byDate[d] || 0) + (Number(r.spend) || 0);
+        });
+        return Object.entries(byDate)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([, v]) => v);
+      }, [daily]);
+
+      // ── Compute projections ──────────────────────────
+      const projections = useMemo(() => {
+        const result = {};
+
+        // SPEND: daily weighted regression (half-life 7 days)
+        if (dailySpendData.length >= 2) {
+          const N = dailySpendData.length;
+          const pts = dailySpendData.map((y, i) => ({ x: i, y }));
+          const wts = dailySpendData.map((_, i) => Math.pow(0.5, (N - 1 - i) / 7));
+          const reg = weightedLinearRegression(pts, wts);
+          if (reg && !isNaN(reg.slope)) {
+            const lastDayVal = dailySpendData[N - 1];
+            // Arithmetic series: sum of next daysInPeriod projected daily vals
+            const projTotal = daysInPeriod * lastDayVal +
+              reg.slope * daysInPeriod * (daysInPeriod + 1) / 2;
+            const change = projTotal - totals.spend;
+            result.spend = { projected: projTotal, change, slope: reg.slope * 7, perWeek: true };
+          }
+        }
+
+        // ICPs: weekly unweighted, cumulative projection
+        const icpSeries = weeklyTotals.map((w, i) => ({ x: i, y: w.estIcps }));
+        const icpReg = linearRegression(icpSeries);
+        if (icpReg && weeklyTotals.length >= 2) {
+          const lastWeekIcps = weeklyTotals[weeklyTotals.length - 1].estIcps;
+          const wksFwd = Math.round(weeksInPeriod);
+          const projTotal = wksFwd * lastWeekIcps +
+            icpReg.slope * wksFwd * (wksFwd + 1) / 2;
+          result.icps = { projected: projTotal, change: projTotal - totals.estimatedIcps, slope: icpReg.slope, perWeek: true };
+        }
+
+        // CPICP: weekly ratio, point extrapolation at horizon
+        const cpicpSeries = weeklyTotals.map((w, i) => ({
+          x: i, y: w.estIcps > 0 ? w.spend / w.estIcps : null
+        }));
+        const cpicpReg = linearRegression(cpicpSeries);
+        if (cpicpReg && weeklyTotals.length >= 2) {
+          const lastIdx = weeklyTotals.length - 1;
+          const currentVal = cpicpSeries[lastIdx].y;
+          const wksFwd = Math.round(weeksInPeriod);
+          const projVal = currentVal != null ? currentVal + cpicpReg.slope * wksFwd : null;
+          result.cpicp = {
+            projected: projVal,
+            change: projVal != null && currentVal != null ? projVal - currentVal : null,
+            slope: cpicpReg.slope,
+            perWeek: true,
+          };
+        }
+
+        // ATTRIBUTION: weekly ratio, point extrapolation
+        const attrSeries = weeklyTotals.map((w, i) => ({
+          x: i, y: w.estIcps > 0 ? (w.attribIcps / w.estIcps) * 100 : null
+        }));
+        const attrReg = linearRegression(attrSeries);
+        if (attrReg && weeklyTotals.length >= 2) {
+          const lastIdx = weeklyTotals.length - 1;
+          const currentVal = attrSeries[lastIdx].y;
+          const wksFwd = Math.round(weeksInPeriod);
+          const projVal = currentVal != null ? currentVal + attrReg.slope * wksFwd : null;
+          result.attribution = {
+            projected: projVal,
+            change: projVal != null && currentVal != null ? projVal - currentVal : null,
+            slope: attrReg.slope,
+            perWeek: true,
+          };
+        }
+
+        return result;
+      }, [dailySpendData, weeklyTotals, totals, daysInPeriod, weeksInPeriod]);
+
+      // ── Render helper for trend + projection lines ───
+      const renderTrendAndProjection = (proj, fmtRate, fmtProjected, lowerIsBetter, neutral) => {
+        if (!proj) {
+          return <div className="text-[11px] text-stone-400 mt-1">Not enough data for trend</div>;
+        }
+        const { slope, projected, change } = proj;
+        if (slope == null || isNaN(slope)) {
+          return <div className="text-[11px] text-stone-400 mt-1">No trend</div>;
+        }
+        // Trend color
+        let trendColor = 'text-stone-400';
+        if (!neutral && slope !== 0) {
+          const improving = lowerIsBetter ? slope < 0 : slope > 0;
+          trendColor = improving ? 'text-emerald-600' : 'text-red-500';
+        }
+        const arrow = slope > 0 ? '↗' : slope < 0 ? '↘' : '→';
+        const sign = slope > 0 ? '+' : slope < 0 ? '−' : '';
+        return (
+          <div className="mt-1 space-y-0.5">
+            <div className={`text-[11px] ${trendColor}`}>
+              {arrow} {sign}{fmtRate(Math.abs(slope))}/wk trend
+            </div>
+            {projected != null && (
+              <div className="text-[11px] text-stone-500">
+                → {fmtProjected(projected)} projected next {horizonLabel}
+              </div>
+            )}
+          </div>
+        );
+      };
 
       const cards = [
         {
@@ -1052,48 +1167,46 @@
           value: fmtCurrency(totals.spend),
           accent: 'text-stone-800',
           hint: `${weeklyTotals.length} weekly rows`,
-          tooltip: 'Total Meta ad spend across all campaigns, summed over the weekly rollup rows in the selected date range.',
-          trend: {
-            weeklySeries: spendSeries,
-            formatDelta: (v) => fmtCurrency(v),
-            neutral: true,
-          },
+          tooltip: 'Total Meta ad spend across all campaigns in the selected range. Projection uses daily-weighted regression so recent days count more.',
+          trendBlock: renderTrendAndProjection(
+            projections.spend, fmtCurrency, fmtCurrency, false, true
+          ),
         },
         {
           label: 'Estimated ICPs',
           value: fmtNumber(totals.estimatedIcps, 1),
           accent: 'text-amber-600',
           hint: `${fmtNumber(totals.attributedIcps)} UTM-matched`,
-          tooltip: 'Total ICPs credited to campaigns using hybrid attribution: hard UTM matches plus a proportional share of unattributed ICPs (distributed by each campaign\u2019s Meta conversion volume). ICP = HubSpot contact decisioned as investment_crowdfunding.',
-          trend: {
-            weeklySeries: icpsSeries,
-            formatDelta: (v) => fmtNumber(v, 1),
-            lowerIsBetter: false,
-          },
+          tooltip: 'Total ICPs credited via hybrid attribution. ICP = HubSpot contact decisioned as investment_crowdfunding.',
+          trendBlock: renderTrendAndProjection(
+            projections.icps,
+            (v) => fmtNumber(v, 1),
+            (v) => fmtNumber(v, 1),
+            false, false
+          ),
         },
         {
           label: 'Blended CPICP',
           value: fmtCurrencyCents(blendedCpicp),
           accent: 'text-cyan-700',
-          hint: 'Spend ÷ Est. ICPs',
-          tooltip: 'Cost Per ICP using hybrid attribution. This is the primary efficiency metric for the marketing team. Lower is better.',
-          trend: {
-            weeklySeries: cpicpSeries,
-            formatDelta: (v) => fmtCurrencyCents(v),
-            lowerIsBetter: true,
-          },
+          hint: 'Spend \u00f7 Est. ICPs',
+          tooltip: 'Cost Per ICP using hybrid attribution. Primary efficiency metric. Lower is better. Projection extrapolates the current weekly trend forward by the selected period length.',
+          trendBlock: renderTrendAndProjection(
+            projections.cpicp, fmtCurrencyCents, fmtCurrencyCents, true, false
+          ),
         },
         {
           label: 'Attribution Rate',
           value: fmtPct(attributionRate, 1),
           accent: 'text-emerald-700',
           hint: 'UTM-matched share',
-          tooltip: 'Share of estimated ICPs that were matched to a campaign via utm_campaign. Higher means cleaner tracking. Below 50% means most credit is coming from the unattributed pool (allocation by Meta conversion share).',
-          trend: {
-            weeklySeries: attribSeries,
-            formatDelta: (v) => v.toFixed(1) + ' pp',
-            lowerIsBetter: false,
-          },
+          tooltip: 'Share of estimated ICPs matched via utm_campaign. Higher = better tracking. Projection extrapolates the current weekly trend.',
+          trendBlock: renderTrendAndProjection(
+            projections.attribution,
+            (v) => v.toFixed(1) + 'pp',
+            (v) => v.toFixed(1) + '%',
+            false, false
+          ),
         },
       ];
 
@@ -1103,11 +1216,11 @@
             <div key={c.label} className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
               <div className="text-xs text-stone-500 uppercase tracking-wide font-medium flex items-center">
                 <span>{c.label}</span>
-                <InfoTip text={c.tooltip} side="bottom" />
+                <InfoTip text={c.tooltip} />
               </div>
               <div className={`text-2xl font-bold mt-1 ${c.accent}`}>{c.value}</div>
               <div className="text-xs text-stone-400 mt-1">{c.hint}</div>
-              <GoForwardTrend {...c.trend} />
+              {c.trendBlock}
             </div>
           ))}
         </div>
@@ -1121,14 +1234,20 @@
     // the reverse. Ties broken by spend (bigger spender
     // first) so zero-ICP or zero-CTR campaigns don't crowd
     // the leaderboard with noise.
-    function PerformanceLeaderboard({ rollup, rangeStart, rangeEnd, direction }) {
+    function PerformanceLeaderboard({ rollup, rangeStart, rangeEnd, direction, onlyMature, setOnlyMature }) {
       const [metricKey, setMetricKey] = useState('cpicp_blended');
       const metric = LEADERBOARD_METRICS.find(m => m.key === metricKey) || LEADERBOARD_METRICS[0];
       const isBest = direction === 'best';
 
       const ranked = useMemo(() => {
         const agg = aggregateCampaigns(rollup, rangeStart, rangeEnd);
-        const valid = agg.filter(c => c[metricKey] != null && !isNaN(c[metricKey]));
+        let valid = agg.filter(c => c[metricKey] != null && !isNaN(c[metricKey]));
+        // "Only mature" filters to campaigns with over $1,000
+        // total spend in the selected period. Shared toggle
+        // between both leaderboards.
+        if (onlyMature) {
+          valid = valid.filter(c => (c.spend || 0) >= 1000);
+        }
         // ascending = lowest first
         const ascending = (isBest && metric.lowerIsBetter) || (!isBest && !metric.lowerIsBetter);
         valid.sort((a, b) => {
@@ -1138,7 +1257,7 @@
           return b.spend - a.spend;
         });
         return valid.slice(0, 3);
-      }, [rollup, rangeStart, rangeEnd, metricKey, isBest, metric.lowerIsBetter]);
+      }, [rollup, rangeStart, rangeEnd, metricKey, isBest, metric.lowerIsBetter, onlyMature]);
 
       const titleColor = isBest ? 'text-emerald-700' : 'text-red-700';
       const frameColor = isBest
@@ -1158,16 +1277,27 @@
                 side="bottom"
               />
             </h3>
-            <select
-              value={metricKey}
-              onChange={e => setMetricKey(e.target.value)}
-              className="text-xs border border-stone-300 rounded bg-white px-2 py-1 font-medium text-stone-700 cursor-pointer"
-              title={metric.tooltip}
-            >
-              {LEADERBOARD_METRICS.map(m => (
-                <option key={m.key} value={m.key}>{m.label}</option>
-              ))}
-            </select>
+            <div className="flex items-center gap-2">
+              <label className="flex items-center gap-1 cursor-pointer" title="Only show campaigns with over $1,000 total spend in the selected period">
+                <input
+                  type="checkbox"
+                  checked={onlyMature}
+                  onChange={e => setOnlyMature(e.target.checked)}
+                  className="rounded border-stone-300"
+                />
+                <span className="text-[11px] text-stone-600 whitespace-nowrap">Only mature</span>
+              </label>
+              <select
+                value={metricKey}
+                onChange={e => setMetricKey(e.target.value)}
+                className="text-xs border border-stone-300 rounded bg-white px-2 py-1 font-medium text-stone-700 cursor-pointer"
+                title={metric.tooltip}
+              >
+                {LEADERBOARD_METRICS.map(m => (
+                  <option key={m.key} value={m.key}>{m.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <ul className="space-y-2">
             {ranked.length === 0 ? (
@@ -1294,7 +1424,12 @@
       // available metric. Same for comparison.
       useEffect(() => {
         if (!availableMetrics.find(m => m.key === primaryKey)) {
-          if (availableMetrics[0]) setPrimaryKey(availableMetrics[0].key);
+          // Prefer Blended CPICP as the sticky default when
+          // falling back. This avoids the chart staying on
+          // "Spend" after a Day→Week granularity flip.
+          const cpicpAvail = availableMetrics.find(m => m.key === 'cpicp_blended');
+          if (cpicpAvail) setPrimaryKey('cpicp_blended');
+          else if (availableMetrics[0]) setPrimaryKey(availableMetrics[0].key);
         }
         if (comparisonKey && !availableMetrics.find(m => m.key === comparisonKey)) {
           setComparisonKey('');
@@ -2728,6 +2863,9 @@
       const [beeClicks, setBeeClicks]   = useState(0);
       const [chatUnlocked, setChatUnlocked] = useState(false);
       const [chatOpen, setChatOpen]     = useState(false);
+      // Shared between both leaderboards — toggling one
+      // toggles the other. Filters to campaigns with >$1k.
+      const [onlyMature, setOnlyMature] = useState(false);
 
       const handleBeeClick = useCallback(() => {
         if (chatUnlocked) {
@@ -2845,10 +2983,15 @@
             )}
 
             {/* ─── HEADLINE: ICP / CPICP metrics ─────────── */}
-            <ICPSummaryCards rollup={rollup.filter(r => {
-              const ws = String(r.week_start).substring(0, 10);
-              return ws >= start && ws <= end;
-            })} />
+            <ICPSummaryCards
+              rollup={rollup.filter(r => {
+                const ws = String(r.week_start).substring(0, 10);
+                return ws >= start && ws <= end;
+              })}
+              daily={daily}
+              rangeStart={start}
+              rangeEnd={end}
+            />
 
             {/* ─── LEADERBOARDS: Top 3 / Bottom 3 tiles ───── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
@@ -2857,12 +3000,16 @@
                 rangeStart={start}
                 rangeEnd={end}
                 direction="best"
+                onlyMature={onlyMature}
+                setOnlyMature={setOnlyMature}
               />
               <PerformanceLeaderboard
                 rollup={rollup}
                 rangeStart={start}
                 rangeEnd={end}
                 direction="worst"
+                onlyMature={onlyMature}
+                setOnlyMature={setOnlyMature}
               />
             </div>
 
