@@ -582,16 +582,27 @@
         shortLabel: 'CPICP',
         color: '#0891b2',
         lowerIsBetter: true,
-        availableAt: { day: false, week: true, month: true },
-        source: { week: 'rollup', month: 'rollup' },
+        availableAt: { day: true, week: true, month: true },
+        source: { day: 'daily', week: 'rollup', month: 'rollup' },
         formatValue: (v) => fmtCurrencyCents(v),
         formatAxis:  (v) => '$' + v,
         aggregateRows: (rows) => {
           const s = rows.reduce((a, r) => a + (Number(r.spend) || 0), 0);
-          const i = rows.reduce((a, r) => a + (Number(r.estimated_icps) || 0), 0);
+          // Weekly rollup rows already have estimated_icps with
+          // IC override baked in. Daily rows from rolling_data
+          // only carry ic_conversions, so we fall back to that
+          // when estimated_icps is missing. The result: at day
+          // granularity, IC-optimized campaigns get real CPICP
+          // lines and non-IC campaigns return null (which the
+          // chart handles via connectNulls).
+          const i = rows.reduce((a, r) => {
+            const est = Number(r.estimated_icps);
+            if (est > 0) return a + est;
+            return a + (Number(r.ic_conversions) || 0);
+          }, 0);
           return i > 0 ? Math.round((s / i) * 100) / 100 : null;
         },
-        tooltip: 'Cost Per ICP using hybrid attribution (blended). Total spend divided by estimated ICPs. This is the primary efficiency metric. Lower is better.',
+        tooltip: 'Cost Per ICP using hybrid attribution (blended). Spend ÷ estimated ICPs. The primary efficiency metric. Lower is better. At Day granularity, only IC-optimized campaigns have a meaningful value (uses direct IC conversions); non-IC campaigns show no line at daily.',
       },
       {
         key: 'cpicp_attributed',
