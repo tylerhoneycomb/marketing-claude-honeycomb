@@ -107,7 +107,17 @@ function handleDashboardApi_(e) {
     chat: true,
     run_budget_analysis: true,
     get_spend_goal: true,
-    set_spend_goal: true
+    set_spend_goal: true,
+    // Slack-safe approval flow. The bare approve/reject
+    // actions show a confirmation page only (no side effect),
+    // so Slack's unfurl crawler can't accidentally fire them.
+    // The actual state change happens on confirm_approve /
+    // confirm_reject, which only a human clicking a button
+    // can trigger.
+    approve: true,
+    reject: true,
+    confirm_approve: true,
+    confirm_reject: true
   };
 
   if (!action || !dashboardActions[action]) return null;
@@ -115,6 +125,18 @@ function handleDashboardApi_(e) {
   // Chat returns its own Response object.
   if (action === 'chat') {
     return handleChatRequest_(e);
+  }
+
+  // Approve/reject links from Slack — two-step to defeat
+  // the Slack link-unfurling crawler. Crawler hits approve
+  // or reject, gets an HTML confirmation page, and stops.
+  // Only a human clicking the button triggers the real
+  // state change.
+  if (action === 'approve' || action === 'reject') {
+    return showApprovalConfirmationPage_(e, action);
+  }
+  if (action === 'confirm_approve' || action === 'confirm_reject') {
+    return applyApprovalDecision_(e, action.replace('confirm_', ''));
   }
 
   // Budget analysis trigger — calls the existing
@@ -670,6 +692,120 @@ function getTargetWeeklySpend_() {
 function getWeeklySpendTolerance_() {
   var override = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
   return override ? Number(override) : WEEKLY_SPEND_TOLERANCE;
+}
+
+
+// ─── SLACK-SAFE APPROVAL CONFIRMATION FLOW ────────────────
+// Why this exists:
+// Slack's link-unfurling crawler automatically fires GET
+// requests against every URL in an incoming webhook message.
+// If approve/reject were one-step GET handlers (like they
+// used to be), the crawler would fire BOTH URLs the instant
+// the proposal posts to Slack — setting both APPROVED and
+// REJECTED tokens before any human ever clicks. Result:
+// proposals silently auto-approve themselves.
+//
+// The fix: the bare `approve` and `reject` actions now just
+// return an HTML confirmation page with a "Click to confirm"
+// button. That button points at `confirm_approve` or
+// `confirm_reject`, which do the actual state write. The
+// Slack crawler visits the first URL and stops there (it
+// doesn't click buttons), so the side effect only happens
+// when a real human clicks.
+
+function showApprovalConfirmationPage_(e, action) {
+  var token = e && e.parameter && e.parameter.token;
+  if (!token) {
+    return HtmlService.createHtmlOutput('<h2>Invalid link.</h2><p>Missing token.</p>');
+  }
+
+  var pendingToken = PROPS.getProperty('BUDGET_PENDING_TOKEN');
+  if (!pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>No pending budget proposal.</h2>' +
+      '<p>This proposal may have already been actioned or expired.</p>');
+  }
+  if (token !== pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>Token mismatch.</h2>' +
+      '<p>This link is invalid or has already been used.</p>');
+  }
+
+  var isApprove = action === 'approve';
+  var color       = isApprove ? '#10b981' : '#ef4444';
+  var label       = isApprove ? 'APPROVE' : 'REJECT';
+  var description = isApprove
+    ? 'This will mark the current budget proposal approved. The scheduled executor will apply all proposed changes at 3:00 AM.'
+    : 'This will mark the current budget proposal rejected. No budget changes will be applied this cycle.';
+
+  var baseUrl = WEB_APP_URL || ScriptApp.getService().getUrl();
+  var confirmUrl = baseUrl + '?action=confirm_' + action + '&token=' + token;
+
+  var html =
+    '<!doctype html><html><head>' +
+    '<meta charset="utf-8">' +
+    '<title>Honeycomb Budget — Confirm</title>' +
+    '<meta name="robots" content="noindex">' +
+    '<style>' +
+    'body{font-family:-apple-system,system-ui,"Segoe UI",sans-serif;max-width:560px;margin:60px auto;padding:24px;color:#1c1917;}' +
+    'h1{font-size:22px;margin-bottom:8px;}' +
+    'p{line-height:1.55;color:#57534e;}' +
+    '.btn{display:inline-block;padding:14px 28px;color:white;text-decoration:none;' +
+    'border-radius:8px;font-weight:600;font-size:15px;background:' + color + ';margin-top:16px;}' +
+    '.btn:hover{opacity:.92}' +
+    '.note{margin-top:24px;padding:12px 16px;background:#fef3c7;border:1px solid #fde68a;' +
+    'border-radius:6px;font-size:13px;color:#78350f;line-height:1.5;}' +
+    '</style></head><body>' +
+    '<h1>🐝 Honeycomb Budget — Confirm ' + label + '</h1>' +
+    '<p>You clicked the <strong>' + label + '</strong> link for the current budget proposal.</p>' +
+    '<p>' + description + '</p>' +
+    '<a class="btn" href="' + confirmUrl + '">Click to confirm ' + label + '</a>' +
+    '<div class="note">This extra confirmation step exists so that link previews (like Slack unfurl) can\'t accidentally approve or reject proposals on your behalf.</div>' +
+    '</body></html>';
+
+  return HtmlService.createHtmlOutput(html);
+}
+
+function applyApprovalDecision_(e, decision) {
+  var token = e && e.parameter && e.parameter.token;
+  if (!token) {
+    return HtmlService.createHtmlOutput('<h2>Invalid link.</h2><p>Missing token.</p>');
+  }
+
+  var pendingToken = PROPS.getProperty('BUDGET_PENDING_TOKEN');
+  if (!pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>No pending budget proposal.</h2>' +
+      '<p>This proposal may have already been actioned or expired.</p>');
+  }
+  if (token !== pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>Token mismatch.</h2>' +
+      '<p>This link is invalid or has already been used.</p>');
+  }
+
+  var user = Session.getActiveUser().getEmail() || 'unknown user';
+
+  if (decision === 'approve') {
+    PROPS.setProperty('BUDGET_APPROVED_TOKEN', token);
+    postToSlack_('*Honeycomb Budget* ✅ Approved by ' + user +
+                 '. Changes will execute tonight at 3:00 AM.');
+    return HtmlService.createHtmlOutput(
+      '<h2>✅ Budget changes approved.</h2>' +
+      '<p>Changes will execute tonight at 3:00 AM. ' +
+      'You\'ll receive a Slack confirmation when complete.</p>');
+  }
+
+  if (decision === 'reject') {
+    PROPS.setProperty('BUDGET_REJECTED_TOKEN', token);
+    postToSlack_('*Honeycomb Budget* ❌ Rejected by ' + user +
+                 '. No changes will be applied this cycle.');
+    return HtmlService.createHtmlOutput(
+      '<h2>❌ Budget changes rejected.</h2>' +
+      '<p>No budget changes will be made this cycle.</p>');
+  }
+
+  return HtmlService.createHtmlOutput('<h2>Unknown decision.</h2>');
 }
 
 
