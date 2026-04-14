@@ -517,6 +517,38 @@
     // AND conceptually by the weekly performance table (which
     // has its own inline version). Keep the two in sync if
     // you change what's being summed.
+    // ─── IC CAMPAIGN DETECTION ─────────────────────────
+    // Returns true when a campaign_mapping row is flagged
+    // as IC-optimized. The source of truth is the
+    // conversion_event column (col C) in campaign_mapping,
+    // populated by the Apps Script when it discovers an ad
+    // set optimized against the "Investment Crowdfunding
+    // Prequal Decision" custom conversion event.
+    //
+    // Match is case-insensitive and partial — the Meta API
+    // returns the full event label like "Investment
+    // Crowdfunding Prequal Decision" but the frontend
+    // should still recognize it.
+    function isICCampaignMapping(mapping) {
+      if (!mapping) return false;
+      const conv = String(mapping.conversion_event || '').toLowerCase();
+      return conv.indexOf('investment crowdfunding') !== -1;
+    }
+
+    // Builds a Set of campaign names that are IC-optimized,
+    // given the full mappings list. Used for badging in the
+    // table and for semantic routing in the chart tooltips.
+    function buildICCampaignNameSet(mappings) {
+      const set = new Set();
+      (mappings || []).forEach(m => {
+        if (isICCampaignMapping(m)) {
+          set.add(String(m.campaign_name || '').trim());
+        }
+      });
+      return set;
+    }
+
+
     function aggregateCampaigns(rollup, rangeStart, rangeEnd) {
       const inRange = rollup.filter(r => {
         const ws = String(r.week_start).substring(0, 10);
@@ -647,7 +679,7 @@
         formatAxis:  (v) => v,
         aggregateRows: (rows) =>
           rows.reduce((s, r) => s + (Number(r.ic_conversions) || 0), 0),
-        tooltip: 'Direct IC (Investment Crowdfunding) conversions reported by Meta from the custom conversion event. For campaigns optimized against this event, this is the ground-truth ICP count and now drives blended CPICP directly (overriding hybrid attribution).',
+        tooltip: 'Direct IC (Investment Crowdfunding) conversion events reported by Meta. Can appear on any campaign because Meta credits the IC event back to whatever campaign produced the original lead. A non-zero count does NOT mean the campaign is IC-optimized — use the IC badge next to the campaign name (from campaign_mapping.conversion_event) to tell those apart. For actually-IC-optimized campaigns, this is the direct conversion signal Meta is optimizing against.',
       },
       {
         key: 'attribution_rate',
@@ -2224,10 +2256,11 @@
       { key: 'ytd', label: 'YTD',           start: startOfYearStr,       end: yesterdayStr },
     ];
 
-    function CampaignPerformanceTable({ rollup, mappings }) {
+    function CampaignPerformanceTable({ rollup, mappings, icCampaignNames }) {
       const [sortKey, setSortKey] = useState('blendedCpicp');
       const [sortDir, setSortDir] = useState('asc'); // lowest CPICP first
       const [showInactive, setShowInactive] = useState(false);
+      const icSet = icCampaignNames || new Set();
 
       // Period selector state — independent from the global
       // dashboard date range. Default: prior 30 days.
@@ -2325,9 +2358,10 @@
             attribRate,
             weekCount: c.weeks.length,
             inactive: false,
+            is_ic_campaign: icSet.has(c.campaign),
           };
         });
-      }, [rollup, rangeStart, rangeEnd]);
+      }, [rollup, rangeStart, rangeEnd, icSet]);
 
       // Inactive campaigns: campaigns that exist in the
       // UTM mappings but had no spend in the selected
@@ -2355,10 +2389,11 @@
             attribRate: null,
             weekCount: 0,
             inactive: true,
+            is_ic_campaign: icSet.has(name),
           });
         });
         return out;
-      }, [mappings, rows]);
+      }, [mappings, rows, icSet]);
 
       const sorted = useMemo(() => {
         const base = showInactive ? [...rows, ...inactiveRows] : [...rows];
@@ -2510,7 +2545,7 @@
                   </Th>
                   <Th k="icConversions" align="right">
                     IC Conv
-                    <InfoTip text="Direct IC (Investment Crowdfunding) conversions reported by Meta from the custom conversion event. Non-zero only for campaigns optimized against this event. For those campaigns, blended CPICP is computed from this value directly rather than from the hybrid estimate." />
+                    <InfoTip text="Direct IC (Investment Crowdfunding) conversion events reported by Meta. Can appear on general campaigns too — Meta credits the IC event back to whatever campaign produced the original lead that later became an IC decision. A non-zero count does NOT mean the campaign is IC-optimized. Look for the lime IC badge next to the campaign name to identify actually-IC-optimized campaigns (from campaign_mapping.conversion_event)." />
                   </Th>
                   <Th k="blendedCpicp" align="right" defaultDir="asc">
                     CPICP
@@ -2554,9 +2589,21 @@
                         : 'hover:bg-stone-50'
                     }`}
                   >
-                    <td className="px-3 py-2 font-medium text-stone-900">
-                      {r.campaign}
-                      <div className="text-xs text-stone-400">{r.weekCount} weeks</div>
+                    <td className={`px-3 py-2 font-medium ${r.inactive ? '' : 'text-stone-900'}`}>
+                      <div className="flex items-center gap-1.5">
+                        <span>{r.campaign}</span>
+                        {r.is_ic_campaign && (
+                          <span
+                            className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-lime-100 text-lime-800 border border-lime-300"
+                            title="IC-optimized: this campaign is configured against the Investment Crowdfunding Prequal Decision custom conversion event in Meta. Its IC conversions are direct signal from Meta rather than attribution spillover."
+                          >
+                            IC
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-xs text-stone-400">
+                        {r.inactive ? 'no spend in range' : `${r.weekCount} weeks`}
+                      </div>
                     </td>
                     <td className="px-3 py-2 text-right">{fmtCurrency(r.spend)}</td>
                     <td className="px-3 py-2 text-right">{fmtNumber(r.estIcps, 1)}</td>
@@ -3404,6 +3451,14 @@
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState(null);
 
+      // Set of campaign names flagged as IC-optimized in
+      // campaign_mapping. Used by the table to badge IC
+      // campaigns and by the chart key to mark them.
+      const icCampaignNames = useMemo(
+        () => buildICCampaignNameSet(mappings),
+        [mappings]
+      );
+
       const { start, end } = useCustom
         ? { start: customStart, end: customEnd }
         : { start: DATE_PRESETS[preset].start(), end: DATE_PRESETS[preset].end() };
@@ -3536,7 +3591,11 @@
                 top. That's intentional — you can look at the
                 dashboard at one range while drilling into a
                 different period in the table. */}
-            <CampaignPerformanceTable rollup={rollup} mappings={mappings} />
+            <CampaignPerformanceTable
+              rollup={rollup}
+              mappings={mappings}
+              icCampaignNames={icCampaignNames}
+            />
 
             {/* ─── NARRATIVE + MAPPINGS ──────────────────── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
