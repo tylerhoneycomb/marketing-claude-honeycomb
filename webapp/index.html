@@ -634,7 +634,7 @@
           }, 0);
           return i > 0 ? Math.round((s / i) * 100) / 100 : null;
         },
-        tooltip: 'Cost Per ICP using hybrid attribution (blended). Spend ÷ estimated ICPs. The primary efficiency metric. Lower is better. At Day granularity, only IC-optimized campaigns have a meaningful value (uses direct IC conversions); non-IC campaigns show no line at daily.',
+        tooltip: 'Cost Per ICP using hybrid attribution (blended). Spend ÷ estimated ICPs. The primary efficiency metric. Lower is better. v3 attribution: Meta IC conversions are the floor for each campaign, plus a proportional share of any HubSpot ICPs that exceeded the total IC conversion count. At Day granularity, only IC-optimized campaigns have a meaningful value (uses direct IC conversions); non-IC campaigns show no line at daily.',
       },
       {
         key: 'cpicp_attributed',
@@ -665,7 +665,7 @@
         formatAxis:  (v) => v,
         aggregateRows: (rows) =>
           Math.round(rows.reduce((s, r) => s + (Number(r.estimated_icps) || 0), 0) * 10) / 10,
-        tooltip: 'Estimated ICPs using hybrid attribution (UTM-matched plus proportional share of unattributed). For campaigns optimized against the IC custom conversion event, this value is replaced with the direct IC conversion count.',
+        tooltip: 'Estimated ICPs using v3 hybrid attribution: Meta IC conversions for this campaign (deduplicated, the floor) plus a proportional share of any HubSpot ICPs that exceeded the total IC conversion count (weighted by Meta conversion volume).',
       },
       {
         key: 'ic_conversions',
@@ -679,7 +679,7 @@
         formatAxis:  (v) => v,
         aggregateRows: (rows) =>
           rows.reduce((s, r) => s + (Number(r.ic_conversions) || 0), 0),
-        tooltip: 'Direct IC (Investment Crowdfunding) conversion events reported by Meta. Can appear on any campaign because Meta credits the IC event back to whatever campaign produced the original lead. A non-zero count does NOT mean the campaign is IC-optimized — use the IC badge next to the campaign name (from campaign_mapping.conversion_event) to tell those apart. For actually-IC-optimized campaigns, this is the direct conversion signal Meta is optimizing against.',
+        tooltip: 'Direct IC (Investment Crowdfunding) conversion events reported by Meta, deduplicated. In v3 attribution, this is the FOUNDATION of estimated ICPs — every IC conversion on a campaign flows directly into that campaign\'s estimated_icps as the floor. Can appear on any campaign because Meta credits the IC event back to whatever campaign produced the original lead. A non-zero count does NOT mean the campaign is IC-optimized — use the IC badge next to the campaign name (from campaign_mapping.conversion_event) to tell those apart.',
       },
       {
         key: 'attribution_rate',
@@ -696,7 +696,7 @@
           const a = rows.reduce((s, r) => s + (Number(r.icps_attributed) || 0), 0);
           return e > 0 ? Math.round((a / e) * 1000) / 10 : null;
         },
-        tooltip: 'Share of estimated ICPs that were hard-matched to a campaign via utm_campaign. Higher means cleaner tracking.',
+        tooltip: 'Share of estimated ICPs that are backed by direct IC conversions from Meta (deduplicated). Higher means more of this campaign\'s credit is coming from Meta\'s direct signal rather than the proportional share of the unattributed pool.',
       },
       {
         key: 'spend',
@@ -799,14 +799,14 @@
         label: 'Estimated ICPs',
         lowerIsBetter: false,
         format: (v) => fmtNumber(v, 1),
-        tooltip: 'Total estimated ICPs attributed to each campaign (hard UTM matches plus a proportional share of unattributed ICPs). Higher is better.',
+        tooltip: 'Total estimated ICPs attributed to each campaign using v3 hybrid attribution (direct Meta IC conversions plus a proportional share of any HubSpot ICPs that exceeded the total IC conversion count). Higher is better.',
       },
       {
         key: 'attribution_rate',
         label: 'Attribution Rate',
         lowerIsBetter: false,
         format: (v) => v != null ? v.toFixed(0) + '%' : '—',
-        tooltip: 'Share of each campaign\u2019s estimated ICPs that came with a matching UTM tag. Higher means cleaner tracking. Below 50% means most credit is coming from the unattributed pool.',
+        tooltip: 'Share of each campaign\u2019s estimated ICPs that are backed by direct IC conversions from Meta (deduplicated). Higher means more of the campaign\u2019s credit is coming from Meta\u2019s direct signal rather than the proportional share of the unattributed pool.',
       },
       {
         key: 'cpl',
@@ -1260,7 +1260,7 @@
           label: 'Estimated ICPs',
           value: fmtNumber(totals.estimatedIcps, 1),
           accent: 'text-amber-600',
-          hint: `${fmtNumber(totals.attributedIcps)} UTM-matched`,
+          hint: `${fmtNumber(totals.attributedIcps)} from IC conversions`,
           tooltip: 'Total ICPs credited via hybrid attribution. ICP = HubSpot contact decisioned as investment_crowdfunding.',
           trendBlock: renderTrendAndProjection(
             projections.icps,
@@ -1283,8 +1283,8 @@
           label: 'Attribution Rate',
           value: fmtPct(attributionRate, 1),
           accent: 'text-emerald-700',
-          hint: 'UTM-matched share',
-          tooltip: 'Share of estimated ICPs matched via utm_campaign. Higher = better tracking. Projection extrapolates the current weekly trend.',
+          hint: 'Direct IC share',
+          tooltip: 'Share of estimated ICPs backed by direct IC conversions from Meta (deduplicated). Higher = more credit coming from Meta\u2019s direct signal rather than the proportional share of the unattributed pool. Projection extrapolates the current weekly trend.',
           trendBlock: renderTrendAndProjection(
             projections.attribution,
             (v) => v.toFixed(1) + 'pp',
@@ -2541,11 +2541,11 @@
                   <Th k="spend" align="right">Spend</Th>
                   <Th k="estIcps" align="right">
                     Est. ICPs
-                    <InfoTip text="Estimated ICPs attributed to this campaign using hybrid attribution (hard UTM matches plus proportional share of unattributed ICPs). For IC-optimized campaigns, this is overridden with the direct IC conversion count." />
+                    <InfoTip text="Estimated ICPs attributed to this campaign using v3 hybrid attribution: Meta IC conversions for this campaign (the floor) plus a proportional share of any HubSpot ICPs that exceeded the total IC conversion count, weighted by Meta conversion volume share." />
                   </Th>
                   <Th k="icConversions" align="right">
                     IC Conv
-                    <InfoTip text="Direct IC (Investment Crowdfunding) conversion events reported by Meta. Can appear on general campaigns too — Meta credits the IC event back to whatever campaign produced the original lead that later became an IC decision. A non-zero count does NOT mean the campaign is IC-optimized. Look for the lime IC badge next to the campaign name to identify actually-IC-optimized campaigns (from campaign_mapping.conversion_event)." />
+                    <InfoTip text="Direct IC (Investment Crowdfunding) conversion events reported by Meta, deduplicated. In v3 attribution, this is the FOUNDATION of estimated ICPs — every IC conversion flows directly into this campaign's estimated_icps as the floor. Can appear on general campaigns too — Meta credits the IC event back to whatever campaign produced the original lead that later became an IC decision. A non-zero count does NOT mean the campaign is IC-optimized. Look for the lime IC badge next to the campaign name to identify actually-IC-optimized campaigns (from campaign_mapping.conversion_event)." />
                   </Th>
                   <Th k="blendedCpicp" align="right" defaultDir="asc">
                     CPICP
@@ -2569,7 +2569,7 @@
                   </Th>
                   <Th k="attribRate" align="right">
                     Attr. %
-                    <InfoTip text="Share of this campaign's estimated ICPs that came with a matching UTM tag. Higher = cleaner tracking. Below 50% means most credit comes from the unattributed pool." />
+                    <InfoTip text="Share of this campaign's estimated ICPs that are backed by direct IC conversions from Meta. Higher = more of this campaign's credit is coming from Meta's deduplicated direct signal. Lower = more credit comes from the proportional share of the unattributed pool." />
                   </Th>
                 </tr>
               </thead>
