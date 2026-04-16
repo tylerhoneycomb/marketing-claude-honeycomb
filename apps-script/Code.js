@@ -3356,7 +3356,10 @@ function getDailyData_(start, end) {
       reach: Number(data[i][8]) || 0,
       conversions: Number(data[i][9]) || 0,
       frequency: Number(data[i][10]) || 0,
-      cpl: (data[i][11] === '' || data[i][11] == null) ? null : Number(data[i][11])
+      cpl: (data[i][11] === '' || data[i][11] == null) ? null : Number(data[i][11]),
+      // IC Conversions live in column 12 (0-indexed). Defaults
+      // to 0 for older rows that predate the column.
+      ic_conversions: Number(data[i][12]) || 0
     });
   }
   return rows;

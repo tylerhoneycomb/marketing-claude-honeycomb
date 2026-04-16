@@ -2017,7 +2017,7 @@
                       <p className="text-xs text-stone-500 mt-3 max-w-md mx-auto leading-relaxed">
                         Daily CPICP needs <code className="bg-stone-100 px-1 rounded">ic_conversions</code> in the daily data.
                         {fieldMissing
-                          ? ' The current Apps Script is not returning that field — re-paste webapp/apps-script-api.gs in the Apps Script editor and redeploy as a new version.'
+                          ? ' The current Apps Script is not returning that field. This has been fixed — merge the latest Code.js changes and the clasp deploy will update it automatically.'
                           : ' If no IC-optimized campaigns had conversions in this range, switch to Week or Month granularity for a fuller picture.'}
                       </p>
                     );
