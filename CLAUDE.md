@@ -26,11 +26,33 @@ This monorepo contains marketing automation, ad copy, workflows, and tooling for
 
 ## Repo Structure
 
+- `/apps-script/` — Full Apps Script intelligence layer, deployed via clasp + GitHub Actions
+  - `Code.js` — The complete intelligence script (~3,600 lines). Edit here, never in the Apps Script web editor
+  - `.clasp.json` — Points clasp at the Apps Script project (do not edit)
+  - `appsscript.json` — Apps Script manifest (scopes, runtime, Web App settings)
+- `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
+  - `index.html` — The full dashboard app
+  - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
 - `/ad-copy/` — Meta (Facebook/Instagram) ad copy organized by vertical
 - `/workflows/` — Automation scripts and marketing workflows
 - `/audiences/` — Audience lists and segmentation data (never commit PII)
 - `/reports/` — Campaign performance reports
 - `.github/workflows/` — GitHub Actions CI/CD
+  - `deploy-webapp.yml` — Auto-deploys dashboard to GitHub Pages on changes to webapp/
+  - `deploy-apps-script.yml` — Auto-deploys Apps Script via clasp on changes to apps-script/
+
+## Apps Script Deployment (clasp)
+
+The Apps Script project is managed via clasp and deployed automatically through GitHub Actions. **Do not instruct users to copy/paste code into the Apps Script web editor** — that workflow is deprecated. Any direct edit in the web editor will be silently overwritten on the next CI run.
+
+- **To change the script:** Edit `apps-script/Code.js` in a feature branch, open a PR, merge to main. CI runs `clasp push` + `clasp deploy` automatically.
+- **To change the manifest:** Edit `apps-script/appsscript.json`, same flow.
+- **To verify a deploy:** Check the "Deploy Apps Script" workflow run in GitHub Actions.
+- **To roll back:** Revert the commit on main; CI redeploys the prior version.
+
+The `.js` extension on `Code.js` is intentional — clasp uses `.js` locally and converts to `.gs` on push. Do not rename it.
+
+Authentication uses the `CLASPRC_JSON` GitHub secret (OAuth credentials). Do not attempt to read, modify, or rotate this secret programmatically.
 
 ## Code Style
 

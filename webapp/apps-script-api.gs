@@ -2,92 +2,36 @@
 // HONEYCOMB ADS DASHBOARD — APPS SCRIPT API LAYER
 // ============================================================
 //
-// Adds JSON API endpoints to the existing Apps Script project
-// so the webapp dashboard in /webapp/index.html can read from
-// the Google Sheet. No existing functions are changed or
-// overwritten. The budget approve/reject flow keeps working
-// exactly as it does today.
+// REFERENCE COPY — the live deployed version of these functions
+// lives in apps-script/Code.js and is deployed via clasp +
+// GitHub Actions. This file exists in /webapp/ for documentation
+// and as a readable subset of the web API portion of the full
+// intelligence script.
 //
-// ─── HOW TO INSTALL (≈90 seconds, two steps) ────────────────
+// ─── DEPRECATED: MANUAL COPY/PASTE INSTALL ──────────────────
+// The original workflow (copy this file into the Apps Script
+// web editor, add two lines to doGet, redeploy manually) is
+// NO LONGER USED. All changes now flow through:
+//   1. Edit apps-script/Code.js in a feature branch
+//   2. Open a PR against main
+//   3. On merge, GitHub Actions runs clasp push + clasp deploy
+//   4. Live within ~30-60 seconds
 //
-// STEP 1 — PASTE THIS FILE AT THE BOTTOM OF YOUR SCRIPT
-//   a. Open the Apps Script editor.
-//   b. Scroll to the very bottom of honeycomb_ads_intelligence_final.js
-//      (or whichever file holds the existing doGet function).
-//   c. Copy EVERYTHING in this file below the "──── BEGIN PASTE ────"
-//      marker and paste it at the bottom.
-//   d. Press Cmd+S (Mac) or Ctrl+S (Windows) to save.
+// Do NOT edit Code.gs directly in the Apps Script web editor.
+// Any manual edit will be silently overwritten on the next
+// CI-driven deploy.
 //
-// STEP 2 — ADD TWO LINES TO THE EXISTING doGet FUNCTION
-//   a. In the same Apps Script file, press Cmd+F / Ctrl+F and
-//      search for:    function doGet(e)
-//   b. Immediately inside the opening curly brace, add these
-//      two lines as the very first thing the function does:
-//
-//        var dashboardResponse = handleDashboardApi_(e);
-//        if (dashboardResponse) return dashboardResponse;
-//
-//      The result should look like this:
-//
-//        function doGet(e) {
-//          var dashboardResponse = handleDashboardApi_(e);
-//          if (dashboardResponse) return dashboardResponse;
-//
-//          // ... all the existing approve/reject code stays here,
-//          //     completely untouched ...
-//        }
-//
-//   c. Save again (Cmd+S / Ctrl+S).
-//
-// STEP 3 — REDEPLOY THE WEB APP
-//   a. Click the blue "Deploy" button in the top-right.
-//   b. Choose "Manage deployments".
-//   c. Click the pencil icon on the existing deployment.
-//   d. Under "Version", pick "New version".
-//   e. Click "Deploy".
-//   f. Copy the "Web app URL" shown (ends in /exec). This is
-//      the same URL your Slack approve/reject links already
-//      use — it does not change.
-//
-// STEP 4 — CONNECT THE DASHBOARD
-//   a. Open the dashboard in your browser.
-//   b. Click "Connect API" in the top-right corner.
-//   c. Paste the /exec URL you just copied.
-//   d. Click "Save". The dashboard switches from mock data
-//      to real data instantly.
+// ─── WHAT THIS FILE CONTAINS ────────────────────────────────
+// The functions below are the web API layer that powers the
+// dashboard (handleDashboardApi_, Hive Mind chat backend,
+// Slack-safe approval flow, helper functions). They are a
+// subset of the full apps-script/Code.js.
 //
 // ─── TESTING ────────────────────────────────────────────────
-// After Step 3 you can sanity-check by visiting this URL in
-// your browser (replacing WEB_APP_URL with the /exec URL):
+// Sanity-check by visiting this URL in your browser
+// (replacing WEB_APP_URL with the /exec URL):
 //     WEB_APP_URL?action=mappings
 // You should see a JSON list of your campaign mappings.
-//
-// ─── SAFETY / ROLLBACK ──────────────────────────────────────
-// Apps Script keeps version history automatically. If anything
-// behaves oddly, go to File → See version history and restore
-// the previous version. None of the changes below modify data
-// — every new function here is read-only.
-//
-// ─── UPDATING AN EXISTING INSTALL ───────────────────────────
-// When this file changes (e.g. a new feature like the chat
-// backend is added), the simplest re-install path is:
-//   1. In your Code.gs, find the start of `handleDashboardApi_`.
-//      Select everything from that function down through the
-//      very last helper (currently `buildDashboardContext_`).
-//   2. Delete that entire block.
-//   3. Paste the current contents of the BEGIN PASTE block
-//      below in its place.
-//   4. Redeploy as a new version (Deploy → Manage deployments
-//      → pencil → New version → Deploy). The /exec URL does
-//      not change.
-// Your two-line patch inside the existing doGet stays intact
-// across updates — you only need to re-do it if you
-// accidentally delete it.
-//
-// The chat backend ALSO needs a new `doPost` function. If
-// your Code.gs doesn't already have one, the one below will
-// add it. If it does, merge the `if (action === 'chat')`
-// branch into your existing doPost manually.
 // ============================================================
 
 
