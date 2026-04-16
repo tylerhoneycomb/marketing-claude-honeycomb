@@ -2840,6 +2840,7 @@
       const [goalSource, setGoalSource]       = useState('');
       const [goalLoading, setGoalLoading]     = useState(false);
       const [goalSaveResult, setGoalSaveResult] = useState('');
+      const [pendingProposal, setPendingProposal] = useState(null);
 
       // Load current spend goal on mount
       useEffect(() => {
@@ -2850,6 +2851,7 @@
               setGoalTarget(String(data.target_weekly_spend || ''));
               setGoalTolerance(String(data.weekly_spend_tolerance || ''));
               setGoalSource(data.source || '');
+              setPendingProposal(data.pending || null);
             }
           })
           .catch(() => {}); // silently fail if endpoint not installed yet
@@ -2874,23 +2876,28 @@
         setRunning(false);
       };
 
-      const handleSaveGoal = async () => {
+      const handleDeployGoal = async () => {
         if (!apiUrl) return;
         setGoalLoading(true);
         setGoalSaveResult('');
         try {
-          const data = await fetchAction(apiUrl, 'set_spend_goal', {
+          const data = await fetchAction(apiUrl, 'propose_spend_target', {
             target: goalTarget,
             tolerance: goalTolerance,
           });
           if (data && data.ok) {
-            setGoalTarget(String(data.target_weekly_spend || ''));
-            setGoalTolerance(String(data.weekly_spend_tolerance || ''));
-            setGoalSaveResult('Saved');
-            setTimeout(() => setGoalSaveResult(''), 2000);
+            setGoalSaveResult('Sent to Slack for approval');
+            setPendingProposal({
+              target: Number(goalTarget),
+              tolerance: Number(goalTolerance),
+              proposed_at: new Date().toISOString(),
+            });
+            setTimeout(() => setGoalSaveResult(''), 4000);
+          } else if (data && data.error) {
+            setGoalSaveResult(data.error);
           }
         } catch (err) {
-          setGoalSaveResult('Save failed: ' + (err.message || err));
+          setGoalSaveResult('Failed: ' + (err.message || err));
         }
         setGoalLoading(false);
       };
@@ -2934,8 +2941,16 @@
             <div className="border border-stone-200 rounded-lg p-3">
               <h4 className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
                 <span>Weekly Spend Goal</span>
-                <InfoTip text="The optimizer aims to keep total weekly spend near this target. The tolerance is how far over or under the target is considered 'within range' before the optimizer applies a portfolio-level correction." />
+                <InfoTip text="The optimizer aims to keep total weekly spend near this target. The tolerance is how far over or under the target is considered 'within range' before the optimizer applies a portfolio-level correction. Changes require Slack approval before taking effect." />
               </h4>
+              {pendingProposal && (
+                <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800">
+                  <span className="font-semibold">Pending approval:</span>{' '}
+                  ${Number(pendingProposal.target).toLocaleString()}/week
+                  {pendingProposal.tolerance != null && ` (\u00b1$${Number(pendingProposal.tolerance).toLocaleString()})`}
+                  {' '}&mdash; check Slack
+                </div>
+              )}
               <div className="flex flex-wrap gap-3 mb-3">
                 <div>
                   <label className="text-[11px] text-stone-600 font-medium block mb-1">
@@ -2966,18 +2981,18 @@
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleSaveGoal}
+                  onClick={handleDeployGoal}
                   disabled={goalLoading || !apiUrl}
-                  className="bg-stone-800 hover:bg-stone-900 text-white px-3 py-1.5 rounded text-xs font-medium disabled:opacity-50"
+                  className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {goalLoading ? 'Saving…' : 'Save'}
+                  {goalLoading ? 'Deploying\u2026' : 'Deploy'}
                 </button>
                 {goalSaveResult && (
                   <span className={`text-xs font-medium ${
-                    goalSaveResult === 'Saved' ? 'text-emerald-700' : 'text-red-700'
+                    goalSaveResult === 'Sent to Slack for approval' ? 'text-emerald-700' : 'text-red-700'
                   }`}>{goalSaveResult}</span>
                 )}
-                {goalSource && (
+                {goalSource && !goalSaveResult && (
                   <span className="text-[10px] text-stone-400 ml-auto">
                     Source: {goalSource === 'hardcoded_default' ? 'default ($10,000 / $500)' : 'custom override'}
                   </span>
