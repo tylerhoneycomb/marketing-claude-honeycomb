@@ -36,7 +36,7 @@ const WEEKLY_SPEND_TOLERANCE = 500;     // dollars ±
 const CAMPAIGN_DAILY_MIN_CENTS = 2500;    // $25.00/day floor
 const MAX_CHANGE_PCT = 0.02;    // ±2% per cycle
 const MAX_REDUCTION_PCT = 0.04;    // hard cap: dramatic underperformers only, max 4% reduction per cycle
-const LIFETIME_MIN_CONVERSIONS = 25;      // eligibility gate
+const LIFETIME_MIN_CONVERSIONS = 10;      // eligibility gate
 const WEEKLY_ICP_TARGET = 75;      // weekly ICP benchmark (informational — no kill switch)
 const ROLLING_DAYS = 14;      // signal window
 const FREQ_WATCH_THRESHOLD = 2.0;     // modifier
@@ -1968,6 +1968,8 @@ function runFullDiagnostic() {
 
 function runBudgetAnalysis() {
   Logger.log('=== runBudgetAnalysis ===');
+  // Record timestamp so the dashboard can show "last run".
+  PROPS.setProperty('BUDGET_LAST_RUN_AT', new Date().toISOString());
   validateTokens_();
 
   var priorTokenExists = !!PROPS.getProperty('BUDGET_PENDING_TOKEN');
@@ -2318,8 +2320,14 @@ function computeRecommendations_(currentBudgets, signals) {
 
   var currentTotal = Object.values(currentBudgets)
     .reduce(function (s, b) { return s + b.dailyBudgetCents; }, 0);
-  var targetDaily = Math.round(TARGET_WEEKLY_SPEND * 100 / 7);
-  var toleranceDaily = Math.round(WEEKLY_SPEND_TOLERANCE * 100 / 7);
+  // Read target from Script Properties (dashboard override)
+  // with fallback to the hardcoded constant.
+  var effectiveTarget = getTargetWeeklySpend_();
+  var effectiveTolerance = getWeeklySpendTolerance_();
+  var targetDaily = Math.round(effectiveTarget * 100 / 7);
+  var toleranceDaily = Math.round(effectiveTolerance * 100 / 7);
+  Logger.log('Using target $' + effectiveTarget + '/week ± $' + effectiveTolerance +
+    (PROPS.getProperty('DASHBOARD_TARGET_WEEKLY_SPEND') ? ' (dashboard override)' : ' (default)'));
 
   var eligibleIds = eligible.reduce(function (m, c) { m[c.campaignId] = true; return m; }, {});
   var ineligibleTotal = Object.keys(currentBudgets).reduce(function (s, cid) {
@@ -2431,6 +2439,7 @@ function computeRecommendations_(currentBudgets, signals) {
   changed._currentTotal = currentTotal;
   changed._proposedTotal = trueProposedTotal;
   changed._targetTotal = targetDaily;
+  changed._effectiveTolerance = effectiveTolerance;
 
   Logger.log('Recommendations: ' + changed.length + ' campaigns to change.');
   return changed;
@@ -2519,7 +2528,7 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
     ' | Weekly: ' + weeklyCurrentStr + ' → ' + weeklyProposedStr,
     'ICP pace (rolling 7 days): ' + icpPace.label + ' (reference only — no kill switch)',
     recs._poolWarning
-      ? 'WARNING: Proposed pool is outside ±$' + WEEKLY_SPEND_TOLERANCE + '/week tolerance.'
+      ? 'WARNING: Proposed pool is outside ±$' + (recs._effectiveTolerance || WEEKLY_SPEND_TOLERANCE) + '/week tolerance.'
       : 'Pool within tolerance.',
     '',
     'PROPOSED CHANGES (' + recs.length + ' campaigns):'
@@ -2609,7 +2618,7 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
   text += 'Daily: ' + currentTotalStr + ' → ' + proposedTotalStr +
     '  |  Weekly: ' + weeklyCurrentStr + ' → ' + weeklyProposedStr;
   if (recs._poolWarning) {
-    text += ' ⚠️ *Outside ±$' + WEEKLY_SPEND_TOLERANCE + ' tolerance*';
+    text += ' ⚠️ *Outside ±$' + (recs._effectiveTolerance || WEEKLY_SPEND_TOLERANCE) + ' tolerance*';
   }
   text += '\n\n';
 
@@ -2951,6 +2960,8 @@ function doGet(e) {
 
   if (action === 'approve') {
     PROPS.setProperty('BUDGET_APPROVED_TOKEN', token);
+    PROPS.setProperty('BUDGET_LAST_APPROVED_BY', user);
+    PROPS.setProperty('BUDGET_LAST_APPROVED_AT', new Date().toISOString());
     postToSlack_('*Honeycomb Budget* ✅ Approved by ' + user +
       '. Changes will execute tonight at 3:00 AM.');
     return HtmlService.createHtmlOutput(
@@ -3064,7 +3075,16 @@ function handleDashboardApi_(e) {
     chat: true,
     run_budget_analysis: true,
     get_spend_goal: true,
-    set_spend_goal: true
+    get_campaign_budgets: true,
+    propose_spend_target: true,
+    // Two-step Slack-safe approval for spend target changes.
+    // Same pattern as the budget proposal flow: bare URLs show
+    // an HTML confirmation page, actual state change only on
+    // the confirm_ variant.
+    approve_target: true,
+    reject_target: true,
+    confirm_approve_target: true,
+    confirm_reject_target: true
   };
 
   if (!action || !dashboardActions[action]) return null;
@@ -3094,40 +3114,140 @@ function handleDashboardApi_(e) {
     }
   }
 
+  // Fetch current daily budgets from Meta for all active
+  // campaigns. Returns { campaignId: { name, dailyBudgetCents, status } }.
+  // Used by the dashboard to compute budget pacing/utilization.
+  // This makes a live Meta API call, so it's not called on every
+  // page load — only when the dashboard needs it.
+  if (action === 'get_campaign_budgets') {
+    try {
+      var budgets = getCurrentMetaBudgets_();
+      // Convert to array for easier frontend consumption,
+      // including campaign_id for matching.
+      var budgetList = Object.keys(budgets).map(function(cid) {
+        return {
+          campaign_id: cid,
+          campaign_name: budgets[cid].name,
+          daily_budget_cents: budgets[cid].dailyBudgetCents,
+          status: budgets[cid].status
+        };
+      });
+      return jsonResponse_(budgetList);
+    } catch (err) {
+      Logger.log('get_campaign_budgets error: ' + err.message);
+      return jsonResponse_({ error: 'Failed to fetch Meta budgets: ' + err.message });
+    }
+  }
+
   // Read the current spend goal + tolerance. These
   // default to the hardcoded constants but can be
   // overridden via Script Properties so the dashboard
-  // can adjust them without a code change.
+  // can adjust them without a code change. Also returns
+  // any pending (unapproved) proposal so the dashboard
+  // can show its status.
   if (action === 'get_spend_goal') {
-    var goalOverride = PROPS.getProperty('DASHBOARD_TARGET_WEEKLY_SPEND');
+    var goalOverride      = PROPS.getProperty('DASHBOARD_TARGET_WEEKLY_SPEND');
     var toleranceOverride = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
+    var pendingTarget     = PROPS.getProperty('PENDING_SPEND_TARGET');
+    var pendingTolerance  = PROPS.getProperty('PENDING_SPEND_TOLERANCE');
+    var pendingAt         = PROPS.getProperty('PENDING_SPEND_TARGET_AT');
+    var response = {
+      target_weekly_spend:    goalOverride      ? Number(goalOverride)      : TARGET_WEEKLY_SPEND,
+      weekly_spend_tolerance: toleranceOverride  ? Number(toleranceOverride) : WEEKLY_SPEND_TOLERANCE,
+      source: goalOverride ? 'script_property_override' : 'hardcoded_default',
+      pending: null,
+      // Budget operation context for the dashboard's
+      // Budget Controls panel.
+      budget_context: {
+        slack_channel: PROPS.getProperty('SLACK_CHANNEL') || '#marketing-ads-budget',
+        last_run_at:      PROPS.getProperty('BUDGET_LAST_RUN_AT') || null,
+        last_approved_by: PROPS.getProperty('BUDGET_LAST_APPROVED_BY') || null,
+        last_approved_at: PROPS.getProperty('BUDGET_LAST_APPROVED_AT') || null
+      }
+    };
+    if (pendingTarget) {
+      response.pending = {
+        target:    Number(pendingTarget),
+        tolerance: pendingTolerance ? Number(pendingTolerance) : null,
+        proposed_at: pendingAt || null
+      };
+    }
+    return jsonResponse_(response);
+  }
+
+  // Propose a spend target change. Does NOT take effect
+  // immediately — saves the proposed values as pending and
+  // posts a Slack message with approve/reject links. The
+  // target only becomes active after Slack approval.
+  if (action === 'propose_spend_target') {
+    var newTarget    = e.parameter.target;
+    var newTolerance = e.parameter.tolerance;
+
+    if (!newTarget || isNaN(Number(newTarget)) || Number(newTarget) <= 0) {
+      return jsonResponse_({ error: 'Invalid target value. Must be a positive number.' });
+    }
+
+    var targetVal    = Math.round(Number(newTarget));
+    var toleranceVal = (newTolerance != null && !isNaN(Number(newTolerance)) && Number(newTolerance) >= 0)
+      ? Math.round(Number(newTolerance)) : null;
+
+    // Generate a unique token for this proposal.
+    var token = Utilities.getUuid().replace(/-/g, '').substring(0, 16);
+
+    // Save pending values to Script Properties.
+    PROPS.setProperty('SPEND_TARGET_PENDING_TOKEN', token);
+    PROPS.setProperty('PENDING_SPEND_TARGET', String(targetVal));
+    if (toleranceVal !== null) {
+      PROPS.setProperty('PENDING_SPEND_TOLERANCE', String(toleranceVal));
+    } else {
+      PROPS.deleteProperty('PENDING_SPEND_TOLERANCE');
+    }
+    PROPS.setProperty('PENDING_SPEND_TARGET_AT', new Date().toISOString());
+
+    // Current values for context in the Slack message.
+    var currentTarget    = getTargetWeeklySpend_();
+    var currentTolerance = getWeeklySpendTolerance_();
+
+    var baseUrl    = WEB_APP_URL || ScriptApp.getService().getUrl();
+    var approveUrl = baseUrl + '?action=approve_target&token=' + token;
+    var rejectUrl  = baseUrl + '?action=reject_target&token=' + token;
+
+    var slackText = '*Honeycomb Spend Target Change*\n\n';
+    slackText += '*Proposed target:* $' + targetVal.toLocaleString() + '/week';
+    slackText += '  (currently $' + currentTarget.toLocaleString() + '/week)\n';
+    if (toleranceVal !== null && toleranceVal !== currentTolerance) {
+      slackText += '*Proposed tolerance:* \u00b1$' + toleranceVal + '/week';
+      slackText += '  (currently \u00b1$' + currentTolerance + '/week)\n';
+    } else {
+      slackText += '*Tolerance:* \u00b1$' + currentTolerance + '/week (unchanged)\n';
+    }
+    slackText += '\nThis changes the weekly spend target the budget optimizer aims at. ';
+    slackText += 'Takes effect on the next optimization run after approval.\n\n';
+    slackText += '\u2705  Approve: ' + approveUrl + '\n';
+    slackText += '\u274c  Reject:  ' + rejectUrl;
+
+    try {
+      postToSlack_(slackText);
+    } catch (slackErr) {
+      Logger.log('propose_spend_target: Slack post failed: ' + slackErr.message);
+      // Still return success — the proposal is saved even if Slack fails.
+    }
+
     return jsonResponse_({
-      target_weekly_spend: goalOverride ? Number(goalOverride) : TARGET_WEEKLY_SPEND,
-      weekly_spend_tolerance: toleranceOverride ? Number(toleranceOverride) : WEEKLY_SPEND_TOLERANCE,
-      source: goalOverride ? 'script_property_override' : 'hardcoded_default'
+      ok: true,
+      message: 'Spend target change proposed. Check Slack for approval.'
     });
   }
 
-  // Write new spend goal + tolerance to Script Properties.
-  // Does NOT modify the code constants — stores overrides
-  // that the budget optimizer reads at runtime.
-  if (action === 'set_spend_goal') {
-    var newTarget = e.parameter.target;
-    var newTolerance = e.parameter.tolerance;
-    if (newTarget != null && !isNaN(Number(newTarget)) && Number(newTarget) > 0) {
-      PROPS.setProperty('DASHBOARD_TARGET_WEEKLY_SPEND', String(Number(newTarget)));
-    }
-    if (newTolerance != null && !isNaN(Number(newTolerance)) && Number(newTolerance) >= 0) {
-      PROPS.setProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE', String(Number(newTolerance)));
-    }
-    // Read back the saved values to confirm.
-    var savedTarget = PROPS.getProperty('DASHBOARD_TARGET_WEEKLY_SPEND');
-    var savedTolerance = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
-    return jsonResponse_({
-      ok: true,
-      target_weekly_spend: savedTarget ? Number(savedTarget) : TARGET_WEEKLY_SPEND,
-      weekly_spend_tolerance: savedTolerance ? Number(savedTolerance) : WEEKLY_SPEND_TOLERANCE
-    });
+  // Spend target approval — two-step Slack-safe flow.
+  // Bare approve/reject URLs show an HTML confirmation page
+  // (so Slack's link-unfurl crawler can't accidentally fire them).
+  // The confirm_ variants do the actual state change.
+  if (action === 'approve_target' || action === 'reject_target') {
+    return showTargetApprovalPage_(e, action === 'approve_target' ? 'approve' : 'reject');
+  }
+  if (action === 'confirm_approve_target' || action === 'confirm_reject_target') {
+    return applyTargetDecision_(e, action === 'confirm_approve_target' ? 'approve' : 'reject');
   }
 
   try {
@@ -3614,6 +3734,141 @@ function getTargetWeeklySpend_() {
 function getWeeklySpendTolerance_() {
   var override = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
   return override ? Number(override) : WEEKLY_SPEND_TOLERANCE;
+}
+
+
+// ─── SPEND TARGET APPROVAL FLOW (two-step, Slack-safe) ──────
+// Same pattern as the budget proposal approval: bare approve/
+// reject URLs return an HTML confirmation page. Slack's
+// link-unfurling crawler visits those and stops. Only a human
+// clicking the "Confirm" button triggers the actual state write.
+
+function showTargetApprovalPage_(e, decision) {
+  var token = e && e.parameter && e.parameter.token;
+  if (!token) {
+    return HtmlService.createHtmlOutput('<h2>Invalid link.</h2><p>Missing token.</p>');
+  }
+
+  var pendingToken = PROPS.getProperty('SPEND_TARGET_PENDING_TOKEN');
+  if (!pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>No pending spend target change.</h2>' +
+      '<p>This proposal may have already been actioned or expired.</p>');
+  }
+  if (token !== pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>Token mismatch.</h2>' +
+      '<p>This link is invalid or has already been used.</p>');
+  }
+
+  var pendingTarget    = PROPS.getProperty('PENDING_SPEND_TARGET');
+  var pendingTolerance = PROPS.getProperty('PENDING_SPEND_TOLERANCE');
+  var currentTarget    = getTargetWeeklySpend_();
+  var currentTolerance = getWeeklySpendTolerance_();
+
+  var isApprove = decision === 'approve';
+  var color     = isApprove ? '#10b981' : '#ef4444';
+  var label     = isApprove ? 'APPROVE' : 'REJECT';
+  var description = isApprove
+    ? 'This will change the weekly spend target from $' + currentTarget +
+      ' to $' + pendingTarget + '. The optimizer will use the new target on its next run.'
+    : 'This will cancel the proposed spend target change. The current target ($' +
+      currentTarget + '/week) will remain in effect.';
+
+  var baseUrl    = WEB_APP_URL || ScriptApp.getService().getUrl();
+  var confirmUrl = baseUrl + '?action=confirm_' + decision + '_target&token=' + token;
+
+  var html =
+    '<!doctype html><html><head>' +
+    '<meta charset="utf-8">' +
+    '<title>Honeycomb Spend Target \u2014 Confirm</title>' +
+    '<meta name="robots" content="noindex">' +
+    '<style>' +
+    'body{font-family:-apple-system,system-ui,"Segoe UI",sans-serif;max-width:560px;margin:60px auto;padding:24px;color:#1c1917;}' +
+    'h1{font-size:22px;margin-bottom:8px;}' +
+    'p{line-height:1.55;color:#57534e;}' +
+    '.detail{margin:16px 0;padding:12px 16px;background:#f5f5f4;border-radius:6px;font-size:14px;line-height:1.6;}' +
+    '.btn{display:inline-block;padding:14px 28px;color:white;text-decoration:none;' +
+    'border-radius:8px;font-weight:600;font-size:15px;background:' + color + ';margin-top:16px;}' +
+    '.btn:hover{opacity:.92}' +
+    '.note{margin-top:24px;padding:12px 16px;background:#fef3c7;border:1px solid #fde68a;' +
+    'border-radius:6px;font-size:13px;color:#78350f;line-height:1.5;}' +
+    '</style></head><body>' +
+    '<h1>\ud83d\udc1d Honeycomb Spend Target \u2014 Confirm ' + label + '</h1>' +
+    '<div class="detail">' +
+    '<strong>Current target:</strong> $' + currentTarget + '/week (\u00b1$' + currentTolerance + ')<br>' +
+    '<strong>Proposed target:</strong> $' + pendingTarget + '/week' +
+    (pendingTolerance ? ' (\u00b1$' + pendingTolerance + ')' : '') +
+    '</div>' +
+    '<p>' + description + '</p>' +
+    '<a class="btn" href="' + confirmUrl + '">Click to confirm ' + label + '</a>' +
+    '<div class="note">This extra confirmation step exists so that link previews (like Slack unfurl) ' +
+    'can\'t accidentally approve or reject changes on your behalf.</div>' +
+    '</body></html>';
+
+  return HtmlService.createHtmlOutput(html);
+}
+
+
+function applyTargetDecision_(e, decision) {
+  var token = e && e.parameter && e.parameter.token;
+  if (!token) {
+    return HtmlService.createHtmlOutput('<h2>Invalid link.</h2><p>Missing token.</p>');
+  }
+
+  var pendingToken = PROPS.getProperty('SPEND_TARGET_PENDING_TOKEN');
+  if (!pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>No pending spend target change.</h2>' +
+      '<p>This proposal may have already been actioned or expired.</p>');
+  }
+  if (token !== pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>Token mismatch.</h2>' +
+      '<p>This link is invalid or has already been used.</p>');
+  }
+
+  var pendingTarget    = PROPS.getProperty('PENDING_SPEND_TARGET');
+  var pendingTolerance = PROPS.getProperty('PENDING_SPEND_TOLERANCE');
+  var user = Session.getActiveUser().getEmail() || 'unknown user';
+
+  // Clean up pending state regardless of decision.
+  PROPS.deleteProperty('SPEND_TARGET_PENDING_TOKEN');
+  PROPS.deleteProperty('PENDING_SPEND_TARGET');
+  PROPS.deleteProperty('PENDING_SPEND_TOLERANCE');
+  PROPS.deleteProperty('PENDING_SPEND_TARGET_AT');
+
+  if (decision === 'approve') {
+    // Apply the new target.
+    if (pendingTarget) {
+      PROPS.setProperty('DASHBOARD_TARGET_WEEKLY_SPEND', pendingTarget);
+    }
+    if (pendingTolerance) {
+      PROPS.setProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE', pendingTolerance);
+    }
+    var newTarget    = getTargetWeeklySpend_();
+    var newTolerance = getWeeklySpendTolerance_();
+
+    postToSlack_('*Honeycomb Spend Target* \u2705 Approved by ' + user +
+      '. New target: $' + newTarget + '/week (\u00b1$' + newTolerance +
+      '). Takes effect on the next budget optimization run.');
+
+    return HtmlService.createHtmlOutput(
+      '<h2>\u2705 Spend target updated.</h2>' +
+      '<p>New target: <strong>$' + newTarget + '/week</strong> (\u00b1$' + newTolerance + ').</p>' +
+      '<p>The budget optimizer will use this target on its next run.</p>');
+  }
+
+  if (decision === 'reject') {
+    postToSlack_('*Honeycomb Spend Target* \u274c Rejected by ' + user +
+      '. No changes to the spend target.');
+
+    return HtmlService.createHtmlOutput(
+      '<h2>\u274c Spend target change rejected.</h2>' +
+      '<p>The current target remains unchanged.</p>');
+  }
+
+  return HtmlService.createHtmlOutput('<h2>Unknown decision.</h2>');
 }
 
 

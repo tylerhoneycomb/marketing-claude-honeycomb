@@ -51,13 +51,13 @@ function handleDashboardApi_(e) {
     chat: true,
     run_budget_analysis: true,
     get_spend_goal: true,
-    set_spend_goal: true,
-    // Slack-safe approval flow. The bare approve/reject
-    // actions show a confirmation page only (no side effect),
-    // so Slack's unfurl crawler can't accidentally fire them.
-    // The actual state change happens on confirm_approve /
-    // confirm_reject, which only a human clicking a button
-    // can trigger.
+    propose_spend_target: true,
+    // Slack-safe approval flow for spend target changes.
+    approve_target: true,
+    reject_target: true,
+    confirm_approve_target: true,
+    confirm_reject_target: true,
+    // Slack-safe approval flow for budget proposals.
     approve: true,
     reject: true,
     confirm_approve: true,
@@ -103,40 +103,45 @@ function handleDashboardApi_(e) {
     }
   }
 
-  // Read the current spend goal + tolerance. These
-  // default to the hardcoded constants but can be
-  // overridden via Script Properties so the dashboard
-  // can adjust them without a code change.
+  // Read the current spend goal + tolerance. Also returns
+  // any pending (unapproved) proposal so the dashboard
+  // can show its status.
   if (action === 'get_spend_goal') {
     var goalOverride      = PROPS.getProperty('DASHBOARD_TARGET_WEEKLY_SPEND');
     var toleranceOverride = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
-    return jsonResponse_({
+    var pendingTarget     = PROPS.getProperty('PENDING_SPEND_TARGET');
+    var pendingTolerance  = PROPS.getProperty('PENDING_SPEND_TOLERANCE');
+    var pendingAt         = PROPS.getProperty('PENDING_SPEND_TARGET_AT');
+    var response = {
       target_weekly_spend:    goalOverride      ? Number(goalOverride)      : TARGET_WEEKLY_SPEND,
       weekly_spend_tolerance: toleranceOverride  ? Number(toleranceOverride) : WEEKLY_SPEND_TOLERANCE,
-      source: goalOverride ? 'script_property_override' : 'hardcoded_default'
-    });
+      source: goalOverride ? 'script_property_override' : 'hardcoded_default',
+      pending: null
+    };
+    if (pendingTarget) {
+      response.pending = {
+        target:      Number(pendingTarget),
+        tolerance:   pendingTolerance ? Number(pendingTolerance) : null,
+        proposed_at: pendingAt || null
+      };
+    }
+    return jsonResponse_(response);
   }
 
-  // Write new spend goal + tolerance to Script Properties.
-  // Does NOT modify the code constants — stores overrides
-  // that the budget optimizer reads at runtime.
-  if (action === 'set_spend_goal') {
-    var newTarget    = e.parameter.target;
-    var newTolerance = e.parameter.tolerance;
-    if (newTarget != null && !isNaN(Number(newTarget)) && Number(newTarget) > 0) {
-      PROPS.setProperty('DASHBOARD_TARGET_WEEKLY_SPEND', String(Number(newTarget)));
-    }
-    if (newTolerance != null && !isNaN(Number(newTolerance)) && Number(newTolerance) >= 0) {
-      PROPS.setProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE', String(Number(newTolerance)));
-    }
-    // Read back the saved values to confirm.
-    var savedTarget    = PROPS.getProperty('DASHBOARD_TARGET_WEEKLY_SPEND');
-    var savedTolerance = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
-    return jsonResponse_({
-      ok: true,
-      target_weekly_spend:    savedTarget    ? Number(savedTarget)    : TARGET_WEEKLY_SPEND,
-      weekly_spend_tolerance: savedTolerance ? Number(savedTolerance) : WEEKLY_SPEND_TOLERANCE
-    });
+  // Propose a spend target change (Slack-approved).
+  // See apps-script/Code.js for the full implementation.
+  if (action === 'propose_spend_target') {
+    // [Full implementation in apps-script/Code.js — this
+    //  reference copy shows only the action routing.]
+    return jsonResponse_({ error: 'propose_spend_target: see Code.js' });
+  }
+
+  // Spend target approval — two-step Slack-safe flow.
+  if (action === 'approve_target' || action === 'reject_target') {
+    return showTargetApprovalPage_(e, action === 'approve_target' ? 'approve' : 'reject');
+  }
+  if (action === 'confirm_approve_target' || action === 'confirm_reject_target') {
+    return applyTargetDecision_(e, action === 'confirm_approve_target' ? 'approve' : 'reject');
   }
 
   try {

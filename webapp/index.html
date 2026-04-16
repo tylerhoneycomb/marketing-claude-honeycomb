@@ -648,7 +648,7 @@
           }, 0);
           return i > 0 ? Math.round((s / i) * 100) / 100 : null;
         },
-        tooltip: 'Cost Per ICP using hybrid attribution (blended). Spend ÷ estimated ICPs. The primary efficiency metric. Lower is better. v3 attribution: Meta IC conversions are the floor for each campaign, plus a proportional share of any HubSpot ICPs that exceeded the total IC conversion count. At Day granularity, only IC-optimized campaigns have a meaningful value (uses direct IC conversions); non-IC campaigns show no line at daily.',
+        tooltip: 'Spend \u00f7 estimated ICPs. The primary efficiency metric \u2014 lower is better. Under $120 is healthy; above $200 warrants investigation. If rising, review creative fatigue or audience targeting. At Day granularity, only IC-optimized campaigns show values.',
       },
       {
         key: 'cpicp_attributed',
@@ -665,7 +665,7 @@
           const a = rows.reduce((acc, r) => acc + (Number(r.icps_attributed) || 0), 0);
           return a > 0 ? Math.round((s / a) * 100) / 100 : null;
         },
-        tooltip: 'Cost Per ICP using only hard UTM-matched ICPs (no unattributed pool share). More conservative than blended CPICP — higher values because the denominator is smaller. Useful for comparing tracking-clean campaigns.',
+        tooltip: 'Spend \u00f7 UTM-matched ICPs only (no proportional pool share). More conservative than blended CPICP. Useful for comparing campaigns with clean tracking.',
       },
       {
         key: 'estimated_icps',
@@ -679,7 +679,7 @@
         formatAxis:  (v) => v,
         aggregateRows: (rows) =>
           Math.round(rows.reduce((s, r) => s + (Number(r.estimated_icps) || 0), 0) * 10) / 10,
-        tooltip: 'Estimated ICPs using v3 hybrid attribution: Meta IC conversions for this campaign (deduplicated, the floor) plus a proportional share of any HubSpot ICPs that exceeded the total IC conversion count (weighted by Meta conversion volume).',
+        tooltip: 'ICPs credited to each campaign via hybrid attribution: direct Meta IC conversions (the floor) plus a proportional share of unattributed HubSpot ICPs. Higher is better.',
       },
       {
         key: 'ic_conversions',
@@ -693,7 +693,7 @@
         formatAxis:  (v) => v,
         aggregateRows: (rows) =>
           rows.reduce((s, r) => s + (Number(r.ic_conversions) || 0), 0),
-        tooltip: 'Direct IC (Investment Crowdfunding) conversion events reported by Meta, deduplicated. In v3 attribution, this is the FOUNDATION of estimated ICPs — every IC conversion on a campaign flows directly into that campaign\'s estimated_icps as the floor. Can appear on any campaign because Meta credits the IC event back to whatever campaign produced the original lead. A non-zero count does NOT mean the campaign is IC-optimized — use the IC badge next to the campaign name (from campaign_mapping.conversion_event) to tell those apart.',
+        tooltip: 'Meta IC conversion events (deduplicated). The floor of estimated ICPs in the attribution model. Can appear on any campaign because Meta credits IC events back to the originating lead campaign. Look for the IC badge to identify campaigns actually optimized against this event.',
       },
       {
         key: 'attribution_rate',
@@ -711,7 +711,7 @@
           const a = rows.reduce((s, r) => s + (Number(r.ic_conversions) || 0), 0);
           return e > 0 ? Math.round((a / e) * 1000) / 10 : null;
         },
-        tooltip: 'Share of estimated ICPs that are backed by direct IC conversions from Meta (deduplicated). Higher means more of this campaign\'s credit is coming from Meta\'s direct signal rather than the proportional share of the unattributed pool.',
+        tooltip: 'IC conversions \u00f7 estimated ICPs. Higher means more credit comes from Meta\'s direct signal. Low rates (under 40%) suggest most credit is coming from the proportional pool rather than direct attribution.',
       },
       {
         key: 'spend',
@@ -792,7 +792,7 @@
           const rch = rows.reduce((s, r) => s + (Number(r.reach) || 0), 0);
           return rch > 0 ? Math.round((i / rch) * 100) / 100 : null;
         },
-        tooltip: 'Average number of times each person in the reach saw the ad. Above 3.5 usually signals audience saturation.',
+        tooltip: 'Average ad exposures per person. Above 3.0 suggests audience fatigue \u2014 consider expanding targeting or refreshing creative.',
       },
     ];
 
@@ -807,42 +807,42 @@
         label: 'CPICP',
         lowerIsBetter: true,
         format: (v) => fmtCurrencyCents(v),
-        tooltip: 'Cost per ICP using hybrid attribution. Total spend divided by estimated ICPs over the selected range. Lower is better.',
+        tooltip: 'Spend \u00f7 estimated ICPs. Lower is better. Under $120 is healthy.',
       },
       {
         key: 'estimated_icps',
         label: 'Estimated ICPs',
         lowerIsBetter: false,
         format: (v) => fmtNumber(v, 1),
-        tooltip: 'Total estimated ICPs attributed to each campaign using v3 hybrid attribution (direct Meta IC conversions plus a proportional share of any HubSpot ICPs that exceeded the total IC conversion count). Higher is better.',
+        tooltip: 'ICPs credited via hybrid attribution (IC conversions + proportional pool). Higher is better.',
       },
       {
         key: 'attribution_rate',
         label: 'Attribution Rate',
         lowerIsBetter: false,
-        format: (v) => v != null ? v.toFixed(0) + '%' : '—',
-        tooltip: 'Share of each campaign\u2019s estimated ICPs that are backed by direct IC conversions from Meta (deduplicated). Higher means more of the campaign\u2019s credit is coming from Meta\u2019s direct signal rather than the proportional share of the unattributed pool.',
+        format: (v) => v != null ? v.toFixed(0) + '%' : '\u2014',
+        tooltip: 'IC conversions \u00f7 estimated ICPs. Higher = more direct attribution from Meta.',
       },
       {
         key: 'cpl',
         label: 'CPL (Meta)',
         lowerIsBetter: true,
         format: (v) => fmtCurrencyCents(v),
-        tooltip: 'Cost per Lead based on Meta-reported conversions. Useful as an efficiency signal, but CPICP is generally more accurate because it uses HubSpot\u2019s actual decision data.',
+        tooltip: 'Cost per Lead from Meta conversions. Useful signal, but CPICP is more accurate.',
       },
       {
         key: 'ctr',
         label: 'CTR',
         lowerIsBetter: false,
-        format: (v) => v != null ? (v * 100).toFixed(2) + '%' : '—',
-        tooltip: 'Click-Through Rate. Share of ad impressions that resulted in a click. Higher usually indicates stronger creative.',
+        format: (v) => v != null ? (v * 100).toFixed(2) + '%' : '\u2014',
+        tooltip: 'Clicks \u00f7 impressions. Higher = stronger creative. Below 0.5% warrants attention.',
       },
       {
         key: 'spend',
         label: 'Total Spend',
         lowerIsBetter: false,
         format: (v) => fmtCurrency(v),
-        tooltip: 'Total spend in the selected range. Not a performance metric on its own, but useful context for which campaigns are absorbing the biggest share of budget.',
+        tooltip: 'Total spend in range. Useful for seeing which campaigns absorb the most budget.',
       },
     ];
 
@@ -1330,6 +1330,130 @@
       );
     }
 
+    // ── CPICP TRAJECTORY ALERT ────────────────────────
+    // A dismissible alert banner when portfolio CPICP is
+    // materially worsening (rising costs). Fires when the
+    // latest week's CPICP is 10%+ worse than the 4-week
+    // baseline, or when the regression slope implies 15%+
+    // rise over the visible period.
+    function CPICPAlert({ rollup, rangeStart, rangeEnd }) {
+      const [dismissed, setDismissed] = useState(false);
+
+      const alert = useMemo(() => {
+        if (!rollup || rollup.length === 0) return null;
+
+        // Weekly portfolio CPICP
+        const byWeek = {};
+        rollup.forEach(r => {
+          const ws = String(r.week_start).substring(0, 10);
+          if (rangeStart && ws < rangeStart) return;
+          if (rangeEnd && ws > rangeEnd) return;
+          if (!byWeek[ws]) byWeek[ws] = { spend: 0, icps: 0 };
+          byWeek[ws].spend += Number(r.spend) || 0;
+          byWeek[ws].icps  += Number(r.estimated_icps) || 0;
+        });
+        const weeks = Object.entries(byWeek)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([wk, d]) => ({
+            week: wk,
+            cpicp: d.icps > 0 ? d.spend / d.icps : null
+          }))
+          .filter(w => w.cpicp != null);
+
+        if (weeks.length < 3) return null;
+
+        const latest = weeks[weeks.length - 1];
+        const baseline = weeks.slice(Math.max(0, weeks.length - 5), weeks.length - 1);
+        const baseAvg = baseline.reduce((s, w) => s + w.cpicp, 0) / baseline.length;
+        if (baseAvg <= 0) return null;
+
+        const wowPct = ((latest.cpicp - baseAvg) / baseAvg) * 100;
+
+        // Also check regression slope
+        const series = weeks.map((w, i) => ({ x: i, y: w.cpicp }));
+        const reg = linearRegression(series);
+        const slopePct = reg && reg.intercept > 0
+          ? (reg.slope * (series.length - 1) / reg.intercept) * 100
+          : 0;
+
+        // Per-campaign callouts: find campaigns with WoW > 15%
+        const campaignByName = {};
+        rollup.forEach(r => {
+          const ws = String(r.week_start).substring(0, 10);
+          if (rangeStart && ws < rangeStart) return;
+          if (rangeEnd && ws > rangeEnd) return;
+          const name = r.campaign_name;
+          if (!campaignByName[name]) campaignByName[name] = [];
+          campaignByName[name].push({
+            week: ws,
+            cpicp: (Number(r.estimated_icps) || 0) > 0
+              ? (Number(r.spend) || 0) / Number(r.estimated_icps)
+              : null
+          });
+        });
+        const worseningCampaigns = [];
+        Object.entries(campaignByName).forEach(([name, wks]) => {
+          const valid = wks.filter(w => w.cpicp != null).sort((a, b) => a.week.localeCompare(b.week));
+          if (valid.length < 2) return;
+          const last = valid[valid.length - 1];
+          const prior = valid[valid.length - 2];
+          if (prior.cpicp > 0) {
+            const chg = ((last.cpicp - prior.cpicp) / prior.cpicp) * 100;
+            if (chg > 15) worseningCampaigns.push({ name, pct: chg });
+          }
+        });
+        worseningCampaigns.sort((a, b) => b.pct - a.pct);
+
+        // Fire alert if portfolio CPICP rose 10%+ vs baseline
+        // or regression slope shows 15%+ rise over the period
+        if (wowPct < 10 && slopePct < 15) return null;
+
+        const isSevere = wowPct >= 20 || slopePct >= 25;
+        return {
+          wowPct: Math.round(wowPct),
+          slopePct: Math.round(slopePct),
+          latestCpicp: latest.cpicp,
+          baseAvg,
+          isSevere,
+          worseningCampaigns: worseningCampaigns.slice(0, 3),
+        };
+      }, [rollup, rangeStart, rangeEnd]);
+
+      if (!alert || dismissed) return null;
+
+      const bg = alert.isSevere
+        ? 'bg-red-50 border-red-300 text-red-900'
+        : 'bg-amber-50 border-amber-300 text-amber-900';
+
+      return (
+        <div className={`rounded-lg border p-3 flex items-start gap-3 ${bg}`}>
+          <div className="flex-shrink-0 text-lg mt-0.5">{alert.isSevere ? '\u26a0\ufe0f' : '\ud83d\udcc8'}</div>
+          <div className="flex-1 text-sm">
+            <div className="font-semibold">
+              CPICP Alert: Portfolio cost rising {alert.wowPct > 0 ? `+${alert.wowPct}%` : ''} vs. 4-week baseline
+            </div>
+            <div className="text-xs mt-1 opacity-80">
+              Latest week: {fmtCurrencyCents(alert.latestCpicp)} &middot; 4-wk avg: {fmtCurrencyCents(alert.baseAvg)}
+              {alert.slopePct > 0 && ` \u00b7 Trend: +${alert.slopePct}% over period`}
+            </div>
+            {alert.worseningCampaigns.length > 0 && (
+              <div className="text-xs mt-1 opacity-70">
+                Biggest movers: {alert.worseningCampaigns.map(c =>
+                  `${c.name} (+${Math.round(c.pct)}%)`
+                ).join(', ')}
+              </div>
+            )}
+          </div>
+          <button
+            onClick={() => setDismissed(true)}
+            className="flex-shrink-0 text-xs opacity-50 hover:opacity-100 px-1"
+            title="Dismiss"
+          >&times;</button>
+        </div>
+      );
+    }
+
+
     // ── Top/Bottom 3 performer tile ────────────────────
     // Ranks campaigns by a dropdown-selectable metric.
     // "Top" honors the metric's natural direction (lowest
@@ -1349,9 +1473,26 @@
       const ranked = useMemo(() => {
         const agg = aggregateCampaigns(rollup, rangeStart, rangeEnd);
         let valid = agg.filter(c => c[metricKey] != null && !isNaN(c[metricKey]));
+
+        // Exclude campaigns less than 2 weeks old. Uses the full
+        // rollup to find each campaign's first-ever week, not just
+        // what's in the selected date range.
+        const firstWeekMap = {};
+        rollup.forEach(r => {
+          const ws = String(r.week_start).substring(0, 10);
+          const name = r.campaign_name;
+          if (!firstWeekMap[name] || ws < firstWeekMap[name]) firstWeekMap[name] = ws;
+        });
+        const endDate = rangeEnd ? new Date(rangeEnd) : new Date();
+        valid = valid.filter(c => {
+          const first = firstWeekMap[c.campaign_name];
+          if (!first) return false;
+          const daysSinceFirst = (endDate - new Date(first)) / 86400000;
+          return daysSinceFirst >= 14;
+        });
+
         // "Only mature" filters to campaigns with over $1,000
-        // total spend in the selected period. Shared toggle
-        // between both leaderboards.
+        // total spend in the selected period.
         if (onlyMature) {
           valid = valid.filter(c => (c.spend || 0) >= 1000);
         }
@@ -2275,11 +2416,56 @@
       { key: 'ytd', label: 'YTD',           start: startOfYearStr,       end: yesterdayStr },
     ];
 
-    function CampaignPerformanceTable({ rollup, mappings, icCampaignNames }) {
+    function CampaignPerformanceTable({ rollup, mappings, icCampaignNames, pausedCampaignNames, daily, apiUrl }) {
       const [sortKey, setSortKey] = useState('blendedCpicp');
       const [sortDir, setSortDir] = useState('asc'); // lowest CPICP first
       const [showInactive, setShowInactive] = useState(false);
       const icSet = icCampaignNames || new Set();
+      const pausedSet = pausedCampaignNames || new Set();
+
+      // Budget pacing: fetched on demand from Meta API via
+      // get_campaign_budgets. Keyed by campaign name.
+      const [budgetMap, setBudgetMap] = useState({});
+      const [budgetLoading, setBudgetLoading] = useState(false);
+      useEffect(() => {
+        if (!apiUrl) return;
+        setBudgetLoading(true);
+        fetchAction(apiUrl, 'get_campaign_budgets')
+          .then(data => {
+            if (Array.isArray(data)) {
+              const map = {};
+              data.forEach(b => {
+                map[String(b.campaign_name || '').trim()] = b.daily_budget_cents / 100;
+              });
+              setBudgetMap(map);
+            }
+          })
+          .catch(() => {}) // Meta API may not be available
+          .finally(() => setBudgetLoading(false));
+      }, [apiUrl]);
+
+      // Compute average daily spend per campaign from the last
+      // 7 days of daily data for pacing calculation.
+      const avgDailySpend = useMemo(() => {
+        if (!daily || daily.length === 0) return {};
+        const cutoff = new Date();
+        cutoff.setDate(cutoff.getDate() - 7);
+        const cutoffStr = cutoff.toISOString().substring(0, 10);
+        const byCampaign = {};
+        daily.forEach(r => {
+          const d = String(r.date).substring(0, 10);
+          if (d < cutoffStr) return;
+          const name = String(r.campaign_name || '').trim();
+          if (!byCampaign[name]) byCampaign[name] = { total: 0, days: new Set() };
+          byCampaign[name].total += Number(r.spend) || 0;
+          byCampaign[name].days.add(d);
+        });
+        const result = {};
+        Object.entries(byCampaign).forEach(([name, data]) => {
+          result[name] = data.days.size > 0 ? data.total / data.days.size : 0;
+        });
+        return result;
+      }, [daily]);
 
       // Period selector state — independent from the global
       // dashboard date range. Default: prior 30 days.
@@ -2377,9 +2563,10 @@
             weekCount: c.weeks.length,
             inactive: false,
             is_ic_campaign: icSet.has(c.campaign),
+            is_paused: pausedSet.has(c.campaign),
           };
         });
-      }, [rollup, rangeStart, rangeEnd, icSet]);
+      }, [rollup, rangeStart, rangeEnd, icSet, pausedSet]);
 
       // Inactive campaigns: campaigns that exist in the
       // UTM mappings but had no spend in the selected
@@ -2408,6 +2595,7 @@
             weekCount: 0,
             inactive: true,
             is_ic_campaign: icSet.has(name),
+            is_paused: pausedSet.has(name),
           });
         });
         return out;
@@ -2559,11 +2747,11 @@
                   <Th k="spend" align="right">Spend</Th>
                   <Th k="estIcps" align="right">
                     Est. ICPs
-                    <InfoTip text="Estimated ICPs attributed to this campaign using v3 hybrid attribution: Meta IC conversions for this campaign (the floor) plus a proportional share of any HubSpot ICPs that exceeded the total IC conversion count, weighted by Meta conversion volume share." />
+                    <InfoTip text="ICPs credited to this campaign: direct IC conversions (floor) + proportional share of unattributed HubSpot ICPs." />
                   </Th>
                   <Th k="icConversions" align="right">
                     IC Conv
-                    <InfoTip text="Direct IC (Investment Crowdfunding) conversion events reported by Meta, deduplicated. In v3 attribution, this is the FOUNDATION of estimated ICPs — every IC conversion flows directly into this campaign's estimated_icps as the floor. Can appear on general campaigns too — Meta credits the IC event back to whatever campaign produced the original lead that later became an IC decision. A non-zero count does NOT mean the campaign is IC-optimized. Look for the lime IC badge next to the campaign name to identify actually-IC-optimized campaigns (from campaign_mapping.conversion_event)." />
+                    <InfoTip text="Meta IC conversion events (deduplicated). The floor of estimated ICPs. Can appear on any campaign via attribution spillover. Look for the IC badge to identify campaigns actually optimized for this event." />
                   </Th>
                   <Th k="blendedCpicp" align="right" defaultDir="asc">
                     CPICP
@@ -2587,14 +2775,18 @@
                   </Th>
                   <Th k="attribRate" align="right">
                     Attr. %
-                    <InfoTip text="Share of this campaign's estimated ICPs that are backed by direct IC conversions from Meta. Higher = more of this campaign's credit is coming from Meta's deduplicated direct signal. Lower = more credit comes from the proportional share of the unattributed pool." />
+                    <InfoTip text="Share of this campaign's estimated ICPs backed by direct IC conversions from Meta. Higher = more credit from Meta's direct signal." />
+                  </Th>
+                  <Th k="pacing" align="right">
+                    Pacing
+                    <InfoTip text="Budget utilization: avg daily spend over last 7 days vs. Meta's set daily budget. 100% = spending exactly the budget. Under 80% = underspending. Over 110% = overspending." />
                   </Th>
                 </tr>
               </thead>
               <tbody>
                 {sorted.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="text-center py-10 text-stone-500">
+                    <td colSpan={11} className="text-center py-10 text-stone-500">
                       No weekly rollup data in the selected range.
                     </td>
                   </tr>
@@ -2613,9 +2805,17 @@
                         {r.is_ic_campaign && (
                           <span
                             className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-lime-100 text-lime-800 border border-lime-300"
-                            title="IC-optimized: this campaign is configured against the Investment Crowdfunding Prequal Decision custom conversion event in Meta. Its IC conversions are direct signal from Meta rather than attribution spillover."
+                            title="IC-optimized: this campaign is configured against the Investment Crowdfunding Prequal Decision custom conversion event in Meta."
                           >
                             IC
+                          </span>
+                        )}
+                        {r.is_paused && (
+                          <span
+                            className="inline-block px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wide bg-amber-100 text-amber-800 border border-amber-300"
+                            title="Paused: this campaign has historical spend but no spend in the last 24 hours."
+                          >
+                            Paused
                           </span>
                         )}
                       </div>
@@ -2637,6 +2837,19 @@
                     <td className="px-3 py-2 text-center">{renderTrend(r.trendSlope, r.trendPct)}</td>
                     <td className="px-3 py-2 text-right text-stone-500">
                       {r.attribRate != null ? r.attribRate.toFixed(0) + '%' : '—'}
+                    </td>
+                    <td className="px-3 py-2 text-right">
+                      {(() => {
+                        const budget = budgetMap[r.campaign];
+                        const avg = avgDailySpend[r.campaign];
+                        if (r.inactive || !budget || budget <= 0) return <span className="text-stone-300">&mdash;</span>;
+                        const pct = Math.round(((avg || 0) / budget) * 100);
+                        const color = pct >= 80 && pct <= 110 ? 'text-emerald-700' :
+                                      pct < 50 ? 'text-red-600' :
+                                      pct > 120 ? 'text-red-600' :
+                                      'text-amber-600';
+                        return <span className={`font-medium ${color}`} title={`$${(avg||0).toFixed(0)}/day of $${budget.toFixed(0)}/day budget`}>{pct}%</span>;
+                      })()}
                     </td>
                   </tr>
                 ))}
@@ -2840,8 +3053,10 @@
       const [goalSource, setGoalSource]       = useState('');
       const [goalLoading, setGoalLoading]     = useState(false);
       const [goalSaveResult, setGoalSaveResult] = useState('');
+      const [pendingProposal, setPendingProposal] = useState(null);
+      const [budgetContext, setBudgetContext] = useState(null);
 
-      // Load current spend goal on mount
+      // Load current spend goal + budget context on mount
       useEffect(() => {
         if (!apiUrl) return;
         fetchAction(apiUrl, 'get_spend_goal')
@@ -2850,6 +3065,8 @@
               setGoalTarget(String(data.target_weekly_spend || ''));
               setGoalTolerance(String(data.weekly_spend_tolerance || ''));
               setGoalSource(data.source || '');
+              setPendingProposal(data.pending || null);
+              setBudgetContext(data.budget_context || null);
             }
           })
           .catch(() => {}); // silently fail if endpoint not installed yet
@@ -2874,33 +3091,52 @@
         setRunning(false);
       };
 
-      const handleSaveGoal = async () => {
+      const handleDeployGoal = async () => {
         if (!apiUrl) return;
         setGoalLoading(true);
         setGoalSaveResult('');
         try {
-          const data = await fetchAction(apiUrl, 'set_spend_goal', {
+          const data = await fetchAction(apiUrl, 'propose_spend_target', {
             target: goalTarget,
             tolerance: goalTolerance,
           });
           if (data && data.ok) {
-            setGoalTarget(String(data.target_weekly_spend || ''));
-            setGoalTolerance(String(data.weekly_spend_tolerance || ''));
-            setGoalSaveResult('Saved');
-            setTimeout(() => setGoalSaveResult(''), 2000);
+            setGoalSaveResult('Sent to Slack for approval');
+            setPendingProposal({
+              target: Number(goalTarget),
+              tolerance: Number(goalTolerance),
+              proposed_at: new Date().toISOString(),
+            });
+            setTimeout(() => setGoalSaveResult(''), 4000);
+          } else if (data && data.error) {
+            setGoalSaveResult(data.error);
           }
         } catch (err) {
-          setGoalSaveResult('Save failed: ' + (err.message || err));
+          setGoalSaveResult('Failed: ' + (err.message || err));
         }
         setGoalLoading(false);
       };
 
       return (
         <div className="bg-white p-4 rounded-lg shadow-sm border border-stone-200">
-          <h3 className="text-base font-semibold text-stone-800 flex items-center mb-4">
+          <h3 className="text-base font-semibold text-stone-800 flex items-center mb-2">
             <span>Budget Controls</span>
-            <InfoTip text="Manually trigger the budget optimization process (same as the scheduled Wed/Fri run) and adjust the weekly spend goal and tolerance the optimizer aims at." />
+            <InfoTip text="Trigger the budget optimization (same as the scheduled Wed/Fri run), adjust the weekly spend target, and view approval history." />
           </h3>
+
+          {budgetContext && (
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-stone-500 mb-3">
+              <span>Channel: <span className="font-medium text-stone-600">{budgetContext.slack_channel}</span></span>
+              {budgetContext.last_run_at && (
+                <span>Last run: <span className="font-medium text-stone-600">{new Date(budgetContext.last_run_at).toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</span></span>
+              )}
+              {budgetContext.last_approved_by && (
+                <span>Approved by: <span className="font-medium text-stone-600">{budgetContext.last_approved_by.split('@')[0]}</span>
+                  {budgetContext.last_approved_at && ` on ${new Date(budgetContext.last_approved_at).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}`}
+                </span>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Manual trigger */}
@@ -2934,8 +3170,16 @@
             <div className="border border-stone-200 rounded-lg p-3">
               <h4 className="text-sm font-semibold text-stone-700 mb-2 flex items-center">
                 <span>Weekly Spend Goal</span>
-                <InfoTip text="The optimizer aims to keep total weekly spend near this target. The tolerance is how far over or under the target is considered 'within range' before the optimizer applies a portfolio-level correction." />
+                <InfoTip text="The optimizer aims to keep total weekly spend near this target. The tolerance is how far over or under the target is considered 'within range' before the optimizer applies a portfolio-level correction. Changes require Slack approval before taking effect." />
               </h4>
+              {pendingProposal && (
+                <div className="mb-3 px-3 py-2 bg-amber-50 border border-amber-200 rounded-md text-xs text-amber-800">
+                  <span className="font-semibold">Pending approval:</span>{' '}
+                  ${Number(pendingProposal.target).toLocaleString()}/week
+                  {pendingProposal.tolerance != null && ` (\u00b1$${Number(pendingProposal.tolerance).toLocaleString()})`}
+                  {' '}&mdash; check Slack
+                </div>
+              )}
               <div className="flex flex-wrap gap-3 mb-3">
                 <div>
                   <label className="text-[11px] text-stone-600 font-medium block mb-1">
@@ -2966,18 +3210,18 @@
               </div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={handleSaveGoal}
+                  onClick={handleDeployGoal}
                   disabled={goalLoading || !apiUrl}
-                  className="bg-stone-800 hover:bg-stone-900 text-white px-3 py-1.5 rounded text-xs font-medium disabled:opacity-50"
+                  className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {goalLoading ? 'Saving…' : 'Save'}
+                  {goalLoading ? 'Deploying\u2026' : 'Deploy'}
                 </button>
                 {goalSaveResult && (
                   <span className={`text-xs font-medium ${
-                    goalSaveResult === 'Saved' ? 'text-emerald-700' : 'text-red-700'
+                    goalSaveResult === 'Sent to Slack for approval' ? 'text-emerald-700' : 'text-red-700'
                   }`}>{goalSaveResult}</span>
                 )}
-                {goalSource && (
+                {goalSource && !goalSaveResult && (
                   <span className="text-[10px] text-stone-400 ml-auto">
                     Source: {goalSource === 'hardcoded_default' ? 'default ($10,000 / $500)' : 'custom override'}
                   </span>
@@ -3469,6 +3713,7 @@
       const [rollup, setRollup] = useState([]);
       const [mappings, setMappings] = useState([]);
       const [narrative, setNarrative] = useState(null);
+      const [campaignList, setCampaignList] = useState([]);
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState(null);
 
@@ -3480,6 +3725,25 @@
         [mappings]
       );
 
+      // Paused campaigns: have historical spend but no spend
+      // on the most recent day. "last_active" from the campaigns
+      // endpoint is the latest date with spend > 0. If that date
+      // is more than 1 day ago, the campaign is paused.
+      const pausedCampaignNames = useMemo(() => {
+        if (!campaignList || campaignList.length === 0) return new Set();
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().substring(0, 10);
+        const paused = new Set();
+        campaignList.forEach(c => {
+          const lastActive = String(c.last_active || '').substring(0, 10);
+          if (lastActive && lastActive < yesterdayStr) {
+            paused.add(String(c.campaign_name || '').trim());
+          }
+        });
+        return paused;
+      }, [campaignList]);
+
       const { start, end } = useCustom
         ? { start: customStart, end: customEnd }
         : { start: DATE_PRESETS[preset].start(), end: DATE_PRESETS[preset].end() };
@@ -3488,17 +3752,19 @@
         setLoading(true);
         setError(null);
         try {
-          const [d, r, m, n] = await Promise.all([
+          const [d, r, m, n, cl] = await Promise.all([
             fetchAction(apiUrl, 'daily', { start, end }),
             fetchAction(apiUrl, 'rollup'),
             fetchAction(apiUrl, 'mappings'),
             fetchAction(apiUrl, 'narrative'),
+            fetchAction(apiUrl, 'campaigns'),
           ]);
           setDaily(Array.isArray(d) ? d : []);
           setRollup(Array.isArray(r) ? r : []);
           setMappings(Array.isArray(m) ? m : []);
           // narrative may come back as a single object or null
           setNarrative(Array.isArray(n) ? (n[n.length - 1] || null) : n);
+          setCampaignList(Array.isArray(cl) ? cl : []);
         } catch (err) {
           // Raw error still goes to the console for devtools
           // debugging; the on-screen banner gets a friendly,
@@ -3509,6 +3775,7 @@
           setRollup([]);
           setMappings([]);
           setNarrative(null);
+          setCampaignList([]);
         }
         setLoading(false);
       }, [apiUrl, start, end]);
@@ -3565,6 +3832,13 @@
               </div>
             )}
 
+            {/* ─── CPICP TRAJECTORY ALERT ───────────────── */}
+            <CPICPAlert
+              rollup={rollup}
+              rangeStart={start}
+              rangeEnd={end}
+            />
+
             {/* ─── HEADLINE: ICP / CPICP metrics ─────────── */}
             <ICPSummaryCards
               rollup={rollup.filter(r => {
@@ -3616,6 +3890,9 @@
               rollup={rollup}
               mappings={mappings}
               icCampaignNames={icCampaignNames}
+              pausedCampaignNames={pausedCampaignNames}
+              daily={daily}
+              apiUrl={apiUrl}
             />
 
             {/* ─── NARRATIVE + MAPPINGS ──────────────────── */}
