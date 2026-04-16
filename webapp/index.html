@@ -274,7 +274,13 @@
             baseCpicp + (trendDir * progress * 28) + (((w * 5 + idx * 3) % 20) - 10)
           );
           const estIcps = Math.max(0.5, Math.round((weekSpend / cpicp) * 10) / 10);
+          // icps_attributed = HubSpot contacts with a matching
+          // utm_campaign tag (still the UTM-match reference in v3).
           const attribIcps = Math.round(estIcps * (0.5 + (idx % 3) * 0.1));
+          // ic_conversions = Meta IC conversion events for this
+          // campaign/week. In v3 attribution, this is the floor of
+          // estimated_icps and the denominator for attribution_rate.
+          const icMockConv = Math.round(estIcps * (0.55 + ((idx + 1) % 3) * 0.12));
           const metaConv = Math.round(estIcps * 1.4);
           const priorCpicp = w < 12
             ? (rollup[rollup.length - campaigns.length]
@@ -293,8 +299,10 @@
             ctr:                  0.012,
             meta_conversions:     metaConv,
             icps_attributed:      attribIcps,
+            ic_conversions:       icMockConv,
             estimated_icps:       estIcps,
-            attribution_rate:     Math.round((attribIcps / estIcps) * 1000) / 10,
+            // v3: attribution_rate = ic_conversions / estimated_icps
+            attribution_rate:     Math.round((icMockConv / estIcps) * 1000) / 10,
             cpl:                  metaConv > 0 ? Math.round((weekSpend / metaConv) * 100) / 100 : null,
             cpicp_attributed:     attribIcps > 0 ? Math.round((weekSpend / attribIcps) * 100) / 100 : null,
             cpicp_blended:        Math.round(cpicp * 100) / 100,
@@ -567,7 +575,10 @@
             clicks: 0,
             meta_conversions: 0,
             estimated_icps: 0,
-            icps_attributed: 0,
+            // ic_conversions = Meta IC conversion events, the
+            // v3 foundation of estimated_icps and the numerator
+            // for attribution_rate.
+            ic_conversions: 0,
             weekCount: 0,
           };
         }
@@ -577,7 +588,7 @@
         c.clicks           += Number(r.clicks) || 0;
         c.meta_conversions += Number(r.meta_conversions) || 0;
         c.estimated_icps   += Number(r.estimated_icps) || 0;
-        c.icps_attributed  += Number(r.icps_attributed) || 0;
+        c.ic_conversions   += Number(r.ic_conversions) || 0;
         c.weekCount++;
       });
 
@@ -586,7 +597,10 @@
         cpicp_blended:    c.estimated_icps > 0 ? c.spend / c.estimated_icps : null,
         cpl:              c.meta_conversions > 0 ? c.spend / c.meta_conversions : null,
         ctr:              c.impressions > 0 ? c.clicks / c.impressions : null,
-        attribution_rate: c.estimated_icps > 0 ? (c.icps_attributed / c.estimated_icps) * 100 : null,
+        // v3: attribution_rate = ic_conversions / estimated_icps
+        // (share of estimated ICPs backed by direct IC conversions
+        // from Meta, not the old UTM-matched share).
+        attribution_rate: c.estimated_icps > 0 ? (c.ic_conversions / c.estimated_icps) * 100 : null,
       }));
     }
 
@@ -692,8 +706,9 @@
         formatValue: (v) => (v == null ? '—' : v.toFixed(1) + '%'),
         formatAxis:  (v) => v + '%',
         aggregateRows: (rows) => {
+          // v3: attribution_rate = ic_conversions / estimated_icps
           const e = rows.reduce((s, r) => s + (Number(r.estimated_icps) || 0), 0);
-          const a = rows.reduce((s, r) => s + (Number(r.icps_attributed) || 0), 0);
+          const a = rows.reduce((s, r) => s + (Number(r.ic_conversions) || 0), 0);
           return e > 0 ? Math.round((a / e) * 1000) / 10 : null;
         },
         tooltip: 'Share of estimated ICPs that are backed by direct IC conversions from Meta (deduplicated). Higher means more of this campaign\'s credit is coming from Meta\'s direct signal rather than the proportional share of the unattributed pool.',
@@ -1102,34 +1117,37 @@
       }, [daysInPeriod]);
 
       // ── Weekly aggregates ────────────────────────────
+      // v3: icConv holds Meta IC conversions (the foundation
+      // of estimated_icps and the numerator for attribution_rate).
       const weeklyTotals = useMemo(() => {
         const byWeek = {};
         rollup.forEach(r => {
           const week = String(r.week_start).substring(0, 10);
           if (!byWeek[week]) {
-            byWeek[week] = { week, spend: 0, estIcps: 0, attribIcps: 0 };
+            byWeek[week] = { week, spend: 0, estIcps: 0, icConv: 0 };
           }
-          byWeek[week].spend      += Number(r.spend) || 0;
-          byWeek[week].estIcps    += Number(r.estimated_icps) || 0;
-          byWeek[week].attribIcps += Number(r.icps_attributed) || 0;
+          byWeek[week].spend   += Number(r.spend) || 0;
+          byWeek[week].estIcps += Number(r.estimated_icps) || 0;
+          byWeek[week].icConv  += Number(r.ic_conversions) || 0;
         });
         return Object.values(byWeek).sort((a, b) => a.week.localeCompare(b.week));
       }, [rollup]);
 
       const totals = useMemo(() => {
-        const t = { spend: 0, estimatedIcps: 0, attributedIcps: 0 };
+        const t = { spend: 0, estimatedIcps: 0, icConversions: 0 };
         weeklyTotals.forEach(w => {
-          t.spend          += w.spend;
-          t.estimatedIcps  += w.estIcps;
-          t.attributedIcps += w.attribIcps;
+          t.spend         += w.spend;
+          t.estimatedIcps += w.estIcps;
+          t.icConversions += w.icConv;
         });
         return t;
       }, [weeklyTotals]);
 
       const blendedCpicp = totals.estimatedIcps > 0
         ? totals.spend / totals.estimatedIcps : null;
+      // v3: attribution_rate = ic_conversions / estimated_icps
       const attributionRate = totals.estimatedIcps > 0
-        ? (totals.attributedIcps / totals.estimatedIcps) * 100 : null;
+        ? (totals.icConversions / totals.estimatedIcps) * 100 : null;
 
       // ── Daily spend series (for weighted projection) ──
       const dailySpendData = useMemo(() => {
@@ -1194,8 +1212,9 @@
         }
 
         // ATTRIBUTION: weekly ratio, point extrapolation
+        // v3: attribution_rate = ic_conversions / estimated_icps
         const attrSeries = weeklyTotals.map((w, i) => ({
-          x: i, y: w.estIcps > 0 ? (w.attribIcps / w.estIcps) * 100 : null
+          x: i, y: w.estIcps > 0 ? (w.icConv / w.estIcps) * 100 : null
         }));
         const attrReg = linearRegression(attrSeries);
         if (attrReg && weeklyTotals.length >= 2) {
@@ -1260,7 +1279,7 @@
           label: 'Estimated ICPs',
           value: fmtNumber(totals.estimatedIcps, 1),
           accent: 'text-amber-600',
-          hint: `${fmtNumber(totals.attributedIcps)} from IC conversions`,
+          hint: `${fmtNumber(totals.icConversions)} from IC conversions`,
           tooltip: 'Total ICPs credited via hybrid attribution. ICP = HubSpot contact decisioned as investment_crowdfunding.',
           trendBlock: renderTrendAndProjection(
             projections.icps,
@@ -2294,7 +2313,6 @@
               campaign: key,
               spend: 0,
               estIcps: 0,
-              attribIcps: 0,
               icConversions: 0,
               weeks: [],
             };
@@ -2302,7 +2320,6 @@
           const c = byCampaign[key];
           c.spend         += Number(r.spend) || 0;
           c.estIcps       += Number(r.estimated_icps) || 0;
-          c.attribIcps    += Number(r.icps_attributed) || 0;
           c.icConversions += Number(r.ic_conversions) || 0;
           c.weeks.push({
             week_start: String(r.week_start).substring(0, 10),
@@ -2345,7 +2362,8 @@
             : null;
 
           const blendedCpicp = c.estIcps > 0 ? c.spend / c.estIcps : null;
-          const attribRate = c.estIcps > 0 ? (c.attribIcps / c.estIcps) * 100 : null;
+          // v3: attribution_rate = ic_conversions / estimated_icps
+          const attribRate = c.estIcps > 0 ? (c.icConversions / c.estIcps) * 100 : null;
 
           return {
             ...c,
@@ -2662,13 +2680,16 @@
         if (!target || isNaN(target) || target <= 0) return null;
 
         // Use all available rollup for the regression.
+        // v3: the "attrib" bucket tracks ic_conversions
+        // (the v3 attribution_rate numerator), not the old
+        // UTM-matched icps_attributed.
         const byWeek = {};
         rollup.forEach(r => {
           const wk = String(r.week_start).substring(0, 10);
           if (!byWeek[wk]) byWeek[wk] = { spend: 0, icps: 0, attrib: 0, impressions: 0, clicks: 0, convs: 0 };
           byWeek[wk].spend  += Number(r.spend) || 0;
           byWeek[wk].icps   += Number(r.estimated_icps) || 0;
-          byWeek[wk].attrib += Number(r.icps_attributed) || 0;
+          byWeek[wk].attrib += Number(r.ic_conversions) || 0;
           byWeek[wk].convs  += Number(r.meta_conversions) || 0;
         });
         const weeks = Object.values(byWeek);
