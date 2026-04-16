@@ -1968,6 +1968,8 @@ function runFullDiagnostic() {
 
 function runBudgetAnalysis() {
   Logger.log('=== runBudgetAnalysis ===');
+  // Record timestamp so the dashboard can show "last run".
+  PROPS.setProperty('BUDGET_LAST_RUN_AT', new Date().toISOString());
   validateTokens_();
 
   var priorTokenExists = !!PROPS.getProperty('BUDGET_PENDING_TOKEN');
@@ -2958,6 +2960,8 @@ function doGet(e) {
 
   if (action === 'approve') {
     PROPS.setProperty('BUDGET_APPROVED_TOKEN', token);
+    PROPS.setProperty('BUDGET_LAST_APPROVED_BY', user);
+    PROPS.setProperty('BUDGET_LAST_APPROVED_AT', new Date().toISOString());
     postToSlack_('*Honeycomb Budget* ✅ Approved by ' + user +
       '. Changes will execute tonight at 3:00 AM.');
     return HtmlService.createHtmlOutput(
@@ -3071,6 +3075,7 @@ function handleDashboardApi_(e) {
     chat: true,
     run_budget_analysis: true,
     get_spend_goal: true,
+    get_campaign_budgets: true,
     propose_spend_target: true,
     // Two-step Slack-safe approval for spend target changes.
     // Same pattern as the budget proposal flow: bare URLs show
@@ -3109,6 +3114,31 @@ function handleDashboardApi_(e) {
     }
   }
 
+  // Fetch current daily budgets from Meta for all active
+  // campaigns. Returns { campaignId: { name, dailyBudgetCents, status } }.
+  // Used by the dashboard to compute budget pacing/utilization.
+  // This makes a live Meta API call, so it's not called on every
+  // page load — only when the dashboard needs it.
+  if (action === 'get_campaign_budgets') {
+    try {
+      var budgets = getCurrentMetaBudgets_();
+      // Convert to array for easier frontend consumption,
+      // including campaign_id for matching.
+      var budgetList = Object.keys(budgets).map(function(cid) {
+        return {
+          campaign_id: cid,
+          campaign_name: budgets[cid].name,
+          daily_budget_cents: budgets[cid].dailyBudgetCents,
+          status: budgets[cid].status
+        };
+      });
+      return jsonResponse_(budgetList);
+    } catch (err) {
+      Logger.log('get_campaign_budgets error: ' + err.message);
+      return jsonResponse_({ error: 'Failed to fetch Meta budgets: ' + err.message });
+    }
+  }
+
   // Read the current spend goal + tolerance. These
   // default to the hardcoded constants but can be
   // overridden via Script Properties so the dashboard
@@ -3125,7 +3155,15 @@ function handleDashboardApi_(e) {
       target_weekly_spend:    goalOverride      ? Number(goalOverride)      : TARGET_WEEKLY_SPEND,
       weekly_spend_tolerance: toleranceOverride  ? Number(toleranceOverride) : WEEKLY_SPEND_TOLERANCE,
       source: goalOverride ? 'script_property_override' : 'hardcoded_default',
-      pending: null
+      pending: null,
+      // Budget operation context for the dashboard's
+      // Budget Controls panel.
+      budget_context: {
+        slack_channel: PROPS.getProperty('SLACK_CHANNEL') || '#marketing-ads-budget',
+        last_run_at:      PROPS.getProperty('BUDGET_LAST_RUN_AT') || null,
+        last_approved_by: PROPS.getProperty('BUDGET_LAST_APPROVED_BY') || null,
+        last_approved_at: PROPS.getProperty('BUDGET_LAST_APPROVED_AT') || null
+      }
     };
     if (pendingTarget) {
       response.pending = {
