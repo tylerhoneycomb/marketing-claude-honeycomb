@@ -242,7 +242,13 @@
             reach: reach,
             conversions: conv,
             frequency: Math.round((impr / reach) * 100) / 100,
-            cpl: conv > 0 ? Math.round((spend / conv) * 100) / 100 : null
+            cpl: conv > 0 ? Math.round((spend / conv) * 100) / 100 : null,
+            // Mock IC conversions: roughly half the lead conversions
+            // for IC-ish campaigns, zero for others. Gives the daily
+            // CPICP chart something to plot in mock mode.
+            ic_conversions: /ic|invest|crowd/i.test(c.name)
+              ? Math.max(0, Math.round(conv * 0.6))
+              : Math.max(0, Math.round(conv * 0.15))
           });
         });
       }
@@ -2007,18 +2013,32 @@
                     No data for {primaryMetric.label} at {granularity} granularity in the selected range.
                   </p>
                   {primaryMetric.key === 'cpicp_blended' && granularity === 'day' && (() => {
-                    // Detect whether the daily payload includes
-                    // the ic_conversions field at all. If it
-                    // doesn't, the Apps Script needs to be
-                    // re-pasted to expose it.
-                    const sampleRow = (daily || [])[0];
+                    // Diagnostic for why Daily CPICP has no data.
+                    // Three cases:
+                    //   1. Daily payload missing ic_conversions field
+                    //      (Apps Script hasn't been redeployed)
+                    //   2. Field present, but all values are 0
+                    //      (no IC conversions in range)
+                    //   3. No daily rows at all in range
+                    const rowsInRange = (daily || []);
+                    const sampleRow = rowsInRange[0];
                     const fieldMissing = sampleRow && !('ic_conversions' in sampleRow);
+                    const totalIC = rowsInRange.reduce(
+                      (s, r) => s + (Number(r.ic_conversions) || 0), 0
+                    );
+                    let message;
+                    if (!sampleRow) {
+                      message = 'No daily rows returned for this date range.';
+                    } else if (fieldMissing) {
+                      message = 'The current Apps Script deployment is not returning the ic_conversions field. The fix is in Code.js on main — confirm the latest Deploy Apps Script workflow succeeded and that the Web App has been redeployed as a new version.';
+                    } else if (totalIC === 0) {
+                      message = `The field is present but zero IC conversions were recorded across all ${rowsInRange.length} daily rows in range. Daily CPICP only shows values when IC-optimized campaigns had conversions. Switch to Week or Month granularity for a fuller picture.`;
+                    } else {
+                      message = 'Unexpected state — ic_conversions totals are non-zero but no CPICP points were built. This usually means spend is zero on every day with IC conversions.';
+                    }
                     return (
                       <p className="text-xs text-stone-500 mt-3 max-w-md mx-auto leading-relaxed">
-                        Daily CPICP needs <code className="bg-stone-100 px-1 rounded">ic_conversions</code> in the daily data.
-                        {fieldMissing
-                          ? ' The current Apps Script is not returning that field. This has been fixed — merge the latest Code.js changes and the clasp deploy will update it automatically.'
-                          : ' If no IC-optimized campaigns had conversions in this range, switch to Week or Month granularity for a fuller picture.'}
+                        <strong>Daily CPICP needs ic_conversions.</strong> {message}
                       </p>
                     );
                   })()}
