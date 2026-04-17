@@ -54,6 +54,15 @@ The `.js` extension on `Code.js` is intentional — clasp uses `.js` locally and
 
 Authentication uses the `CLASPRC_JSON` GitHub secret (OAuth credentials). Do not attempt to read, modify, or rotate this secret programmatically.
 
+### Apps Script deploy: targets a fixed deployment
+
+The `clasp deploy` step in `.github/workflows/deploy-apps-script.yml` uses
+`--deploymentId ${{ secrets.CLASP_DEPLOYMENT_ID }}` to update the existing
+Web App deployment in place. The dashboard's `/exec` URL is tied to that
+deployment ID and never changes across CI runs. Do not remove the
+`--deploymentId` flag — without it, every CI run creates a phantom
+deployment with a new URL while the live dashboard URL goes stale.
+
 ## Code Style
 
 - Python scripts: follow PEP 8, use descriptive variable names

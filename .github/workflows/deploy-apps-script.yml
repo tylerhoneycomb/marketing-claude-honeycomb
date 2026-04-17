@@ -35,4 +35,4 @@ jobs:
 
       - name: Deploy new version
         working-directory: apps-script
-        run: clasp deploy --description "Deployed from commit ${{ github.sha }}"
+        run: clasp deploy --deploymentId ${{ secrets.CLASP_DEPLOYMENT_ID }} --description "Deployed from commit ${{ github.sha }}"
