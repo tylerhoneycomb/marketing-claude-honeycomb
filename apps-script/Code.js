@@ -883,7 +883,7 @@ function collectMetaRows_(allRows, data, existingKeys, icActionTypes) {
     var reach = parseInt(row.reach, 10) || 0;
     var clicks = parseInt(row.clicks, 10) || 0;
     var frequency = reach > 0 ? Math.round((impressions / reach) * 100) / 100 : 0;
-    var cpl = conversions > 0 ? Math.round((spend / conversions) * 100) / 100 : '';
+    var cpl = conversions > 0 ? Math.round((spend / conversions) * 100) / 100 : null;
 
     allRows.push([
       row.date_start, monthName, weekNum,
