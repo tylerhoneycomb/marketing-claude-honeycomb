@@ -448,6 +448,9 @@ function handleChatRequest_(e) {
       '- CTR: click-through rate. Creative quality signal.',
       '- Frequency: avg ad exposures per unique reach. Above 3.5 = audience saturation risk.',
       '',
+      'DAILY DATA (available in the context block below):',
+      'The context includes the last 30 days of daily per-campaign performance data (spend, impressions, clicks, conversions, IC conversions) plus a daily portfolio summary. Use this data to answer questions about recent daily trends, yesterday\'s performance, day-over-day changes, and intra-week patterns. For longer-term analysis (multi-week trends, CPICP, attribution), prefer the weekly rollup data which includes estimated_icps and attribution metrics that daily data does not have.',
+      '',
       'HOW TO RESPOND:',
       '- Be concise. Think "quick Slack message," not "long email."',
       '- Cite specific numbers from the data below when possible. Avoid vague language.',
@@ -593,6 +596,17 @@ function buildDashboardContext_() {
     });
     lines.push('');
   }
+
+  // ── Daily per-campaign data (last 30 days) ─────────
+  // See apps-script/Code.js for full implementation.
+  // Reads rolling_data sheet, filters to last 30 days,
+  // produces two blocks:
+  //   1. DAILY PERFORMANCE: per-campaign rows with
+  //      date, campaign_name, spend, impressions, clicks,
+  //      conversions, ic_conversions
+  //   2. DAILY PORTFOLIO SUMMARY: aggregated daily totals
+  //      (total_spend, total_conversions, etc.)
+  // [Full implementation in apps-script/Code.js]
 
   // ── Campaign mappings ───────────────────────────────
   var mappingSheet = ss.getSheetByName(MAPPING_SHEET);

@@ -3542,6 +3542,9 @@ function handleChatRequest_(e) {
       '- CTR: click-through rate. Creative quality signal.',
       '- Frequency: avg ad exposures per unique reach. Above 3.5 = audience saturation risk.',
       '',
+      'DAILY DATA (available in the context block below):',
+      'The context includes the last 30 days of daily per-campaign performance data (spend, impressions, clicks, conversions, IC conversions) plus a daily portfolio summary. Use this data to answer questions about recent daily trends, yesterday\'s performance, day-over-day changes, and intra-week patterns. For longer-term analysis (multi-week trends, CPICP, attribution), prefer the weekly rollup data which includes estimated_icps and attribution metrics that daily data does not have.',
+      '',
       'HOW TO RESPOND:',
       '- Be concise. Think "quick Slack message," not "long email."',
       '- Cite specific numbers from the data below when possible. Avoid vague language.',
@@ -3686,6 +3689,78 @@ function buildDashboardContext_() {
       }).join('\t'));
     });
     lines.push('');
+  }
+
+  // ── Daily per-campaign data (last 30 days) ─────────
+  var metaSheet = ss.getSheetByName(META_SHEET);
+  if (metaSheet && metaSheet.getLastRow() > 1) {
+    var tz = Session.getScriptTimeZone();
+    var cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    var cutoffStr = Utilities.formatDate(cutoff, tz, 'yyyy-MM-dd');
+
+    var metaData = metaSheet.getDataRange().getValues();
+    // Columns: 0=Date 1=Month 2=Week 3=CampaignName 4=CampaignID
+    //   5=Impressions 6=Clicks 7=Spend 8=Reach 9=Conversions
+    //   10=Frequency 11=CPL 12=IC Conversions
+    var dailyRows = [];
+    var portfolioByDate = {};
+
+    for (var di = 1; di < metaData.length; di++) {
+      var dateStr = metaData[di][0] instanceof Date
+        ? Utilities.formatDate(metaData[di][0], tz, 'yyyy-MM-dd')
+        : String(metaData[di][0]);
+      if (!dateStr || dateStr < cutoffStr) continue;
+
+      var spend = Number(metaData[di][7]) || 0;
+      var impressions = Number(metaData[di][5]) || 0;
+      var clicks = Number(metaData[di][6]) || 0;
+      var conversions = Number(metaData[di][9]) || 0;
+      var icConv = Number(metaData[di][12]) || 0;
+      var campaignName = String(metaData[di][3] || '');
+
+      dailyRows.push(
+        dateStr + '\t' + campaignName + '\t' +
+        spend + '\t' + impressions + '\t' + clicks + '\t' +
+        conversions + '\t' + icConv
+      );
+
+      if (!portfolioByDate[dateStr]) {
+        portfolioByDate[dateStr] = {
+          spend: 0, conversions: 0, icConv: 0,
+          impressions: 0, clicks: 0, campaigns: 0
+        };
+      }
+      var pd = portfolioByDate[dateStr];
+      pd.spend += spend;
+      pd.conversions += conversions;
+      pd.icConv += icConv;
+      pd.impressions += impressions;
+      pd.clicks += clicks;
+      pd.campaigns++;
+    }
+
+    if (dailyRows.length > 0) {
+      lines.push('DAILY PERFORMANCE (last 30 days, ' + dailyRows.length + ' rows, tab-separated):');
+      lines.push('date\tcampaign_name\tspend\timpressions\tclicks\tconversions\tic_conversions');
+      dailyRows.forEach(function (r) { lines.push(r); });
+      lines.push('');
+    }
+
+    var sortedDates = Object.keys(portfolioByDate).sort();
+    if (sortedDates.length > 0) {
+      lines.push('DAILY PORTFOLIO SUMMARY (last 30 days, ' + sortedDates.length + ' days):');
+      lines.push('date\ttotal_spend\ttotal_conversions\ttotal_ic_conversions\ttotal_impressions\ttotal_clicks\tcampaign_count');
+      sortedDates.forEach(function (d) {
+        var p = portfolioByDate[d];
+        lines.push(
+          d + '\t' + p.spend + '\t' + p.conversions + '\t' +
+          p.icConv + '\t' + p.impressions + '\t' + p.clicks + '\t' +
+          p.campaigns
+        );
+      });
+      lines.push('');
+    }
   }
 
   // ── Campaign mappings ───────────────────────────────
