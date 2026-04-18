@@ -1382,7 +1382,9 @@
           ? (reg.slope * (series.length - 1) / reg.intercept) * 100
           : 0;
 
-        // Per-campaign callouts: find campaigns with WoW > 15%
+        // Per-campaign callouts: find campaigns with meaningful
+        // CPICP increases. Require minimum spend ($200/week) to
+        // filter out low-volume noise where CPICP swings wildly.
         const campaignByName = {};
         rollup.forEach(r => {
           const ws = String(r.week_start).substring(0, 10);
@@ -1390,22 +1392,36 @@
           if (rangeEnd && ws > rangeEnd) return;
           const name = r.campaign_name;
           if (!campaignByName[name]) campaignByName[name] = [];
+          const spend = Number(r.spend) || 0;
+          const icps = Number(r.estimated_icps) || 0;
           campaignByName[name].push({
             week: ws,
-            cpicp: (Number(r.estimated_icps) || 0) > 0
-              ? (Number(r.spend) || 0) / Number(r.estimated_icps)
-              : null
+            spend,
+            cpicp: icps > 0 ? spend / icps : null
           });
         });
         const worseningCampaigns = [];
         Object.entries(campaignByName).forEach(([name, wks]) => {
-          const valid = wks.filter(w => w.cpicp != null).sort((a, b) => a.week.localeCompare(b.week));
-          if (valid.length < 2) return;
+          const valid = wks
+            .filter(w => w.cpicp != null && w.spend >= 200)
+            .sort((a, b) => a.week.localeCompare(b.week));
+          if (valid.length < 3) return;
+          // Compare latest week to 4-week baseline (not just
+          // prior week, which is too noisy).
           const last = valid[valid.length - 1];
-          const prior = valid[valid.length - 2];
-          if (prior.cpicp > 0) {
-            const chg = ((last.cpicp - prior.cpicp) / prior.cpicp) * 100;
-            if (chg > 15) worseningCampaigns.push({ name, pct: chg });
+          const base = valid.slice(Math.max(0, valid.length - 5), valid.length - 1);
+          const baseAvgCpicp = base.reduce((s, w) => s + w.cpicp, 0) / base.length;
+          if (baseAvgCpicp <= 0) return;
+          const absDelta = last.cpicp - baseAvgCpicp;
+          const pctChg = (absDelta / baseAvgCpicp) * 100;
+          // Only flag if CPICP rose materially: 20%+ AND $20+
+          if (pctChg > 20 && absDelta > 20) {
+            worseningCampaigns.push({
+              name,
+              pct: pctChg,
+              from: baseAvgCpicp,
+              to: last.cpicp,
+            });
           }
         });
         worseningCampaigns.sort((a, b) => b.pct - a.pct);
@@ -1445,7 +1461,7 @@
             {alert.worseningCampaigns.length > 0 && (
               <div className="text-xs mt-1 opacity-70">
                 Biggest movers: {alert.worseningCampaigns.map(c =>
-                  `${c.name} (+${Math.round(c.pct)}%)`
+                  `${c.name} (${fmtCurrencyCents(c.from)} \u2192 ${fmtCurrencyCents(c.to)})`
                 ).join(', ')}
               </div>
             )}
