@@ -1322,6 +1322,19 @@ function generateWeeklyNarrative() {
     Logger.log('No completed week available. Current week is still in progress.');
     return;
   }
+
+  var logSheet = ss.getSheetByName(INTEL_SHEET);
+  if (logSheet && logSheet.getLastRow() > 1) {
+    var logData = logSheet.getDataRange().getValues();
+    for (var li = 1; li < logData.length; li++) {
+      if (resolveReportingWeek_(logData[li][1]) === targetWeek) {
+        Logger.log('Narrative already exists for ' + targetWeek + ' (row ' + (li + 1) +
+          '). Skipping. Use generateNarrativeForWeek_ with overwrite:true to regenerate.');
+        return;
+      }
+    }
+  }
+
   generateNarrativeForWeek_(targetWeek, { postToSlack: true, overwrite: false });
   Logger.log('=== generateWeeklyNarrative complete ===');
 }
@@ -1361,6 +1374,12 @@ function generateNarrativeForWeek_(targetWeek, opts) {
 
   Logger.log('--- generateNarrativeForWeek_: ' + targetWeek +
     ' (overwrite=' + overwrite + ', slack=' + postSlack + ') ---');
+
+  if (typeof targetWeek !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(targetWeek)) {
+    Logger.log('ERROR: targetWeek must be a YYYY-MM-DD string, got: ' +
+      typeof targetWeek + ' "' + String(targetWeek).substring(0, 40) + '". Aborting.');
+    return;
+  }
 
   // Monday assertion — parse YYYY-MM-DD component parts to stay in script
   // timezone. new Date('2026-03-09') parses as UTC midnight, which is
