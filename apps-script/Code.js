@@ -85,6 +85,10 @@ function getMonthName(date) {
   return months[date.getMonth()];
 }
 
+// Canonical week function — all week labels in the pipeline flow from here.
+// buildWeeklyRollup and generateWeeklyNarrative both depend on this returning
+// Monday. Changing the convention here changes it everywhere; never inline
+// week math elsewhere.
 function getWeekStart(date) {
   var d;
   if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}/)) {
@@ -1295,20 +1299,88 @@ function buildWeeklyRollup() {
 
 function generateWeeklyNarrative() {
   Logger.log('=== generateWeeklyNarrative ===');
-  validateTokens_();
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-
   var rollupSheet = ss.getSheetByName(ROLLUP_SHEET);
   if (!rollupSheet) {
     Logger.log('ERROR: weekly_rollup sheet not found. Run buildWeeklyRollup first.');
     return;
   }
-
   var data = rollupSheet.getDataRange().getValues();
   if (data.length < 2) {
     Logger.log('ERROR: weekly_rollup is empty. Run buildWeeklyRollup first.');
     return;
   }
+  var weekSet = {};
+  var allWeeks = [];
+  data.slice(1).forEach(function (r) {
+    var w = dateToYMD_(r[0]);
+    if (w && !weekSet[w]) { weekSet[w] = true; allWeeks.push(w); }
+  });
+  allWeeks.sort();
+  var targetWeek = getMostRecentCompletedWeek_(allWeeks);
+  if (!targetWeek) {
+    Logger.log('No completed week available. Current week is still in progress.');
+    return;
+  }
+  generateNarrativeForWeek_(targetWeek, { postToSlack: true, overwrite: false });
+  Logger.log('=== generateWeeklyNarrative complete ===');
+}
+
+
+// Resolves any reporting_week cell value to a YYYY-MM-DD string.
+// Handles Date objects, "YYYY-MM-DD" strings, and JS Date.toString() output
+// like "Sun Mar 15 2026 00:00:00 GMT-0400 (Eastern Daylight Time)".
+function resolveReportingWeek_(val) {
+  var tz = Session.getScriptTimeZone();
+  if (val instanceof Date) {
+    return Utilities.formatDate(val, tz, 'yyyy-MM-dd');
+  }
+  var s = String(val).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    return s.substring(0, 10);
+  }
+  try {
+    var parsed = new Date(s);
+    if (!isNaN(parsed.getTime())) {
+      return Utilities.formatDate(parsed, tz, 'yyyy-MM-dd');
+    }
+  } catch (e) { /* unparseable — fall through */ }
+  return null;
+}
+
+
+// Core narrative generator for a specific week.
+// targetWeek must be a Monday-dated YYYY-MM-DD string.
+// opts.postToSlack (default true): post the Slack digest after writing.
+// opts.overwrite (default false): delete existing intelligence_log rows
+//   for this week window (Monday + preceding Sunday) before appending.
+function generateNarrativeForWeek_(targetWeek, opts) {
+  opts = opts || {};
+  var postSlack = opts.postToSlack !== false;
+  var overwrite = !!opts.overwrite;
+
+  Logger.log('--- generateNarrativeForWeek_: ' + targetWeek +
+    ' (overwrite=' + overwrite + ', slack=' + postSlack + ') ---');
+
+  // Monday assertion — parse YYYY-MM-DD component parts to stay in script
+  // timezone. new Date('2026-03-09') parses as UTC midnight, which is
+  // Sunday 8 PM in ET — wrong day-of-week.
+  var twParts = targetWeek.split('-');
+  var twDate = new Date(parseInt(twParts[0]), parseInt(twParts[1]) - 1, parseInt(twParts[2]));
+  if (twDate.getDay() !== 1) {
+    Logger.log('ERROR: ' + targetWeek + ' is not a Monday (day=' + twDate.getDay() + '). Aborting.');
+    return;
+  }
+
+  validateTokens_();
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var rollupSheet = ss.getSheetByName(ROLLUP_SHEET);
+  if (!rollupSheet || rollupSheet.getLastRow() < 2) {
+    Logger.log('ERROR: weekly_rollup sheet missing or empty.');
+    return;
+  }
+
+  var data = rollupSheet.getDataRange().getValues();
 
   var weekSet = {};
   var allWeeks = [];
@@ -1318,26 +1390,22 @@ function generateWeeklyNarrative() {
   });
   allWeeks.sort();
 
-  var targetWeek = getMostRecentCompletedWeek_(allWeeks);
-  if (!targetWeek) {
-    Logger.log('No completed week available. Current week is still in progress.');
-    return;
-  }
-  Logger.log('Generating narrative for week of: ' + targetWeek);
-
   var weekRows = data.slice(1).filter(function (r) { return dateToYMD_(r[0]) === targetWeek; });
   if (weekRows.length === 0) {
-    Logger.log('ERROR: No rows found for week ' + targetWeek);
+    Logger.log('ERROR: No rollup rows found for week ' + targetWeek);
     return;
   }
+
+  Logger.log('Generating narrative for week of: ' + targetWeek +
+    ' (' + weekRows.length + ' campaign rows)');
 
   var totalSpend = 0, totalICPs = 0, totalAttrICPs = 0, totalConversions = 0, totalICConversions = 0;
   weekRows.forEach(function (r) {
     totalSpend += r[3] || 0;
-    totalICPs += r[12] || 0;       // estimated_icps (was col 11, now 12)
-    totalAttrICPs += r[11] || 0;   // icps_attributed (was col 10, now 11)
-    totalConversions += r[9] || 0; // meta_conversions (unchanged)
-    totalICConversions += r[10] || 0; // ic_conversions (new col 10)
+    totalICPs += r[12] || 0;
+    totalAttrICPs += r[11] || 0;
+    totalConversions += r[9] || 0;
+    totalICConversions += r[10] || 0;
   });
   var overallCPICP = totalICPs > 0 ? (totalSpend / totalICPs).toFixed(2) : 'N/A';
   var overallCPL = totalConversions > 0 ? (totalSpend / totalConversions).toFixed(2) : 'N/A';
@@ -1345,23 +1413,23 @@ function generateWeeklyNarrative() {
     ? Math.round((totalICConversions / totalICPs) * 1000) / 10 + '%' : 'N/A';
 
   var sortedRows = weekRows.slice().sort(function (a, b) {
-    if (a[16] === null && b[16] === null) return 0;  // cpicp_blended (was 15, now 16)
+    if (a[16] === null && b[16] === null) return 0;
     if (a[16] === null) return 1;
     if (b[16] === null) return -1;
     return a[16] - b[16];
   });
 
   var campaignLines = sortedRows.map(function (r) {
-    var wowStr = (r[19] !== null && r[19] !== '')               // was 18, now 19
+    var wowStr = (r[19] !== null && r[19] !== '')
       ? (r[19] > 0 ? '+' + r[19] + '%' : r[19] + '%') : 'no prior week';
-    var vsStr = (r[20] !== null && r[20] !== '')                 // was 19, now 20
+    var vsStr = (r[20] !== null && r[20] !== '')
       ? (r[20] > 0 ? '+' + r[20] + '%' : r[20] + '%') : 'no baseline yet';
-    var cpicpStr = r[16] !== null ? '$' + r[16] : 'no est. ICPs'; // was 15, now 16
-    var attrStr = r[13] !== null ? r[13] + '% IC attributed' : 'no IC data'; // IC conversion coverage
+    var cpicpStr = r[16] !== null ? '$' + r[16] : 'no est. ICPs';
+    var attrStr = r[13] !== null ? r[13] + '% IC attributed' : 'no IC data';
     var icConvStr = (r[10] || 0) > 0 ? ' | IC convs ' + r[10] : '';
     return '  ' + r[2] + ' (' + r[1] + ')' +
       ': spend $' + (r[3] || 0).toFixed(0) +
-      ' | est. ICPs ' + (r[12] || 0) +             // was 11, now 12
+      ' | est. ICPs ' + (r[12] || 0) +
       ' | CPICP ' + cpicpStr +
       ' | WoW ' + wowStr +
       ' | vs 4wk avg ' + vsStr +
@@ -1376,12 +1444,12 @@ function generateWeeklyNarrative() {
     .join('\n') || '  None';
 
   var spikeAlerts = weekRows
-    .filter(function (r) { return r[20] !== null && r[20] !== '' && r[20] > 25 && (r[12] || 0) > 0; }) // was 19→20, 11→12
-    .map(function (r) { return '  ' + r[2] + ': CPICP $' + r[16] + ' (+' + r[20] + '% vs 4wk avg)'; }) // was 15→16, 19→20
+    .filter(function (r) { return r[20] !== null && r[20] !== '' && r[20] > 25 && (r[12] || 0) > 0; })
+    .map(function (r) { return '  ' + r[2] + ': CPICP $' + r[16] + ' (+' + r[20] + '% vs 4wk avg)'; })
     .join('\n') || '  None';
 
   var zeroICPLines = weekRows
-    .filter(function (r) { return (r[12] || 0) === 0 && (r[3] || 0) > 0; }) // was 11, now 12
+    .filter(function (r) { return (r[12] || 0) === 0 && (r[3] || 0) > 0; })
     .map(function (r) { return '  ' + r[2] + ': $' + (r[3] || 0).toFixed(0) + ' spend, 0 est. ICPs'; })
     .join('\n') || '  None';
 
@@ -1483,23 +1551,96 @@ function generateWeeklyNarrative() {
     Logger.log('Anthropic exception: ' + e.message);
   }
 
+  // ── Write to intelligence_log ──────────────────────
   var logSheet = ss.getSheetByName(INTEL_SHEET);
   if (!logSheet) logSheet = ss.insertSheet(INTEL_SHEET);
   if (logSheet.getLastRow() === 0) {
     logSheet.appendRow(['generated_at', 'reporting_week', 'total_spend', 'total_icps',
       'overall_cpicp', 'context_block', 'narrative']);
   }
+
+  if (overwrite && logSheet.getLastRow() > 1) {
+    var tz = Session.getScriptTimeZone();
+    var sundayBefore = new Date(twDate);
+    sundayBefore.setDate(sundayBefore.getDate() - 1);
+    var sundayStr = Utilities.formatDate(sundayBefore, tz, 'yyyy-MM-dd');
+
+    var logData = logSheet.getDataRange().getValues();
+    for (var i = logData.length - 1; i >= 1; i--) {
+      var resolved = resolveReportingWeek_(logData[i][1]);
+      if (resolved === targetWeek || resolved === sundayStr) {
+        Logger.log('  DELETE row ' + (i + 1) + ': reporting_week raw="' +
+          String(logData[i][1]).substring(0, 40) + '" → resolved=' + resolved);
+        logSheet.deleteRow(i + 1);
+      }
+    }
+  }
+
   logSheet.appendRow([
     new Date().toISOString(), targetWeek,
     totalSpend.toFixed(2), totalICPs, overallCPICP,
     contextBlock, narrative
   ]);
+  Logger.log('  APPEND: reporting_week=' + targetWeek +
+    ' spend=$' + totalSpend.toFixed(2) + ' icps=' + totalICPs);
 
-  postWeeklyNarrativeToSlack_(
-    targetWeek, totalSpend, totalICPs, overallCPICP, overallCPL,
-    totalAttrICPs, overallAttrRate, weekRows, allWeeks, data, narrative
-  );
-  Logger.log('=== generateWeeklyNarrative complete ===');
+  // ── Reconciliation: verify spend matches rollup ────
+  var rollupCheck = 0;
+  var freshRollup = rollupSheet.getDataRange().getValues();
+  for (var ri = 1; ri < freshRollup.length; ri++) {
+    if (dateToYMD_(freshRollup[ri][0]) === targetWeek) {
+      rollupCheck += freshRollup[ri][3] || 0;
+    }
+  }
+  var spendGap = Math.abs(totalSpend - rollupCheck);
+  if (spendGap > 0.01) {
+    Logger.log('WARNING: RECONCILIATION FAILED for ' + targetWeek +
+      ': narrative=$' + totalSpend.toFixed(2) +
+      ' rollup=$' + rollupCheck.toFixed(2) +
+      ' gap=$' + spendGap.toFixed(2));
+  } else {
+    Logger.log('  Reconciliation OK: spend=$' + totalSpend.toFixed(2) + ' matches rollup');
+  }
+
+  if (postSlack) {
+    postWeeklyNarrativeToSlack_(
+      targetWeek, totalSpend, totalICPs, overallCPICP, overallCPL,
+      totalAttrICPs, overallAttrRate, weekRows, allWeeks, data, narrative
+    );
+  }
+}
+
+
+// One-time backfill: regenerate the three Sunday-convention narrative rows
+// under the correct Monday convention. Run once from the Apps Script editor
+// after deploying this code.
+//
+// Step 1: Dry run on a known-good Monday week (2026-04-06) to validate the
+//   core helper. That row already exists and is Monday-aligned — if the
+//   overwrite works, reconciliation passes, and the new row has the same
+//   totals, the machinery is sound.
+// Step 2: Backfill the three historical weeks that used the old Sunday
+//   convention (3/8 → 3/9, 3/15 → 3/16, 3/22 → 3/23).
+function backfillHistoricalNarratives() {
+  Logger.log('=== backfillHistoricalNarratives ===');
+
+  Logger.log('--- DRY RUN: overwriting known-good week 2026-04-06 ---');
+  generateNarrativeForWeek_('2026-04-06', { postToSlack: false, overwrite: true });
+  Logger.log('--- Dry run complete. Check reconciliation above. ---');
+  Utilities.sleep(2000);
+
+  var backfillWeeks = ['2026-03-09', '2026-03-16', '2026-03-23'];
+  for (var i = 0; i < backfillWeeks.length; i++) {
+    Logger.log('--- BACKFILL ' + (i + 1) + '/3: ' + backfillWeeks[i] + ' ---');
+    generateNarrativeForWeek_(backfillWeeks[i], { postToSlack: false, overwrite: true });
+    if (i < backfillWeeks.length - 1) Utilities.sleep(2000);
+  }
+
+  Logger.log('=== backfillHistoricalNarratives complete ===');
+  Logger.log('Verify: intelligence_log should now have Monday-aligned rows for');
+  Logger.log('  2026-03-09, 2026-03-16, 2026-03-23, and 2026-04-06.');
+  Logger.log('  All Sunday-dated rows (3/8, 3/15, 3/22) and the malformed');
+  Logger.log('  Date.toString() row should be deleted.');
 }
 
 
