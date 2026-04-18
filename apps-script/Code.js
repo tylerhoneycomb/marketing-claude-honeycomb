@@ -249,6 +249,7 @@ function syncCampaignMappings_() {
   if (!mappingSheet) {
     mappingSheet = ss.insertSheet(MAPPING_SHEET);
     mappingSheet.appendRow(['campaign_name', 'utm_campaign', 'conversion_event', 'custom_conversion_id']);
+    mappingSheet.getRange('D:D').setNumberFormat('@');
   }
 
   // Ensure existing sheets have the new columns (backward compat)
@@ -257,6 +258,7 @@ function syncCampaignMappings_() {
     if (headerRow.length < 3) mappingSheet.getRange(1, 3).setValue('conversion_event');
     if (headerRow.length < 4) mappingSheet.getRange(1, 4).setValue('custom_conversion_id');
   }
+  mappingSheet.getRange('D:D').setNumberFormat('@');
 
   var existingMappings = {};
   var mappingData = mappingSheet.getDataRange().getValues();
@@ -826,6 +828,7 @@ function fetchDataForDateRange_(sheet, startDate, endDate) {
         'Impressions', 'Clicks', 'Spend', 'Reach', 'Conversions', 'Frequency', 'CPL',
         'IC Conversions']);
     }
+    sheet.getRange('E:E').setNumberFormat('@');
 
     sheet.getRange(sheet.getLastRow() + 1, 1, allRows.length, 13).setValues(allRows);
     Logger.log('Meta fetch complete. New rows written: ' + allRows.length);
