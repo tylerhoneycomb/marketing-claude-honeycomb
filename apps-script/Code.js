@@ -1429,6 +1429,9 @@ function generateNarrativeForWeek_(targetWeek, opts) {
     totalConversions += r[9] || 0;
     totalICConversions += r[10] || 0;
   });
+  totalSpend = Math.round(totalSpend * 100) / 100;
+  totalICPs = Math.round(totalICPs * 10) / 10;
+  totalAttrICPs = Math.round(totalAttrICPs * 10) / 10;
   var overallCPICP = totalICPs > 0 ? (totalSpend / totalICPs).toFixed(2) : 'N/A';
   var overallCPL = totalConversions > 0 ? (totalSpend / totalConversions).toFixed(2) : 'N/A';
   var overallAttrRate = totalICPs > 0
