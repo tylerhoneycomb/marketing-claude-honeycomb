@@ -24,12 +24,22 @@ This monorepo contains marketing automation, ad copy, workflows, and tooling for
 - Community investors who want to support local businesses
 - Honeycomb Credit internal marketing team
 
+## Living Documentation
+
+Two documents in `/docs/` describe the project's state and internals. **Both MUST be kept in sync with the code.** When you make changes that affect functionality, data model, APIs, deployment, or significant function contracts, update the relevant sections of these docs in the same PR:
+
+- `/docs/STATE_REPORT.md` — plain-English overview of functionality, limitations, and known risks. Audience: non-technical stakeholders. Update when functionality changes, limitations are resolved, or new risks emerge.
+- `/docs/TECHNICAL_REFERENCE.md` — engineering reference: architecture, data model, APIs, deployment, function index, technical debt. Audience: developers. Update when schema changes, constants change, new integrations are added, or any function listed in the function reference index is significantly modified.
+
+Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it on every meaningful change. If an update introduces or resolves technical debt, also update the tech-debt index in `TECHNICAL_REFERENCE.md` §10.4.
+
 ## Repo Structure
 
 - `/apps-script/` — Full Apps Script intelligence layer, deployed via clasp + GitHub Actions
   - `Code.js` — The complete intelligence script (~3,600 lines). Edit here, never in the Apps Script web editor
   - `.clasp.json` — Points clasp at the Apps Script project (do not edit)
   - `appsscript.json` — Apps Script manifest (scopes, runtime, Web App settings)
+- `/docs/` — Living documentation (`STATE_REPORT.md`, `TECHNICAL_REFERENCE.md`) — keep in sync with code changes
 - `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
