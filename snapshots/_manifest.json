@@ -1,0 +1,26 @@
+{
+  "exported_at": "2026-04-20T16:04:37.703Z",
+  "exported_by": "exportAuditSnapshot",
+  "sheets": {
+    "rolling_data": {
+      "row_count": 1001,
+      "total_rows": 1154,
+      "columns": 13
+    },
+    "weekly_rollup": {
+      "row_count": 172,
+      "total_rows": 172,
+      "columns": 22
+    },
+    "intelligence_log": {
+      "row_count": 6,
+      "total_rows": 6,
+      "columns": 7
+    },
+    "campaign_mapping": {
+      "row_count": 20,
+      "total_rows": 20,
+      "columns": 4
+    }
+  }
+}

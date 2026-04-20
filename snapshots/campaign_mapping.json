@@ -1,0 +1,134 @@
+{
+  "sheet": "campaign_mapping",
+  "exported_at": "2026-04-20T16:04:37.701Z",
+  "row_count": 20,
+  "total_rows_in_sheet": 20,
+  "columns": [
+    "campaign_name",
+    "utm_campaign",
+    "conversion_event",
+    "custom_conversion_id"
+  ],
+  "data": [
+    {
+      "campaign_name": "Bakeries Leads Campaign - Daily budget - Q4 2025",
+      "utm_campaign": "for bakeries",
+      "conversion_event": "Prequal results page view (leads)",
+      "custom_conversion_id": "1120689106810751"
+    },
+    {
+      "campaign_name": "Coffee Shop Leads Campaign - Daily Budget - Q4 2205",
+      "utm_campaign": "for coffee",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Breweries leads campaign - Daily Budget - Q4 2025",
+      "utm_campaign": "for breweries",
+      "conversion_event": "Prequal results page view (leads)",
+      "custom_conversion_id": "1120689106810751"
+    },
+    {
+      "campaign_name": "Wineries / vineyards leads campaign - Daily Budget - Q4 2025",
+      "utm_campaign": "for vineyards",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Distillers leads campaign - Daily Budget - Q4 2025",
+      "utm_campaign": "for distillers",
+      "conversion_event": "Prequal results page view (leads)",
+      "custom_conversion_id": "1120689106810751"
+    },
+    {
+      "campaign_name": "Creameries Leads Campaign - Daily budget - Q1 2026",
+      "utm_campaign": "for creameries",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Sustainable Main Street Leads Campaign - Daily budget - Q1 2026",
+      "utm_campaign": "for sustainable",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "LPF partners - Daily budget - Q1 2026",
+      "utm_campaign": "for LPFs",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Pizza Shops - Daily budget - Q1 2026",
+      "utm_campaign": "for pizzerias",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "IC decision conversion testing 1 - Successful offerings - Daily budget - Q1 2026",
+      "utm_campaign": "for ICrev2test",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "IC decision experiment rev2 - Daily budget",
+      "utm_campaign": "for ICrev2test",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Agriculture - Daily budget - Q1 2026",
+      "utm_campaign": "for ag",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Test - Agriculture - Daily budget - Q1 2026",
+      "utm_campaign": "for ag",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Agriculture - Daily budget - Q1 2026 - Copy",
+      "utm_campaign": "for ag",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "BBQ__Leads",
+      "utm_campaign": "for BBQ",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Delis / butchers - Q1 2026",
+      "utm_campaign": "for delis",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Fitness / Wellness Leads Campaign - Daily budget - Q1 2026",
+      "utm_campaign": "for wellness",
+      "conversion_event": "Prequal results page view (leads)",
+      "custom_conversion_id": "1120689106810751"
+    },
+    {
+      "campaign_name": "Juice / Smoothie Leads Campaign - Daily budget - Q1 2026",
+      "utm_campaign": "for juice",
+      "conversion_event": "",
+      "custom_conversion_id": ""
+    },
+    {
+      "campaign_name": "Rev2.Health, Fitness & Personal Care-IC Conversion Event-4.9.2026",
+      "utm_campaign": "for rev.2Health, Fitness & Personal Care",
+      "conversion_event": "Investment Crowdfunding Prequal Decision",
+      "custom_conversion_id": "2330338620810873"
+    },
+    {
+      "campaign_name": "Rev2.Craft Producers & Bars-IC Conversion Event-4.9.2026",
+      "utm_campaign": "for rev.2Craft Producers & Bars",
+      "conversion_event": "Investment Crowdfunding Prequal Decision",
+      "custom_conversion_id": "2330338620810873"
+    }
+  ]
+}
