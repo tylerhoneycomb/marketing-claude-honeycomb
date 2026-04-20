@@ -78,6 +78,16 @@ deployment with a new URL while the live dashboard URL goes stale.
 - Building or improving automation scripts
 - Proofreading for brand voice consistency
 
+## Audit Snapshots
+
+The pipeline supports exporting sheet data as JSON to a dedicated `audit-snapshots` branch for Claude Code to read and analyze.
+
+- **Sheets exported:** rolling_data (last 90 days), weekly_rollup, intelligence_log, campaign_mapping
+- **Branch:** `audit-snapshots` (never merged to main — data-only branch)
+- **Files:** `snapshots/{sheet_name}.json` + `snapshots/_manifest.json`
+- **How to export:** Run `exportAuditSnapshot()` from the Apps Script editor. Requires `GITHUB_PAT` in Script Properties (see setup instructions in Code.js).
+- **How to audit:** `git fetch origin audit-snapshots`, then read files from that branch. The manifest gives row counts and column lists for a quick health check.
+
 ## Compliance Notes
 
 - Honeycomb Credit is a regulated investment platform (Reg CF)

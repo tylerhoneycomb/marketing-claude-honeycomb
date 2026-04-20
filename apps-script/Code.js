@@ -3961,6 +3961,185 @@ function buildDashboardContext_() {
 }
 
 
+// ============================================================
+// AUDIT SNAPSHOT EXPORT
+// ============================================================
+// Exports key sheets as JSON to the `audit-snapshots` branch in
+// the GitHub repo. Run manually from Apps Script editor or on a
+// weekly time trigger. Claude Code reads the snapshots to audit
+// pipeline data without needing direct Sheets access.
+//
+// Setup (one-time):
+//   1. Create a fine-grained GitHub PAT at
+//      https://github.com/settings/tokens?type=beta
+//      Scope: Contents (read/write) on
+//      tylerhoneycomb/marketing-claude-honeycomb only.
+//   2. In Apps Script editor: File → Project properties →
+//      Script properties → Add: GITHUB_PAT = <your token>
+
+function exportAuditSnapshot() {
+  Logger.log('=== exportAuditSnapshot ===');
+  var pat = PROPS.getProperty('GITHUB_PAT');
+  if (!pat) {
+    Logger.log('ERROR: GITHUB_PAT not set in Script Properties.');
+    Logger.log('See setup instructions in Code.js above exportAuditSnapshot.');
+    return;
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var tz = Session.getScriptTimeZone();
+  var dateStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
+  var owner = 'tylerhoneycomb';
+  var repo = 'marketing-claude-honeycomb';
+  var branch = 'audit-snapshots';
+
+  var sheetConfigs = [
+    { name: META_SHEET, maxDays: 90 },
+    { name: ROLLUP_SHEET },
+    { name: INTEL_SHEET },
+    { name: MAPPING_SHEET }
+  ];
+
+  var files = {};
+  var summarySheets = {};
+
+  sheetConfigs.forEach(function (config) {
+    var sheet = ss.getSheetByName(config.name);
+    if (!sheet || sheet.getLastRow() < 1) {
+      Logger.log('  Skipping empty/missing sheet: ' + config.name);
+      return;
+    }
+
+    var data = sheet.getDataRange().getValues();
+    var headers = data[0].map(function (h) { return String(h).trim(); });
+
+    var cutoff = null;
+    if (config.maxDays) {
+      cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - config.maxDays);
+    }
+
+    var rows = [];
+    for (var i = 1; i < data.length; i++) {
+      if (cutoff && data[i][0] instanceof Date && data[i][0] < cutoff) continue;
+
+      var obj = {};
+      for (var j = 0; j < headers.length; j++) {
+        var val = data[i][j];
+        if (val instanceof Date) {
+          val = Utilities.formatDate(val, tz, "yyyy-MM-dd'T'HH:mm:ss");
+        }
+        obj[headers[j]] = val;
+      }
+      rows.push(obj);
+    }
+
+    files['snapshots/' + config.name + '.json'] = JSON.stringify({
+      sheet: config.name,
+      exported_at: new Date().toISOString(),
+      row_count: rows.length,
+      total_rows_in_sheet: data.length - 1,
+      columns: headers,
+      data: rows
+    }, null, 2);
+
+    summarySheets[config.name] = {
+      row_count: rows.length,
+      total_rows: data.length - 1,
+      columns: headers.length
+    };
+    Logger.log('  ' + config.name + ': ' + rows.length + ' rows');
+  });
+
+  files['snapshots/_manifest.json'] = JSON.stringify({
+    exported_at: new Date().toISOString(),
+    exported_by: 'exportAuditSnapshot',
+    sheets: summarySheets
+  }, null, 2);
+
+  if (pushSnapshotToGitHub_(owner, repo, branch, files, 'audit snapshot ' + dateStr, pat)) {
+    Logger.log('Snapshot pushed to branch "' + branch + '": ' + Object.keys(files).length + ' files');
+  }
+  Logger.log('=== exportAuditSnapshot complete ===');
+}
+
+
+function pushSnapshotToGitHub_(owner, repo, branch, files, message, pat) {
+  var baseUrl = 'https://api.github.com/repos/' + owner + '/' + repo;
+  var headers = {
+    'Authorization': 'token ' + pat,
+    'Accept': 'application/vnd.github.v3+json',
+    'User-Agent': 'HoneycombAdsScript'
+  };
+
+  function ghFetch(path, opts) {
+    opts = opts || {};
+    opts.headers = headers;
+    opts.muteHttpExceptions = true;
+    var url = path.indexOf('http') === 0 ? path : baseUrl + path;
+    var resp = UrlFetchApp.fetch(url, opts);
+    var code = resp.getResponseCode();
+    if (code >= 400) {
+      Logger.log('GitHub API error (' + code + ') ' + (opts.method || 'GET') +
+        ' ' + path + ': ' + resp.getContentText().substring(0, 200));
+      return null;
+    }
+    return JSON.parse(resp.getContentText());
+  }
+
+  var ref = ghFetch('/git/ref/heads/' + branch);
+  if (!ref) {
+    Logger.log('  Branch "' + branch + '" not found, creating from main...');
+    var mainRef = ghFetch('/git/ref/heads/main');
+    if (!mainRef) { Logger.log('ERROR: Could not read main branch.'); return false; }
+    ref = ghFetch('/git/refs', {
+      method: 'POST', contentType: 'application/json',
+      payload: JSON.stringify({ ref: 'refs/heads/' + branch, sha: mainRef.object.sha })
+    });
+    if (!ref) { Logger.log('ERROR: Could not create branch.'); return false; }
+  }
+
+  var parentSha = ref.object.sha;
+
+  var commit = ghFetch('/git/commits/' + parentSha);
+  if (!commit) return false;
+  var baseTreeSha = commit.tree.sha;
+
+  var treeEntries = [];
+  var paths = Object.keys(files);
+  for (var i = 0; i < paths.length; i++) {
+    var blob = ghFetch('/git/blobs', {
+      method: 'POST', contentType: 'application/json',
+      payload: JSON.stringify({ content: files[paths[i]], encoding: 'utf-8' })
+    });
+    if (!blob) return false;
+    treeEntries.push({ path: paths[i], mode: '100644', type: 'blob', sha: blob.sha });
+    Logger.log('  blob: ' + paths[i] + ' (' + files[paths[i]].length + ' bytes)');
+  }
+
+  var tree = ghFetch('/git/trees', {
+    method: 'POST', contentType: 'application/json',
+    payload: JSON.stringify({ base_tree: baseTreeSha, tree: treeEntries })
+  });
+  if (!tree) return false;
+
+  var newCommit = ghFetch('/git/commits', {
+    method: 'POST', contentType: 'application/json',
+    payload: JSON.stringify({ message: message, tree: tree.sha, parents: [parentSha] })
+  });
+  if (!newCommit) return false;
+
+  var updated = ghFetch('/git/refs/heads/' + branch, {
+    method: 'PATCH', contentType: 'application/json',
+    payload: JSON.stringify({ sha: newCommit.sha })
+  });
+  if (!updated) return false;
+
+  Logger.log('  Commit: ' + newCommit.sha.substring(0, 7) + ' → ' + branch);
+  return true;
+}
+
+
 // ─── SPEND GOAL RUNTIME OVERRIDE ──────────────────────────
 // Helper functions that let the budget optimizer read the
 // spend goal from Script Properties (if the dashboard has
