@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-04-20_
+_Last updated: 2026-04-21_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -626,6 +626,11 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - **Narrative panel** — latest `intelligence_log` narrative, markdown-formatted.
 - **Mappings table** — campaign_id → utm → conversion event reference.
 - **"Hive Mind" chat** — unlocked by clicking the 🐝 logo 5 times. Natural-language interface to campaign data via Claude.
+
+**Chart rendering notes:**
+
+- **Daily granularity x-axis:** `allBuckets` enumerates every date between `rangeStart` and `rangeEnd` inclusive (via `enumerateDateRange()` helper, ~line 144). This ensures days with no data still appear on the axis. Week/month granularity derives buckets from `rollup` since those are comprehensive.
+- **Per-campaign line breaks:** Per-campaign `<Line>` components use `connectNulls={false}` so paused campaigns render as line breaks, not straight-line bridges across the gap. Portfolio-mode lines keep `connectNulls={true}` since aggregate totals are continuous. Trendlines also keep `connectNulls={true}` since they're fully populated by design.
 
 **Reference copy:** `webapp/apps-script-api.gs` is a documentation-only subset of `Code.js` showing the web API layer. **Not auto-generated** — maintained by hand. Diverges from `Code.js` in practice; only `Code.js` is the source of truth for deployed behavior.
 
