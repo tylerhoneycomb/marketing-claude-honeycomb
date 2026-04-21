@@ -112,6 +112,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 - **Writer:** `collectMetaRows_()` (Code.js:841) via `fetchDataForDateRange_()` (Code.js:760).
 - **Dedup key:** `date || campaign_id` held in a `Set` in memory per run. Zero-spend rows are skipped.
 - **Retention:** Append-only. No cleanup.
+- **Name normalization:** Historical `Campaign Name` values are rewritten to the current Meta name when a rename is detected in `syncCampaignMappings_`. The primary key for all joins is `Campaign ID` (column E) — names are purely display labels. The one-time `backfillCampaignIds_` migration also normalizes historical names on first run.
 
 ### 3.2 `hubspot_icps` — HubSpot contacts decisioned as investment_crowdfunding
 
@@ -155,7 +156,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 - **Writer:** `syncCampaignMappings_()` (Code.js:232). Auto-discovery from Meta ads API + manual edits allowed.
 - **Primary key:** `campaign_id` (column E). When populated, existence checks and UTM/IC lookups prefer this over `campaign_name`. Legacy rows without an ID fall back to name-based matching. The one-time `backfillCampaignIds_()` migration fills column E for all existing rows and deduplicates rename-caused duplicates.
 - **Discovery flow:** Reads `/ads?fields=creative{url_tags}` to extract utm_campaign; reads `/adsets?fields=promoted_object` to find custom conversion IDs; resolves custom conversion IDs to event names via `/{id}?fields=name`.
-- **Rename handling:** If a campaign_id already has a mapping row and the name in Meta has changed, the sync updates the name in place and posts a Slack notification. It does NOT overwrite columns B-D.
+- **Rename handling:** If a campaign_id already has a mapping row and the name in Meta has changed, the sync updates the name in place, rewrites all historical `rolling_data` rows for that campaign_id to the new name (so downstream consumers see one canonical name), and posts a Slack notification. It does NOT overwrite manually-set columns B-D.
 - **Read by:** `buildCampaignUTMMap_()` (Code.js:~633) builds `{campaignId: utm}` lookup (prefers column E, falls back to name). `getICConversionMap_()` (Code.js:~706) identifies IC campaigns (prefers column E, falls back to name→rolling_data join).
 
 ### 3.4 `weekly_rollup` — Aggregated weekly performance + hybrid attribution

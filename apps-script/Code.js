@@ -467,6 +467,7 @@ function syncCampaignMappings_() {
 
   var newRows = [];
   var renamedCampaigns = [];
+  var renamesByCid = {};
   Object.keys(resolved).forEach(function (cid) {
     var campaignName = unmappedById[cid];
     var convInfo = conversionByCampaignId[cid] || {};
@@ -479,6 +480,7 @@ function syncCampaignMappings_() {
       if (oldName !== campaignName) {
         mappingSheet.getRange(rowNum, 1).setValue(campaignName);
         renamedCampaigns.push(oldName + ' → ' + campaignName);
+        renamesByCid[cid] = campaignName;
         Logger.log('Rename detected: row ' + rowNum + ' "' + oldName + '" → "' + campaignName + '"');
       }
     } else if (!freshNames[campaignName]) {
@@ -524,10 +526,36 @@ function syncCampaignMappings_() {
   }
 
   if (renamedCampaigns.length > 0) {
+    // Update historical rolling_data rows so all downstream
+    // consumers (weekly rollup, dashboard, AI chat context) see
+    // one canonical name per campaign_id. Campaign_id is the
+    // stable key; the historical name is just a stale label.
+    var rdSheet = ss.getSheetByName(META_SHEET);
+    var rdRowsUpdated = 0;
+    if (rdSheet && rdSheet.getLastRow() > 1) {
+      var rdLastRow = rdSheet.getLastRow();
+      var rdNameRange = rdSheet.getRange(2, 4, rdLastRow - 1, 1);
+      var rdNames = rdNameRange.getValues();
+      var rdIds = rdSheet.getRange(2, 5, rdLastRow - 1, 1).getValues();
+      for (var rdi = 0; rdi < rdNames.length; rdi++) {
+        var rdCid = String(rdIds[rdi][0]).trim();
+        if (renamesByCid[rdCid] && String(rdNames[rdi][0]).trim() !== renamesByCid[rdCid]) {
+          rdNames[rdi][0] = renamesByCid[rdCid];
+          rdRowsUpdated++;
+        }
+      }
+      if (rdRowsUpdated > 0) {
+        rdNameRange.setValues(rdNames);
+        Logger.log('Updated ' + rdRowsUpdated + ' historical rolling_data rows to new campaign name(s).');
+      }
+    }
+
     postToSlack_(
       '🔄 *Honeycomb Ads — Campaign Renames Detected*\n' +
       renamedCampaigns.length + ' campaign' + (renamedCampaigns.length !== 1 ? 's' : '') +
-      ' renamed in Meta. Mapping rows updated in place (UTM and conversion settings preserved):\n\n' +
+      ' renamed in Meta. Mapping rows updated in place (UTM and conversion settings preserved)' +
+      (rdRowsUpdated > 0 ? '. ' + rdRowsUpdated + ' historical rolling_data rows also updated so reports use the new name' : '') +
+      ':\n\n' +
       renamedCampaigns.map(function (r) { return '• ' + r; }).join('\n')
     );
   }
@@ -774,8 +802,50 @@ function backfillCampaignIds_() {
     }
   });
 
+  // Normalize historical rolling_data names: if a campaign_id has
+  // multiple names (from prior renames that happened before this
+  // fix deployed), collapse them all to the name on its latest-
+  // dated row. This runs once during migration; going forward,
+  // rename detection in syncCampaignMappings_ keeps names aligned.
+  var rdNormalized = 0;
+  if (metaSheet.getLastRow() > 1) {
+    var rdLastRow = metaSheet.getLastRow();
+    var rdNameRange = metaSheet.getRange(2, 4, rdLastRow - 1, 1);
+    var rdNames = rdNameRange.getValues();
+    var rdIds = metaSheet.getRange(2, 5, rdLastRow - 1, 1).getValues();
+    var rdDates = metaSheet.getRange(2, 1, rdLastRow - 1, 1).getValues();
+
+    // Find latest-dated name per campaign_id.
+    var latestByCid = {};
+    for (var rdi = 0; rdi < rdNames.length; rdi++) {
+      var rdCid = String(rdIds[rdi][0]).trim();
+      var rdName = String(rdNames[rdi][0]).trim();
+      if (!rdCid || !rdName) continue;
+      var rdDate = rdDates[rdi][0] instanceof Date
+        ? Utilities.formatDate(rdDates[rdi][0], Session.getScriptTimeZone(), 'yyyy-MM-dd')
+        : String(rdDates[rdi][0]).substring(0, 10);
+      if (!latestByCid[rdCid] || rdDate > latestByCid[rdCid].date) {
+        latestByCid[rdCid] = { name: rdName, date: rdDate };
+      }
+    }
+
+    // Rewrite any row whose name differs from the latest.
+    for (var rdj = 0; rdj < rdNames.length; rdj++) {
+      var jCid = String(rdIds[rdj][0]).trim();
+      if (jCid && latestByCid[jCid] && String(rdNames[rdj][0]).trim() !== latestByCid[jCid].name) {
+        rdNames[rdj][0] = latestByCid[jCid].name;
+        rdNormalized++;
+      }
+    }
+    if (rdNormalized > 0) {
+      rdNameRange.setValues(rdNames);
+      Logger.log('  Normalized ' + rdNormalized + ' historical rolling_data names to match latest per campaign_id.');
+    }
+  }
+
   PROPS.setProperty('MAPPING_BACKFILL_COMPLETE', new Date().toISOString());
-  Logger.log('Backfill complete: ' + filled + ' IDs filled, ' + dupsRemoved + ' duplicates removed.');
+  Logger.log('Backfill complete: ' + filled + ' IDs filled, ' + dupsRemoved +
+    ' mapping duplicates removed, ' + rdNormalized + ' rolling_data rows normalized.');
 }
 
 
