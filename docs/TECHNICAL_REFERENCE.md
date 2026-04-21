@@ -150,10 +150,13 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | 1 | utm_campaign | String | UTM tag extracted from ad destination URLs |
 | 2 | conversion_event | String | Custom conversion event name (manual or auto-discovered) |
 | 3 | custom_conversion_id | String (`@` format) | Meta custom conversion ID; forced text for precision |
+| 4 | campaign_id | String (`@` format) | **Primary key.** Stable Meta campaign ID. Populated by `syncCampaignMappings_`. Enables rename resilience — when a campaign is renamed in Meta, the sync updates the `campaign_name` column in place and preserves all manually-set values (utm_campaign, conversion_event, custom_conversion_id). |
 
 - **Writer:** `syncCampaignMappings_()` (Code.js:232). Auto-discovery from Meta ads API + manual edits allowed.
+- **Primary key:** `campaign_id` (column E). When populated, existence checks and UTM/IC lookups prefer this over `campaign_name`. Legacy rows without an ID fall back to name-based matching. The one-time `backfillCampaignIds_()` migration fills column E for all existing rows and deduplicates rename-caused duplicates.
 - **Discovery flow:** Reads `/ads?fields=creative{url_tags}` to extract utm_campaign; reads `/adsets?fields=promoted_object` to find custom conversion IDs; resolves custom conversion IDs to event names via `/{id}?fields=name`.
-- **Read by:** `buildCampaignUTMMap_()` (Code.js:586) returns `{campaignId: utm}` lookup. `getICConversionMap_()` (Code.js:653) returns `{icCampaignIds, customConversionIds}` for IC-attribution matching.
+- **Rename handling:** If a campaign_id already has a mapping row and the name in Meta has changed, the sync updates the name in place and posts a Slack notification. It does NOT overwrite columns B-D.
+- **Read by:** `buildCampaignUTMMap_()` (Code.js:~633) builds `{campaignId: utm}` lookup (prefers column E, falls back to name). `getICConversionMap_()` (Code.js:~706) identifies IC campaigns (prefers column E, falls back to name→rolling_data join).
 
 ### 3.4 `weekly_rollup` — Aggregated weekly performance + hybrid attribution
 
