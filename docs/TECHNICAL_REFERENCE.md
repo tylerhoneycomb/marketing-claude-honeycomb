@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-04-21_
+_Last updated: 2026-04-21 (IC conversion pattern fix)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -264,7 +264,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | `ROLLING_DAYS` | `14` | Signal window for budget decisions |
 | `FREQ_WATCH_THRESHOLD` | `2.0` | Frequency flag |
 | `FREQ_HIGH_THRESHOLD` | `3.0` | Frequency override (reduce) |
-| `IC_CONVERSION_EVENT_PATTERN` | `'investment_crowdfunding'` | Custom conversion event name pattern |
+| `IC_CONVERSION_EVENT_PATTERN` | `'investment crowdfunding'` | Substring match (case-insensitive) against `campaign_mapping.conversion_event`. Matches "Investment Crowdfunding Prequal Decision". Changed from `'investment_crowdfunding'` (underscore) on 2026-04-21 to fix an IC tracking outage that ran 4/15–4/20 — see the discontinuity comment in `Code.js`. |
 
 ### 4.2 Script Properties (secrets + runtime state)
 

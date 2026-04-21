@@ -49,7 +49,28 @@ const FREQ_HIGH_THRESHOLD = 3.0;     // override
 // The script auto-discovers which campaigns use this conversion via the
 // promoted_object field on their ad sets, and stores the plain-text name
 // in campaign_mapping for visibility.
-const IC_CONVERSION_EVENT_PATTERN = 'investment_crowdfunding';  // matches conversion event name
+//
+// IC CONVERSION DISCONTINUITY (2026-04-15 → 2026-04-21):
+// Before 2026-04-15, the `conversion_event` column in campaign_mapping was
+// effectively empty, so the pattern check at getICConversionMap_ was
+// bypassed and IC Conversions in rolling_data reflected the "Prequal
+// results page view (leads)" event (ccid 1120689106810751) — a legitimate
+// top-of-funnel signal on the older 4 campaigns that fed into the hybrid
+// attribution model.
+//
+// On ~2026-04-15, syncCampaignMappings_ auto-populated conversion_event
+// with Meta's plain-text display names (e.g. "Investment Crowdfunding
+// Prequal Decision"). The then-current pattern `'investment_crowdfunding'`
+// (underscored) stopped matching anything, so IC Conversions dropped to 0
+// for 5 consecutive days (4/15-4/19).
+//
+// Fix (2026-04-21): pattern changed to 'investment crowdfunding' (space)
+// to match "Investment Crowdfunding Prequal Decision". Going forward IC
+// Conversions reflect ONLY the decision event (ccid 2330338620810873) —
+// a cleaner, decision-level signal. Pre-4/15 and post-4/21 IC Conversions
+// are NOT directly comparable; treat them as two linked but distinct
+// series in historical analysis.
+const IC_CONVERSION_EVENT_PATTERN = 'investment crowdfunding';  // matches conversion event name
 
 
 // ============================================================

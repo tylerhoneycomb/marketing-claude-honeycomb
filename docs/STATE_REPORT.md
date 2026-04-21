@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-04-21_
+_Last updated: 2026-04-21 (IC conversion pattern fix)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -81,7 +81,7 @@ Everything is connected through a single Google Spreadsheet that stores all the 
 
 ### Data-quality risks still open
 
-- **Attribution quality dropped sharply week of 4/13.** 33% attribution quality vs. 85% the week before. That's a tracking problem in Meta (probably a pixel or custom-conversion setup), not a code bug, but it means recent CPICP numbers carry significant uncertainty until investigated.
+- **~~Attribution quality dropped sharply week of 4/13.~~** _Diagnosed and fixed 2026-04-21._ The 33% attribution quality that week was NOT a Meta tracking problem — it was a code bug. A pattern constant (`IC_CONVERSION_EVENT_PATTERN`) stopped matching the `conversion_event` values in `campaign_mapping` after `syncCampaignMappings_` auto-populated them with Meta's plain-text names. IC Conversions recorded 0 for 5 consecutive days (4/15–4/19). The pattern has been corrected. Post-fix IC Conversions reflect "Investment Crowdfunding Prequal Decision" — a cleaner decision-level signal than the pre-4/15 series, which was capturing "Prequal results page view." The two series are not directly comparable; CPICP baselines reset at the fix date.
 - **Campaign mapping is partially populated.** Only 4 of 20 campaigns in the mapping sheet have the "Prequal results page view" conversion event configured, and only 2 have the newer "Investment Crowdfunding Prequal Decision" event. Campaigns without custom_conversion_id set fall back to Meta's generic lead conversion, which gives fuzzier ICP attribution.
 - **One narrative row uses an older attribution model.** The 3/30 row was written under the v2 "blended" model before the v3 hybrid fix. Its numbers are correct for that week under the old method but aren't directly comparable to surrounding weeks.
 
@@ -116,7 +116,7 @@ Everything is connected through a single Google Spreadsheet that stores all the 
 
 ## Known risks worth watching
 
-1. **Attribution collapse of 4/13 could repeat.** The underlying Meta tracking setup needs a once-over. If the IC conversion pixel or event configuration is partially broken, all subsequent CPICP numbers get noisy.
+1. **IC tracking pattern is still a string-match.** The 4/15 outage was rooted in a fragile `indexOf` check against a human-readable event name. Any future rename of the "Investment Crowdfunding Prequal Decision" event in Meta — or a change to the `conversion_event` column values — would break tracking again. Longer-term fix: key IC tracking off `custom_conversion_id` (the stable numeric Meta ID) instead of the event name string. Deferred for now.
 2. **Scheduled triggers can silently stop.** Apps Script occasionally revokes triggers after script updates. A weekly "is the pipeline still running?" check would be worthwhile — currently relies on noticing the digest didn't arrive.
 3. **Meta access token expiration.** Long-lived Meta access tokens eventually expire. When it happens, every data pull fails until someone regenerates it. No proactive warning.
 4. **Budget automation could over-react in low-volume weeks.** The eligibility gate (≥10 lifetime conversions) prevents new campaigns from getting changes, but in quiet weeks the rules engine could still move money based on small-sample signals. The ±2% cap limits damage per cycle, but repeated cycles compound.
@@ -132,7 +132,7 @@ Everything is connected through a single Google Spreadsheet that stores all the 
 - Fix the "Q4 2205" typo in campaign_mapping.
 
 ### High impact, medium effort
-- Investigate the 4/13 attribution collapse directly in Meta. This is a marketing-operations task, not a code task, but it's the single most valuable thing right now.
+- ~~Investigate the 4/13 attribution collapse directly in Meta.~~ **Done 2026-04-21** — root cause was in code (`IC_CONVERSION_EVENT_PATTERN`), not Meta. Fix deployed.
 - Extract the shared hybrid attribution math into one function used by both the weekly rollup and the budget analyzer.
 - Populate `custom_conversion_id` for all active campaigns in campaign_mapping.
 
