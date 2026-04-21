@@ -3063,16 +3063,44 @@ function buildBudgetWeeklySummary_() {
   }
 
   if (executed.length > 0) {
-    lines.push('');
-    lines.push('Changes applied (' + executed.length + ' campaigns):');
+    // Collapse multiple changes per campaign into one net line:
+    // show the first "current" and last "proposed" budget, sorted by impact.
+    var byCampaign = {};
     executed.forEach(function (r) {
-      var arrow = r.changeCents > 0 ? '↑' : '↓';
-      var weekly = Math.abs(r.changeCents * 7 / 100).toFixed(0);
-      lines.push(arrow + ' ' + r.name + ':  $' +
-        (r.currentCents / 100).toFixed(0) + ' → $' +
-        (r.proposedCents / 100).toFixed(0) + '/day' +
-        '  (_$' + weekly + '/week_)');
+      if (!byCampaign[r.name]) {
+        byCampaign[r.name] = {
+          name: r.name,
+          firstCents: r.currentCents,
+          lastCents: r.proposedCents,
+          netChangeCents: 0
+        };
+      }
+      byCampaign[r.name].lastCents = r.proposedCents;
+      byCampaign[r.name].netChangeCents += r.changeCents;
     });
+
+    var collapsed = Object.values(byCampaign)
+      .filter(function (c) { return c.netChangeCents !== 0; })
+      .sort(function (a, b) { return Math.abs(b.netChangeCents) - Math.abs(a.netChangeCents); });
+
+    var uniqueCount = collapsed.length;
+    var maxShow = 10;
+    var shown = collapsed.slice(0, maxShow);
+
+    lines.push('');
+    lines.push('Net changes across ' + uniqueCount + ' campaigns (' +
+      Object.keys(tokenOutcomes).filter(function (t) { return tokenOutcomes[t] === 'executed'; }).length +
+      ' cycles):');
+    shown.forEach(function (c) {
+      var arrow = c.netChangeCents > 0 ? '↑' : '↓';
+      var weekly = Math.abs(c.netChangeCents * 7 / 100).toFixed(0);
+      lines.push(arrow + ' ' + c.name + ':  $' +
+        (c.firstCents / 100).toFixed(0) + ' → $' +
+        (c.lastCents / 100).toFixed(0) + '/day  ($' + weekly + '/week)');
+    });
+    if (uniqueCount > maxShow) {
+      lines.push('  _...and ' + (uniqueCount - maxShow) + ' more with smaller changes_');
+    }
 
     lines.push('');
     lines.push('Net weekly spend impact:  ' +
