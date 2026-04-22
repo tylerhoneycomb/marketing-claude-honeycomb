@@ -49,7 +49,28 @@ const FREQ_HIGH_THRESHOLD = 3.0;     // override
 // The script auto-discovers which campaigns use this conversion via the
 // promoted_object field on their ad sets, and stores the plain-text name
 // in campaign_mapping for visibility.
-const IC_CONVERSION_EVENT_PATTERN = 'investment_crowdfunding';  // matches conversion event name
+//
+// IC CONVERSION DISCONTINUITY (2026-04-15 → 2026-04-21):
+// Before 2026-04-15, the `conversion_event` column in campaign_mapping was
+// effectively empty, so the pattern check at getICConversionMap_ was
+// bypassed and IC Conversions in rolling_data reflected the "Prequal
+// results page view (leads)" event (ccid 1120689106810751) — a legitimate
+// top-of-funnel signal on the older 4 campaigns that fed into the hybrid
+// attribution model.
+//
+// On ~2026-04-15, syncCampaignMappings_ auto-populated conversion_event
+// with Meta's plain-text display names (e.g. "Investment Crowdfunding
+// Prequal Decision"). The then-current pattern `'investment_crowdfunding'`
+// (underscored) stopped matching anything, so IC Conversions dropped to 0
+// for 5 consecutive days (4/15-4/19).
+//
+// Fix (2026-04-21): pattern changed to 'investment crowdfunding' (space)
+// to match "Investment Crowdfunding Prequal Decision". Going forward IC
+// Conversions reflect ONLY the decision event (ccid 2330338620810873) —
+// a cleaner, decision-level signal. Pre-4/15 and post-4/21 IC Conversions
+// are NOT directly comparable; treat them as two linked but distinct
+// series in historical analysis.
+const IC_CONVERSION_EVENT_PATTERN = 'investment crowdfunding';  // matches conversion event name
 
 
 // ============================================================
@@ -248,26 +269,35 @@ function syncCampaignMappings_() {
 
   if (!mappingSheet) {
     mappingSheet = ss.insertSheet(MAPPING_SHEET);
-    mappingSheet.appendRow(['campaign_name', 'utm_campaign', 'conversion_event', 'custom_conversion_id']);
+    mappingSheet.appendRow(['campaign_name', 'utm_campaign', 'conversion_event', 'custom_conversion_id', 'campaign_id']);
     mappingSheet.getRange('D:D').setNumberFormat('@');
+    mappingSheet.getRange('E:E').setNumberFormat('@');
   }
 
-  // Ensure existing sheets have the new columns (backward compat)
+  // Ensure existing sheets have all columns (backward compat)
   var headerRow = mappingSheet.getRange(1, 1, 1, mappingSheet.getLastColumn()).getValues()[0];
   if (headerRow.length < 4 || String(headerRow[2]).trim() !== 'conversion_event') {
     if (headerRow.length < 3) mappingSheet.getRange(1, 3).setValue('conversion_event');
     if (headerRow.length < 4) mappingSheet.getRange(1, 4).setValue('custom_conversion_id');
   }
+  if (headerRow.length < 5 || String(headerRow[4]).trim() !== 'campaign_id') {
+    mappingSheet.getRange(1, 5).setValue('campaign_id');
+  }
   mappingSheet.getRange('D:D').setNumberFormat('@');
+  mappingSheet.getRange('E:E').setNumberFormat('@');
 
   var existingMappings = {};
+  var existingById = {};
   var mappingData = mappingSheet.getDataRange().getValues();
   for (var mi = 1; mi < mappingData.length; mi++) {
     var mName = String(mappingData[mi][0]).trim();
     var mUtm = String(mappingData[mi][1]).trim();
+    var mCid = (mappingData[mi].length > 4) ? String(mappingData[mi][4]).trim() : '';
     if (mName && mUtm) existingMappings[mName] = mUtm;
+    if (mCid) existingById[mCid] = mi + 1;
   }
-  Logger.log('Existing mappings: ' + Object.keys(existingMappings).length);
+  Logger.log('Existing mappings: ' + Object.keys(existingMappings).length +
+    ' (' + Object.keys(existingById).length + ' with campaign_id)');
 
   var metaSheet = ss.getSheetByName(META_SHEET);
   if (!metaSheet) { Logger.log('rolling_data not found — skipping sync.'); return; }
@@ -443,33 +473,64 @@ function syncCampaignMappings_() {
   }
   // ────────────────────────────────────────────────────────────
 
-  // Dedup: re-read campaign_mapping before writing to catch concurrent additions
+  // Dedup: re-read campaign_mapping before writing. Use campaign_id
+  // as the primary key when populated so renames don't create
+  // duplicate rows.
   var freshMappingData = mappingSheet.getDataRange().getValues();
   var freshNames = {};
+  var freshIdToRow = {};
   for (var fi = 1; fi < freshMappingData.length; fi++) {
     var fn = String(freshMappingData[fi][0]).trim();
     if (fn) freshNames[fn] = true;
+    var fCid = (freshMappingData[fi].length > 4) ? String(freshMappingData[fi][4]).trim() : '';
+    if (fCid) freshIdToRow[fCid] = fi + 1;
   }
 
   var newRows = [];
+  var renamedCampaigns = [];
+  var renamesByCid = {};
   Object.keys(resolved).forEach(function (cid) {
     var campaignName = unmappedById[cid];
-    if (!freshNames[campaignName]) {
-      var convInfo = conversionByCampaignId[cid] || {};
+    var convInfo = conversionByCampaignId[cid] || {};
+
+    if (freshIdToRow[cid]) {
+      // Campaign ID already has a mapping row — this is a rename
+      // or a re-discovery. Update the name; preserve manual columns.
+      var rowNum = freshIdToRow[cid];
+      var oldName = String(mappingSheet.getRange(rowNum, 1).getValue()).trim();
+      if (oldName !== campaignName) {
+        mappingSheet.getRange(rowNum, 1).setValue(campaignName);
+        renamedCampaigns.push(oldName + ' → ' + campaignName);
+        renamesByCid[cid] = campaignName;
+        Logger.log('Rename detected: row ' + rowNum + ' "' + oldName + '" → "' + campaignName + '"');
+      }
+    } else if (!freshNames[campaignName]) {
+      // Truly new campaign — append with campaign_id in column E.
       newRows.push([
         campaignName,
         resolved[cid],
         convInfo.conversionName || '',
-        convInfo.customConversionId || ''
+        convInfo.customConversionId || '',
+        cid
       ]);
     } else {
-      Logger.log('Skipping duplicate write for: ' + campaignName);
+      // Name exists but no campaign_id — legacy row. Backfill the id.
+      for (var bfi = 1; bfi < freshMappingData.length; bfi++) {
+        if (String(freshMappingData[bfi][0]).trim() === campaignName) {
+          var existingId = (freshMappingData[bfi].length > 4) ? String(freshMappingData[bfi][4]).trim() : '';
+          if (!existingId) {
+            mappingSheet.getRange(bfi + 1, 5).setValue(cid);
+            Logger.log('Backfilled campaign_id for "' + campaignName + '": ' + cid);
+          }
+          break;
+        }
+      }
     }
   });
 
   if (newRows.length > 0) {
     mappingSheet.getRange(
-      mappingSheet.getLastRow() + 1, 1, newRows.length, 4
+      mappingSheet.getLastRow() + 1, 1, newRows.length, 5
     ).setValues(newRows);
     Logger.log('Auto-populated ' + newRows.length + ' new campaign mapping(s).');
 
@@ -482,6 +543,41 @@ function syncCampaignMappings_() {
         return '• ' + r[0] + ' → `' + r[1] + '`' + convLabel;
       }).join('\n') +
       '\n\nThese have been added to `campaign_mapping`. Edit the tab to override if needed.'
+    );
+  }
+
+  if (renamedCampaigns.length > 0) {
+    // Update historical rolling_data rows so all downstream
+    // consumers (weekly rollup, dashboard, AI chat context) see
+    // one canonical name per campaign_id. Campaign_id is the
+    // stable key; the historical name is just a stale label.
+    var rdSheet = ss.getSheetByName(META_SHEET);
+    var rdRowsUpdated = 0;
+    if (rdSheet && rdSheet.getLastRow() > 1) {
+      var rdLastRow = rdSheet.getLastRow();
+      var rdNameRange = rdSheet.getRange(2, 4, rdLastRow - 1, 1);
+      var rdNames = rdNameRange.getValues();
+      var rdIds = rdSheet.getRange(2, 5, rdLastRow - 1, 1).getValues();
+      for (var rdi = 0; rdi < rdNames.length; rdi++) {
+        var rdCid = String(rdIds[rdi][0]).trim();
+        if (renamesByCid[rdCid] && String(rdNames[rdi][0]).trim() !== renamesByCid[rdCid]) {
+          rdNames[rdi][0] = renamesByCid[rdCid];
+          rdRowsUpdated++;
+        }
+      }
+      if (rdRowsUpdated > 0) {
+        rdNameRange.setValues(rdNames);
+        Logger.log('Updated ' + rdRowsUpdated + ' historical rolling_data rows to new campaign name(s).');
+      }
+    }
+
+    postToSlack_(
+      '🔄 *Honeycomb Ads — Campaign Renames Detected*\n' +
+      renamedCampaigns.length + ' campaign' + (renamedCampaigns.length !== 1 ? 's' : '') +
+      ' renamed in Meta. Mapping rows updated in place (UTM and conversion settings preserved)' +
+      (rdRowsUpdated > 0 ? '. ' + rdRowsUpdated + ' historical rolling_data rows also updated so reports use the new name' : '') +
+      ':\n\n' +
+      renamedCampaigns.map(function (r) { return '• ' + r; }).join('\n')
     );
   }
 
@@ -560,11 +656,11 @@ function syncCampaignMappings_() {
 
     var backfilled = 0;
     for (var bi = 1; bi < backfillData.length; bi++) {
-      var bfName = String(backfillData[bi][0]).trim();
       var bfConvEvent = (backfillData[bi].length > 2) ? String(backfillData[bi][2]).trim() : '';
       if (bfConvEvent) continue;  // already populated
 
-      var bfCid = nameToIds[bfName];
+      var bfCid = (backfillData[bi].length > 4) ? String(backfillData[bi][4]).trim() : '';
+      if (!bfCid) bfCid = nameToIds[String(backfillData[bi][0]).trim()];
       if (bfCid && conversionByCampaignId[bfCid]) {
         var bfInfo = conversionByCampaignId[bfCid];
         mappingSheet.getRange(bi + 1, 3).setValue(bfInfo.conversionName || '');
@@ -577,6 +673,8 @@ function syncCampaignMappings_() {
     }
   }
   // ────────────────────────────────────────────────────────────
+
+  backfillCampaignIds_();
 
   PROPS.setProperty('SYNC_LAST_RUN_DATE', todayStr);
   Logger.log('syncCampaignMappings_ complete.');
@@ -599,12 +697,16 @@ function buildCampaignUTMMap_() {
 
   var mappingData = mappingSheet.getDataRange().getValues();
   var nameToUtm = {};
+  var cidToUtm = {};
   for (var mi = 1; mi < mappingData.length; mi++) {
     var cName = String(mappingData[mi][0]).trim();
     var cUtm = String(mappingData[mi][1]).trim();
+    var cMappingId = (mappingData[mi].length > 4) ? String(mappingData[mi][4]).trim() : '';
     if (cName && cUtm) nameToUtm[cName] = cUtm;
+    if (cMappingId && cUtm) cidToUtm[cMappingId] = cUtm;
   }
-  Logger.log('Mappings loaded: ' + Object.keys(nameToUtm).length);
+  Logger.log('Mappings loaded: ' + Object.keys(nameToUtm).length +
+    ' (' + Object.keys(cidToUtm).length + ' with campaign_id)');
 
   if (Object.keys(nameToUtm).length === 0) {
     Logger.log('ERROR: campaign_mapping tab is empty.');
@@ -624,7 +726,9 @@ function buildCampaignUTMMap_() {
     if (!cName2 || !cid) continue;
     if (idToUtm[cid]) continue;
 
-    if (nameToUtm[cName2]) {
+    if (cidToUtm[cid]) {
+      idToUtm[cid] = cidToUtm[cid];
+    } else if (nameToUtm[cName2]) {
       idToUtm[cid] = nameToUtm[cName2];
     } else {
       unmapped[cName2] = true;
@@ -644,6 +748,128 @@ function buildCampaignUTMMap_() {
 
 // ============================================================
 // IC CAMPAIGN IDENTIFICATION
+// One-time backfill: populates campaign_id (column E) in
+// campaign_mapping for all rows that are missing it. Matches
+// by campaign_name against rolling_data. Also deduplicates
+// rows where the same campaign_id appears under multiple names
+// (prior renames). Runs automatically once, gated by
+// MAPPING_BACKFILL_COMPLETE in Script Properties.
+function backfillCampaignIds_() {
+  if (PROPS.getProperty('MAPPING_BACKFILL_COMPLETE')) return;
+  Logger.log('--- backfillCampaignIds_ (one-time migration) ---');
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var mappingSheet = ss.getSheetByName(MAPPING_SHEET);
+  var metaSheet = ss.getSheetByName(META_SHEET);
+  if (!mappingSheet || !metaSheet) return;
+
+  var metaData = metaSheet.getDataRange().getValues();
+  var nameToId = {};
+  for (var ri = 1; ri < metaData.length; ri++) {
+    var n = String(metaData[ri][3]).trim();
+    var id = String(metaData[ri][4]).trim();
+    if (n && id) nameToId[n] = id;
+  }
+
+  var mappingData = mappingSheet.getDataRange().getValues();
+  var filled = 0;
+  var idToRows = {};
+
+  for (var mi = 1; mi < mappingData.length; mi++) {
+    var mName = String(mappingData[mi][0]).trim();
+    var existingId = (mappingData[mi].length > 4) ? String(mappingData[mi][4]).trim() : '';
+
+    if (!existingId && nameToId[mName]) {
+      existingId = nameToId[mName];
+      mappingSheet.getRange(mi + 1, 5).setValue(existingId);
+      filled++;
+      Logger.log('  Backfilled campaign_id for "' + mName + '": ' + existingId);
+    }
+
+    if (existingId) {
+      if (!idToRows[existingId]) idToRows[existingId] = [];
+      idToRows[existingId].push(mi + 1);
+    }
+  }
+
+  // Deduplicate: if a campaign_id maps to multiple rows (prior
+  // renames), keep the row with the most-filled manual columns
+  // and delete the others.
+  var dupsRemoved = 0;
+  Object.keys(idToRows).forEach(function (cid) {
+    var rows = idToRows[cid];
+    if (rows.length < 2) return;
+
+    var best = rows[0];
+    var bestScore = 0;
+    rows.forEach(function (rowNum) {
+      var vals = mappingSheet.getRange(rowNum, 1, 1, 5).getValues()[0];
+      var score = 0;
+      if (String(vals[1]).trim()) score++;
+      if (String(vals[2]).trim()) score++;
+      if (String(vals[3]).trim()) score++;
+      if (score > bestScore) { bestScore = score; best = rowNum; }
+    });
+
+    var latestName = mappingSheet.getRange(rows[rows.length - 1], 1).getValue();
+    mappingSheet.getRange(best, 1).setValue(latestName);
+
+    for (var di = rows.length - 1; di >= 0; di--) {
+      if (rows[di] !== best) {
+        Logger.log('  Dedup: deleting row ' + rows[di] + ' for campaign_id ' + cid);
+        mappingSheet.deleteRow(rows[di]);
+        dupsRemoved++;
+      }
+    }
+  });
+
+  // Normalize historical rolling_data names: if a campaign_id has
+  // multiple names (from prior renames that happened before this
+  // fix deployed), collapse them all to the name on its latest-
+  // dated row. This runs once during migration; going forward,
+  // rename detection in syncCampaignMappings_ keeps names aligned.
+  var rdNormalized = 0;
+  if (metaSheet.getLastRow() > 1) {
+    var rdLastRow = metaSheet.getLastRow();
+    var rdNameRange = metaSheet.getRange(2, 4, rdLastRow - 1, 1);
+    var rdNames = rdNameRange.getValues();
+    var rdIds = metaSheet.getRange(2, 5, rdLastRow - 1, 1).getValues();
+    var rdDates = metaSheet.getRange(2, 1, rdLastRow - 1, 1).getValues();
+
+    // Find latest-dated name per campaign_id.
+    var latestByCid = {};
+    for (var rdi = 0; rdi < rdNames.length; rdi++) {
+      var rdCid = String(rdIds[rdi][0]).trim();
+      var rdName = String(rdNames[rdi][0]).trim();
+      if (!rdCid || !rdName) continue;
+      var rdDate = rdDates[rdi][0] instanceof Date
+        ? Utilities.formatDate(rdDates[rdi][0], Session.getScriptTimeZone(), 'yyyy-MM-dd')
+        : String(rdDates[rdi][0]).substring(0, 10);
+      if (!latestByCid[rdCid] || rdDate > latestByCid[rdCid].date) {
+        latestByCid[rdCid] = { name: rdName, date: rdDate };
+      }
+    }
+
+    // Rewrite any row whose name differs from the latest.
+    for (var rdj = 0; rdj < rdNames.length; rdj++) {
+      var jCid = String(rdIds[rdj][0]).trim();
+      if (jCid && latestByCid[jCid] && String(rdNames[rdj][0]).trim() !== latestByCid[jCid].name) {
+        rdNames[rdj][0] = latestByCid[jCid].name;
+        rdNormalized++;
+      }
+    }
+    if (rdNormalized > 0) {
+      rdNameRange.setValues(rdNames);
+      Logger.log('  Normalized ' + rdNormalized + ' historical rolling_data names to match latest per campaign_id.');
+    }
+  }
+
+  PROPS.setProperty('MAPPING_BACKFILL_COMPLETE', new Date().toISOString());
+  Logger.log('Backfill complete: ' + filled + ' IDs filled, ' + dupsRemoved +
+    ' mapping duplicates removed, ' + rdNormalized + ' rolling_data rows normalized.');
+}
+
+
 // Reads campaign_mapping to identify which campaign IDs use
 // IC-specific conversion events, and returns their custom
 // conversion IDs so collectMetaRows_ can extract IC conversion
@@ -660,7 +886,8 @@ function getICConversionMap_() {
   if (!metaSheet) return { icCampaignIds: {}, customConversionIds: {} };
   var metaData = metaSheet.getDataRange().getValues();
 
-  // Build name → campaign_ids from rolling_data
+  // Build name → campaign_ids from rolling_data (fallback for rows
+  // without campaign_id in column E).
   var nameToIds = {};
   for (var ri = 1; ri < metaData.length; ri++) {
     var cName = String(metaData[ri][3]).trim();
@@ -678,19 +905,22 @@ function getICConversionMap_() {
     var mName = String(mappingData[mi][0]).trim();
     var convEvent = (mappingData[mi].length > 2) ? String(mappingData[mi][2]).trim() : '';
     var ccId = (mappingData[mi].length > 3) ? String(mappingData[mi][3]).trim() : '';
+    var mCampaignId = (mappingData[mi].length > 4) ? String(mappingData[mi][4]).trim() : '';
 
     if (!convEvent || !ccId) continue;
 
-    // Check if this conversion event matches the IC pattern
     if (convEvent.toLowerCase().indexOf(IC_CONVERSION_EVENT_PATTERN) === -1) continue;
 
-    // Mark all campaign IDs with this name as IC campaigns
-    var ids = nameToIds[mName] || {};
-    Object.keys(ids).forEach(function (cid) {
-      icCampaignIds[cid] = true;
-    });
+    // Prefer campaign_id from mapping column E when populated.
+    if (mCampaignId) {
+      icCampaignIds[mCampaignId] = true;
+    } else {
+      var ids = nameToIds[mName] || {};
+      Object.keys(ids).forEach(function (cid) {
+        icCampaignIds[cid] = true;
+      });
+    }
 
-    // Store the action_type string for this custom conversion
     var actionType = 'offsite_conversion.custom.' + ccId;
     customConversionIds[ccId] = actionType;
   }

@@ -140,6 +140,27 @@
     // Used to aggregate rollup rows into monthly buckets.
     const monthKey = (dateStr) => dateStr.substring(0, 7);
 
+    // Enumerate every YYYY-MM-DD between startStr and endStr
+    // (inclusive). Used to fill the x-axis at daily granularity
+    // so days with no data still appear on the chart instead of
+    // collapsing the visible range.
+    function enumerateDateRange(startStr, endStr) {
+      const result = [];
+      if (!startStr || !endStr) return result;
+      const start = new Date(startStr + 'T00:00:00');
+      const end = new Date(endStr + 'T00:00:00');
+      if (isNaN(start) || isNaN(end) || start > end) return result;
+      const cursor = new Date(start);
+      while (cursor <= end) {
+        const y = cursor.getFullYear();
+        const m = String(cursor.getMonth() + 1).padStart(2, '0');
+        const d = String(cursor.getDate()).padStart(2, '0');
+        result.push(`${y}-${m}-${d}`);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+      return result;
+    }
+
 
     // ─── MATH HELPERS ─────────────────────────────────────
 
@@ -1737,12 +1758,20 @@
         return monthKey(base);
       }, [granularity]);
 
-      // All distinct buckets in the source, sorted.
+      // All buckets on the x-axis, sorted. For daily granularity
+      // we enumerate every day in the selected range so days with
+      // no spend (paused campaigns, data-collection gaps, today
+      // before the 7am pipeline runs) still appear on the x-axis.
+      // For week/month we derive from the rollup since those are
+      // comprehensive.
       const allBuckets = useMemo(() => {
+        if (granularity === 'day') {
+          return enumerateDateRange(rangeStart, rangeEnd);
+        }
         const s = new Set();
         sourceRows.forEach(r => s.add(getBucketKey(r)));
         return Array.from(s).sort();
-      }, [sourceRows, getBucketKey]);
+      }, [sourceRows, getBucketKey, granularity, rangeStart, rangeEnd]);
 
       // Per-campaign totals (used for ranking + toggle pills).
       const campaignSummary = useMemo(() => {
@@ -2176,7 +2205,7 @@
                           strokeWidth={2.5}
                           dot={{ r: 3 }}
                           activeDot={{ r: 5 }}
-                          connectNulls
+                          connectNulls={false}
                         />
                       ))}
                     {showTrendlines && campaignSummary

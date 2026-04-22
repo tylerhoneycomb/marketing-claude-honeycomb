@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-04-20_
+_Last updated: 2026-04-21 (IC conversion pattern fix)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -112,6 +112,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 - **Writer:** `collectMetaRows_()` (Code.js:841) via `fetchDataForDateRange_()` (Code.js:760).
 - **Dedup key:** `date || campaign_id` held in a `Set` in memory per run. Zero-spend rows are skipped.
 - **Retention:** Append-only. No cleanup.
+- **Name normalization:** Historical `Campaign Name` values are rewritten to the current Meta name when a rename is detected in `syncCampaignMappings_`. The primary key for all joins is `Campaign ID` (column E) — names are purely display labels. The one-time `backfillCampaignIds_` migration also normalizes historical names on first run.
 
 ### 3.2 `hubspot_icps` — HubSpot contacts decisioned as investment_crowdfunding
 
@@ -150,10 +151,13 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | 1 | utm_campaign | String | UTM tag extracted from ad destination URLs |
 | 2 | conversion_event | String | Custom conversion event name (manual or auto-discovered) |
 | 3 | custom_conversion_id | String (`@` format) | Meta custom conversion ID; forced text for precision |
+| 4 | campaign_id | String (`@` format) | **Primary key.** Stable Meta campaign ID. Populated by `syncCampaignMappings_`. Enables rename resilience — when a campaign is renamed in Meta, the sync updates the `campaign_name` column in place and preserves all manually-set values (utm_campaign, conversion_event, custom_conversion_id). |
 
 - **Writer:** `syncCampaignMappings_()` (Code.js:232). Auto-discovery from Meta ads API + manual edits allowed.
+- **Primary key:** `campaign_id` (column E). When populated, existence checks and UTM/IC lookups prefer this over `campaign_name`. Legacy rows without an ID fall back to name-based matching. The one-time `backfillCampaignIds_()` migration fills column E for all existing rows and deduplicates rename-caused duplicates.
 - **Discovery flow:** Reads `/ads?fields=creative{url_tags}` to extract utm_campaign; reads `/adsets?fields=promoted_object` to find custom conversion IDs; resolves custom conversion IDs to event names via `/{id}?fields=name`.
-- **Read by:** `buildCampaignUTMMap_()` (Code.js:586) returns `{campaignId: utm}` lookup. `getICConversionMap_()` (Code.js:653) returns `{icCampaignIds, customConversionIds}` for IC-attribution matching.
+- **Rename handling:** If a campaign_id already has a mapping row and the name in Meta has changed, the sync updates the name in place, rewrites all historical `rolling_data` rows for that campaign_id to the new name (so downstream consumers see one canonical name), and posts a Slack notification. It does NOT overwrite manually-set columns B-D.
+- **Read by:** `buildCampaignUTMMap_()` (Code.js:~633) builds `{campaignId: utm}` lookup (prefers column E, falls back to name). `getICConversionMap_()` (Code.js:~706) identifies IC campaigns (prefers column E, falls back to name→rolling_data join).
 
 ### 3.4 `weekly_rollup` — Aggregated weekly performance + hybrid attribution
 
@@ -260,7 +264,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | `ROLLING_DAYS` | `14` | Signal window for budget decisions |
 | `FREQ_WATCH_THRESHOLD` | `2.0` | Frequency flag |
 | `FREQ_HIGH_THRESHOLD` | `3.0` | Frequency override (reduce) |
-| `IC_CONVERSION_EVENT_PATTERN` | `'investment_crowdfunding'` | Custom conversion event name pattern |
+| `IC_CONVERSION_EVENT_PATTERN` | `'investment crowdfunding'` | Substring match (case-insensitive) against `campaign_mapping.conversion_event`. Matches "Investment Crowdfunding Prequal Decision". Changed from `'investment_crowdfunding'` (underscore) on 2026-04-21 to fix an IC tracking outage that ran 4/15–4/20 — see the discontinuity comment in `Code.js`. |
 
 ### 4.2 Script Properties (secrets + runtime state)
 
@@ -626,6 +630,11 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - **Narrative panel** — latest `intelligence_log` narrative, markdown-formatted.
 - **Mappings table** — campaign_id → utm → conversion event reference.
 - **"Hive Mind" chat** — unlocked by clicking the 🐝 logo 5 times. Natural-language interface to campaign data via Claude.
+
+**Chart rendering notes:**
+
+- **Daily granularity x-axis:** `allBuckets` enumerates every date between `rangeStart` and `rangeEnd` inclusive (via `enumerateDateRange()` helper, ~line 144). This ensures days with no data still appear on the axis. Week/month granularity derives buckets from `rollup` since those are comprehensive.
+- **Per-campaign line breaks:** Per-campaign `<Line>` components use `connectNulls={false}` so paused campaigns render as line breaks, not straight-line bridges across the gap. Portfolio-mode lines keep `connectNulls={true}` since aggregate totals are continuous. Trendlines also keep `connectNulls={true}` since they're fully populated by design.
 
 **Reference copy:** `webapp/apps-script-api.gs` is a documentation-only subset of `Code.js` showing the web API layer. **Not auto-generated** — maintained by hand. Diverges from `Code.js` in practice; only `Code.js` is the source of truth for deployed behavior.
 
