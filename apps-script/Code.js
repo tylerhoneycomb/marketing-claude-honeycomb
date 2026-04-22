@@ -42,6 +42,8 @@ const ROLLING_DAYS = 14;      // signal window
 const FREQ_WATCH_THRESHOLD = 2.0;     // modifier
 const FREQ_HIGH_THRESHOLD = 3.0;     // override
 
+const ANTHROPIC_MODEL = 'claude-opus-4-7';  // used by narrative, chat, budget commentary, daily digest
+
 // IC-specific conversion tracking
 // The "Investment Crowdfunding Prequal Decision" custom conversion fires
 // on Lead events where content_name contains "investment_crowdfunding".
@@ -1783,7 +1785,7 @@ function generateNarrativeForWeek_(targetWeek, opts) {
         'Content-Type': 'application/json'
       },
       payload: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: ANTHROPIC_MODEL,
         max_tokens: 1000,
         system: systemPrompt,
         messages: [{ role: 'user', content: contextBlock }]
@@ -2144,7 +2146,7 @@ function postDailyDigest() {
         'Content-Type': 'application/json'
       },
       payload: JSON.stringify({
-        model: 'claude-sonnet-4-6', max_tokens: 120,
+        model: ANTHROPIC_MODEL, max_tokens: 120,
         system: 'You are a terse performance marketing analyst for Honeycomb Credit. ' +
           'Write exactly 2 sentences assessing yesterday\'s ad performance. ' +
           'First sentence: verdict on yesterday (good/bad/neutral) and the key reason. ' +
@@ -2315,7 +2317,7 @@ function testAnthropicConnection() {
       'Content-Type': 'application/json'
     },
     payload: JSON.stringify({
-      model: 'claude-sonnet-4-6',
+      model: ANTHROPIC_MODEL,
       max_tokens: 20,
       messages: [{ role: 'user', content: 'Reply with only the word: connected' }]
     }),
@@ -2983,7 +2985,7 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
         'Content-Type': 'application/json'
       },
       payload: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: ANTHROPIC_MODEL,
         max_tokens: 350,
         system: systemPrompt,
         messages: [{ role: 'user', content: contextBlock }]
@@ -3884,7 +3886,7 @@ function getCampaignList_() {
 //      block from the live sheet and prepends it to a
 //      system prompt that establishes CPICP as the primary
 //      KPI and defines its formula
-//   4. Calls claude-sonnet-4-6 with system + history + user
+//   4. Calls Claude (ANTHROPIC_MODEL) with system + history + user
 //   5. Returns { reply: '...' } as JSON
 
 function doPost(e) {
@@ -4000,7 +4002,7 @@ function handleChatRequest_(e) {
         'Content-Type': 'application/json'
       },
       payload: JSON.stringify({
-        model: 'claude-sonnet-4-6',
+        model: ANTHROPIC_MODEL,
         max_tokens: 1500,
         system: systemPrompt,
         messages: messages

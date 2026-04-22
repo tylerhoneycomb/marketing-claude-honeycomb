@@ -264,6 +264,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | `ROLLING_DAYS` | `14` | Signal window for budget decisions |
 | `FREQ_WATCH_THRESHOLD` | `2.0` | Frequency flag |
 | `FREQ_HIGH_THRESHOLD` | `3.0` | Frequency override (reduce) |
+| `ANTHROPIC_MODEL` | `'claude-opus-4-7'` | Claude model for all Anthropic API calls (narrative, chat, budget commentary, daily digest). Change here to upgrade everywhere. |
 | `IC_CONVERSION_EVENT_PATTERN` | `'investment crowdfunding'` | Substring match (case-insensitive) against `campaign_mapping.conversion_event`. Matches "Investment Crowdfunding Prequal Decision". Changed from `'investment_crowdfunding'` (underscore) on 2026-04-21 to fix an IC tracking outage that ran 4/15–4/20 — see the discontinuity comment in `Code.js`. |
 
 ### 4.2 Script Properties (secrets + runtime state)
@@ -368,7 +369,7 @@ Pagination: offset-based cursor via `json.paging.next.after`.
 
 - **Base URL:** `https://api.anthropic.com/v1/messages`
 - **Credential:** `ANTHROPIC_API_KEY` (Script Property), sent as `x-api-key` header
-- **Model:** `claude-sonnet-4-6` — **hardcoded in 3 places** (narrative, budget commentary, chat). Technical debt; should be a single constant.
+- **Model:** Controlled by the `ANTHROPIC_MODEL` constant (Code.js:45). Currently set to `claude-opus-4-7`. All 5 call sites reference the constant.
 - **Common headers:** `anthropic-version: 2023-06-01`, `Content-Type: application/json`
 
 **Three call sites:**
@@ -461,7 +462,7 @@ Thin wrapper:
 - Aggregates spend / ICPs / conversions from `weekly_rollup` rows for that week.
 - Rounds `totalSpend` (2 decimals), `totalICPs` / `totalAttrICPs` (1 decimal) to eliminate IEEE 754 residuals before write.
 - Builds `contextBlock` with campaign breakdown, frequency alerts, CPICP spike alerts, zero-ICP warnings.
-- Calls Anthropic with `claude-sonnet-4-6`, 1000 max tokens.
+- Calls Anthropic with `ANTHROPIC_MODEL` (`claude-opus-4-7`), 1000 max tokens.
 - On `overwrite: true`: deletes existing rows matching target Monday OR preceding Sunday (covers old pre-fix convention).
 - Appends new row.
 - Reconciliation check: independently re-reads rollup, sums spend for target week, warns if mismatch > $0.01.
@@ -609,7 +610,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Validates `ANTHROPIC_API_KEY`.
 - Caps `message` at 4,000 chars; caps `history` at 30 turns (user/assistant only).
 - Builds system prompt: "Hive Mind" persona, CPICP definition, hybrid v3 attribution explanation, secondary metric definitions, daily data disclaimer.
-- Calls Anthropic with `claude-sonnet-4-6`, 1500 max tokens, full context block prepended to user message.
+- Calls Anthropic with `ANTHROPIC_MODEL` (`claude-opus-4-7`), 1500 max tokens, full context block prepended to user message.
 - Error handling: explicit branches for each HTTP error class (see §6.1). Returns friendly, actionable error messages to the client.
 
 ### 9.5 Dashboard (`webapp/index.html`)
@@ -720,7 +721,7 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 
 | Issue | Location | Impact |
 |---|---|---|
-| Claude model hardcoded in 3 places | Code.js:~1463, ~2775, ~3700 | Model upgrades require 3 edits; should be a constant |
+| ~~Claude model hardcoded in 3 places~~ | ~~Code.js~~ | **Resolved 2026-04-22.** Extracted to `ANTHROPIC_MODEL` constant (Code.js:45). All 5 call sites reference the constant. |
 | Hybrid attribution math duplicated | Code.js:1166-1176 and 2178-2286 | Risk of drift between `buildWeeklyRollup` and `computeBudgetSignals_` |
 | Rules engine is 200+ lines of nested logic | Code.js:2367 | Hard to test; decision table would help |
 | Dashboard API inline in `handleDashboardApi_` | Code.js:3235 | Large switch; extract action handlers |
