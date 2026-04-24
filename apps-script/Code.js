@@ -3382,21 +3382,27 @@ function doGet(e) {
       '<p>This link is invalid or has already been used.</p>');
   }
 
-  var user = Session.getActiveUser().getEmail() || 'unknown user';
-
-  if (action === 'approve') {
-    PROPS.setProperty('BUDGET_APPROVED_TOKEN', token);
-    PROPS.setProperty('BUDGET_LAST_APPROVED_BY', user);
-    PROPS.setProperty('BUDGET_LAST_APPROVED_AT', new Date().toISOString());
-    postToSlack_('*Honeycomb Budget* ✅ Approved by ' + user +
-      '. Changes will execute tonight at 3:00 AM.');
-    return HtmlService.createHtmlOutput(
-      '<h2>✅ Budget changes approved.</h2>' +
-      '<p>Changes will execute tonight at 3:00 AM. ' +
-      'You\'ll receive a Slack confirmation when complete.</p>');
+  if (action === 'approve' || action === 'reject') {
+    return showBudgetConfirmationPage_(e, action);
   }
 
-  if (action === 'reject') {
+  if (action === 'confirm_approve' || action === 'confirm_reject') {
+    var confirmAction = action === 'confirm_approve' ? 'approve' : 'reject';
+
+    var user = Session.getActiveUser().getEmail() || 'unknown user';
+
+    if (confirmAction === 'approve') {
+      PROPS.setProperty('BUDGET_APPROVED_TOKEN', token);
+      PROPS.setProperty('BUDGET_LAST_APPROVED_BY', user);
+      PROPS.setProperty('BUDGET_LAST_APPROVED_AT', new Date().toISOString());
+      postToSlack_('*Honeycomb Budget* ✅ Approved by ' + user +
+        '. Changes will execute tonight at 3:00 AM.');
+      return HtmlService.createHtmlOutput(
+        '<h2>✅ Budget changes approved.</h2>' +
+        '<p>Changes will execute tonight at 3:00 AM. ' +
+        'You\'ll receive a Slack confirmation when complete.</p>');
+    }
+
     PROPS.setProperty('BUDGET_REJECTED_TOKEN', token);
     postToSlack_('*Honeycomb Budget* ❌ Rejected by ' + user +
       '. No changes will be applied this cycle.');
@@ -3406,6 +3412,58 @@ function doGet(e) {
   }
 
   return HtmlService.createHtmlOutput('<h2>Unknown action.</h2>');
+}
+
+
+// Returns an HTML confirmation page with a button. Slack's
+// link-unfurling bot will fetch this page but won't click the
+// button, so the approval can only be completed by a human.
+function showBudgetConfirmationPage_(e, action) {
+  var token = e && e.parameter && e.parameter.token;
+  if (!token) {
+    return HtmlService.createHtmlOutput('<h2>Invalid link.</h2><p>Missing token.</p>');
+  }
+
+  var pendingToken = PROPS.getProperty('BUDGET_PENDING_TOKEN');
+  if (!pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>No pending budget proposal.</h2>' +
+      '<p>This proposal may have already been actioned or expired.</p>');
+  }
+  if (token !== pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>Token mismatch.</h2>' +
+      '<p>This link is invalid or has already been used.</p>');
+  }
+
+  var isApprove = action === 'approve';
+  var color     = isApprove ? '#10b981' : '#ef4444';
+  var label     = isApprove ? 'APPROVE BUDGET CHANGES' : 'REJECT BUDGET CHANGES';
+  var description = isApprove
+    ? 'This will approve the pending budget changes. They will execute tonight at 3:00 AM.'
+    : 'This will reject the pending budget changes. No campaign budgets will be modified.';
+
+  var baseUrl    = WEB_APP_URL || ScriptApp.getService().getUrl();
+  var confirmUrl = baseUrl + '?action=confirm_' + action + '&token=' + token;
+
+  var html =
+    '<!doctype html><html><head>' +
+    '<meta charset="utf-8">' +
+    '<title>Honeycomb Budget — Confirm</title>' +
+    '<meta name="robots" content="noindex">' +
+    '<style>body{font-family:system-ui,sans-serif;max-width:480px;margin:60px auto;padding:0 20px;text-align:center}' +
+    'h2{margin-bottom:8px}p{color:#555;margin:12px 0 24px}' +
+    'a.btn{display:inline-block;padding:14px 32px;background:' + color +
+    ';color:#fff;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600}' +
+    'a.btn:hover{opacity:0.9}</style></head><body>' +
+    '<h2>Honeycomb Budget</h2>' +
+    '<p>' + description + '</p>' +
+    '<a class="btn" href="' + confirmUrl + '">' + label + '</a>' +
+    '<p style="margin-top:32px;font-size:13px;color:#999">Click the button above to confirm. ' +
+    'This page exists to prevent automated systems from accidentally approving changes.</p>' +
+    '</body></html>';
+
+  return HtmlService.createHtmlOutput(html);
 }
 
 
