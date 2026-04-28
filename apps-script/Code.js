@@ -583,9 +583,10 @@ function syncCampaignMappings_() {
     );
   }
 
-  // Unresolvable campaigns: alert only on NEW ones
+  // Unresolvable campaigns: alert only on NEW ones that aren't
+  // already mapped via campaign_id in the mapping sheet.
   var stillUnmapped = Object.keys(unmappedById).filter(function (cid) {
-    return !resolved[cid];
+    return !resolved[cid] && !freshIdToRow[cid];
   });
 
   if (stillUnmapped.length > 0) {
@@ -3242,6 +3243,7 @@ function buildBudgetWeeklySummary_() {
 
     if (status === 'executed') {
       executed.push({
+        campaignId: String(row[4]).trim(),
         name: String(row[5]),
         currentCents: parseInt(row[6]) || 0,
         proposedCents: parseInt(row[7]) || 0,
@@ -3295,20 +3297,23 @@ function buildBudgetWeeklySummary_() {
   }
 
   if (executed.length > 0) {
-    // Collapse multiple changes per campaign into one net line:
-    // show the first "current" and last "proposed" budget, sorted by impact.
+    // Collapse multiple changes per campaign into one net line.
+    // Key by campaign_id so renames don't create duplicate lines;
+    // fall back to name for legacy rows without an ID.
     var byCampaign = {};
     executed.forEach(function (r) {
-      if (!byCampaign[r.name]) {
-        byCampaign[r.name] = {
+      var key = r.campaignId || r.name;
+      if (!byCampaign[key]) {
+        byCampaign[key] = {
           name: r.name,
           firstCents: r.currentCents,
           lastCents: r.proposedCents,
           netChangeCents: 0
         };
       }
-      byCampaign[r.name].lastCents = r.proposedCents;
-      byCampaign[r.name].netChangeCents += r.changeCents;
+      byCampaign[key].name = r.name;
+      byCampaign[key].lastCents = r.proposedCents;
+      byCampaign[key].netChangeCents += r.changeCents;
     });
 
     var collapsed = Object.values(byCampaign)
