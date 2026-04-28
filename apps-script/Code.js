@@ -679,6 +679,67 @@ function syncCampaignMappings_() {
 
   backfillCampaignIds_();
 
+  // ── General-purpose rename reconciliation ─────────────────
+  // The rename detection in the resolved-campaign loop above only
+  // catches campaigns whose ads have discoverable URL tags.
+  // Campaigns without URL tags (the AD-* batch) bypass that loop
+  // entirely. This second pass catches ALL renames by comparing
+  // each mapping row's campaign_name to the latest name in
+  // rolling_data for that campaign_id.
+  var reconMappingData = mappingSheet.getDataRange().getValues();
+  var latestNameById = {};
+  for (var lni = metaData.length - 1; lni >= 1; lni--) {
+    var lnCid = String(metaData[lni][4]).trim();
+    if (lnCid && !latestNameById[lnCid]) {
+      latestNameById[lnCid] = String(metaData[lni][3]).trim();
+    }
+  }
+
+  var reconRenames = [];
+  for (var rmi = 1; rmi < reconMappingData.length; rmi++) {
+    var rmCid = (reconMappingData[rmi].length > 4) ? String(reconMappingData[rmi][4]).trim() : '';
+    if (!rmCid) continue;
+    var rmCurrentName = String(reconMappingData[rmi][0]).trim();
+    var rmLatestName = latestNameById[rmCid];
+    if (rmLatestName && rmLatestName !== rmCurrentName) {
+      mappingSheet.getRange(rmi + 1, 1).setValue(rmLatestName);
+      reconRenames.push(rmCurrentName + ' → ' + rmLatestName);
+      Logger.log('Reconcile rename: row ' + (rmi + 1) + ' "' + rmCurrentName + '" → "' + rmLatestName + '"');
+    }
+  }
+
+  if (reconRenames.length > 0) {
+    // Also normalize historical rolling_data rows
+    var rdSheet = ss.getSheetByName(META_SHEET);
+    var rdNormalized = 0;
+    if (rdSheet && rdSheet.getLastRow() > 1) {
+      var rdLastRow = rdSheet.getLastRow();
+      var rdNameRange = rdSheet.getRange(2, 4, rdLastRow - 1, 1);
+      var rdNames = rdNameRange.getValues();
+      var rdIds = rdSheet.getRange(2, 5, rdLastRow - 1, 1).getValues();
+      for (var rdi = 0; rdi < rdNames.length; rdi++) {
+        var rdCid = String(rdIds[rdi][0]).trim();
+        if (rdCid && latestNameById[rdCid] && String(rdNames[rdi][0]).trim() !== latestNameById[rdCid]) {
+          rdNames[rdi][0] = latestNameById[rdCid];
+          rdNormalized++;
+        }
+      }
+      if (rdNormalized > 0) {
+        rdNameRange.setValues(rdNames);
+      }
+    }
+
+    Logger.log('Reconciled ' + reconRenames.length + ' mapping name(s), ' + rdNormalized + ' rolling_data rows.');
+    postToSlack_(
+      '🔄 *Honeycomb Ads — Campaign Names Reconciled*\n' +
+      reconRenames.length + ' mapping row' + (reconRenames.length !== 1 ? 's' : '') +
+      ' updated to match current Meta names' +
+      (rdNormalized > 0 ? ' (' + rdNormalized + ' historical rolling_data rows also normalized)' : '') +
+      ':\n\n' +
+      reconRenames.map(function (r) { return '• ' + r; }).join('\n')
+    );
+  }
+
   PROPS.setProperty('SYNC_LAST_RUN_DATE', todayStr);
   Logger.log('syncCampaignMappings_ complete.');
 }
