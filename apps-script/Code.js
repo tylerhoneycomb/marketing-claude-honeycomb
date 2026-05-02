@@ -2208,7 +2208,7 @@ function postDailyDigest() {
         'Content-Type': 'application/json'
       },
       payload: JSON.stringify({
-        model: ANTHROPIC_MODEL, max_tokens: 120,
+        model: ANTHROPIC_MODEL, max_tokens: 200,
         system: 'You are a terse performance marketing analyst for Honeycomb Credit. ' +
           'Write exactly 2 sentences assessing yesterday\'s ad performance. ' +
           'First sentence: verdict on yesterday (good/bad/neutral) and the key reason. ' +
@@ -3048,7 +3048,7 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
       },
       payload: JSON.stringify({
         model: ANTHROPIC_MODEL,
-        max_tokens: 350,
+        max_tokens: 500,
         system: systemPrompt,
         messages: [{ role: 'user', content: contextBlock }]
       }),
