@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-04-21 (IC conversion pattern fix)_
+_Last updated: 2026-04-27_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -74,6 +74,10 @@ Everything is connected through a single Google Spreadsheet that stores all the 
 - **Audit trail.** Every budget change proposed, approved, rejected, or executed is recorded in the `budget_queue` sheet with a reason, a timestamp, and who approved it. Every narrative is timestamped in `intelligence_log`.
 - **Deployment hygiene.** Code changes go through pull requests on GitHub, get deployed automatically, and never require anyone to edit the Apps Script web editor. This keeps the repo as the single source of truth.
 - **Audit snapshot pipeline.** Claude Code can pull the last 90 days of data anytime and do health checks.
+- **Campaign rename resilience.** Renaming a campaign in Meta is handled automatically: the sync detects the name change via `campaign_id`, updates the mapping row in place (preserving UTM and conversion settings), normalizes all historical `rolling_data` rows to the new name, and posts a Slack notification. Works for ALL campaigns, including those without URL tags.
+- **Two-step budget approval.** Budget proposal links in Slack now show an HTML confirmation page with a button — Slack's link-unfurling bot gets the page but can't click buttons, so only a human can approve or reject.
+- **AI upgraded to Claude Opus 4.7.** All 5 Anthropic API call sites (narrative, chat, budget commentary, daily digest, weekly Slack) use a single `ANTHROPIC_MODEL` constant — future upgrades are one line.
+- **Dashboard line chart accuracy.** Daily granularity shows the full selected date range (no collapsed x-axis), and per-campaign lines break on paused days instead of drawing misleading straight lines across gaps.
 
 ---
 
@@ -102,8 +106,8 @@ Everything is connected through a single Google Spreadsheet that stores all the 
 - **Hybrid attribution math is duplicated.** The weekly rollup and the budget analyzer each compute hybrid ICPs independently. If one is updated and the other isn't, budget decisions could drift from reported numbers. Worth extracting into a single shared function.
 - **Multiple Meta campaigns map to one UTM value.** "for ag" covers 3 Meta campaigns, "for ICrev2test" covers 2. Not a bug — just means segment-level rollups combine spend across these.
 - **Campaign-mapping typo.** One row reads "Q4 2205" instead of "Q4 2025." Cosmetic but worth cleaning up.
-- **Hardcoded Claude model in 3 places.** If we upgrade from Sonnet 4.6 to 4.7, we'd need to change it in three spots. Should be a constant.
-- **No rate limiting on the chat endpoint.** Someone could hammer the Hive Mind chat and run up Anthropic API costs. Low likelihood given it's a hidden feature, but worth knowing.
+- ~~**Hardcoded Claude model in 3 places.**~~ _Resolved 2026-04-22._ Extracted to `ANTHROPIC_MODEL` constant (Code.js:45). Upgraded to Opus 4.7. All 5 call sites reference the constant.
+- **No rate limiting on the chat endpoint.** Someone could hammer the Hive Mind chat and run up Anthropic API costs. Low likelihood given it's a hidden feature, but worth knowing. Cost impact is higher now with Opus 4.7 (more capable but more expensive per token).
 - **Audit snapshot uses GitHub's low-level Git API directly.** Works, but code is verbose and has no retry logic on GitHub API errors.
 
 ### Compliance / security
@@ -137,7 +141,7 @@ Everything is connected through a single Google Spreadsheet that stores all the 
 - Populate `custom_conversion_id` for all active campaigns in campaign_mapping.
 
 ### Medium impact, low effort
-- Move the Claude model name to a constant/config at the top of Code.js.
+- ~~Move the Claude model name to a constant/config at the top of Code.js.~~ **Done 2026-04-22.**
 - Add a Meta token expiration warning (check validity at start of daily pipeline, alert Slack if close to expiring).
 
 ### Lower priority
@@ -149,4 +153,4 @@ Everything is connected through a single Google Spreadsheet that stores all the 
 
 ## Summary in one paragraph
 
-This is a mature, working automation platform. The core data pipeline runs daily without intervention, the budget optimizer has appropriate human-in-the-loop safeguards, and the recent Q1 audit confirmed the data-quality fixes are holding. The most pressing concern is an operational tracking issue in Meta (not code) that crashed attribution quality in the most recent week. After that, the biggest ROI improvements are all around observability: proactive alerts on pipeline failures, attribution drops, and token expiration. The system does not currently tell you when it's broken — you have to notice.
+This is a mature, working automation platform. The core data pipeline runs daily without intervention, the budget optimizer has two-step human-in-the-loop safeguards (Slack confirmation page defeats link-unfurling bots), and campaign renames in Meta are handled automatically without manual mapping cleanup. The Q1 audit's 6 data-quality issues are all resolved, IC conversion tracking has been restored (now using the cleaner "Investment Crowdfunding Prequal Decision" event), and the AI layer runs on Claude Opus 4.7 via a single configurable constant. The biggest remaining ROI improvements are around observability: proactive alerts on pipeline failures, attribution-quality drops, and token expiration. The system does not currently tell you when it's broken — you have to notice.

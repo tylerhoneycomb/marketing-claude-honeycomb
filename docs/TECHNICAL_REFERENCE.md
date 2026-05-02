@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-04-21 (IC conversion pattern fix)_
+_Last updated: 2026-04-27_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 

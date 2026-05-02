@@ -3524,7 +3524,7 @@ function showBudgetConfirmationPage_(e, action) {
     'a.btn:hover{opacity:0.9}</style></head><body>' +
     '<h2>Honeycomb Budget</h2>' +
     '<p>' + description + '</p>' +
-    '<a class="btn" href="' + confirmUrl + '">' + label + '</a>' +
+    '<a class="btn" href="' + confirmUrl + '" target="_top">' + label + '</a>' +
     '<p style="margin-top:32px;font-size:13px;color:#999">Click the button above to confirm. ' +
     'This page exists to prevent automated systems from accidentally approving changes.</p>' +
     '</body></html>';
@@ -4608,7 +4608,7 @@ function showTargetApprovalPage_(e, decision) {
     (pendingTolerance ? ' (\u00b1$' + pendingTolerance + ')' : '') +
     '</div>' +
     '<p>' + description + '</p>' +
-    '<a class="btn" href="' + confirmUrl + '">Click to confirm ' + label + '</a>' +
+    '<a class="btn" href="' + confirmUrl + '" target="_top">Click to confirm ' + label + '</a>' +
     '<div class="note">This extra confirmation step exists so that link previews (like Slack unfurl) ' +
     'can\'t accidentally approve or reject changes on your behalf.</div>' +
     '</body></html>';
