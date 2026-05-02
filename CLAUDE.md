@@ -43,6 +43,13 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 - `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
+- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md`: `daily-check`, `fatigue-monitor`, `budget-optimizer`, `ad-copy-generator`, `pipeline-health`.
+- `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair.
+- `/data/` — Agent data repository.
+  - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest)
+  - `data/creatives/creatives.json` — creative metadata, accreted over time
+  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`)
+  - `data/config/benchmarks.json` — all thresholds; never hardcode them in scripts
 - `/ad-copy/` — Meta (Facebook/Instagram) ad copy organized by vertical
 - `/workflows/` — Automation scripts and marketing workflows
 - `/audiences/` — Audience lists and segmentation data (never commit PII)
@@ -50,6 +57,7 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 - `.github/workflows/` — GitHub Actions CI/CD
   - `deploy-webapp.yml` — Auto-deploys dashboard to GitHub Pages on changes to webapp/
   - `deploy-apps-script.yml` — Auto-deploys Apps Script via clasp on changes to apps-script/
+  - `daily-data.yml` — Manual-only (workflow_dispatch) ad-level data pull; will be flipped to a daily cron once the snapshot output is verified
 
 ## Apps Script Deployment (clasp)
 
@@ -104,3 +112,27 @@ The pipeline supports exporting sheet data as JSON to a dedicated `audit-snapsho
 - Do not draft content that guarantees investment returns
 - Do not include specific APY/interest rate claims without explicit approval
 - All investment-related copy should include: "Investing involves risk"
+
+## Agent Data Constraints
+
+The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent loop. The legacy campaign-level Apps Script pipeline keeps running unchanged.
+
+- **Snapshots are read-only.** Files under `data/snapshots/` are committed by the `daily-data.yml` GitHub Action and represent ground truth from Meta. Do NOT manually edit them.
+- **Derived signals are regenerable.** Files under `data/derived/` are computed artifacts. Re-running `python3 scripts/compute_signals.py` rebuilds them from the snapshots. They can be deleted and regenerated at any time.
+- **Thresholds live in one place.** All fatigue, budget, and performance thresholds live in `data/config/benchmarks.json`. Never hardcode threshold numbers inside scripts or skills — always read from the config.
+- **The agent never writes to Meta directly.** All budget recommendations flow through the existing Slack approval pipeline in `apps-script/Code.js`. The agent's role is to surface signals and propose actions, not to execute changes against the Meta API.
+- **Learning-phase protection.** Never propose budget changes to ad sets where `learning_stage_info.status == "LEARNING"`. The `compute_signals.py` step already filters these and marks them `actionable: false`; defensively re-check in any skill that proposes ad-set actions.
+- **Signal floors.** Fatigue signals require ≥ 3 days of data and ≥ 1,000 impressions before they're considered actionable. Don't promote a row whose `actionable` field is `false`, even if it has a flag set.
+- **Daily-data workflow is manual-only for now.** `.github/workflows/daily-data.yml` runs only on workflow_dispatch until we've confirmed the first few snapshot outputs are clean. To enable the schedule, uncomment the `schedule` block in the workflow file.
+
+## Skills
+
+Skill files (`skills/<name>/SKILL.md`) are operating instructions, not documentation. When invoking a skill, follow its instructions exactly: input files, decision logic, output format, and constraints. Each skill states the conditions for when to invoke it; if the conditions don't match the user's request, suggest a different skill rather than improvising.
+
+Current skills:
+
+- **daily-check** — top-of-session orientation; the "5 daily questions"
+- **fatigue-monitor** — per-ad fatigue detection with severity-based recommendations
+- **budget-optimizer** — ad-set budget shifts, routed through the existing Slack approval flow
+- **ad-copy-generator** — Reg-CF-compliant copy variants for fatigue refreshes and new launches
+- **pipeline-health** — read-only verification of snapshot freshness, workflow status, token signals

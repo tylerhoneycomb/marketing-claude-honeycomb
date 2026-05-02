@@ -1,0 +1,44 @@
+{
+  "account": {
+    "id": "act_1953544531525812",
+    "name": "Honeycomb Credit",
+    "api_version": "v21.0"
+  },
+  "thresholds": {
+    "fatigue": {
+      "ctr_decline_pct_7d": 20,
+      "frequency_warning": 2.0,
+      "frequency_critical": 3.0,
+      "min_impressions_for_signal": 1000,
+      "min_days_active": 3
+    },
+    "budget": {
+      "daily_min_cents": 2500,
+      "max_change_pct_per_cycle": 0.02,
+      "max_reduction_pct": 0.04,
+      "class_spend_floor_pct": 0.65,
+      "weekly_target_spend": 10000,
+      "weekly_spend_tolerance": 500
+    },
+    "performance": {
+      "bleeder_ctr_vs_adset_avg": 0.5,
+      "winner_spend_share_min": 0.3,
+      "lifetime_min_conversions": 25
+    }
+  },
+  "ic_tracking": {
+    "pattern": "investment crowdfunding",
+    "custom_conversion_id": "2330338620810873",
+    "event_name": "Investment Crowdfunding Prequal Decision",
+    "action_type": "offsite_conversion.custom.2330338620810873",
+    "lead_action_types": [
+      "lead",
+      "offsite_conversion.fb_pixel_lead",
+      "onsite_conversion.lead_grouped"
+    ]
+  },
+  "snapshot_retention": {
+    "daily_snapshot_days": 90,
+    "rolling_window_days": 7
+  }
+}

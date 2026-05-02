@@ -1,0 +1,19 @@
+{
+  "computed_at": "2026-05-02T21:08:13.384330+00:00",
+  "window_days": 7,
+  "snapshot_dates": [],
+  "ad_count": 0,
+  "adset_count": 0,
+  "campaign_count": 0,
+  "fatigue_severity_counts": {
+    "critical": 0,
+    "warning": 0,
+    "ok": 0
+  },
+  "actionable_critical": [],
+  "actionable_warning": [],
+  "winners": [],
+  "bleeders": [],
+  "learning_phase_adsets_skipped": 0,
+  "note": "No snapshots found; derived files initialized empty."
+}
