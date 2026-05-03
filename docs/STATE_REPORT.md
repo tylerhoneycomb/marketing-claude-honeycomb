@@ -76,7 +76,7 @@ Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` oper
 
 - **pipeline-health** _(shipped 2026-05-03)_ — runs four checks (data freshness, Meta token validity, IC conversion event existence, dashboard endpoint health) and writes results to a new `pipeline_health` Sheet tab via `Code.js?action=health-write`. Posts to Slack only on WARN/FAIL.
 - **daily-check** _(shipped 2026-05-03)_ — pulls 7 days of campaign/adset/ad insights, computes pacing vs weekly target, portfolio CPICP rankings, top 3 winners + bleeders, early fatigue flags, learning-phase ad sets, and stale creatives. Writes a summary row to a new `daily_check_log` Sheet tab via `Code.js?action=daily-check-write`. Runs alongside the existing campaign-level Apps Script daily digest — does not replace it.
-- **fatigue-monitor** _(coming)_ — ad-level fatigue classification with baseline-aware severity scoring.
+- **fatigue-monitor** _(shipped 2026-05-03)_ — pulls 14 days of ad-level insights, computes each ad's peak-window baseline (days 4–7 after launch), and classifies the current 7 days as `saturated` / `fatigued` / `early_fatigue` / `underperforming` / `healthy`. Cross-references pending budget proposals via `Code.js?action=budget-queue-read` and surfaces conflicts. Writes per-ad rows to a new `fatigue_log` Sheet tab via `Code.js?action=fatigue-write`. Caches creative metadata in `data/creatives/creatives.json` so thumbnails + ad copy are pulled once per creative, not per run.
 
 Skills query Meta live for operational decisions; the snapshot pipeline above provides the historical backbone. Both share a single Meta client at `scripts/lib/meta.py` (HTTP retries, paging, throttle handling, IC extraction, row normalization).
 

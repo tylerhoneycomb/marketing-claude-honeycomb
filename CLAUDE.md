@@ -173,8 +173,12 @@ defined in `Code.js`. To add a new write endpoint:
 - **daily-check** — morning briefing: pacing vs weekly target, campaign
   portfolio sorted by CPICP, top 3 winners + bleeders, early fatigue flags,
   learning-phase ad sets, and stale creatives (>21 days active).
-- **fatigue-monitor** _(coming Session 3)_ — ad-level fatigue classification
-  with baseline-aware severity scoring.
+- **fatigue-monitor** — per-ad fatigue classification (saturated / fatigued /
+  early_fatigue / underperforming / healthy) with baseline-aware severity
+  scoring. Three baseline paths: in-range (no extra API call), historical
+  (one consolidated query for all Path-B ads), or estimated. Cross-references
+  pending budget proposals via `?action=budget-queue-read` and flags
+  conflicts (e.g. fatiguing ad in a campaign with a pending budget INCREASE).
 
 ### Shared client
 

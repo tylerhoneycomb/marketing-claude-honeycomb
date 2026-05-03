@@ -3639,7 +3639,9 @@ function handleDashboardApi_(e) {
     // at the bottom; writers (`*-write`) handle their own response.
     'rolling-latest-date': true,
     'health-write': true,
-    'daily-check-write': true
+    'daily-check-write': true,
+    'budget-queue-read': true,
+    'fatigue-write': true
   };
 
   if (!action || !dashboardActions[action]) return null;
@@ -3818,6 +3820,13 @@ function handleDashboardApi_(e) {
     return handleDailyCheckWrite_(e);
   }
 
+  // `fatigue-monitor` skill writes one row per evaluated ad to
+  // `fatigue_log`. Accepts a JSON body {rows:[...]} batch payload or a
+  // form-encoded `rows=<json>` param.
+  if (action === 'fatigue-write') {
+    return handleFatigueWrite_(e);
+  }
+
   try {
     var result;
     switch (action) {
@@ -3841,6 +3850,9 @@ function handleDashboardApi_(e) {
         break;
       case 'rolling-latest-date':
         result = getRollingLatestDate_();
+        break;
+      case 'budget-queue-read':
+        result = getBudgetQueuePending_(e.parameter);
         break;
     }
     return jsonResponse_(result);
@@ -4026,6 +4038,127 @@ function handleDailyCheckWrite_(e) {
   ]);
 
   return jsonResponse_({ ok: true, written: 1 });
+}
+
+
+// Read-only: returns currently `pending` rows from `budget_queue`. The
+// `fatigue-monitor` skill calls this so it can flag conflicts (e.g. a
+// fatiguing ad in a campaign with a pending budget INCREASE). Optional
+// `campaign_id` param narrows the result; otherwise returns all pending.
+function getBudgetQueuePending_(params) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(BUDGET_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) return { pending: [] };
+
+  var data = sheet.getDataRange().getValues();
+  // Schema (writeToQueue_, Code.js:2913):
+  //   0:token 1:created_at 2:analysis_date 3:execution_scheduled
+  //   4:campaign_id 5:campaign_name
+  //   6:current_budget_cents 7:proposed_budget_cents
+  //   8:change_cents 9:change_pct
+  //   10:signal_reasons 11:status
+  var filterCampaignId = params && params.campaign_id
+    ? String(params.campaign_id).trim() : null;
+
+  var pending = [];
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+    if (String(r[11]).toLowerCase() !== 'pending') continue;
+    var campaignId = String(r[4]).trim();
+    if (filterCampaignId && campaignId !== filterCampaignId) continue;
+
+    var changeCents = Number(r[8]) || 0;
+    pending.push({
+      token: String(r[0]),
+      created_at: r[1] instanceof Date ? r[1].toISOString() : String(r[1]),
+      analysis_date: String(r[2]).substring(0, 10),
+      execution_scheduled: String(r[3]),
+      campaign_id: campaignId,
+      campaign_name: String(r[5]),
+      current_budget_cents: Number(r[6]) || 0,
+      proposed_budget_cents: Number(r[7]) || 0,
+      change_cents: changeCents,
+      change_pct: Number(r[9]) || 0,
+      direction: changeCents > 0 ? 'increase' : (changeCents < 0 ? 'decrease' : 'flat'),
+      signal_reasons: String(r[10]),
+      status: 'pending'
+    });
+  }
+  return { pending: pending, count: pending.length };
+}
+
+
+// Append-only: writes per-ad fatigue classifications. Creates the tab on
+// first call. The `fatigue-monitor` skill writes ALL evaluated ads
+// (including healthy) for the historical record.
+function handleFatigueWrite_(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('fatigue_log');
+  if (!sheet) {
+    sheet = ss.insertSheet('fatigue_log');
+    sheet.appendRow([
+      'date', 'ad_id', 'ad_name', 'campaign',
+      'classification',
+      'ctr_baseline', 'ctr_current', 'ctr_decline_pct',
+      'frequency',
+      'cpc_baseline', 'cpc_current',
+      'days_active', 'baseline_type',
+      'budget_conflict',
+      'recorded_at'
+    ]);
+  }
+
+  var rows = [];
+  var p = (e && e.parameter) || {};
+
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && Array.isArray(parsed.rows)) rows = parsed.rows;
+    } catch (parseErr) {
+      // fall through
+    }
+  }
+  if (!rows.length && p.rows) {
+    try {
+      rows = JSON.parse(p.rows);
+      if (!Array.isArray(rows)) {
+        return jsonResponse_({ error: 'rows must be a JSON array' });
+      }
+    } catch (err) {
+      return jsonResponse_({ error: 'rows is not valid JSON: ' + err.message });
+    }
+  }
+
+  if (!rows.length) {
+    return jsonResponse_({ error: 'no rows provided (use JSON body {rows:[...]} or rows=<json>)' });
+  }
+
+  var nowIso = new Date().toISOString();
+  var written = 0;
+  for (var ri = 0; ri < rows.length; ri++) {
+    var row = rows[ri] || {};
+    if (!row.ad_id) continue;
+    sheet.appendRow([
+      String(row.date || ''),
+      String(row.ad_id),
+      String(row.ad_name || ''),
+      String(row.campaign || ''),
+      String(row.classification || ''),
+      row.ctr_baseline == null ? '' : Number(row.ctr_baseline),
+      row.ctr_current == null ? '' : Number(row.ctr_current),
+      row.ctr_decline_pct == null ? '' : Number(row.ctr_decline_pct),
+      row.frequency == null ? '' : Number(row.frequency),
+      row.cpc_baseline == null ? '' : Number(row.cpc_baseline),
+      row.cpc_current == null ? '' : Number(row.cpc_current),
+      row.days_active == null ? '' : Number(row.days_active),
+      String(row.baseline_type || ''),
+      String(row.budget_conflict || ''),
+      nowIso
+    ]);
+    written++;
+  }
+  return jsonResponse_({ ok: true, written: written });
 }
 
 
@@ -4215,6 +4348,9 @@ function doPost(e) {
   }
   if (action === 'daily-check-write') {
     return handleDailyCheckWrite_(e);
+  }
+  if (action === 'fatigue-write') {
+    return handleFatigueWrite_(e);
   }
 
   return jsonResponse_({ error: 'Unknown POST action: ' + action });
