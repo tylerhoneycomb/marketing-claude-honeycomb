@@ -1,0 +1,114 @@
+name: Agent — Fatigue Monitor
+
+# Manual-only until first autonomous runs are verified.
+# Once the skill output is confirmed clean, uncomment the schedule
+# block to run twice a week (Mon + Thu, 9:30 AM ET). Daily would
+# over-query Meta — fatigue moves slowly.
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '30 13 * * 1,4'  # Mon + Thu 9:30 AM ET (UTC-4) / 8:30 AM ET during DST
+
+permissions:
+  contents: read
+  # Required by claude-code-action@v1 for OIDC auth at startup.
+  id-token: write
+
+concurrency:
+  group: agent-fatigue-monitor
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    # 14-day fetch + per-creative metadata + Path-B historical query
+    # + classification across N ads. First run is the slowest because
+    # the creative cache is empty.
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests==2.32.3
+
+      - name: Run fatigue-monitor skill via Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          # Same secret the daily-data + other agent workflows use.
+          # The skill scripts read it directly via os.environ.
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          # Optional. If unset, Claude skips Slack posting and only
+          # surfaces results in this workflow's logs.
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          show_full_output: "true"
+          display_report: "true"
+          claude_args: "--permission-mode bypassPermissions"
+          prompt: |
+            Run the fatigue-monitor skill exactly as documented in
+            skills/fatigue-monitor/SKILL.md.
+
+            Three scripts run in sequence. classify_fatigue.py handles
+            the Sheet write AND the budget-conflict cross-reference —
+            you only read its JSON and compose the human-readable
+            summary.
+
+            Steps:
+            1. `python3 skills/fatigue-monitor/scripts/fetch_fatigue_data.py > /tmp/fatigue_fetch.json`
+            2. `python3 skills/fatigue-monitor/scripts/compute_baselines.py --input /tmp/fatigue_fetch.json > /tmp/fatigue_baselines.json`
+            3. `python3 skills/fatigue-monitor/scripts/classify_fatigue.py --fetch /tmp/fatigue_fetch.json --baselines /tmp/fatigue_baselines.json`
+            4. Parse classify_fatigue.py's stdout JSON.
+            5. Compose output per the rules below.
+
+            Output rules:
+            - Print non-healthy ads to terminal grouped by severity:
+                FATIGUED first, then EARLY FATIGUE, then SATURATED,
+                then UNDERPERFORMING. Skip `healthy` entirely.
+              For each ad: name (campaign), CTR baseline → current
+              with decline %, frequency, CPC change, days_active,
+              headline preview if available. If `baseline_type ==
+              "estimated"`, append `(estimated baseline)` to the
+              metrics line. If `budget_conflict` is non-null, render
+              it as a separate warning line under that ad — that's
+              the most actionable signal in the report.
+              If `classifications` is empty, say so in one line:
+                "No fatigue signals — all evaluated ads healthy or
+                 below thresholds."
+              End with: "Sheet log: N rows written to fatigue_log"
+              and a one-liner of stats.by_classification counts.
+            - If `SLACK_WEBHOOK_URL` env var is set and non-empty,
+              POST the non-healthy section to that webhook via curl.
+              If unset or empty, skip Slack silently.
+            - If `sheet_write.posted` is false in the classify output,
+              surface that as a separate WARN line.
+
+            Constraints:
+            - Read-only on the repo. Do not modify any files. Do not
+              create branches or push commits.
+            - Do not call the Meta API directly. The fetch and baseline
+              scripts handle all Meta queries (including the Path-B
+              historical baseline batch).
+            - If any script exits non-zero, surface the stderr message
+              and stop.
+
+      - name: Dump Claude execution log
+        if: always()
+        run: |
+          LOG=/home/runner/work/_temp/claude-execution-output.json
+          if [ -f "$LOG" ]; then
+            echo "=== claude-execution-output.json ==="
+            cat "$LOG"
+          else
+            echo "No claude-execution-output.json at $LOG"
+            ls -la /home/runner/work/_temp/ || true
+          fi

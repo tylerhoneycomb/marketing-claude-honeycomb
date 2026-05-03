@@ -160,6 +160,24 @@ Each skill that needs a scheduled run gets its own workflow file under
 
 - `agent-pipeline-health.yml` — runs `pipeline-health` skill. Manual-only
   (`workflow_dispatch`) until verified; cron block staged but commented out.
+- `agent-daily-check.yml` — runs `daily-check` skill. Manual-only;
+  cron block staged for 8:30 AM ET daily.
+- `agent-fatigue-monitor.yml` — runs `fatigue-monitor` skill. Manual-only;
+  cron block staged for Mon + Thu 9:30 AM ET (twice-weekly — fatigue
+  moves slowly, daily would over-query Meta).
+
+Every agent workflow uses the same template (lessons learned from the
+agent-pipeline-health iteration cycle):
+
+- `permissions: contents:read + id-token:write` (latter required by
+  claude-code-action@v1 for OIDC auth)
+- `claude_args: "--permission-mode bypassPermissions"` (workflow is the
+  trust boundary; without this Claude can't run any Bash command in CI)
+- `show_full_output: "true"` and `display_report: "true"` (surface
+  Claude's output in the workflow log instead of saving it silently)
+- A "Dump Claude execution log" step with `if: always()` that cats
+  `/tmp/claude-execution-output.json` (belt-and-suspenders diagnostic
+  fallback)
 
 Each agent workflow needs these GitHub Secrets on the repo:
 - `ANTHROPIC_API_KEY` — already set (used by the existing `claude.yml` too)

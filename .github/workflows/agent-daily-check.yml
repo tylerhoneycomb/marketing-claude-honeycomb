@@ -1,0 +1,115 @@
+name: Agent — Daily Check
+
+# Manual-only until first autonomous runs are verified.
+# Once the skill output is confirmed clean, uncomment the schedule
+# block to run daily at 8:30 AM ET (after the 7 AM Apps Script
+# data pull, before Tyler's morning standup).
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '30 12 * * *'  # 8:30 AM ET (UTC-4) / 7:30 AM ET during DST
+
+permissions:
+  contents: read
+  # Required by claude-code-action@v1 for OIDC auth at startup.
+  id-token: write
+
+concurrency:
+  group: agent-daily-check
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25  # 7-day fetch + 5 Meta API calls + analysis
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests==2.32.3
+
+      - name: Run daily-check skill via Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          # Same secret the daily-data + agent-pipeline-health workflows use.
+          # The skill scripts read it directly via os.environ.
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          # Optional. If unset, Claude skips Slack posting and only
+          # surfaces results in this workflow's logs.
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Surface Claude's full output in the workflow log. Without
+          # these, the action runs Claude silently and only saves the
+          # transcript to /tmp.
+          show_full_output: "true"
+          display_report: "true"
+          # Bypass per-command permission prompts. The workflow itself
+          # is the trust boundary; without this Claude can't run any
+          # Bash command in CI (no human to click "approve").
+          claude_args: "--permission-mode bypassPermissions"
+          prompt: |
+            Run the daily-check skill exactly as documented in
+            skills/daily-check/SKILL.md.
+
+            Two scripts run in sequence. analyze_daily.py handles the
+            Sheet write itself — you only read its JSON and compose the
+            human-readable summary.
+
+            Steps:
+            1. `python3 skills/daily-check/scripts/fetch_daily_data.py > /tmp/daily_data.json`
+            2. `python3 skills/daily-check/scripts/analyze_daily.py --input /tmp/daily_data.json`
+            3. Parse the JSON analyze_daily.py prints to stdout.
+            4. Compose output per the rules below.
+
+            Output rules:
+            - Print a sectioned terminal summary (matches the SKILL.md
+              "Output — Interactive" example shape):
+                PACING:    one line — status + numbers
+                PORTFOLIO: one line per campaign with IC conversions
+                WINNERS:   up to 3 lines (skip section if empty)
+                BLEEDERS:  up to 3 lines (skip section if empty)
+                FATIGUE WATCH: up to N lines (skip section if empty)
+                LEARNING:  one line per learning-phase ad set
+                STALE:     one line per stale creative
+              End with: "Sheet log: 1 row written to daily_check_log"
+              (or surface sheet_write.error if posted is false).
+            - If `SLACK_WEBHOOK_URL` env var is set and non-empty, POST
+              the same plain-text summary to that webhook via curl.
+              If unset or empty, skip Slack silently.
+            - If `sheet_write.posted` is false in the analyze output,
+              surface that as a separate WARN line — historical log
+              broken even though the analysis ran.
+
+            Constraints:
+            - Read-only on the repo. Do not modify any files. Do not
+              create branches or push commits.
+            - Do not call the Meta API directly. The fetch script
+              handles all Meta queries.
+            - If either script exits non-zero, surface the stderr
+              message and stop — that's a real problem the script's
+              own error path already framed correctly.
+
+      # Belt-and-suspenders: dump the action's saved transcript even
+      # if show_full_output / display_report don't render cleanly.
+      # Runs on success or failure so we can diagnose either way.
+      - name: Dump Claude execution log
+        if: always()
+        run: |
+          LOG=/home/runner/work/_temp/claude-execution-output.json
+          if [ -f "$LOG" ]; then
+            echo "=== claude-execution-output.json ==="
+            cat "$LOG"
+          else
+            echo "No claude-execution-output.json at $LOG"
+            ls -la /home/runner/work/_temp/ || true
+          fi
