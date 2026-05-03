@@ -106,6 +106,7 @@ CREATIVE_FIELDS = [
     "id",
     "name",
     "thumbnail_url",
+    "image_url",
     "image_hash",
     "object_story_spec",
     "effective_object_story_id",
@@ -369,9 +370,18 @@ def normalize_creative(row: dict[str, Any]) -> dict[str, Any]:
     story = row.get("object_story_spec") or {}
     link_data = story.get("link_data") or {}
     cta = link_data.get("call_to_action") or {}
+    # Prefer the full-size image (typically 600-1080px wide) over the
+    # thumbnail (64-200px) — visual analysis at thumbnail resolution is
+    # unreliable. Meta exposes image_url at the top level for image
+    # creatives, with link_data.picture as a secondary location for
+    # link-ad creatives.
+    image_url = (row.get("image_url")
+                 or link_data.get("picture")
+                 or row.get("thumbnail_url"))
     return {
         "creative_id": row.get("id"),
         "name": row.get("name"),
+        "image_url": image_url,
         "thumbnail_url": row.get("thumbnail_url"),
         "image_hash": row.get("image_hash") or link_data.get("image_hash"),
         "title": row.get("title") or link_data.get("name"),
@@ -379,3 +389,54 @@ def normalize_creative(row: dict[str, Any]) -> dict[str, Any]:
         "link_url": row.get("link_url") or link_data.get("link"),
         "call_to_action_type": row.get("call_to_action_type") or cta.get("type"),
     }
+
+
+def download_image(creative_id: str, url: str | None,
+                   dest_dir: Path) -> Path | None:
+    """Download a creative's image to dest_dir/<creative_id>.jpg.
+
+    Idempotent: returns the existing path if the file is already present
+    (and non-empty). Best-effort: a hard failure logs a warning and
+    returns None — callers should not abort the surrounding workflow on
+    a missing image.
+
+    Why this exists: Meta CDN URLs eventually 404. The local file is
+    the source of truth for downstream visual analysis (the Creative
+    Intelligence skill's vision-API categorization).
+    """
+    if not url:
+        return None
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    target = dest_dir / f"{creative_id}.jpg"
+    if target.exists() and target.stat().st_size > 0:
+        return target
+
+    last_err: Exception | None = None
+    for attempt in range(2):
+        try:
+            resp = requests.get(url, timeout=20, stream=True)
+            if resp.status_code != 200:
+                last_err = RuntimeError(
+                    f"HTTP {resp.status_code} on {url[:120]}")
+                if resp.status_code in (429, 500, 502, 503, 504):
+                    time.sleep(2 ** attempt)
+                    continue
+                break  # 4xx other than 429 — don't retry
+            tmp = target.with_suffix(".jpg.tmp")
+            with tmp.open("wb") as f:
+                for chunk in resp.iter_content(chunk_size=65536):
+                    if chunk:
+                        f.write(chunk)
+            tmp.rename(target)
+            return target
+        except requests.RequestException as exc:
+            last_err = exc
+            if attempt == 0:
+                time.sleep(1)
+                continue
+            break
+
+    logging.warning("download_image: failed for creative %s: %s",
+                    creative_id, last_err)
+    return None
+

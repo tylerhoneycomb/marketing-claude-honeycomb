@@ -43,6 +43,7 @@ from lib.meta import (  # noqa: E402
     DEFAULT_SLEEP_BETWEEN_CALLS,
     INSIGHTS_FIELDS_AD,
     MetaClient,
+    download_image,
     ic_action_type_from_config,
     load_config,
     normalize_ad,
@@ -51,6 +52,7 @@ from lib.meta import (  # noqa: E402
 )
 
 CREATIVES_PATH = REPO_ROOT / "data" / "creatives" / "creatives.json"
+IMAGES_DIR = REPO_ROOT / "data" / "creatives" / "images"
 
 
 def yesterday_in_tz(tz: ZoneInfo) -> date:
@@ -173,11 +175,34 @@ def main(argv: list[str] | None = None) -> int:
             continue
         seen_creative_ids.add(creative_id)
         if creative_id in cache:
-            creatives_for_output.append({**cache[creative_id], "ad_id": ad_id})
+            cached = cache[creative_id]
+            # Backfill local image for previously-cached creatives that
+            # don't have one yet (common after enabling local image
+            # caching for the first time on a populated cache).
+            if not cached.get("local_image_path"):
+                local = download_image(
+                    creative_id,
+                    cached.get("image_url") or cached.get("thumbnail_url"),
+                    IMAGES_DIR,
+                )
+                if local:
+                    cached = {**cached,
+                              "local_image_path": str(local.relative_to(REPO_ROOT))}
+                    # Re-stage as a "new" creative so update_creatives_cache
+                    # writes the new local_image_path back to disk.
+                    new_creatives.append(cached)
+            creatives_for_output.append({**cached, "ad_id": ad_id})
             continue
         try:
             raw = client.creative(creative_id)
             normalized = normalize_creative(raw)
+            local = download_image(
+                creative_id,
+                normalized.get("image_url") or normalized.get("thumbnail_url"),
+                IMAGES_DIR,
+            )
+            if local:
+                normalized["local_image_path"] = str(local.relative_to(REPO_ROOT))
             new_creatives.append(normalized)
             creatives_for_output.append({**normalized, "ad_id": ad_id})
         except RuntimeError as exc:
