@@ -1,8 +1,9 @@
 name: Daily Ad Data Collection
 
-# This workflow is currently MANUAL-ONLY (workflow_dispatch).
-# Once we've verified the snapshot output is correct, uncomment the
-# `schedule` block below to enable the daily 8 AM ET (12:00 UTC) run.
+# Daily 8 AM ET cron + workflow_dispatch for manual backfills.
+# After 2026-05-03, autonomous mode: runs daily and commits the snapshot
+# directly to main. Manual dispatch is preserved for backfills via the
+# start_date / end_date inputs.
 on:
   workflow_dispatch:
     inputs:
@@ -22,8 +23,8 @@ on:
         description: 'Min seconds between Meta API calls (rate limiting).'
         required: false
         default: '1.0'
-  # schedule:
-  #   - cron: '0 12 * * *'  # 8 AM ET (UTC-4) / 7 AM ET during DST
+  schedule:
+    - cron: '0 12 * * *'  # 8 AM ET (UTC-4) / 7 AM ET during DST
 
 permissions:
   contents: write
