@@ -43,7 +43,7 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 - `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
-- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md`: `daily-check`, `fatigue-monitor`, `budget-optimizer`, `ad-copy-generator`, `pipeline-health`.
+- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`.
 - `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair.
 - `/data/` — Agent data repository.
   - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest)
@@ -149,8 +149,23 @@ defined in `Code.js`. To add a new write endpoint:
 ### Execution modes
 
 - **Interactive:** Tyler prompts Claude Code directly. Output goes to terminal.
-- **Autonomous:** GitHub Action runs `anthropics/claude-code-action@v1` on cron.
-  Same skill, same behavior. Output goes to Slack.
+- **Autonomous:** GitHub Action runs `anthropics/claude-code-action@v1` on
+  cron or manual dispatch. Same skill files, same behavior. Output goes to
+  Slack on WARN/FAIL (silent on PASS) and to the workflow log either way.
+
+### Autonomous workflows
+
+Each skill that needs a scheduled run gets its own workflow file under
+`.github/workflows/agent-<skill>.yml`. Current:
+
+- `agent-pipeline-health.yml` — runs `pipeline-health` skill. Manual-only
+  (`workflow_dispatch`) until verified; cron block staged but commented out.
+
+Each agent workflow needs these GitHub Secrets on the repo:
+- `ANTHROPIC_API_KEY` — already set (used by the existing `claude.yml` too)
+- `META_ACCESS_TOKEN` — same secret used by `daily-data.yml`
+- `SLACK_WEBHOOK_URL` — optional; if unset, skills skip Slack and surface
+  output in the workflow log only
 
 ### Meta API conventions
 

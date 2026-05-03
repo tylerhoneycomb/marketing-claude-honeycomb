@@ -67,9 +67,15 @@ Requires:
 - **Stale creatives:** ads active > `fatigue.creative_age_warning_days` (21 by default). Worth a refresh look but not necessarily fatiguing.
 - **`sheet_write.posted == false`:** the historical log didn't write. Surface that as its own line in Slack — the briefing is still useful, but Tyler should know the log is broken.
 
-## Output — Slack
+## Output — Interactive (terminal)
 
-Compose a plain-text summary. Keep it scannable — one line per item, sections separated by blank lines. No markdown headers. Example shape:
+When invoked from an interactive Claude Code session, **always print a human-readable summary to terminal** — don't just dump raw JSON. Same format as the Slack template below, just printed to stdout. Always show all sections that have data (skip empty sections). End with a one-liner confirming the Sheet write outcome (e.g., "Sheet log: 1 row written to daily_check_log").
+
+## Output — Slack (only if webhook is set)
+
+**Skip Slack posting entirely if `SLACK_WEBHOOK_URL` env var is unset or empty** — print to terminal only (see Interactive section above). Slack is opt-in via the secret; the default for interactive runs is terminal-only.
+
+When the webhook IS set: compose a plain-text summary, keep it scannable — one line per item, sections separated by blank lines. No markdown headers. POST to `$SLACK_WEBHOOK_URL` via curl. Example shape:
 
 ```
 📊 Daily Check — 2026-05-03

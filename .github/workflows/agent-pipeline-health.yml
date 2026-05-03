@@ -1,0 +1,81 @@
+name: Agent — Pipeline Health
+
+# Manual-only until first autonomous runs are verified.
+# Once the skill output is confirmed clean, uncomment the schedule
+# block to run daily at 9 AM ET (after the 7 AM Apps Script data pull).
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 13 * * *'  # 9 AM ET (UTC-4) / 8 AM ET during DST
+
+permissions:
+  contents: read
+
+concurrency:
+  group: agent-pipeline-health
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests==2.32.3
+
+      - name: Run pipeline-health skill via Claude Code
+        uses: anthropics/claude-code-action@v1
+        env:
+          # Same secret the daily-data workflow uses. The skill script
+          # (scripts/check_health.py) reads it directly via os.environ.
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          # Optional. If unset, Claude will skip Slack posting and only
+          # surface results in this workflow's logs.
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Run the pipeline-health skill exactly as documented in
+            skills/pipeline-health/SKILL.md.
+
+            The script (skills/pipeline-health/scripts/check_health.py)
+            handles the Sheet write itself — you only need to read its
+            JSON output and compose the human-readable summary.
+
+            Steps:
+            1. Run `python3 skills/pipeline-health/scripts/check_health.py`.
+            2. Parse the JSON it prints to stdout.
+            3. Compose output per the rules below.
+
+            Output rules:
+            - If all four checks return PASS, print one line:
+              "All checks PASS — pipeline healthy as of <date>."
+              Do NOT post to Slack on full PASS (silent success — see
+              SKILL.md "Constraints").
+            - If any check is WARN or FAIL, print a multi-line summary:
+              one line per non-PASS check using the `detail` string
+              verbatim, FAIL listed before WARN. THEN, if the
+              SLACK_WEBHOOK_URL env var is set and non-empty, POST the
+              same plain-text summary to that webhook via curl.
+            - If `sheet_write.posted` is `false` in the script output,
+              surface that as its own WARN line — the historical log is
+              broken even if the four checks ran.
+
+            Constraints:
+            - Read-only on the repo. Do not modify any files. Do not
+              create branches or push commits.
+            - Do not call the Meta API directly. The skill script handles
+              that.
+            - If the script exits non-zero, surface the stderr message
+              and stop — that's a real problem the script's own error
+              path already framed correctly.

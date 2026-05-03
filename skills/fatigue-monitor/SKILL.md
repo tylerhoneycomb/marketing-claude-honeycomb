@@ -92,9 +92,15 @@ Surface that prominently in Slack — it's the main "act today" signal.
 }
 ```
 
-## Output — Slack (only non-healthy ads)
+## Output — Interactive (terminal)
 
-Plain text, sectioned by severity (FATIGUED first, then EARLY FATIGUE, then SATURATED, then UNDERPERFORMING). Skip `healthy` entirely. Per ad include name, campaign, the metrics in the format shown below, days active, and a short headline preview if available. If `baseline_type == "estimated"` for a fatigued ad, append `(estimated baseline)` after the metrics line. If a `budget_conflict` exists, render it as a separate warning line under that ad.
+When invoked from an interactive Claude Code session, **always print a human-readable summary to terminal** — don't just dump raw JSON. Same format as the Slack template below, just printed to stdout. Always show non-healthy ads grouped by severity. End with a one-liner confirming the Sheet write outcome (e.g., "Sheet log: N rows written to fatigue_log") and the per-classification counts from `stats.by_classification`.
+
+## Output — Slack (only non-healthy ads, only if webhook is set)
+
+**Skip Slack posting entirely if `SLACK_WEBHOOK_URL` env var is unset or empty** — print to terminal only (see Interactive section above). Slack is opt-in via the secret; the default for interactive runs is terminal-only.
+
+When the webhook IS set: plain text, sectioned by severity (FATIGUED first, then EARLY FATIGUE, then SATURATED, then UNDERPERFORMING). Skip `healthy` entirely. Per ad include name, campaign, the metrics in the format shown below, days active, and a short headline preview if available. If `baseline_type == "estimated"` for a fatigued ad, append `(estimated baseline)` after the metrics line. If a `budget_conflict` exists, render it as a separate warning line under that ad. POST to `$SLACK_WEBHOOK_URL` via curl.
 
 ```
 🔥 Fatigue Monitor — 2026-05-03

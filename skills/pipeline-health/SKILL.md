@@ -51,9 +51,11 @@ The script's stdout JSON looks like:
 - **Any WARN or FAIL:** compose a Slack message that lists ONLY the non-PASS checks. Use the `detail` string verbatim. Post via the Slack webhook.
 - **Sheet log:** the script handles writing to `pipeline_health` automatically. Don't re-POST. If `sheet_write.posted` is `false`, that's itself a problem to flag.
 
-## Output — Slack (only on WARN/FAIL)
+## Output — Slack (only on WARN/FAIL, only if webhook is set)
 
-Plain text. No markdown headers. Order: FAIL first, then WARN. Example:
+**Skip Slack posting entirely if `SLACK_WEBHOOK_URL` env var is unset or empty** — print the summary to terminal only. This is the default in interactive mode; Slack is opt-in via the secret.
+
+When the webhook IS set and there are non-PASS checks: plain text, no markdown headers, FAIL first then WARN, posted to `$SLACK_WEBHOOK_URL` via curl. Example:
 
 ```
 ⚠️ Pipeline Health — 2026-05-03
@@ -68,9 +70,22 @@ If a token regeneration deadline is mentioned, include the calendar date so it's
 
 Handled by the script. Each run POSTs one row per check to `?action=health-write` (creates the `pipeline_health` tab on first call). Header row: `date, check, status, detail, recorded_at`. Don't issue your own POST — read `sheet_write.posted` in the script's JSON to confirm it succeeded.
 
-## Output — Interactive
+## Output — Interactive (terminal)
 
-Print the full JSON to terminal, then a one-line summary like `4 checks: 3 PASS, 1 WARN`. Show all checks regardless of status — Tyler may want to see PASS detail.
+When invoked from an interactive Claude Code session, **always print a human-readable summary to terminal** — don't just dump raw JSON. Format:
+
+```
+Pipeline Health — 2026-05-03
+
+[PASS] data_freshness — latest data: 2026-05-02, expected: 2026-05-02
+[PASS] meta_token — valid, expires in 47 days
+[PASS] ic_conversion_event — custom conversion 2330338620810873 ('Investment Crowdfunding Prequal Decision') exists
+[WARN] dashboard_endpoint — valid JSON in 8.2s (slow cold start)
+
+Sheet log: 4 rows written to pipeline_health
+```
+
+Always show all four checks (including PASS) so Tyler sees the full state. Then one trailing line confirming the Sheet write outcome.
 
 ## Constraints
 
