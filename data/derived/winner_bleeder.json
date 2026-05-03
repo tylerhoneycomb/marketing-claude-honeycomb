@@ -1,5 +1,376 @@
 {
-  "computed_at": "2026-05-02T21:08:13.384330+00:00",
+  "computed_at": "2026-05-03T16:11:26.380976+00:00",
   "window_days": 7,
-  "rows": []
+  "rows": [
+    {
+      "adset_id": "120240869767790631",
+      "ad_id": "120240869767780631",
+      "ad_name": "Industry Specific - Breweries - Q4 2025",
+      "spend": 2.0,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120241323300840631",
+      "ad_id": "120241323300850631",
+      "ad_name": "Industry Specific - Bakery",
+      "spend": 32.22,
+      "spend_share": 1.0,
+      "ctr": 0.0172,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120241324161100631",
+      "ad_id": "120241324161090631",
+      "ad_name": "Industry Specific - Breweries - Q4 2025",
+      "spend": 339.5,
+      "spend_share": 1.0,
+      "ctr": 0.0166,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120241421568920631",
+      "ad_id": "120241421568930631",
+      "ad_name": "Distiller ads - Q4 2025",
+      "spend": 438.19,
+      "spend_share": 1.0,
+      "ctr": 0.0235,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120241608377990631",
+      "ad_id": "120241608378000631",
+      "ad_name": "Sustainable Main Street - Q1 2026",
+      "spend": 497.09,
+      "spend_share": 1.0,
+      "ctr": 0.0343,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120242871665670631",
+      "ad_id": "120242871665660631",
+      "ad_name": "Farms - Q1 2026",
+      "spend": 339.66,
+      "spend_share": 1.0,
+      "ctr": 0.0222,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120242950044520631",
+      "ad_id": "120242950044510631",
+      "ad_name": "Industry Specific - Creameries - Q1 2026",
+      "spend": 123.98,
+      "spend_share": 1.0,
+      "ctr": 0.0283,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120242950140650631",
+      "ad_id": "120242950140670631",
+      "ad_name": "Industry Specific - BBQ - Q1 2026",
+      "spend": 468.23,
+      "spend_share": 1.0,
+      "ctr": 0.0261,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120243070857060631",
+      "ad_id": "120243070857050631",
+      "ad_name": "Industry Specific - BBQ - Q1 2026",
+      "spend": 397.46,
+      "spend_share": 1.0,
+      "ctr": 0.0223,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120243109874850631",
+      "ad_id": "120243109874840631",
+      "ad_name": "Delis / butchers - Q1 2026",
+      "spend": 0.69,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120243111129230631",
+      "ad_id": "120243111129220631",
+      "ad_name": "Delis / butchers - Q1 2026",
+      "spend": 1402.24,
+      "spend_share": 1.0,
+      "ctr": 0.0333,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120244094020700631",
+      "ad_id": "120244094020710631",
+      "ad_name": "Industry Specific - Fitness / wellness - Q1 2026",
+      "spend": 449.68,
+      "spend_share": 1.0,
+      "ctr": 0.0391,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120244137988970631",
+      "ad_id": "120244137988990631",
+      "ad_name": "Juice / smoothie - Q1 2026",
+      "spend": 1077.42,
+      "spend_share": 1.0,
+      "ctr": 0.0266,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120244138133050631",
+      "ad_id": "120244138133060631",
+      "ad_name": "Juice / smoothie - Q1 2026",
+      "spend": 3.4,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120244509567530631",
+      "ad_id": "120244509567540631",
+      "ad_name": "Industry Specific - Bakery",
+      "spend": 33.15,
+      "spend_share": 1.0,
+      "ctr": 0.0125,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120244510347050631",
+      "ad_id": "120244510347060631",
+      "ad_name": "Industry Specific - Bakery",
+      "spend": 274.56,
+      "spend_share": 1.0,
+      "ctr": 0.0233,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120244510368850631",
+      "ad_id": "120244510368860631",
+      "ad_name": "Industry Specific - Bakery",
+      "spend": 266.43,
+      "spend_share": 1.0,
+      "ctr": 0.0194,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893421060631",
+      "ad_id": "120245893421410631",
+      "ad_name": "BR-IndependentCoffeeShops-Cohort3",
+      "spend": 65.41,
+      "spend_share": 1.0,
+      "ctr": 0.0185,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893421370631",
+      "ad_id": "120245893421480631",
+      "ad_name": "BR-SportsBars-Cohort1",
+      "spend": 48.4,
+      "spend_share": 1.0,
+      "ctr": 0.01,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893421070631",
+      "ad_id": "120245893421570631",
+      "ad_name": "BR-IndependentCoffeeShops-Cohort5",
+      "spend": 418.59,
+      "spend_share": 1.0,
+      "ctr": 0.0272,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431240631",
+      "ad_id": "120245893431560631",
+      "ad_name": "BR-Distilleries-Cohort9",
+      "spend": 25.8,
+      "spend_share": 1.0,
+      "ctr": 0.0122,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893431210631",
+      "ad_id": "120245893431650631",
+      "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
+      "spend": 52.45,
+      "spend_share": 1.0,
+      "ctr": 0.0197,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431260631",
+      "ad_id": "120245893431690631",
+      "ad_name": "BR-Distilleries-Cohort2",
+      "spend": 478.11,
+      "spend_share": 1.0,
+      "ctr": 0.0256,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431340631",
+      "ad_id": "120245893431780631",
+      "ad_name": "BR-CocktailWineBars-Cohort7",
+      "spend": 22.49,
+      "spend_share": 1.0,
+      "ctr": 0.0089,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893431320631",
+      "ad_id": "120245893431790631",
+      "ad_name": "BR-CocktailWineBars-Cohort4",
+      "spend": 22.58,
+      "spend_share": 1.0,
+      "ctr": 0.0293,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893431360631",
+      "ad_id": "120245893431820631",
+      "ad_name": "BR-CocktailWineBars-Cohort8",
+      "spend": 23.56,
+      "spend_share": 1.0,
+      "ctr": 0.0199,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893431410631",
+      "ad_id": "120245893431860631",
+      "ad_name": "BR-CocktailWineBars-Cohort2",
+      "spend": 334.9,
+      "spend_share": 1.0,
+      "ctr": 0.0259,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431470631",
+      "ad_id": "120245893431950631",
+      "ad_name": "BR-CoffeeRoasters-Cohort6",
+      "spend": 77.99,
+      "spend_share": 1.0,
+      "ctr": 0.0192,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431540631",
+      "ad_id": "120245893431960631",
+      "ad_name": "BR-CocktailWineBars-Cohort11",
+      "spend": 171.04,
+      "spend_share": 1.0,
+      "ctr": 0.0229,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120246482969620631",
+      "ad_id": "120246482969630631",
+      "ad_name": "Creameries - DC - 2026-04-18 - Community",
+      "spend": 8.8,
+      "spend_share": 1.0,
+      "ctr": 0.0199,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120246482969610631",
+      "ad_id": "120246482969640631",
+      "ad_name": "Creameries - DC - 2026-04-18 - Pain",
+      "spend": 82.0,
+      "spend_share": 1.0,
+      "ctr": 0.0196,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120246516495090631",
+      "ad_id": "120246516495080631",
+      "ad_name": "Fitness Wellness - DC - 2026-04-18 - Outcome",
+      "spend": 0.28,
+      "spend_share": 1.0,
+      "ctr": 1.0,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120246516495110631",
+      "ad_id": "120246516495100631",
+      "ad_name": "Fitness Wellness - DC - 2026-04-18 - Community",
+      "spend": 592.83,
+      "spend_share": 1.0,
+      "ctr": 0.0361,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120241605050910631",
+      "ad_id": "120241605050890631",
+      "ad_name": "Industry Specific - Creameries - Q1 2026",
+      "spend": 0.03,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120241421715210631",
+      "ad_id": "120241421715200631",
+      "ad_name": "Distiller ads - Q4 2025",
+      "spend": 1.22,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120244135874610631",
+      "ad_id": "120244135874620631",
+      "ad_name": "Industry Specific - Fitness / wellness - Q1 2026",
+      "spend": 0.25,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120241608386670631",
+      "ad_id": "120241608386660631",
+      "ad_name": "Sustainable Main Street - Q1 2026",
+      "spend": 0.06,
+      "spend_share": 1.0,
+      "ctr": 1.0,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    }
+  ]
 }
