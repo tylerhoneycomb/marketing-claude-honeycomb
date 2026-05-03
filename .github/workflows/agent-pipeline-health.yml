@@ -16,6 +16,9 @@ permissions:
   #    `id-token: write` to your workflow permissions?"
   # See claude.yml for the same pattern.
   id-token: write
+  # Allows the "Post status to tracking issue" step to comment on
+  # issue #48 via gh CLI + ${{ github.token }}.
+  issues: write
 
 concurrency:
   group: agent-pipeline-health
@@ -92,13 +95,24 @@ jobs:
               broken even if the four checks ran.
 
             Constraints:
-            - Read-only on the repo. Do not modify any files. Do not
+            - Read-only on the repo. Do not modify any files (except
+              writing /tmp/agent_status.txt as noted below). Do not
               create branches or push commits.
             - Do not call the Meta API directly. The skill script handles
               that.
             - If the script exits non-zero, surface the stderr message
               and stop — that's a real problem the script's own error
               path already framed correctly.
+
+            Status reporter:
+            - Before exiting, write a single-line status to
+              /tmp/agent_status.txt summarizing the result, e.g.:
+                "PASS 4/0/0"  (data_freshness/meta_token/IC/dashboard counts)
+                "WARN 3/1/0  meta_token expires in 12 days"
+                "FAIL 2/0/2  dashboard_endpoint, data_freshness"
+              Format: <overall> <pass>/<warn>/<fail>  <optional concise reason>
+              The workflow's status reporter step will pick this up and
+              post it to the agent-loop tracking issue.
 
       # Belt-and-suspenders: dump the action's saved transcript even if
       # show_full_output / display_report don't render it cleanly. Runs
@@ -114,3 +128,19 @@ jobs:
             echo "No claude-execution-output.json at $LOG"
             ls -la /home/runner/work/_temp/ || true
           fi
+
+      # Post status to the agent-loop tracking issue (#48).
+      - name: Post status to tracking issue
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS: ${{ job.status }}
+        run: |
+          DETAIL="$(cat /tmp/agent_status.txt 2>/dev/null || echo '(no status file)')"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "**pipeline-health** — ${STATUS}"
+            echo "$DETAIL"
+            echo "[run]($RUN_URL)"
+          } | gh issue comment 48 --repo "${{ github.repository }}" --body-file - || true

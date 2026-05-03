@@ -208,6 +208,32 @@ If both paths fire simultaneously (rare — Apps Script triggers always
 check first), the workflow's `concurrency:` group queues the second
 run rather than racing.
 
+### Agent loop status tracking — issue #48
+
+Every autonomous workflow run (`daily-data`, `agent-pipeline-health`,
+`agent-daily-check`, `agent-fatigue-monitor`) posts a status comment to
+[issue #48](https://github.com/tylerhoneycomb/marketing-claude-honeycomb/issues/48)
+on completion (`if: always()` so failures report too,
+`continue-on-error: true` so a missing/closed issue can't break the
+run). Each comment includes:
+
+- Workflow name + run conclusion (`success` / `failure`)
+- A one-line skill-specific summary (e.g.
+  `PASS 4/0/0` for pipeline-health, or
+  `evaluated=12 fatigued=2 conflicts=1` for fatigue-monitor)
+- Direct link to the workflow run
+
+Agent workflow prompts instruct Claude to write the one-liner summary
+to `/tmp/agent_status.txt` before exiting; the status step picks it up.
+For `daily-data.yml`, the status step reads counts directly from the
+just-committed `_manifest.json`.
+
+Reading the issue comments is the fastest way to verify the agent loop
+is firing correctly — sort by oldest-first for a chronological log.
+Close + reopen a fresh issue when the comment volume gets noisy
+(close the old one, create a new one, update the issue number in all
+four workflow YAML files).
+
 ### Meta API conventions
 
 - API version: `v21.0` (matches `apps-script/Code.js:25`)
