@@ -90,6 +90,10 @@ Each skill that needs scheduled runs gets a workflow file under `.github/workflo
 
 All three use the same template baked from the pipeline-health iteration cycle: `id-token: write` permission for OIDC auth, `--permission-mode bypassPermissions` so Claude can run Bash in CI, `show_full_output: true` + `display_report: true` so Claude's output surfaces in the workflow log, and an `if: always()` step that dumps `claude-execution-output.json` for diagnostics if anything fails.
 
+### Cron fallback via Apps Script (added 2026-05-03)
+
+GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped, and **silently disabled after 60 days of repo inactivity**. To make scheduled runs more reliable, Apps Script time-based triggers (running on Google's cron infrastructure) act as a fallback. Three new functions in `apps-script/Code.js` (`triggerAgent*IfNeeded`) fire ~3 hours after the GitHub cron is supposed to run, check the GitHub API for a recent successful or in-progress run, and dispatch via `workflow_dispatch` only if none exists. If GitHub fired on time, Apps Script skips. If GitHub missed, the fallback picks it up. After running `createAllTriggers()` from the Apps Script editor, the system has two independent schedulers covering each workflow.
+
 ---
 
 ## What's working well
