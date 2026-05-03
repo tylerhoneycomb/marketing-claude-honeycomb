@@ -41,6 +41,7 @@ jobs:
         run: pip install requests==2.32.3
 
       - name: Run pipeline-health skill via Claude Code
+        id: claude
         uses: anthropics/claude-code-action@v1
         env:
           # Same secret the daily-data workflow uses. The skill script
@@ -51,6 +52,12 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # Surface Claude's full output in the workflow log. Without
+          # these, the action runs Claude silently and only saves the
+          # transcript to /tmp — making failures impossible to diagnose
+          # from the run page.
+          show_full_output: "true"
+          display_report: "true"
           prompt: |
             Run the pipeline-health skill exactly as documented in
             skills/pipeline-health/SKILL.md.
@@ -86,3 +93,18 @@ jobs:
             - If the script exits non-zero, surface the stderr message
               and stop — that's a real problem the script's own error
               path already framed correctly.
+
+      # Belt-and-suspenders: dump the action's saved transcript even if
+      # show_full_output / display_report don't render it cleanly. Runs
+      # on success or failure so we can diagnose either way.
+      - name: Dump Claude execution log
+        if: always()
+        run: |
+          LOG=/home/runner/work/_temp/claude-execution-output.json
+          if [ -f "$LOG" ]; then
+            echo "=== claude-execution-output.json ==="
+            cat "$LOG"
+          else
+            echo "No claude-execution-output.json at $LOG"
+            ls -la /home/runner/work/_temp/ || true
+          fi
