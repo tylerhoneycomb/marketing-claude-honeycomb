@@ -1,0 +1,99 @@
+name: Daily Ad Data Collection
+
+# This workflow is currently MANUAL-ONLY (workflow_dispatch).
+# Once we've verified the snapshot output is correct, uncomment the
+# `schedule` block below to enable the daily 8 AM ET (12:00 UTC) run.
+on:
+  workflow_dispatch:
+    inputs:
+      snapshot_date:
+        description: 'Single-day snapshot date YYYY-MM-DD (blank = yesterday UTC). Ignored if start_date+end_date are set.'
+        required: false
+        default: ''
+      start_date:
+        description: 'Backfill range START YYYY-MM-DD (inclusive). Pair with end_date.'
+        required: false
+        default: ''
+      end_date:
+        description: 'Backfill range END YYYY-MM-DD (inclusive). Pair with start_date.'
+        required: false
+        default: ''
+      sleep_between_calls:
+        description: 'Min seconds between Meta API calls (rate limiting).'
+        required: false
+        default: '1.0'
+  # schedule:
+  #   - cron: '0 12 * * *'  # 8 AM ET (UTC-4) / 7 AM ET during DST
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-data
+  cancel-in-progress: false
+
+jobs:
+  fetch-and-compute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests==2.32.3
+
+      - name: Fetch ad-level data from Meta
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          SNAPSHOT_DATE: ${{ github.event.inputs.snapshot_date }}
+          START_DATE: ${{ github.event.inputs.start_date }}
+          END_DATE: ${{ github.event.inputs.end_date }}
+          SLEEP_BETWEEN: ${{ github.event.inputs.sleep_between_calls }}
+        run: |
+          set -e
+          SLEEP_ARG="--sleep ${SLEEP_BETWEEN:-1.0}"
+          if [ -n "$START_DATE" ] && [ -n "$END_DATE" ]; then
+            echo "Backfill mode: $START_DATE → $END_DATE"
+            python scripts/fetch_ad_data.py --start "$START_DATE" --end "$END_DATE" $SLEEP_ARG
+          else
+            python scripts/fetch_ad_data.py $SLEEP_ARG
+          fi
+
+      - name: Compute derived signals
+        run: python scripts/compute_signals.py
+
+      - name: Commit snapshots
+        env:
+          SNAPSHOT_DATE: ${{ github.event.inputs.snapshot_date }}
+          START_DATE: ${{ github.event.inputs.start_date }}
+          END_DATE: ${{ github.event.inputs.end_date }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/snapshots data/derived data/creatives
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+            exit 0
+          fi
+          if [ -n "$START_DATE" ] && [ -n "$END_DATE" ]; then
+            COMMIT_MSG="data: ad-level backfill ${START_DATE} → ${END_DATE}"
+          else
+            DATE_LABEL="${SNAPSHOT_DATE:-$(date -u -d 'yesterday' +%Y-%m-%d)}"
+            COMMIT_MSG="data: ad-level snapshot ${DATE_LABEL}"
+          fi
+          git commit -m "$COMMIT_MSG"
+          for i in 1 2 3 4; do
+            if git push; then
+              exit 0
+            fi
+            sleep $((2 ** i))
+          done
+          echo "git push failed after 4 attempts"
+          exit 1

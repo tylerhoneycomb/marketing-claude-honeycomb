@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-04-27_
+_Last updated: 2026-05-03_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -10,7 +10,14 @@ This document is the engineering reference for the `marketing-claude-honeycomb` 
 
 ## 1. Architecture Overview
 
-The system has three layers: a data/compute layer (Google Apps Script + Google Sheets), a presentation layer (a single-file React dashboard), and integration surfaces (Meta, HubSpot, Slack, Anthropic, GitHub). Google Sheets is the system of record — no separate database.
+The system now has **two parallel data pipelines** plus a presentation layer and an agent layer:
+
+1. **Campaign-level pipeline** (Apps Script + Google Sheets) — the existing system. Source of truth for the dashboard, weekly rollup, narrative generator, and budget approval flow.
+2. **Ad-level pipeline** (Python + GitHub Actions, new 2026-05-02) — a separate, additive pipeline that pulls ad-set + ad-level insights and creative metadata from Meta and writes JSON snapshots into the repo. Powers the agent skills.
+3. **Presentation layer** — a single-file React dashboard.
+4. **Agent layer** — Claude Code reads `skills/<name>/SKILL.md` files at session start, then operates against snapshot files under `data/`.
+
+Google Sheets is the system of record for the campaign-level pipeline. The repo itself (Git history of `data/snapshots/`) is the system of record for the ad-level pipeline.
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
@@ -36,14 +43,36 @@ The system has three layers: a data/compute layer (Google Apps Script + Google S
 │  Dashboard (webapp/index.html, single-file React SPA)          │
 │  Hosted on GitHub Pages. Talks only to the Apps Script /exec.  │
 └───────────────────────────────────────────────────────────────┘
+
+— — — Ad-level pipeline (parallel, agent-facing) — — —
+
+┌───────────────────────────────────────────────────────────────┐
+│  GitHub Actions: daily-data.yml (workflow_dispatch — manual)   │
+│   1. scripts/fetch_ad_data.py   →  data/snapshots/<date>/      │
+│   2. scripts/compute_signals.py →  data/derived/               │
+│   3. git commit + push                                          │
+└───────────────────────────────────────────────────────────────┘
+                             ↑                       ↓
+                ┌──────────────────┐   ┌────────────────────────┐
+                │  Meta Graph API  │   │  Repo (data/ as DB)    │
+                └──────────────────┘   │  snapshots/, derived/, │
+                                       │  creatives/, config/   │
+                                       └────────────────────────┘
+                                                   ↓
+                                       ┌────────────────────────┐
+                                       │ Claude Code agent loop │
+                                       │  reads skills/*.md +   │
+                                       │  data/* on session     │
+                                       └────────────────────────┘
 ```
 
 **Key properties:**
 
 - **No build step.** The dashboard loads React, Recharts, Tailwind, and Babel from CDNs and uses in-browser JSX transpilation. There's no `package.json` or `npm install`.
-- **No separate database.** All state lives in the Google Sheet or in Apps Script's `PropertiesService` (Script Properties).
+- **Two systems of record.** The Google Sheet stores campaign-level data; the Git repo's `data/` directory stores ad-level data. The ad-level pipeline does not write to the Sheet, and the campaign-level pipeline does not write to `data/`.
 - **Deployments are git-native.** Merging to `main` triggers GitHub Actions that push Apps Script via `clasp` and publish the dashboard to GitHub Pages. Nobody edits the Apps Script web editor directly.
 - **Two execution contexts for the Apps Script layer:** (1) time-based triggers run on Google's schedule, (2) HTTP GET/POST to the published Web App `/exec` URL drives the dashboard and Slack approval links.
+- **Ad-level pipeline is workflow_dispatch-only at present.** Until the first few snapshot outputs are verified, `.github/workflows/daily-data.yml` runs only when manually invoked. The cron block is commented out in the workflow file.
 
 ## 2. Repository Structure
 
@@ -59,9 +88,34 @@ marketing-claude-honeycomb/
 ├── docs/
 │   ├── STATE_REPORT.md      # Non-technical project state
 │   └── TECHNICAL_REFERENCE.md  # This document
+├── scripts/                 # NEW (2026-05-02) Ad-level Python pipeline
+│   ├── fetch_ad_data.py     # Daily Meta ad-set + ad insights pull
+│   ├── compute_signals.py   # Derived fatigue / winner-bleeder signals
+│   └── run_daily.sh         # Orchestrator (fetch → compute)
+├── skills/                  # NEW (2026-05-02) Agent skill definitions
+│   ├── daily-check/SKILL.md
+│   ├── fatigue-monitor/SKILL.md
+│   ├── budget-optimizer/SKILL.md
+│   ├── ad-copy-generator/SKILL.md
+│   └── pipeline-health/SKILL.md
+├── data/                    # NEW (2026-05-02) Agent data repository
+│   ├── config/benchmarks.json     # All thresholds (single source)
+│   ├── snapshots/<YYYY-MM-DD>/    # Daily JSON snapshots from Meta
+│   │   ├── campaigns.json
+│   │   ├── adsets.json
+│   │   ├── ads.json
+│   │   ├── adset_insights.json
+│   │   ├── ad_insights.json
+│   │   └── _manifest.json
+│   ├── creatives/creatives.json   # Accumulating creative metadata
+│   └── derived/                   # Computed signals (regenerable)
+│       ├── fatigue_signals.json
+│       ├── winner_bleeder.json
+│       └── summary.json
 ├── .github/workflows/
 │   ├── deploy-apps-script.yml  # Push Code.js via clasp on merge to main
 │   ├── deploy-webapp.yml       # Publish dashboard to GitHub Pages on merge to main
+│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (manual-only)
 │   └── claude.yml              # @claude mentions in issues/PRs
 ├── ad-copy/          # (empty placeholder) Meta ad copy by vertical
 ├── workflows/        # (empty placeholder) Automation scripts
@@ -594,6 +648,11 @@ All return `ContentService.createTextOutput(JSON.stringify(payload))` with MIME 
 | `propose_spend_target` | GET | `target`, `tolerance` | Stages change, sends Slack approval |
 | `approve_target` / `reject_target` | GET | `token` | HTML confirmation page |
 | `confirm_approve_target` / `confirm_reject_target` | GET | `token` | Applies decision |
+| `rolling-latest-date` | GET | — | `{latest_date, total_rows}` from `rolling_data`. Used by `pipeline-health` skill. |
+| `health-write` | POST or GET | JSON body `{rows:[…]}` or `rows=<json>` or `check`/`status`/`detail` | Appends to `pipeline_health` tab (auto-created). Header row: `date, check, status, detail, recorded_at`. |
+| `daily-check-write` | POST or GET | JSON body `{row:{...}}` or query params (`date`, `pacing_status`, `total_spend`, `total_icps`, `portfolio_cpicp`, `fatigue_flag_count`) | Appends one summary row to `daily_check_log` tab (auto-created). Header row: `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at`. |
+| `budget-queue-read` | GET | `campaign_id` (optional) | Returns `{pending: [...], count: N}` from `budget_queue`. Each row: `token, created_at, analysis_date, execution_scheduled, campaign_id, campaign_name, current_budget_cents, proposed_budget_cents, change_cents, change_pct, direction (increase/decrease/flat), signal_reasons, status`. Used by `fatigue-monitor` to flag conflicts. |
+| `fatigue-write` | POST or GET | JSON body `{rows:[...]}` or `rows=<json>` | Appends per-ad rows to `fatigue_log` tab (auto-created). Header row: `date, ad_id, ad_name, campaign, classification, ctr_baseline, ctr_current, ctr_decline_pct, frequency, cpc_baseline, cpc_current, days_active, baseline_type, budget_conflict, recorded_at`. |
 
 ### 9.3 `buildDashboardContext_()` (Code.js:3836)
 
@@ -736,6 +795,10 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 | No circuit breaker on API failures | Daily pipeline | Extended outages produce noisy logs but no alerting escalation |
 | Reference copy `webapp/apps-script-api.gs` drift | Manual maintenance | Can diverge silently from Code.js |
 | Long-lived secrets in plaintext Script Properties | Apps Script | No rotation schedule or expiration warning |
+| Meta token stored in two places | Apps Script Properties + GitHub Secrets | After ad-level pipeline added 2026-05-02, rotation must update both `META_ACCESS_TOKEN` locations |
+| IC custom conversion ID hardcoded in `benchmarks.json` | `data/config/benchmarks.json` | Ad-level pipeline cannot read `campaign_mapping` (lives in Sheets) so it pins to a single `custom_conversion_id`. Will miss new IC conversions added later. |
+| Ad-level fatigue logic duplicates 14-day-window concept from Apps Script budget | `scripts/compute_signals.py` vs `Code.js:computeBudgetSignals_` | Two implementations of "rolling-window-based health signal" can drift |
+| `daily-data.yml` cron disabled | `.github/workflows/daily-data.yml` | Manual-only until first runs verified; uncomment cron block once stable |
 
 ### 10.5 Testing & verification
 
@@ -753,4 +816,198 @@ To verify end-to-end after a change:
 3. For data pipeline changes: run `exportAuditSnapshot()` and have Claude Code audit the resulting JSON files.
 4. For dashboard changes: open the GitHub Pages URL and exercise the affected feature.
 5. For budget automation: run `runBudgetAnalysis()` manually, inspect Slack message and `budget_queue` sheet, reject the proposal to avoid real Meta writes.
+6. For ad-level pipeline changes: run `python3 scripts/fetch_ad_data.py --dry-run` first (no API calls), then trigger the `daily-data.yml` workflow via `workflow_dispatch` and inspect the committed snapshot.
 
+---
+
+## 11. Ad-Level Agent Pipeline (added 2026-05-02)
+
+A parallel, additive pipeline that gives Claude Code per-ad-level data and pre-computed signals. Independent of the Apps Script pipeline. Runs as a GitHub Action; commits JSON snapshots to the repo.
+
+### 11.1 Data flow
+
+```
+GitHub Action (daily-data.yml)
+  └─ scripts/run_daily.sh
+       ├─ fetch_ad_data.py      # Meta Graph API → data/snapshots/<date>/
+       └─ compute_signals.py    # snapshots → data/derived/
+  └─ git commit + push
+```
+
+### 11.2 Snapshot schema
+
+Each daily directory `data/snapshots/<YYYY-MM-DD>/` contains:
+
+| File | Schema (top-level array of objects unless noted) | Source |
+|---|---|---|
+| `campaigns.json` | `{campaign_id, campaign_name}` | Derived from union of insights rows |
+| `adsets.json` | `{adset_id, adset_name, campaign_id, daily_budget_cents, lifetime_budget_cents, optimization_goal, effective_status, learning_stage_info, issues_info}` | Meta `/act_{id}/adsets` |
+| `ads.json` | `{ad_id, ad_name, adset_id, campaign_id, effective_status, creative_id}` | Meta `/act_{id}/ads` |
+| `adset_insights.json` | Per-(date, adset) row with `impressions, clicks, spend, reach, frequency, ctr, cpc, cpm, conversions, ic_conversions` | Meta `/insights?level=adset` |
+| `ad_insights.json` | Per-(date, ad) row with the same metric set | Meta `/insights?level=ad` |
+| `_manifest.json` | `{snapshot_date, exported_at, counts: {...}, files: [...]}` | Written by `fetch_ad_data.py` |
+
+`data/creatives/creatives.json` is a single file accreted across runs:
+
+```json
+{
+  "updated_at": "<iso>",
+  "count": <n>,
+  "creatives": [
+    {"creative_id", "name", "thumbnail_url", "image_hash",
+     "title", "body", "link_url", "call_to_action_type",
+     "first_seen_date", "last_seen_date"}
+  ]
+}
+```
+
+### 11.3 Derived signals (`data/derived/`)
+
+Computed by `scripts/compute_signals.py` from the most recent N snapshots (default: 7 days, configured via `snapshot_retention.rolling_window_days` in `benchmarks.json`).
+
+**`fatigue_signals.json`** — per-ad fatigue evaluation:
+
+```
+{
+  "computed_at": "<iso>", "window_days": 7,
+  "rows": [
+    {
+      "ad_id", "ad_name", "adset_id", "adset_name",
+      "campaign_id", "campaign_name", "creative_id", "creative_thumbnail_url",
+      "days_active", "total_impressions", "total_clicks", "total_spend",
+      "ctr_7d_rolling", "frequency_7d", "ctr_slope", "ctr_decline_pct",
+      "first_date", "last_date",
+      "flags": ["ctr_declining" | "frequency_warning" | "frequency_critical"
+                | "below_min_days_active" | "below_min_impressions"
+                | "adset_in_learning"],
+      "severity": "critical" | "warning" | "ok",
+      "actionable": true | false
+    }
+  ]
+}
+```
+
+Severity rules:
+- `critical` — `frequency_critical` OR (`ctr_declining` AND `frequency_warning`)
+- `warning` — single fatigue flag
+- `ok` — no flags or filtered by gates
+- `actionable: false` is always set if days_active < 3 or impressions < 1,000 or ad set in learning phase
+
+**`winner_bleeder.json`** — per-ad ranking inside its ad set:
+
+```
+{
+  "computed_at", "window_days",
+  "rows": [
+    {"adset_id", "ad_id", "ad_name", "spend", "spend_share",
+     "ctr", "ctr_vs_adset_avg",
+     "label": "winner" | "bleeder" | null}
+  ]
+}
+```
+
+Label rules (gated on impressions ≥ `min_impressions_for_signal`):
+- `winner` — `spend_share ≥ winner_spend_share_min` AND `ctr_vs_adset_avg ≥ 1.0`
+- `bleeder` — `ctr_vs_adset_avg ≤ bleeder_ctr_vs_adset_avg`
+
+**`summary.json`** — top-line counts for the daily-check skill:
+
+```
+{
+  "computed_at", "window_days", "snapshot_dates",
+  "ad_count", "adset_count", "campaign_count",
+  "fatigue_severity_counts": {"critical", "warning", "ok"},
+  "actionable_critical": [ad_id, …],
+  "actionable_warning": [ad_id, …],
+  "winners": [ad_id, …], "bleeders": [ad_id, …],
+  "learning_phase_adsets_skipped": <n>
+}
+```
+
+### 11.4 Configuration
+
+All thresholds live in `data/config/benchmarks.json`. Scripts and skills MUST read from this file rather than hardcoding constants.
+
+Top-level keys (current schema, 2026-05-03):
+- `account.{id, name, meta_api_version, timezone}` — Meta account + Graph API version + display timezone
+- `exec_endpoint` — Apps Script `/exec` URL skills hit for Sheet read/write
+- `slack_webhook_secret_name` — name of the env var skills look up for Slack posting
+- `ic_tracking.{custom_conversion_id, event_name, pattern}` — IC tracking constants. The action type is reconstructed in code as `offsite_conversion.custom.<custom_conversion_id>`.
+- `pacing.{weekly_spend_target_dollars, pacing_tolerance_pct}` — used by daily-check skill
+- `fatigue.*` — CTR decline thresholds (early/fatigued), frequency warnings, CPC inflation, baseline window, min impressions/days active, creative age warning
+- `daily_check.*` — winner/bleeder definitions, early-fatigue thresholds for the daily briefing
+- `pipeline_health.{token_warning_days, endpoint_timeout_seconds, data_freshness_max_gap_weekdays}` — used by pipeline-health skill
+- `campaign_defaults.type` — `prospecting` vs `retargeting` (affects fatigue frequency thresholds)
+
+### 11.5 IC conversion extraction
+
+`fetch_ad_data.py:extract_conversions` mirrors `collectMetaRows_` in `apps-script/Code.js` (line ~1135-1188): for each `actions[]` array, take the first matching lead action type as `conversions`, sum any matches against `offsite_conversion.custom.<ic_tracking.custom_conversion_id>` as `ic_conversions`. This keeps daily ad-level totals reconcilable with the campaign-level `rolling_data` totals.
+
+**Limitation:** Because the ad-level pipeline cannot read `campaign_mapping` (which lives in the Google Sheet), it cannot dynamically discover new IC custom conversion IDs. If marketing adds a second IC conversion in Meta, `benchmarks.json` must be updated by hand. See tech-debt index §10.4.
+
+### 11.6 Skills (`/skills/`)
+
+Skills are self-contained packages: a `SKILL.md` (with YAML frontmatter — `name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Scripts emit structured JSON; the skill interprets the JSON and chooses what to send to Slack and what to write to the Sheet.
+
+| Skill | Status | Purpose |
+|---|---|---|
+| `pipeline-health` | shipped 2026-05-03 | Four checks: data freshness, Meta token, IC conversion event, dashboard endpoint. Slack-silent on PASS. |
+| `daily-check` | shipped 2026-05-03 | Morning briefing: pacing vs weekly target, portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
+| `fatigue-monitor` | shipped 2026-05-03 | Three-script pipeline: 14-day fetch, baseline computation (Path A in-range / B historical-batched / C estimated), classification across 5 severity classes with budget-queue conflict cross-reference. Writes to `fatigue_log`. |
+
+The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earlier versions of the three above) were built against a less-refined spec and are being replaced session-by-session. `compute_signals.py`'s `data/derived/` outputs are now an audit trail rather than the canonical signal source — the skills compute their own canonical versions.
+
+### 11.7 Workflow (`.github/workflows/daily-data.yml`)
+
+- **Trigger:** `workflow_dispatch` only (current). The cron block (`0 12 * * *` UTC = 8 AM ET) is staged but commented out until the first runs are verified clean.
+- **Steps:** checkout → setup Python 3.12 → `pip install requests==2.32.3` → `python scripts/fetch_ad_data.py` → `python scripts/compute_signals.py` → commit `data/` and push to the current branch.
+- **Secrets:** `META_ACCESS_TOKEN` (GitHub Secret on the repo, separate from the Apps Script Script Property of the same name). `META_AD_ACCOUNT_ID` is also read from env if set, falling back to `account.id` in `benchmarks.json`.
+- **Permissions:** `contents: write` (needed to push the daily commit).
+- **Concurrency:** group `daily-data`, no cancel — back-to-back runs queue rather than racing on the same files.
+- **Inputs:**
+  - `snapshot_date` — single-day mode (default: yesterday UTC).
+  - `start_date` + `end_date` — backfill range mode (inclusive, idempotent — skips dates with an existing `_manifest.json`).
+  - `sleep_between_calls` — min seconds between Meta API calls (default 1.0). Backfill uses exponential backoff to 60s on HTTP 429 / Meta error codes 1, 2, 4, 17, 32, 341, 613, 80000, 80004.
+
+### 11.8 Function index — Python scripts
+
+| Function | Location | Purpose |
+|---|---|---|
+| `MetaClient` | `scripts/fetch_ad_data.py` | Thin Graph API wrapper with paging + 4-retry exponential backoff |
+| `MetaClient.insights(level, fields, date)` | `scripts/fetch_ad_data.py` | Single-day insights pull at `level=adset` or `level=ad` |
+| `MetaClient.adsets()` / `ads()` / `creative(id)` | `scripts/fetch_ad_data.py` | Object-graph fetches |
+| `extract_conversions` | `scripts/fetch_ad_data.py` | Mirrors `collectMetaRows_` IC + lead extraction |
+| `merge_creatives` | `scripts/fetch_ad_data.py` | Accumulates creative metadata; preserves `first_seen_date` |
+| `linear_trend_slope` | `scripts/compute_signals.py` | Best-fit slope for CTR-over-days |
+| `compute_ad_metrics` | `scripts/compute_signals.py` | Per-ad rolling metrics |
+| `evaluate_fatigue` | `scripts/compute_signals.py` | Apply thresholds → flags + severity + actionable |
+| `compute_winner_bleeder` | `scripts/compute_signals.py` | Per-adset CTR/spend ranking |
+| `expected_data_date` | `skills/pipeline-health/scripts/check_health.py` | Computes the date `rolling_data` should have, accounting for the 7 AM ET pull cutoff |
+| `weekday_gap` | `skills/pipeline-health/scripts/check_health.py` | Counts business days missed between latest data and expected date |
+| `check_data_freshness` / `check_meta_token` / `check_ic_conversion_event` / `check_dashboard_endpoint` | `skills/pipeline-health/scripts/check_health.py` | Four health checks; each returns `{name, status, detail}` |
+| `getRollingLatestDate_` | `apps-script/Code.js` | `?action=rolling-latest-date` handler — returns latest date in `rolling_data` |
+| `handleHealthWrite_` | `apps-script/Code.js` | `?action=health-write` handler (GET or POST) — appends to `pipeline_health` tab, creates tab on first call |
+
+### 11.9 Tabs added by skills
+
+| Tab | Created by | Header row |
+|---|---|---|
+| `pipeline_health` | `pipeline-health` skill via `?action=health-write` (auto-created in `handleHealthWrite_`) | `date, check, status, detail, recorded_at` |
+| `daily_check_log` | `daily-check` skill via `?action=daily-check-write` (auto-created in `handleDailyCheckWrite_`) | `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at` |
+| `fatigue_log` | `fatigue-monitor` skill via `?action=fatigue-write` (auto-created in `handleFatigueWrite_`) | `date, ad_id, ad_name, campaign, classification, ctr_baseline, ctr_current, ctr_decline_pct, frequency, cpc_baseline, cpc_current, days_active, baseline_type, budget_conflict, recorded_at` |
+
+### 11.10 Shared client (`scripts/lib/meta.py`, added 2026-05-03)
+
+Single Meta Graph API client used by both the snapshot pipeline (`scripts/fetch_ad_data.py`) and skill scripts (`skills/<name>/scripts/`). Contains the `MetaClient` class plus normalization helpers and constants — extracted from `fetch_ad_data.py` so skill scripts don't duplicate the HTTP retry / throttle / paging logic. New skills that need Meta data should `from lib.meta import MetaClient` rather than reimplementing.
+
+| Export | Purpose |
+|---|---|
+| `MetaClient` | Wrapper with `_request`, `_paginate`, `insights(level, fields, since, until=None, time_increment=1)`, `adsets(filtering=…)`, `ads(filtering=…)`, `creative(id)`. Per-call throttle, exponential backoff to 60s, retries on HTTP 429/5xx and Meta error codes 1, 2, 4, 17, 32, 341, 613, 80000, 80004. |
+| `INSIGHTS_FIELDS_CAMPAIGN`, `INSIGHTS_FIELDS_ADSET`, `INSIGHTS_FIELDS_AD` | Field lists per insights level |
+| `ADSET_OBJECT_FIELDS`, `AD_OBJECT_FIELDS`, `CREATIVE_FIELDS` | Object-graph field lists |
+| `LEAD_ACTION_TYPES` | Standard Meta lead action types (mirrors `collectMetaRows_` in Code.js) |
+| `extract_conversions(actions, ic_action_type, lead_action_types)` | Returns `(conversions, ic_conversions)` from a Meta `actions[]` array |
+| `normalize_insights_row` / `normalize_adset` / `normalize_ad` / `normalize_creative` | Flatten Meta JSON into the project's row shape |
+| `ic_action_type_from_config(config)` | Reconstructs `offsite_conversion.custom.<id>` from `benchmarks.json` |
+| `load_config()` | Reads `data/config/benchmarks.json` |
+| `yesterday_utc()` | Helper for snapshot pipeline default date |

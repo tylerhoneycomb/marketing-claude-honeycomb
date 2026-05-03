@@ -3634,7 +3634,14 @@ function handleDashboardApi_(e) {
     approve_target: true,
     reject_target: true,
     confirm_approve_target: true,
-    confirm_reject_target: true
+    confirm_reject_target: true,
+    // Agent skills surface area. Read-only ones go through the switch
+    // at the bottom; writers (`*-write`) handle their own response.
+    'rolling-latest-date': true,
+    'health-write': true,
+    'daily-check-write': true,
+    'budget-queue-read': true,
+    'fatigue-write': true
   };
 
   if (!action || !dashboardActions[action]) return null;
@@ -3800,6 +3807,26 @@ function handleDashboardApi_(e) {
     return applyTargetDecision_(e, action === 'confirm_approve_target' ? 'approve' : 'reject');
   }
 
+  // Agent skills — `pipeline-health` skill calls `health-write` to append
+  // check results to the `pipeline_health` tab. Accepts rows via a `rows`
+  // query/POST param (JSON-encoded array) or repeated check params.
+  if (action === 'health-write') {
+    return handleHealthWrite_(e);
+  }
+
+  // `daily-check` skill writes a single summary row per run to
+  // `daily_check_log`. Accepts JSON body {row:{...}} or query params.
+  if (action === 'daily-check-write') {
+    return handleDailyCheckWrite_(e);
+  }
+
+  // `fatigue-monitor` skill writes one row per evaluated ad to
+  // `fatigue_log`. Accepts a JSON body {rows:[...]} batch payload or a
+  // form-encoded `rows=<json>` param.
+  if (action === 'fatigue-write') {
+    return handleFatigueWrite_(e);
+  }
+
   try {
     var result;
     switch (action) {
@@ -3821,6 +3848,12 @@ function handleDashboardApi_(e) {
       case 'campaigns':
         result = getCampaignList_();
         break;
+      case 'rolling-latest-date':
+        result = getRollingLatestDate_();
+        break;
+      case 'budget-queue-read':
+        result = getBudgetQueuePending_(e.parameter);
+        break;
     }
     return jsonResponse_(result);
 
@@ -3838,6 +3871,294 @@ function jsonResponse_(payload) {
   return ContentService
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+// ─── AGENT SKILLS — read/write helpers ──────────────────────
+// These are surfaced by the `pipeline-health` skill. Other skills
+// will follow the same pattern in their respective sessions.
+
+// Read-only: returns the most recent date present in rolling_data.
+// Used by the pipeline-health data-freshness check. Counts only rows
+// with a parseable date value in column A.
+function getRollingLatestDate_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(META_SHEET);
+  if (!sheet) {
+    return { latest_date: null, total_rows: 0,
+             error: 'Sheet "' + META_SHEET + '" not found' };
+  }
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { latest_date: null, total_rows: 0 };
+  }
+  var dates = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  var latest = null;
+  var counted = 0;
+  for (var i = 0; i < dates.length; i++) {
+    var v = dates[i][0];
+    if (!v) continue;
+    counted++;
+    var d = (v instanceof Date) ? v : new Date(v);
+    if (isNaN(d.getTime())) continue;
+    if (latest === null || d > latest) latest = d;
+  }
+  return {
+    latest_date: latest
+      ? Utilities.formatDate(latest, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+      : null,
+    total_rows: counted
+  };
+}
+
+
+// Append-only: writes pipeline_health rows. Creates the tab on first call.
+// Accepts either:
+//   - `rows` parameter (JSON-encoded array of {date, check, status, detail})
+//   - or four parameters `date`, `check`, `status`, `detail` for a single row
+// Returns { ok, written } or { error }.
+function handleHealthWrite_(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('pipeline_health');
+  if (!sheet) {
+    sheet = ss.insertSheet('pipeline_health');
+    sheet.appendRow(['date', 'check', 'status', 'detail', 'recorded_at']);
+  }
+
+  var rows = [];
+  var p = (e && e.parameter) || {};
+
+  // Wire formats supported, in priority order:
+  //   1. JSON body POST: {"rows": [{date, check, status, detail}, ...]}
+  //   2. Form-encoded `rows` param holding a JSON array
+  //   3. Single row via `check`/`status`/`detail`/`date` query params
+  var bodyRows = null;
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && Array.isArray(parsed.rows)) bodyRows = parsed.rows;
+    } catch (parseErr) {
+      // Not JSON — fall through to form/query handling.
+    }
+  }
+
+  if (bodyRows) {
+    rows = bodyRows;
+  } else if (p.rows) {
+    try {
+      rows = JSON.parse(p.rows);
+      if (!Array.isArray(rows)) {
+        return jsonResponse_({ error: 'rows must be a JSON array' });
+      }
+    } catch (err) {
+      return jsonResponse_({ error: 'rows is not valid JSON: ' + err.message });
+    }
+  } else if (p.check) {
+    rows = [{
+      date: p.date,
+      check: p.check,
+      status: p.status,
+      detail: p.detail
+    }];
+  } else {
+    return jsonResponse_({ error: 'no rows provided (use JSON body, rows=<json>, or check/status/detail)' });
+  }
+
+  var nowIso = new Date().toISOString();
+  var written = 0;
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i] || {};
+    if (!r.check) continue;
+    sheet.appendRow([
+      r.date || '',
+      String(r.check),
+      String(r.status || ''),
+      String(r.detail || ''),
+      nowIso
+    ]);
+    written++;
+  }
+
+  return jsonResponse_({ ok: true, written: written });
+}
+
+
+// Append-only: writes one daily-check summary row. Creates the tab on first
+// call. Accepts:
+//   - JSON body POST: {"row": {date, pacing_status, total_spend, total_icps,
+//                              portfolio_cpicp, fatigue_flag_count}}
+//   - or those fields as form/query params for ad-hoc testing
+function handleDailyCheckWrite_(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('daily_check_log');
+  if (!sheet) {
+    sheet = ss.insertSheet('daily_check_log');
+    sheet.appendRow(['date', 'pacing_status', 'total_spend', 'total_icps',
+      'portfolio_cpicp', 'fatigue_flag_count', 'recorded_at']);
+  }
+
+  var row = null;
+  var p = (e && e.parameter) || {};
+
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && parsed.row && typeof parsed.row === 'object') {
+        row = parsed.row;
+      }
+    } catch (parseErr) {
+      // Fall through to form/query handling.
+    }
+  }
+
+  if (!row && p.date) {
+    row = {
+      date: p.date,
+      pacing_status: p.pacing_status,
+      total_spend: p.total_spend,
+      total_icps: p.total_icps,
+      portfolio_cpicp: p.portfolio_cpicp,
+      fatigue_flag_count: p.fatigue_flag_count
+    };
+  }
+
+  if (!row || !row.date) {
+    return jsonResponse_({ error: 'no row provided (use JSON body {row:{...}} or date/pacing_status/... params)' });
+  }
+
+  var nowIso = new Date().toISOString();
+  sheet.appendRow([
+    String(row.date || ''),
+    String(row.pacing_status || ''),
+    Number(row.total_spend) || 0,
+    Number(row.total_icps) || 0,
+    row.portfolio_cpicp == null ? '' : Number(row.portfolio_cpicp),
+    Number(row.fatigue_flag_count) || 0,
+    nowIso
+  ]);
+
+  return jsonResponse_({ ok: true, written: 1 });
+}
+
+
+// Read-only: returns currently `pending` rows from `budget_queue`. The
+// `fatigue-monitor` skill calls this so it can flag conflicts (e.g. a
+// fatiguing ad in a campaign with a pending budget INCREASE). Optional
+// `campaign_id` param narrows the result; otherwise returns all pending.
+function getBudgetQueuePending_(params) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(BUDGET_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) return { pending: [] };
+
+  var data = sheet.getDataRange().getValues();
+  // Schema (writeToQueue_, Code.js:2913):
+  //   0:token 1:created_at 2:analysis_date 3:execution_scheduled
+  //   4:campaign_id 5:campaign_name
+  //   6:current_budget_cents 7:proposed_budget_cents
+  //   8:change_cents 9:change_pct
+  //   10:signal_reasons 11:status
+  var filterCampaignId = params && params.campaign_id
+    ? String(params.campaign_id).trim() : null;
+
+  var pending = [];
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+    if (String(r[11]).toLowerCase() !== 'pending') continue;
+    var campaignId = String(r[4]).trim();
+    if (filterCampaignId && campaignId !== filterCampaignId) continue;
+
+    var changeCents = Number(r[8]) || 0;
+    pending.push({
+      token: String(r[0]),
+      created_at: r[1] instanceof Date ? r[1].toISOString() : String(r[1]),
+      analysis_date: String(r[2]).substring(0, 10),
+      execution_scheduled: String(r[3]),
+      campaign_id: campaignId,
+      campaign_name: String(r[5]),
+      current_budget_cents: Number(r[6]) || 0,
+      proposed_budget_cents: Number(r[7]) || 0,
+      change_cents: changeCents,
+      change_pct: Number(r[9]) || 0,
+      direction: changeCents > 0 ? 'increase' : (changeCents < 0 ? 'decrease' : 'flat'),
+      signal_reasons: String(r[10]),
+      status: 'pending'
+    });
+  }
+  return { pending: pending, count: pending.length };
+}
+
+
+// Append-only: writes per-ad fatigue classifications. Creates the tab on
+// first call. The `fatigue-monitor` skill writes ALL evaluated ads
+// (including healthy) for the historical record.
+function handleFatigueWrite_(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('fatigue_log');
+  if (!sheet) {
+    sheet = ss.insertSheet('fatigue_log');
+    sheet.appendRow([
+      'date', 'ad_id', 'ad_name', 'campaign',
+      'classification',
+      'ctr_baseline', 'ctr_current', 'ctr_decline_pct',
+      'frequency',
+      'cpc_baseline', 'cpc_current',
+      'days_active', 'baseline_type',
+      'budget_conflict',
+      'recorded_at'
+    ]);
+  }
+
+  var rows = [];
+  var p = (e && e.parameter) || {};
+
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && Array.isArray(parsed.rows)) rows = parsed.rows;
+    } catch (parseErr) {
+      // fall through
+    }
+  }
+  if (!rows.length && p.rows) {
+    try {
+      rows = JSON.parse(p.rows);
+      if (!Array.isArray(rows)) {
+        return jsonResponse_({ error: 'rows must be a JSON array' });
+      }
+    } catch (err) {
+      return jsonResponse_({ error: 'rows is not valid JSON: ' + err.message });
+    }
+  }
+
+  if (!rows.length) {
+    return jsonResponse_({ error: 'no rows provided (use JSON body {rows:[...]} or rows=<json>)' });
+  }
+
+  var nowIso = new Date().toISOString();
+  var written = 0;
+  for (var ri = 0; ri < rows.length; ri++) {
+    var row = rows[ri] || {};
+    if (!row.ad_id) continue;
+    sheet.appendRow([
+      String(row.date || ''),
+      String(row.ad_id),
+      String(row.ad_name || ''),
+      String(row.campaign || ''),
+      String(row.classification || ''),
+      row.ctr_baseline == null ? '' : Number(row.ctr_baseline),
+      row.ctr_current == null ? '' : Number(row.ctr_current),
+      row.ctr_decline_pct == null ? '' : Number(row.ctr_decline_pct),
+      row.frequency == null ? '' : Number(row.frequency),
+      row.cpc_baseline == null ? '' : Number(row.cpc_baseline),
+      row.cpc_current == null ? '' : Number(row.cpc_current),
+      row.days_active == null ? '' : Number(row.days_active),
+      String(row.baseline_type || ''),
+      String(row.budget_conflict || ''),
+      nowIso
+    ]);
+    written++;
+  }
+  return jsonResponse_({ ok: true, written: written });
 }
 
 
@@ -4018,6 +4339,18 @@ function doPost(e) {
 
   if (action === 'chat') {
     return handleChatRequest_(e);
+  }
+  // Agent skills can POST bulk payloads (a JSON array of rows) instead
+  // of cramming everything into the query string. Same handler for GET
+  // and POST so the skill can pick whichever fits.
+  if (action === 'health-write') {
+    return handleHealthWrite_(e);
+  }
+  if (action === 'daily-check-write') {
+    return handleDailyCheckWrite_(e);
+  }
+  if (action === 'fatigue-write') {
+    return handleFatigueWrite_(e);
   }
 
   return jsonResponse_({ error: 'Unknown POST action: ' + action });

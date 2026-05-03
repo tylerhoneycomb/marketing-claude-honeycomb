@@ -1,0 +1,50 @@
+{
+  "account": {
+    "id": "act_1953544531525812",
+    "name": "Honeycomb Credit",
+    "meta_api_version": "v21.0",
+    "timezone": "America/New_York"
+  },
+  "exec_endpoint": "https://script.google.com/macros/s/AKfycbxx8ejN4CH3i7f2sTlXQZNCWVti4n4pD78K0Llvb0dG-HrsDfTOtmjOf0yWlq47F0mhsw/exec",
+  "slack_webhook_secret_name": "SLACK_WEBHOOK_URL",
+  "ic_tracking": {
+    "custom_conversion_id": "2330338620810873",
+    "event_name": "Investment Crowdfunding Prequal Decision",
+    "pattern": "investment crowdfunding"
+  },
+  "pacing": {
+    "weekly_spend_target_dollars": 10000,
+    "pacing_tolerance_pct": 15
+  },
+  "fatigue": {
+    "ctr_early_decline_pct": 15,
+    "ctr_fatigued_decline_pct": 30,
+    "frequency_warning": 2.0,
+    "frequency_critical": 3.0,
+    "frequency_retargeting_critical": 5.0,
+    "cpc_inflation_warning_pct": 25,
+    "cpc_inflation_critical_pct": 50,
+    "cpm_flag_increase_pct": 50,
+    "min_impressions": 1000,
+    "min_days_active": 7,
+    "baseline_window_start_day": 4,
+    "baseline_window_end_day": 7,
+    "creative_age_warning_days": 21
+  },
+  "daily_check": {
+    "min_impressions_for_signal": 1000,
+    "bleeder_ctr_vs_adset_avg_pct": 50,
+    "bleeder_min_spend_share_pct": 10,
+    "winner_min_conversions": 5,
+    "early_fatigue_ctr_decline_pct": 15,
+    "early_fatigue_min_frequency": 2.0
+  },
+  "pipeline_health": {
+    "token_warning_days": 14,
+    "endpoint_timeout_seconds": 10,
+    "data_freshness_max_gap_weekdays": 1
+  },
+  "campaign_defaults": {
+    "type": "prospecting"
+  }
+}
