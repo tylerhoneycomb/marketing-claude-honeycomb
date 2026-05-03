@@ -2282,9 +2282,19 @@ function runDailyPipeline() {
 function createAllTriggers() {
   Logger.log('=== createAllTriggers ===');
 
+  // List of all trigger handler function names this project owns. Any
+  // existing trigger pointing at one of these is deleted before new ones
+  // are created — keeps re-running this function idempotent.
+  var ownedHandlers = {
+    runDailyPipeline: true,
+    generateWeeklyNarrative: true,
+    triggerAgentPipelineHealthIfNeeded: true,
+    triggerAgentDailyCheckIfNeeded: true,
+    triggerAgentFatigueMonitorIfNeeded: true
+  };
+
   ScriptApp.getProjectTriggers().forEach(function (t) {
-    var fn = t.getHandlerFunction();
-    if (fn === 'runDailyPipeline' || fn === 'generateWeeklyNarrative') {
+    if (ownedHandlers[t.getHandlerFunction()]) {
       ScriptApp.deleteTrigger(t);
     }
   });
@@ -2295,11 +2305,208 @@ function createAllTriggers() {
   ScriptApp.newTrigger('generateWeeklyNarrative')
     .timeBased().onWeekDay(ScriptApp.WeekDay.MONDAY).atHour(8).create();
 
+  // Agent workflow fallback triggers. GitHub Actions cron runs each
+  // skill earlier in the morning; these fire ~noon-2 PM ET as a
+  // safety net and dispatch via API only if no recent successful run
+  // exists. See AGENT WORKFLOW DISPATCH section below.
+  ScriptApp.newTrigger('triggerAgentPipelineHealthIfNeeded')
+    .timeBased().everyDays(1).atHour(12).create();
+  ScriptApp.newTrigger('triggerAgentDailyCheckIfNeeded')
+    .timeBased().everyDays(1).atHour(12).create();
+  ScriptApp.newTrigger('triggerAgentFatigueMonitorIfNeeded')
+    .timeBased().everyDays(1).atHour(13).create();
+
   var triggers = ScriptApp.getProjectTriggers();
   Logger.log('Triggers active: ' + triggers.length);
   triggers.forEach(function (t) {
     Logger.log('  ' + t.getHandlerFunction() + ' — ' + t.getEventType());
   });
+}
+
+
+// ============================================================
+// AGENT WORKFLOW DISPATCH (fallback for GitHub Actions cron)
+// ============================================================
+//
+// GitHub Actions cron is best-effort: runs can be delayed up to 30+
+// minutes under load, occasionally skipped during GitHub incidents,
+// and silently disabled after 60 days of zero pushes to the repo.
+//
+// These functions use Apps Script's reliable time-based triggers as a
+// fallback. Each `*IfNeeded` function checks whether the corresponding
+// workflow already ran successfully (or is in-progress) within a recent
+// window via the GitHub API; if so, it skips. If GitHub's cron missed
+// the morning run, the Apps Script trigger fires at noon-2 PM ET and
+// dispatches via the workflow_dispatch API.
+//
+// Setup:
+//   1. Run testAgentDispatch() from the Apps Script editor to verify
+//      the GITHUB_PAT in Script Properties has the right scopes
+//      (classic PAT with `repo` works; fine-grained needs Actions:
+//      Read AND Write).
+//   2. Run createAllTriggers() to install the three time-based triggers.
+//   3. Verify in Project Triggers that the three triggerAgent*IfNeeded
+//      handlers are scheduled.
+
+const AGENT_WORKFLOW_REPO = 'tylerhoneycomb/marketing-claude-honeycomb';
+
+
+// Calls the GitHub workflow_dispatch endpoint. Returns true on 204 No
+// Content (the success response). All errors are logged + return false.
+function triggerAgentWorkflow_(filename) {
+  var pat = PROPS.getProperty('GITHUB_PAT');
+  if (!pat) {
+    Logger.log('triggerAgentWorkflow_: GITHUB_PAT not set; skipping ' + filename);
+    return false;
+  }
+  var url = 'https://api.github.com/repos/' + AGENT_WORKFLOW_REPO +
+            '/actions/workflows/' + filename + '/dispatches';
+  var resp = UrlFetchApp.fetch(url, {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'Authorization': 'Bearer ' + pat,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    payload: JSON.stringify({ ref: 'main' }),
+    muteHttpExceptions: true
+  });
+  var code = resp.getResponseCode();
+  if (code === 204) {
+    Logger.log('triggerAgentWorkflow_: dispatched ' + filename);
+    return true;
+  }
+  Logger.log('triggerAgentWorkflow_: FAIL ' + filename + ' HTTP ' + code +
+             ' — ' + resp.getContentText().substring(0, 300));
+  return false;
+}
+
+
+// Returns true if the workflow has a recent run within `hours` that
+// either succeeded or is currently running/queued. Failed runs do NOT
+// count — those should be retried by the fallback. Returns false on
+// any API error so we err on the side of dispatching (the workflow's
+// own concurrency group prevents true duplicates if both fire).
+function workflowRanWithinHours_(filename, hours) {
+  var pat = PROPS.getProperty('GITHUB_PAT');
+  if (!pat) return false;
+  var url = 'https://api.github.com/repos/' + AGENT_WORKFLOW_REPO +
+            '/actions/workflows/' + filename + '/runs?per_page=10';
+  var resp = UrlFetchApp.fetch(url, {
+    headers: {
+      'Authorization': 'Bearer ' + pat,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    muteHttpExceptions: true
+  });
+  if (resp.getResponseCode() !== 200) {
+    Logger.log('workflowRanWithinHours_: list runs HTTP ' +
+               resp.getResponseCode() + ' for ' + filename +
+               ' — assuming no recent run');
+    return false;
+  }
+  var json = JSON.parse(resp.getContentText());
+  var runs = json.workflow_runs || [];
+  var cutoffMs = Date.now() - (hours * 3600 * 1000);
+  for (var i = 0; i < runs.length; i++) {
+    var createdMs = new Date(runs[i].created_at).getTime();
+    if (createdMs < cutoffMs) continue;
+    var status = runs[i].status;
+    var conclusion = runs[i].conclusion;
+    if (status === 'in_progress' || status === 'queued' ||
+        status === 'pending' || conclusion === 'success') {
+      return true;
+    }
+  }
+  return false;
+}
+
+
+// Daily fallback for agent-pipeline-health.yml. GitHub cron is set for
+// 9 AM ET; this trigger fires noon-1 PM ET. 18-hour lookback window
+// catches today's morning run if it succeeded.
+function triggerAgentPipelineHealthIfNeeded() {
+  Logger.log('=== triggerAgentPipelineHealthIfNeeded ===');
+  if (workflowRanWithinHours_('agent-pipeline-health.yml', 18)) {
+    Logger.log('Recent successful or in-progress run exists — skipping.');
+    return;
+  }
+  triggerAgentWorkflow_('agent-pipeline-health.yml');
+}
+
+
+// Daily fallback for agent-daily-check.yml. GitHub cron 8:30 AM ET;
+// fallback fires noon-1 PM ET. 18-hour window.
+function triggerAgentDailyCheckIfNeeded() {
+  Logger.log('=== triggerAgentDailyCheckIfNeeded ===');
+  if (workflowRanWithinHours_('agent-daily-check.yml', 18)) {
+    Logger.log('Recent successful or in-progress run exists — skipping.');
+    return;
+  }
+  triggerAgentWorkflow_('agent-daily-check.yml');
+}
+
+
+// Twice-weekly fallback for agent-fatigue-monitor.yml. GitHub cron is
+// Mon + Thu 9:30 AM ET. The Apps Script trigger fires daily at hour 13
+// (1-2 PM ET), but we early-out on non-Mon/Thu days so the fallback
+// only kicks in on the days the GitHub cron is supposed to run.
+// 12-hour window = "did it run today?"
+function triggerAgentFatigueMonitorIfNeeded() {
+  Logger.log('=== triggerAgentFatigueMonitorIfNeeded ===');
+  // getDay(): 0=Sun, 1=Mon, ..., 4=Thu. Use script timezone for the
+  // day boundary so the check reflects ET, not the runner's UTC.
+  var dow = parseInt(Utilities.formatDate(
+    new Date(), Session.getScriptTimeZone(), 'u'), 10);
+  // Note: 'u' returns 1=Mon..7=Sun (ISO). Convert: 1=Mon, 4=Thu.
+  if (dow !== 1 && dow !== 4) {
+    Logger.log('Not Mon or Thu (ISO dow=' + dow + ') — skipping.');
+    return;
+  }
+  if (workflowRanWithinHours_('agent-fatigue-monitor.yml', 12)) {
+    Logger.log('Recent successful or in-progress run exists — skipping.');
+    return;
+  }
+  triggerAgentWorkflow_('agent-fatigue-monitor.yml');
+}
+
+
+// Diagnostic: verify the GITHUB_PAT can list workflows. Run from the
+// Apps Script editor before calling createAllTriggers() so you know
+// the token has the right scope (classic with `repo`, or fine-grained
+// with Actions: Read + Write).
+function testAgentDispatch() {
+  Logger.log('=== testAgentDispatch ===');
+  var pat = PROPS.getProperty('GITHUB_PAT');
+  if (!pat) {
+    Logger.log('FAIL: GITHUB_PAT not set in Script Properties.');
+    return;
+  }
+  var url = 'https://api.github.com/repos/' + AGENT_WORKFLOW_REPO + '/actions/workflows';
+  var resp = UrlFetchApp.fetch(url, {
+    headers: {
+      'Authorization': 'Bearer ' + pat,
+      'Accept': 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28'
+    },
+    muteHttpExceptions: true
+  });
+  var code = resp.getResponseCode();
+  if (code !== 200) {
+    Logger.log('FAIL: HTTP ' + code + ' — ' +
+               resp.getContentText().substring(0, 300));
+    Logger.log('Likely cause: PAT lacks Actions scope. Classic PAT needs `repo`; ' +
+               'fine-grained needs Actions: Read + Write on this repo.');
+    return;
+  }
+  var json = JSON.parse(resp.getContentText());
+  Logger.log('PASS: PAT can list workflows. ' + json.total_count + ' found:');
+  (json.workflows || []).forEach(function (w) {
+    Logger.log('  ' + w.path + ' (state: ' + w.state + ')');
+  });
+  Logger.log('Run createAllTriggers() to install the three fallback triggers.');
 }
 
 

@@ -185,6 +185,29 @@ Each agent workflow needs these GitHub Secrets on the repo:
 - `SLACK_WEBHOOK_URL` — optional; if unset, skills skip Slack and surface
   output in the workflow log only
 
+### Dual scheduling: GitHub cron + Apps Script fallback
+
+Each agent workflow has TWO scheduling paths:
+
+1. **GitHub Actions cron** (primary) — the `schedule:` block in each
+   `agent-*.yml` file fires daily/twice-weekly. Best-effort: runs can
+   be delayed up to 30+ minutes, occasionally skipped during GitHub
+   incidents, and silently disabled after 60 days of zero pushes.
+2. **Apps Script trigger** (fallback) — `triggerAgent*IfNeeded()`
+   functions in `Code.js` fire ~3 hours later (noon-2 PM ET) and
+   dispatch via the GitHub workflow_dispatch API only if no recent
+   successful run exists for that workflow. Apps Script's cron runs
+   on Google's infrastructure and is more reliable.
+
+The fallback functions share the existing `GITHUB_PAT` Script Property
+already used by `exportAuditSnapshot()`. Run `testAgentDispatch()` from
+the Apps Script editor to verify scopes; classic PAT with `repo` works,
+fine-grained needs Actions: Read + Write on this repo.
+
+If both paths fire simultaneously (rare — Apps Script triggers always
+check first), the workflow's `concurrency:` group queues the second
+run rather than racing.
+
 ### Meta API conventions
 
 - API version: `v21.0` (matches `apps-script/Code.js:25`)

@@ -749,6 +749,25 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Prompt: run the three scripts in sequence (fetch → baselines → classify) → compose summary grouped by severity, skip healthy ads, prominently surface budget conflicts.
 - Concurrency group `agent-fatigue-monitor`.
 
+### 10.1.1 Apps Script fallback dispatch (added 2026-05-03)
+
+GitHub Actions cron is best-effort. To make scheduled runs more reliable, Apps Script time-based triggers act as a fallback. The pattern lives in `apps-script/Code.js`:
+
+| Function | Purpose |
+|---|---|
+| `triggerAgentWorkflow_(filename)` | POSTs to `/repos/.../actions/workflows/<filename>/dispatches` with `{ref: "main"}`. Reads `GITHUB_PAT` from Script Properties. |
+| `workflowRanWithinHours_(filename, hours)` | GETs `/repos/.../actions/workflows/<filename>/runs?per_page=10`, returns true if any run within window has status `in_progress`/`queued`/`pending` or conclusion `success`. Failed runs do NOT count (so the fallback retries them). |
+| `triggerAgentPipelineHealthIfNeeded` | Daily 12-1 PM ET. 18-hour lookback. |
+| `triggerAgentDailyCheckIfNeeded` | Daily 12-1 PM ET. 18-hour lookback. |
+| `triggerAgentFatigueMonitorIfNeeded` | Daily 1-2 PM ET, but early-outs unless ISO day-of-week is 1 (Mon) or 4 (Thu). 12-hour lookback. |
+| `testAgentDispatch` | Diagnostic: lists workflows via the API to verify the PAT has the right scope. Run before `createAllTriggers()` on first install. |
+
+Setup is one-time:
+1. Run `testAgentDispatch()` from the Apps Script editor — confirms `GITHUB_PAT` has Actions: Read+Write (classic PAT with `repo` works).
+2. Run `createAllTriggers()` — installs the three new triggers alongside the existing `runDailyPipeline` and `generateWeeklyNarrative` triggers.
+
+Idempotency: `createAllTriggers()` deletes any existing triggers it owns before recreating them, so it's safe to re-run.
+
 ### 10.2 Audit snapshots — `exportAuditSnapshot()` (Code.js:~3980)
 
 - Exports 4 sheets as JSON to the `audit-snapshots` branch via the GitHub Git Data API flow (see §6.3).
