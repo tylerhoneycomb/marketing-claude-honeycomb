@@ -58,6 +58,13 @@ jobs:
           # from the run page.
           show_full_output: "true"
           display_report: "true"
+          # Without this, Claude runs in permissionMode:"default" and
+          # auto-denies every Bash command (no human to approve in CI).
+          # The workflow itself is the trust boundary — we control the
+          # prompt, env, and dispatch — so bypassing per-command prompts
+          # is appropriate. Verified necessary by the 5-permission-denial
+          # transcript on the previous run.
+          claude_args: "--permission-mode bypassPermissions"
           prompt: |
             Run the pipeline-health skill exactly as documented in
             skills/pipeline-health/SKILL.md.
