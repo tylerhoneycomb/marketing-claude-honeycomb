@@ -1,73 +1,111 @@
-# Skill: Daily Check
+---
+name: daily-check
+description: Morning briefing — pacing, portfolio performance, winners, bleeders, and early fatigue signals at ad level
+---
+
+# Daily Check
 
 ## Purpose
 
-Produce a short, action-oriented summary of yesterday's Meta ad performance using the latest ad-level snapshot. The "5 daily questions" Berman-style check, adapted for Honeycomb Credit's investment-crowdfunding context.
+Answer five questions each morning so Tyler can act on the right thing: Am I on pace? What's running? How's the portfolio? Who's winning / bleeding? Any early fatigue signals?
 
-## When to invoke
+This skill runs alongside the existing Apps Script daily digest (campaign-level rollup + AI narrative). It adds ad-level detail and an explicit pacing read.
 
-- Tyler asks "give me the daily" / "daily check" / "what happened yesterday"
-- The agent loop runs on a schedule and needs a status read
-- Before any other skill (fatigue-monitor, budget-optimizer) — this orients the rest of the session
+## Scripts
 
-## Inputs
+`scripts/fetch_daily_data.py` — Pulls 7 days of campaign, ad set, and ad-level insights from Meta plus current ad-set objects (`learning_stage_info`, `daily_budget`) and ad objects (`created_time`, `effective_status`). Outputs JSON to stdout.
 
-Read in this order:
+`scripts/analyze_daily.py` — Reads the fetch output, applies thresholds from `data/config/benchmarks.json`, computes pacing/portfolio/winners/bleeders/fatigue/learning/stale-creative views, POSTs the summary row to `?action=daily-check-write`, and outputs structured JSON to stdout for Slack composition.
 
-1. `data/snapshots/<latest>/_manifest.json` — confirms the snapshot exists and is recent
-2. `data/snapshots/<latest>/ad_insights.json` — yesterday's ad-level rows
-3. `data/snapshots/<latest>/adset_insights.json` — yesterday's ad-set rows
-4. `data/derived/summary.json` — counts of fatigue severities, winners, bleeders
-5. `data/derived/fatigue_signals.json` — only if summary shows critical/warning ads
-6. `data/config/benchmarks.json` — thresholds for context
-
-If `data/snapshots/` is empty or `summary.json` is older than 36 hours, surface that as the top-line finding ("snapshot is stale — pipeline may be broken") and run skill `pipeline-health` for triage.
-
-## The five questions
-
-Produce a markdown response that answers, in order:
-
-1. **Did we spend what we planned?**
-   Total spend yesterday vs the per-day pro-rata of `weekly_target_spend` ($10,000 ÷ 7 ≈ $1,429/day). Flag if outside ±20%.
-
-2. **Are we hitting our IC volume?**
-   Total `ic_conversions` summed across ads yesterday. Compare to the 7-day rolling average. Flag day-over-day changes ≥ ±25%.
-
-3. **Where is fatigue?**
-   List ads in `summary.actionable_critical` and `summary.actionable_warning`. For each, name the ad, ad set, severity, and the specific flags (`ctr_declining`, `frequency_critical`, etc.).
-
-4. **Who's winning, who's bleeding?**
-   Top 3 winners and top 3 bleeders from `winner_bleeder.json`. For each, include CTR vs ad-set average and spend share.
-
-5. **What needs a human?**
-   One short bulleted list of items where a human (Tyler) should weigh in. Each item must include: the specific ad/ad set, the proposed action (pause / shift budget / refresh creative), and why. Do NOT auto-execute — recommendations only.
-
-## Output format
+Run:
 
 ```
-# Daily check — <YYYY-MM-DD>
-
-## Spend
-…
-
-## IC volume
-…
-
-## Fatigue
-…
-
-## Winners & bleeders
-…
-
-## Needs human review
-- …
+python3 skills/daily-check/scripts/fetch_daily_data.py > /tmp/daily_data.json
+python3 skills/daily-check/scripts/analyze_daily.py --input /tmp/daily_data.json
 ```
 
-Keep the whole response under ~400 words. If there are no flags in a section, write a single sentence ("All ads under fatigue thresholds.") rather than an empty heading.
+Or piped:
+
+```
+python3 skills/daily-check/scripts/fetch_daily_data.py \
+  | python3 skills/daily-check/scripts/analyze_daily.py
+```
+
+Use `--no-sheet-write` on `analyze_daily.py` for dry runs.
+
+Requires:
+- `META_ACCESS_TOKEN` env var
+- `EXEC_ENDPOINT` env var (optional — falls back to `exec_endpoint` from `benchmarks.json`)
+- `data/config/benchmarks.json` for thresholds
+
+## Output schema (analyze_daily.py stdout)
+
+```
+{
+  "date": "YYYY-MM-DD",                  // = until / yesterday
+  "pacing": {status, yesterday_spend, remaining_daily_target,
+             weekly_target, spent_this_week, days_remaining, week_start},
+  "portfolio": [{campaign, spend, ic_conversions, cpicp, ctr, frequency}, …],
+  "winners":   [{ad_name, campaign, cpc, conversions, ctr}, …],   // up to 3
+  "bleeders":  [{ad_name, campaign, ctr, adset_avg_ctr, spend_share_pct}, …],
+  "fatigue_flags": [{ad_name, campaign, frequency,
+                     ctr_3d, ctr_prior_4d, ctr_decline_pct}, …],
+  "learning_phase": [{adset_name, campaign_id, status}, …],
+  "stale_creatives": [{ad_name, campaign_id, days_active, created_time}, …],
+  "totals": {spend, ic_conversions, cpicp},
+  "sheet_write": {posted, written|error|skipped}
+}
+```
+
+## Interpreting output
+
+- **Pacing:** `underspending` / `overspending` / `on_pace`. Informational, not an emergency. Always include in the summary so Tyler can see whether to adjust budget today.
+- **Portfolio:** list every campaign with IC conversions, sorted by best CPICP. Call out campaigns with non-trivial spend and zero IC conversions — those are the ones to investigate.
+- **Winners / Bleeders:** top 3 of each. These are the specific ads Tyler should look at. If `winners` is empty, that means no ad in the last 7 days hit the floor of ≥5 conversions + ≥1,000 impressions — say so explicitly.
+- **Fatigue flags:** these *preview* the fatigue-monitor skill. Mention them in the briefing but note the full fatigue analysis lives in the separate skill.
+- **Learning phase:** list ad sets currently in learning. State explicitly that no budget changes should be made to these — that's a hard rule.
+- **Stale creatives:** ads active > `fatigue.creative_age_warning_days` (21 by default). Worth a refresh look but not necessarily fatiguing.
+- **`sheet_write.posted == false`:** the historical log didn't write. Surface that as its own line in Slack — the briefing is still useful, but Tyler should know the log is broken.
+
+## Output — Slack
+
+Compose a plain-text summary. Keep it scannable — one line per item, sections separated by blank lines. No markdown headers. Example shape:
+
+```
+📊 Daily Check — 2026-05-03
+
+PACING: underspending — $1,500 yesterday, $8,050/day needed for $10,000 target
+
+PORTFOLIO (7d, best CPICP first):
+  Breweries: $150.00 CPICP, 13 ICPs, $1,950, freq 1.6
+  …
+
+WINNERS:
+  WinnerAd (Breweries): $1.07 CPC, 10 convs
+
+BLEEDERS:
+  BleederAd (Breweries): 0.5% vs 1.5% adset avg, 25% spend share
+
+FATIGUE WATCH:
+  FatigueAd (Breweries): freq 2.3, CTR ↓43% (3d vs prior 4d)
+
+LEARNING:
+  AS1 (campaign c1) — no budget changes
+
+STALE:
+  WinnerAd: 48 days active
+```
+
+Skip empty sections rather than printing "(none)". If everything is empty (no winners, no bleeders, no fatigue), say so in one line: "All ads under signal floors today."
+
+## Output — Sheet
+
+Handled by `analyze_daily.py`. One summary row per run via `?action=daily-check-write` to the `daily_check_log` tab (auto-created on first call). Header: `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at`. Don't issue your own POST.
 
 ## Constraints
 
-- Never recommend a budget change to an ad set whose `learning_stage_info.status == "LEARNING"` (already filtered by `compute_signals.py` — re-check defensively).
-- Never claim a fatigue signal is actionable if the ad has < 3 days active or < 1,000 impressions. The compute step already filters these; if you encounter rows flagged `actionable: false`, do not promote them.
-- All numbers come from the snapshot files. Do NOT call the Meta API directly — that's the data pipeline's job.
-- Honeycomb is regulated (Reg CF). Don't draft anything that promises returns. Use existing brand voice cues from `CLAUDE.md`.
+- This skill **does not** recommend budget changes. It surfaces signals.
+- **Never** propose changes to ad sets in learning phase — flag them by name and stop.
+- This skill runs **alongside** the existing Apps Script daily digest. It is not a replacement; the digest covers the campaign-level rollup and the weekly AI narrative. This skill adds ad-level detail.
+- Scripts handle Meta API + Sheet writes. Don't make additional API calls from the skill executor — read the JSON and compose Slack from it.
+- Numbers come from a single 7-day Meta query. If Meta returns fewer days (e.g., a brand-new account), the pacing math degrades gracefully — `remaining_daily_target` may be `null`. Surface that as "insufficient history for pacing read" rather than reporting confusing numbers.

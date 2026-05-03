@@ -170,10 +170,20 @@ defined in `Code.js`. To add a new write endpoint:
   conversion event existence, and dashboard endpoint health. Run before any
   other skill so a downstream "all clear" reading isn't masking a broken
   pipeline.
-- **daily-check** _(coming Session 2)_ — morning briefing across pacing,
-  portfolio performance, winners, bleeders, and early fatigue signals.
+- **daily-check** — morning briefing: pacing vs weekly target, campaign
+  portfolio sorted by CPICP, top 3 winners + bleeders, early fatigue flags,
+  learning-phase ad sets, and stale creatives (>21 days active).
 - **fatigue-monitor** _(coming Session 3)_ — ad-level fatigue classification
   with baseline-aware severity scoring.
+
+### Shared client
+
+`scripts/lib/meta.py` is the single Meta Graph API client used by the
+snapshot pipeline AND the skills. It owns: HTTP retries, paging, throttle
+error codes (1, 2, 4, 17, 32, 341, 613, 80000, 80004), per-call rate
+limiting, IC conversion extraction, and row normalization. New skills that
+need Meta data should import from this module rather than duplicate the
+client.
 
 ### Snapshot pipeline (parallel to skills)
 

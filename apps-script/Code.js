@@ -3638,7 +3638,8 @@ function handleDashboardApi_(e) {
     // Agent skills surface area. Read-only ones go through the switch
     // at the bottom; writers (`*-write`) handle their own response.
     'rolling-latest-date': true,
-    'health-write': true
+    'health-write': true,
+    'daily-check-write': true
   };
 
   if (!action || !dashboardActions[action]) return null;
@@ -3811,6 +3812,12 @@ function handleDashboardApi_(e) {
     return handleHealthWrite_(e);
   }
 
+  // `daily-check` skill writes a single summary row per run to
+  // `daily_check_log`. Accepts JSON body {row:{...}} or query params.
+  if (action === 'daily-check-write') {
+    return handleDailyCheckWrite_(e);
+  }
+
   try {
     var result;
     switch (action) {
@@ -3961,6 +3968,64 @@ function handleHealthWrite_(e) {
   }
 
   return jsonResponse_({ ok: true, written: written });
+}
+
+
+// Append-only: writes one daily-check summary row. Creates the tab on first
+// call. Accepts:
+//   - JSON body POST: {"row": {date, pacing_status, total_spend, total_icps,
+//                              portfolio_cpicp, fatigue_flag_count}}
+//   - or those fields as form/query params for ad-hoc testing
+function handleDailyCheckWrite_(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('daily_check_log');
+  if (!sheet) {
+    sheet = ss.insertSheet('daily_check_log');
+    sheet.appendRow(['date', 'pacing_status', 'total_spend', 'total_icps',
+      'portfolio_cpicp', 'fatigue_flag_count', 'recorded_at']);
+  }
+
+  var row = null;
+  var p = (e && e.parameter) || {};
+
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && parsed.row && typeof parsed.row === 'object') {
+        row = parsed.row;
+      }
+    } catch (parseErr) {
+      // Fall through to form/query handling.
+    }
+  }
+
+  if (!row && p.date) {
+    row = {
+      date: p.date,
+      pacing_status: p.pacing_status,
+      total_spend: p.total_spend,
+      total_icps: p.total_icps,
+      portfolio_cpicp: p.portfolio_cpicp,
+      fatigue_flag_count: p.fatigue_flag_count
+    };
+  }
+
+  if (!row || !row.date) {
+    return jsonResponse_({ error: 'no row provided (use JSON body {row:{...}} or date/pacing_status/... params)' });
+  }
+
+  var nowIso = new Date().toISOString();
+  sheet.appendRow([
+    String(row.date || ''),
+    String(row.pacing_status || ''),
+    Number(row.total_spend) || 0,
+    Number(row.total_icps) || 0,
+    row.portfolio_cpicp == null ? '' : Number(row.portfolio_cpicp),
+    Number(row.fatigue_flag_count) || 0,
+    nowIso
+  ]);
+
+  return jsonResponse_({ ok: true, written: 1 });
 }
 
 
@@ -4147,6 +4212,9 @@ function doPost(e) {
   // and POST so the skill can pick whichever fits.
   if (action === 'health-write') {
     return handleHealthWrite_(e);
+  }
+  if (action === 'daily-check-write') {
+    return handleDailyCheckWrite_(e);
   }
 
   return jsonResponse_({ error: 'Unknown POST action: ' + action });

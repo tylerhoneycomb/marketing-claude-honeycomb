@@ -650,6 +650,7 @@ All return `ContentService.createTextOutput(JSON.stringify(payload))` with MIME 
 | `confirm_approve_target` / `confirm_reject_target` | GET | `token` | Applies decision |
 | `rolling-latest-date` | GET | — | `{latest_date, total_rows}` from `rolling_data`. Used by `pipeline-health` skill. |
 | `health-write` | POST or GET | JSON body `{rows:[…]}` or `rows=<json>` or `check`/`status`/`detail` | Appends to `pipeline_health` tab (auto-created). Header row: `date, check, status, detail, recorded_at`. |
+| `daily-check-write` | POST or GET | JSON body `{row:{...}}` or query params (`date`, `pacing_status`, `total_spend`, `total_icps`, `portfolio_cpicp`, `fatigue_flag_count`) | Appends one summary row to `daily_check_log` tab (auto-created). Header row: `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at`. |
 
 ### 9.3 `buildDashboardContext_()` (Code.js:3836)
 
@@ -949,7 +950,7 @@ Skills are self-contained packages: a `SKILL.md` (with YAML frontmatter — `nam
 | Skill | Status | Purpose |
 |---|---|---|
 | `pipeline-health` | shipped 2026-05-03 | Four checks: data freshness, Meta token, IC conversion event, dashboard endpoint. Slack-silent on PASS. |
-| `daily-check` | planned (Session 2) | Morning briefing: pacing, portfolio, winners, bleeders, early fatigue, learning-phase ad sets, stale creatives |
+| `daily-check` | shipped 2026-05-03 | Morning briefing: pacing vs weekly target, portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
 | `fatigue-monitor` | planned (Session 3) | Ad-level fatigue classification with baseline-aware severity scoring + budget-conflict detection |
 
 The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earlier versions of the three above) were built against a less-refined spec and are being replaced session-by-session. `compute_signals.py`'s `data/derived/` outputs are now an audit trail rather than the canonical signal source — the skills compute their own canonical versions.
@@ -990,3 +991,20 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 | Tab | Created by | Header row |
 |---|---|---|
 | `pipeline_health` | `pipeline-health` skill via `?action=health-write` (auto-created in `handleHealthWrite_`) | `date, check, status, detail, recorded_at` |
+| `daily_check_log` | `daily-check` skill via `?action=daily-check-write` (auto-created in `handleDailyCheckWrite_`) | `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at` |
+
+### 11.10 Shared client (`scripts/lib/meta.py`, added 2026-05-03)
+
+Single Meta Graph API client used by both the snapshot pipeline (`scripts/fetch_ad_data.py`) and skill scripts (`skills/<name>/scripts/`). Contains the `MetaClient` class plus normalization helpers and constants — extracted from `fetch_ad_data.py` so skill scripts don't duplicate the HTTP retry / throttle / paging logic. New skills that need Meta data should `from lib.meta import MetaClient` rather than reimplementing.
+
+| Export | Purpose |
+|---|---|
+| `MetaClient` | Wrapper with `_request`, `_paginate`, `insights(level, fields, since, until=None, time_increment=1)`, `adsets(filtering=…)`, `ads(filtering=…)`, `creative(id)`. Per-call throttle, exponential backoff to 60s, retries on HTTP 429/5xx and Meta error codes 1, 2, 4, 17, 32, 341, 613, 80000, 80004. |
+| `INSIGHTS_FIELDS_CAMPAIGN`, `INSIGHTS_FIELDS_ADSET`, `INSIGHTS_FIELDS_AD` | Field lists per insights level |
+| `ADSET_OBJECT_FIELDS`, `AD_OBJECT_FIELDS`, `CREATIVE_FIELDS` | Object-graph field lists |
+| `LEAD_ACTION_TYPES` | Standard Meta lead action types (mirrors `collectMetaRows_` in Code.js) |
+| `extract_conversions(actions, ic_action_type, lead_action_types)` | Returns `(conversions, ic_conversions)` from a Meta `actions[]` array |
+| `normalize_insights_row` / `normalize_adset` / `normalize_ad` / `normalize_creative` | Flatten Meta JSON into the project's row shape |
+| `ic_action_type_from_config(config)` | Reconstructs `offsite_conversion.custom.<id>` from `benchmarks.json` |
+| `load_config()` | Reads `data/config/benchmarks.json` |
+| `yesterday_utc()` | Helper for snapshot pipeline default date |
