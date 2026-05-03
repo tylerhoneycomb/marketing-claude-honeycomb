@@ -727,11 +727,27 @@ Builds a compact text snapshot for the chat LLM. Sections:
 **`agent-pipeline-health.yml`** _(added 2026-05-03)_
 
 - Triggers: `workflow_dispatch` only. Cron `0 13 * * *` (9 AM ET) is staged in the file but commented out until first runs are verified.
-- Steps: checkout → setup Python 3.12 → `pip install requests==2.32.3` → `anthropics/claude-code-action@v1` with a fixed `prompt` instructing it to run the `pipeline-health` skill per `SKILL.md`.
-- Secrets required: `ANTHROPIC_API_KEY` (already present), `META_ACCESS_TOKEN` (added 2026-05-03 for the `daily-data.yml` workflow). Optional: `SLACK_WEBHOOK_URL` — if absent, Claude skips the Slack post and only surfaces results in the workflow log.
-- Permissions: `contents: read` only (skill is read-only).
-- Concurrency group `agent-pipeline-health` so back-to-back dispatches queue rather than race.
-- This is the v1 of the autonomous-agent pattern. Daily-check and fatigue-monitor will get `agent-daily-check.yml` / `agent-fatigue-monitor.yml` files following the same template once this proves stable.
+- Steps: checkout → setup Python 3.12 → `pip install requests==2.32.3` → `anthropics/claude-code-action@v1` with a fixed `prompt` instructing it to run the `pipeline-health` skill per `SKILL.md` → "Dump Claude execution log" step that cats `/tmp/claude-execution-output.json` (`if: always()`).
+- Secrets required: `ANTHROPIC_API_KEY`, `META_ACCESS_TOKEN`. Optional: `SLACK_WEBHOOK_URL` — if absent, Claude skips the Slack post and only surfaces results in the workflow log.
+- Permissions: `contents: read` (skill is read-only) + `id-token: write` (required by `claude-code-action@v1` for OIDC auth at startup).
+- Action inputs: `show_full_output: "true"`, `display_report: "true"`, `claude_args: "--permission-mode bypassPermissions"`. The bypass is necessary because the action runs Claude in `permissionMode: "default"` by default and auto-denies every Bash command in CI (no human to click "approve").
+- Concurrency group `agent-pipeline-health`.
+
+**`agent-daily-check.yml`** _(added 2026-05-03)_
+
+- Same template as `agent-pipeline-health.yml` (id-token, bypassPermissions, show_full_output, display_report, dump-log step).
+- Triggers: `workflow_dispatch` only. Cron `30 12 * * *` (8:30 AM ET) staged but commented out.
+- timeout-minutes: 25 (fetch + analyze + 5 Meta API calls).
+- Prompt: run `fetch_daily_data.py > /tmp/daily_data.json` → `analyze_daily.py --input /tmp/daily_data.json` → compose sectioned summary (PACING, PORTFOLIO, WINNERS, BLEEDERS, FATIGUE WATCH, LEARNING, STALE).
+- Concurrency group `agent-daily-check`.
+
+**`agent-fatigue-monitor.yml`** _(added 2026-05-03)_
+
+- Same template.
+- Triggers: `workflow_dispatch` only. Cron `30 13 * * 1,4` (Mon + Thu 9:30 AM ET) staged but commented out — twice-weekly because fatigue moves slowly and daily would over-query Meta.
+- timeout-minutes: 30 (the longest skill: 14-day fetch + creative metadata + Path-B historical query + classification).
+- Prompt: run the three scripts in sequence (fetch → baselines → classify) → compose summary grouped by severity, skip healthy ads, prominently surface budget conflicts.
+- Concurrency group `agent-fatigue-monitor`.
 
 ### 10.2 Audit snapshots — `exportAuditSnapshot()` (Code.js:~3980)
 

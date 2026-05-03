@@ -84,7 +84,11 @@ Skills query Meta live for operational decisions; the snapshot pipeline above pr
 
 Each skill that needs scheduled runs gets a workflow file under `.github/workflows/agent-<skill>.yml` that wraps `anthropics/claude-code-action@v1`. The action receives a fixed prompt that tells it to run the skill per its `SKILL.md`, pulls `META_ACCESS_TOKEN` (and optional `SLACK_WEBHOOK_URL`) from repo secrets, and surfaces results in the workflow log. Slack posting on WARN/FAIL is opt-in via the secret.
 
-- **`agent-pipeline-health.yml`** _(shipped 2026-05-03)_ — manual-only (`workflow_dispatch`) until first runs are verified. Daily cron staged but commented out. This is the v1 of the autonomous-agent pattern; daily-check and fatigue-monitor will follow the same template once this proves stable.
+- **`agent-pipeline-health.yml`** _(shipped 2026-05-03)_ — manual-only (`workflow_dispatch`); daily cron staged for 9 AM ET, commented out. v1 of the autonomous-agent pattern.
+- **`agent-daily-check.yml`** _(shipped 2026-05-03)_ — manual-only; daily cron staged for 8:30 AM ET, commented out.
+- **`agent-fatigue-monitor.yml`** _(shipped 2026-05-03)_ — manual-only; twice-weekly cron staged for Mon + Thu 9:30 AM ET (fatigue moves slowly, daily would over-query Meta).
+
+All three use the same template baked from the pipeline-health iteration cycle: `id-token: write` permission for OIDC auth, `--permission-mode bypassPermissions` so Claude can run Bash in CI, `show_full_output: true` + `display_report: true` so Claude's output surfaces in the workflow log, and an `if: always()` step that dumps `claude-execution-output.json` for diagnostics if anything fails.
 
 ---
 
