@@ -10,6 +10,13 @@ on:
 
 permissions:
   contents: read
+  # `claude-code-action@v1` fetches an OIDC token at startup for its
+  # auth flow with the action's backend. Without `id-token: write` the
+  # action fails before reaching the prompt with:
+  #   "Could not fetch an OIDC token. Did you remember to add
+  #    `id-token: write` to your workflow permissions?"
+  # See claude.yml for the same pattern.
+  id-token: write
 
 concurrency:
   group: agent-pipeline-health
