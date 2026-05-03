@@ -125,14 +125,61 @@ The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent lo
 - **Signal floors.** Fatigue signals require ≥ 3 days of data and ≥ 1,000 impressions before they're considered actionable. Don't promote a row whose `actionable` field is `false`, even if it has a flag set.
 - **Daily-data workflow is manual-only for now.** `.github/workflows/daily-data.yml` runs only on workflow_dispatch until we've confirmed the first few snapshot outputs are clean. To enable the schedule, uncomment the `schedule` block in the workflow file.
 
-## Skills
+## Agent Skills
 
-Skill files (`skills/<name>/SKILL.md`) are operating instructions, not documentation. When invoking a skill, follow its instructions exactly: input files, decision logic, output format, and constraints. Each skill states the conditions for when to invoke it; if the conditions don't match the user's request, suggest a different skill rather than improvising.
+Skills live in `skills/<name>/SKILL.md`. Each skill has Python scripts in
+`scripts/` that handle Meta API calls and computation. Run scripts via
+bash and interpret their JSON output. Skills are operating instructions,
+not documentation — follow the input/output and constraints exactly.
 
-Current skills:
+### Shared config
 
-- **daily-check** — top-of-session orientation; the "5 daily questions"
-- **fatigue-monitor** — per-ad fatigue detection with severity-based recommendations
-- **budget-optimizer** — ad-set budget shifts, routed through the existing Slack approval flow
-- **ad-copy-generator** — Reg-CF-compliant copy variants for fatigue refreshes and new launches
-- **pipeline-health** — read-only verification of snapshot freshness, workflow status, token signals
+All thresholds and account constants live in `data/config/benchmarks.json`.
+Never hardcode thresholds in skill files, scripts, or `Code.js`.
+
+### Sheet write path
+
+Skills write results to the Google Sheet by calling `/exec` action handlers
+defined in `Code.js`. To add a new write endpoint:
+1. Add an action handler to `doGet` (or `doPost` for bulk JSON payloads) in
+   `apps-script/Code.js`
+2. Push to `main` — CI/CD deploys automatically via `clasp`
+3. Call the endpoint from the skill
+
+### Execution modes
+
+- **Interactive:** Tyler prompts Claude Code directly. Output goes to terminal.
+- **Autonomous:** GitHub Action runs `anthropics/claude-code-action@v1` on cron.
+  Same skill, same behavior. Output goes to Slack.
+
+### Meta API conventions
+
+- API version: `v21.0` (matches `apps-script/Code.js:25`)
+- Account ID: `act_1953544531525812`
+- IC conversions: extracted from `actions[]` where `action_type` is
+  `offsite_conversion.custom.2330338620810873` (the "Investment Crowdfunding
+  Prequal Decision" custom conversion)
+- General lead conversions: `lead`, `offsite_conversion.fb_pixel_lead`,
+  `onsite_conversion.lead_grouped`
+- Always filter on `effective_status=["ACTIVE","PAUSED"]` unless explicitly
+  checking for deleted/archived entities
+
+### Current skills
+
+- **pipeline-health** — verifies data freshness, Meta token validity, IC
+  conversion event existence, and dashboard endpoint health. Run before any
+  other skill so a downstream "all clear" reading isn't masking a broken
+  pipeline.
+- **daily-check** _(coming Session 2)_ — morning briefing across pacing,
+  portfolio performance, winners, bleeders, and early fatigue signals.
+- **fatigue-monitor** _(coming Session 3)_ — ad-level fatigue classification
+  with baseline-aware severity scoring.
+
+### Snapshot pipeline (parallel to skills)
+
+`scripts/fetch_ad_data.py` and `scripts/compute_signals.py` populate
+`data/snapshots/` and `data/derived/` daily via `.github/workflows/daily-data.yml`.
+This is the **historical backbone** — skills query Meta live for operational
+decisions, but the snapshot pipeline preserves a 90-day audit trail and is
+how the fatigue monitor will compute baselines for ads older than Meta's
+14-day insight window without making a second API call per ad per run.

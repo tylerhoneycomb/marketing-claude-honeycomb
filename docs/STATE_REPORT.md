@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-02_
+_Last updated: 2026-05-03_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -64,12 +64,21 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 
 - **Audit snapshot export** — dumps the four key data sheets as JSON files to a separate branch in the repo (`audit-snapshots`). This is what lets Claude Code (this assistant) inspect the actual data to diagnose issues.
 
-### Ad-level data pipeline (new, manual for now)
+### Ad-level data pipeline (snapshot backbone)
 
-- **`daily-data.yml` GitHub Action** — pulls ad-set + ad-level insights from Meta for yesterday's date, plus creative metadata for any newly discovered ads, and commits everything to `data/snapshots/<YYYY-MM-DD>/`.
-- **Signal computation** — `scripts/compute_signals.py` reads the most recent ~7 days of snapshots and writes derived files (`data/derived/fatigue_signals.json`, `winner_bleeder.json`, `summary.json`) that tell Claude Code which ads are fatiguing, which are winning, and which to flag for human review.
+- **`daily-data.yml` GitHub Action** — pulls ad-set + ad-level insights from Meta for yesterday's date (or a `start_date`/`end_date` range for backfills), plus creative metadata for any newly discovered ads, and commits everything to `data/snapshots/<YYYY-MM-DD>/`.
+- **Signal computation** — `scripts/compute_signals.py` reads the most recent ~7 days of snapshots and writes derived files (`data/derived/fatigue_signals.json`, `winner_bleeder.json`, `summary.json`) as an audit trail. The new agent skills compute their own canonical signals; these derived files exist for historical analysis and trend lookback beyond Meta's 14-day insight window.
 - **Currently manual** — the workflow runs only on `workflow_dispatch` (manually triggered) until the first few outputs are confirmed correct. A daily cron (8 AM ET) is staged in the workflow file but commented out.
-- **Skills** — five `SKILL.md` files under `skills/` (daily-check, fatigue-monitor, budget-optimizer, ad-copy-generator, pipeline-health) tell Claude Code what to do when invoked. Skills are operating instructions, not docs.
+
+### Agent skills (new, 2026-05-03)
+
+Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` operating manual and Python scripts that handle Meta API calls and computation. Claude Code reads them at session start and runs the scripts via bash. Three skills are scoped:
+
+- **pipeline-health** _(shipped 2026-05-03)_ — runs four checks (data freshness, Meta token validity, IC conversion event existence, dashboard endpoint health) and writes results to a new `pipeline_health` Sheet tab via `Code.js?action=health-write`. Posts to Slack only on WARN/FAIL.
+- **daily-check** _(coming)_ — morning briefing across pacing, portfolio, winners, bleeders, and early fatigue signals.
+- **fatigue-monitor** _(coming)_ — ad-level fatigue classification with baseline-aware severity scoring.
+
+Skills query Meta live for operational decisions; the snapshot pipeline above provides the historical backbone.
 
 ---
 

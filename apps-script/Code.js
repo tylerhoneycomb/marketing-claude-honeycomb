@@ -3634,7 +3634,11 @@ function handleDashboardApi_(e) {
     approve_target: true,
     reject_target: true,
     confirm_approve_target: true,
-    confirm_reject_target: true
+    confirm_reject_target: true,
+    // Agent skills surface area. Read-only ones go through the switch
+    // at the bottom; writers (`*-write`) handle their own response.
+    'rolling-latest-date': true,
+    'health-write': true
   };
 
   if (!action || !dashboardActions[action]) return null;
@@ -3800,6 +3804,13 @@ function handleDashboardApi_(e) {
     return applyTargetDecision_(e, action === 'confirm_approve_target' ? 'approve' : 'reject');
   }
 
+  // Agent skills — `pipeline-health` skill calls `health-write` to append
+  // check results to the `pipeline_health` tab. Accepts rows via a `rows`
+  // query/POST param (JSON-encoded array) or repeated check params.
+  if (action === 'health-write') {
+    return handleHealthWrite_(e);
+  }
+
   try {
     var result;
     switch (action) {
@@ -3821,6 +3832,9 @@ function handleDashboardApi_(e) {
       case 'campaigns':
         result = getCampaignList_();
         break;
+      case 'rolling-latest-date':
+        result = getRollingLatestDate_();
+        break;
     }
     return jsonResponse_(result);
 
@@ -3838,6 +3852,115 @@ function jsonResponse_(payload) {
   return ContentService
     .createTextOutput(JSON.stringify(payload))
     .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+// ─── AGENT SKILLS — read/write helpers ──────────────────────
+// These are surfaced by the `pipeline-health` skill. Other skills
+// will follow the same pattern in their respective sessions.
+
+// Read-only: returns the most recent date present in rolling_data.
+// Used by the pipeline-health data-freshness check. Counts only rows
+// with a parseable date value in column A.
+function getRollingLatestDate_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(META_SHEET);
+  if (!sheet) {
+    return { latest_date: null, total_rows: 0,
+             error: 'Sheet "' + META_SHEET + '" not found' };
+  }
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { latest_date: null, total_rows: 0 };
+  }
+  var dates = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  var latest = null;
+  var counted = 0;
+  for (var i = 0; i < dates.length; i++) {
+    var v = dates[i][0];
+    if (!v) continue;
+    counted++;
+    var d = (v instanceof Date) ? v : new Date(v);
+    if (isNaN(d.getTime())) continue;
+    if (latest === null || d > latest) latest = d;
+  }
+  return {
+    latest_date: latest
+      ? Utilities.formatDate(latest, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+      : null,
+    total_rows: counted
+  };
+}
+
+
+// Append-only: writes pipeline_health rows. Creates the tab on first call.
+// Accepts either:
+//   - `rows` parameter (JSON-encoded array of {date, check, status, detail})
+//   - or four parameters `date`, `check`, `status`, `detail` for a single row
+// Returns { ok, written } or { error }.
+function handleHealthWrite_(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('pipeline_health');
+  if (!sheet) {
+    sheet = ss.insertSheet('pipeline_health');
+    sheet.appendRow(['date', 'check', 'status', 'detail', 'recorded_at']);
+  }
+
+  var rows = [];
+  var p = (e && e.parameter) || {};
+
+  // Wire formats supported, in priority order:
+  //   1. JSON body POST: {"rows": [{date, check, status, detail}, ...]}
+  //   2. Form-encoded `rows` param holding a JSON array
+  //   3. Single row via `check`/`status`/`detail`/`date` query params
+  var bodyRows = null;
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && Array.isArray(parsed.rows)) bodyRows = parsed.rows;
+    } catch (parseErr) {
+      // Not JSON — fall through to form/query handling.
+    }
+  }
+
+  if (bodyRows) {
+    rows = bodyRows;
+  } else if (p.rows) {
+    try {
+      rows = JSON.parse(p.rows);
+      if (!Array.isArray(rows)) {
+        return jsonResponse_({ error: 'rows must be a JSON array' });
+      }
+    } catch (err) {
+      return jsonResponse_({ error: 'rows is not valid JSON: ' + err.message });
+    }
+  } else if (p.check) {
+    rows = [{
+      date: p.date,
+      check: p.check,
+      status: p.status,
+      detail: p.detail
+    }];
+  } else {
+    return jsonResponse_({ error: 'no rows provided (use JSON body, rows=<json>, or check/status/detail)' });
+  }
+
+  var nowIso = new Date().toISOString();
+  var written = 0;
+  for (var i = 0; i < rows.length; i++) {
+    var r = rows[i] || {};
+    if (!r.check) continue;
+    sheet.appendRow([
+      r.date || '',
+      String(r.check),
+      String(r.status || ''),
+      String(r.detail || ''),
+      nowIso
+    ]);
+    written++;
+  }
+
+  return jsonResponse_({ ok: true, written: written });
 }
 
 
@@ -4018,6 +4141,12 @@ function doPost(e) {
 
   if (action === 'chat') {
     return handleChatRequest_(e);
+  }
+  // Agent skills can POST bulk payloads (a JSON array of rows) instead
+  // of cramming everything into the query string. Same handler for GET
+  // and POST so the skill can pick whichever fits.
+  if (action === 'health-write') {
+    return handleHealthWrite_(e);
   }
 
   return jsonResponse_({ error: 'Unknown POST action: ' + action });

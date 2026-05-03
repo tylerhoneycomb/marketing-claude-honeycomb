@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-02_
+_Last updated: 2026-05-03_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -648,6 +648,8 @@ All return `ContentService.createTextOutput(JSON.stringify(payload))` with MIME 
 | `propose_spend_target` | GET | `target`, `tolerance` | Stages change, sends Slack approval |
 | `approve_target` / `reject_target` | GET | `token` | HTML confirmation page |
 | `confirm_approve_target` / `confirm_reject_target` | GET | `token` | Applies decision |
+| `rolling-latest-date` | GET | — | `{latest_date, total_rows}` from `rolling_data`. Used by `pipeline-health` skill. |
+| `health-write` | POST or GET | JSON body `{rows:[…]}` or `rows=<json>` or `check`/`status`/`detail` | Appends to `pipeline_health` tab (auto-created). Header row: `date, check, status, detail, recorded_at`. |
 
 ### 9.3 `buildDashboardContext_()` (Code.js:3836)
 
@@ -923,40 +925,46 @@ Label rules (gated on impressions ≥ `min_impressions_for_signal`):
 
 All thresholds live in `data/config/benchmarks.json`. Scripts and skills MUST read from this file rather than hardcoding constants.
 
-Keys:
-- `account.id`, `account.api_version` — Meta account + Graph API version
-- `thresholds.fatigue.*` — CTR decline %, frequency warning/critical, min impressions, min days active
-- `thresholds.budget.*` — daily floors, ±% caps, weekly target
-- `thresholds.performance.*` — winner / bleeder definitions, lifetime conversion floor
-- `ic_tracking.action_type` — Meta `actions[]` action_type for the IC custom conversion (`offsite_conversion.custom.2330338620810873`); pinned to one ID because the ad-level pipeline does not have access to the Sheets-based `campaign_mapping`
-- `ic_tracking.lead_action_types` — fallback lead action types (matches `collectMetaRows_` in Code.js)
+Top-level keys (current schema, 2026-05-03):
+- `account.{id, name, meta_api_version, timezone}` — Meta account + Graph API version + display timezone
+- `exec_endpoint` — Apps Script `/exec` URL skills hit for Sheet read/write
+- `slack_webhook_secret_name` — name of the env var skills look up for Slack posting
+- `ic_tracking.{custom_conversion_id, event_name, pattern}` — IC tracking constants. The action type is reconstructed in code as `offsite_conversion.custom.<custom_conversion_id>`.
+- `pacing.{weekly_spend_target_dollars, pacing_tolerance_pct}` — used by daily-check skill
+- `fatigue.*` — CTR decline thresholds (early/fatigued), frequency warnings, CPC inflation, baseline window, min impressions/days active, creative age warning
+- `daily_check.*` — winner/bleeder definitions, early-fatigue thresholds for the daily briefing
+- `pipeline_health.{token_warning_days, endpoint_timeout_seconds, data_freshness_max_gap_weekdays}` — used by pipeline-health skill
+- `campaign_defaults.type` — `prospecting` vs `retargeting` (affects fatigue frequency thresholds)
 
 ### 11.5 IC conversion extraction
 
-`fetch_ad_data.py:extract_conversions` mirrors `collectMetaRows_` in `apps-script/Code.js` (line ~1135-1188): for each `actions[]` array, take the first matching lead action type as `conversions`, sum any matches against `ic_tracking.action_type` as `ic_conversions`. This keeps daily ad-level totals reconcilable with the campaign-level `rolling_data` totals.
+`fetch_ad_data.py:extract_conversions` mirrors `collectMetaRows_` in `apps-script/Code.js` (line ~1135-1188): for each `actions[]` array, take the first matching lead action type as `conversions`, sum any matches against `offsite_conversion.custom.<ic_tracking.custom_conversion_id>` as `ic_conversions`. This keeps daily ad-level totals reconcilable with the campaign-level `rolling_data` totals.
 
 **Limitation:** Because the ad-level pipeline cannot read `campaign_mapping` (which lives in the Google Sheet), it cannot dynamically discover new IC custom conversion IDs. If marketing adds a second IC conversion in Meta, `benchmarks.json` must be updated by hand. See tech-debt index §10.4.
 
 ### 11.6 Skills (`/skills/`)
 
-Each subdirectory holds one `SKILL.md`. Skills are operating instructions Claude Code reads at session start; they are not user-facing docs.
+Skills are self-contained packages: a `SKILL.md` (with YAML frontmatter — `name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Scripts emit structured JSON; the skill interprets the JSON and chooses what to send to Slack and what to write to the Sheet.
 
-| Skill | Purpose |
-|---|---|
-| `daily-check` | Top-of-session orientation. The "5 daily questions" — spend, IC volume, fatigue, winners/bleeders, what needs human review |
-| `fatigue-monitor` | Per-ad fatigue detection with severity-based recommendations (pause / refresh / reduce / watch) |
-| `budget-optimizer` | Ad-set budget shifts driven by ad-level winner/bleeder mix. Routes through existing Slack approval flow — does not write to Meta directly |
-| `ad-copy-generator` | Reg-CF-compliant copy variants for fatigue refreshes and new launches |
-| `pipeline-health` | Read-only verification of snapshot freshness, derived-signal recency, workflow status |
+| Skill | Status | Purpose |
+|---|---|---|
+| `pipeline-health` | shipped 2026-05-03 | Four checks: data freshness, Meta token, IC conversion event, dashboard endpoint. Slack-silent on PASS. |
+| `daily-check` | planned (Session 2) | Morning briefing: pacing, portfolio, winners, bleeders, early fatigue, learning-phase ad sets, stale creatives |
+| `fatigue-monitor` | planned (Session 3) | Ad-level fatigue classification with baseline-aware severity scoring + budget-conflict detection |
+
+The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earlier versions of the three above) were built against a less-refined spec and are being replaced session-by-session. `compute_signals.py`'s `data/derived/` outputs are now an audit trail rather than the canonical signal source — the skills compute their own canonical versions.
 
 ### 11.7 Workflow (`.github/workflows/daily-data.yml`)
 
 - **Trigger:** `workflow_dispatch` only (current). The cron block (`0 12 * * *` UTC = 8 AM ET) is staged but commented out until the first runs are verified clean.
 - **Steps:** checkout → setup Python 3.12 → `pip install requests==2.32.3` → `python scripts/fetch_ad_data.py` → `python scripts/compute_signals.py` → commit `data/` and push to the current branch.
-- **Secrets:** `META_ACCESS_TOKEN` (GitHub Secret on the repo, separate from the Apps Script Script Property of the same name).
+- **Secrets:** `META_ACCESS_TOKEN` (GitHub Secret on the repo, separate from the Apps Script Script Property of the same name). `META_AD_ACCOUNT_ID` is also read from env if set, falling back to `account.id` in `benchmarks.json`.
 - **Permissions:** `contents: write` (needed to push the daily commit).
 - **Concurrency:** group `daily-data`, no cancel — back-to-back runs queue rather than racing on the same files.
-- **Optional input:** `snapshot_date` lets you backfill a specific YYYY-MM-DD when triggering manually.
+- **Inputs:**
+  - `snapshot_date` — single-day mode (default: yesterday UTC).
+  - `start_date` + `end_date` — backfill range mode (inclusive, idempotent — skips dates with an existing `_manifest.json`).
+  - `sleep_between_calls` — min seconds between Meta API calls (default 1.0). Backfill uses exponential backoff to 60s on HTTP 429 / Meta error codes 1, 2, 4, 17, 32, 341, 613, 80000, 80004.
 
 ### 11.8 Function index — Python scripts
 
@@ -971,3 +979,14 @@ Each subdirectory holds one `SKILL.md`. Skills are operating instructions Claude
 | `compute_ad_metrics` | `scripts/compute_signals.py` | Per-ad rolling metrics |
 | `evaluate_fatigue` | `scripts/compute_signals.py` | Apply thresholds → flags + severity + actionable |
 | `compute_winner_bleeder` | `scripts/compute_signals.py` | Per-adset CTR/spend ranking |
+| `expected_data_date` | `skills/pipeline-health/scripts/check_health.py` | Computes the date `rolling_data` should have, accounting for the 7 AM ET pull cutoff |
+| `weekday_gap` | `skills/pipeline-health/scripts/check_health.py` | Counts business days missed between latest data and expected date |
+| `check_data_freshness` / `check_meta_token` / `check_ic_conversion_event` / `check_dashboard_endpoint` | `skills/pipeline-health/scripts/check_health.py` | Four health checks; each returns `{name, status, detail}` |
+| `getRollingLatestDate_` | `apps-script/Code.js` | `?action=rolling-latest-date` handler — returns latest date in `rolling_data` |
+| `handleHealthWrite_` | `apps-script/Code.js` | `?action=health-write` handler (GET or POST) — appends to `pipeline_health` tab, creates tab on first call |
+
+### 11.9 Tabs added by skills
+
+| Tab | Created by | Header row |
+|---|---|---|
+| `pipeline_health` | `pipeline-health` skill via `?action=health-write` (auto-created in `handleHealthWrite_`) | `date, check, status, detail, recorded_at` |

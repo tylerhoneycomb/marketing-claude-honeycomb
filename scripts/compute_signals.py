@@ -251,10 +251,24 @@ def in_learning_phase(adset: dict[str, Any]) -> bool:
 
 def run(window_days: int) -> int:
     config = load_config()
-    fatigue_thresholds = config["thresholds"]["fatigue"]
+    # Map new benchmarks.json schema → the keys this script's helpers expect.
+    # The new schema separates "fatigue" thresholds from "daily_check" so the
+    # same numbers don't have to live in two places. compute_signals.py is the
+    # audit-trail layer — its winner/bleeder definitions are heuristic and not
+    # authoritative; the daily-check skill computes the canonical version.
+    fatigue_cfg = config["fatigue"]
+    daily_cfg = config["daily_check"]
+    fatigue_thresholds = {
+        "min_days_active": fatigue_cfg["min_days_active"],
+        "min_impressions_for_signal": fatigue_cfg["min_impressions"],
+        "ctr_decline_pct_7d": fatigue_cfg["ctr_early_decline_pct"],
+        "frequency_warning": fatigue_cfg["frequency_warning"],
+        "frequency_critical": fatigue_cfg["frequency_critical"],
+    }
     perf_thresholds = {
-        **config["thresholds"]["performance"],
-        "min_impressions_for_signal": fatigue_thresholds["min_impressions_for_signal"],
+        "bleeder_ctr_vs_adset_avg": daily_cfg["bleeder_ctr_vs_adset_avg_pct"] / 100.0,
+        "winner_spend_share_min": daily_cfg["bleeder_min_spend_share_pct"] / 100.0,
+        "min_impressions_for_signal": fatigue_cfg["min_impressions"],
     }
 
     dates = load_snapshot_dates(window_days)
@@ -380,8 +394,9 @@ def empty_run(window_days: int, dates: list[str]) -> None:
 
 
 def main(argv: list[str] | None = None) -> int:
-    config = load_config()
-    default_window = config.get("snapshot_retention", {}).get("rolling_window_days", 7)
+    # rolling_window_days isn't a key in the new schema; default to 7 days
+    # (matches the fatigue skill's "current 7-day rolling" window).
+    default_window = 7
     parser = argparse.ArgumentParser(description="Compute derived signals from ad snapshots.")
     parser.add_argument("--window-days", type=int, default=default_window,
                         help=f"Rolling window for trend analysis (default: {default_window}).")

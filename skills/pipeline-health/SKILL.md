@@ -1,93 +1,76 @@
-# Skill: Pipeline Health
+---
+name: pipeline-health
+description: Check whether the Honeycomb ads pipeline is working — data freshness, Meta token, IC tracking, dashboard endpoint
+---
+
+# Pipeline Health
 
 ## Purpose
 
-Verify that the data pipelines feeding the agent are working: ad-level snapshots are fresh, derived signals are recent, the campaign-level Apps Script pipeline is still running, and tokens haven't silently expired.
+Answer one question: is the system working right now? Run this before any other skill so a downstream "no fatigue signals" or "all caught up" reading isn't actually masking a broken pipeline.
 
-## When to invoke
+## Scripts
 
-- Tyler asks "is the pipeline OK?" / "did the data come in?" / "why is the dashboard stale?"
-- The daily-check skill detected a missing or > 36-hour-old snapshot
-- After any deployment that touched `scripts/`, `apps-script/Code.js`, or workflows
-
-## What to check
-
-### 1. Ad-level snapshot freshness
+`scripts/check_health.py` runs four health checks against the Google Sheet, the Meta API, and the dashboard endpoint, and prints structured JSON to stdout.
 
 ```
-ls data/snapshots/ | sort | tail -3
+python3 skills/pipeline-health/scripts/check_health.py
 ```
 
-- Most recent dir should be yesterday's UTC date (or today's, depending on when this runs)
-- Open `data/snapshots/<latest>/_manifest.json`. Verify `exported_at` is within the last 30 hours.
-- Verify `counts` is non-zero across `campaigns`, `adsets`, `ads`, `ad_insights`.
+Requires:
+- `META_ACCESS_TOKEN` env var
+- `EXEC_ENDPOINT` env var (optional — falls back to `account.exec_endpoint` from `benchmarks.json`)
+- `data/config/benchmarks.json` for thresholds
 
-### 2. Derived signals freshness
+The four checks:
+1. **data_freshness** — calls `?action=rolling-latest-date`, compares to expected (yesterday in account timezone, or two days ago if running before 7 AM ET).
+2. **meta_token** — calls Meta `debug_token`, parses `is_valid` and `expires_at`.
+3. **ic_conversion_event** — calls Meta `customconversions`, verifies the IC custom conversion ID is present and active.
+4. **dashboard_endpoint** — calls `?action=leaderboard` with the configured timeout, verifies a JSON response.
 
-- `data/derived/summary.json` `computed_at` should match (or be later than) the latest snapshot's `exported_at`.
-- If the snapshot exists but `summary.json` is older, `compute_signals.py` failed silently. Re-run it locally:
-  ```
-  python3 scripts/compute_signals.py
-  ```
+Each check returns `{name, status, detail}` where `status` is `PASS`, `WARN`, or `FAIL`.
 
-### 3. Workflow run history
+## Interpreting output
 
-Check the GitHub Actions UI (the agent can use `mcp__github__list_pull_requests`-adjacent tools, or Tyler runs this manually):
-- "Daily Ad Data Collection" workflow run on the expected schedule (manual-only currently — confirm it ran when triggered)
-- "Deploy Apps Script" workflow last green run
-- "Deploy Webapp" workflow last green run
+- **All PASS:** system is healthy. In autonomous mode, do nothing — silent success. In interactive mode, print results to terminal.
+- **Any WARN or FAIL:** compose a Slack message that lists ONLY the non-PASS checks. Use the `detail` string verbatim. Post via the Slack webhook.
+- **Always write all results** (including PASS) to the Sheet via `{exec_endpoint}?action=health-write` for the historical log. One row per check.
 
-### 4. Apps Script pipeline (campaign-level)
+## Output — Slack (only on WARN/FAIL)
 
-The legacy campaign-level pipeline is the source of truth for the dashboard. Check via the audit-snapshots branch:
-
-```
-git fetch origin audit-snapshots
-git show origin/audit-snapshots:snapshots/_manifest.json
-```
-
-- `_manifest.json` should show recent `exported_at` (manual export — see `STATE_REPORT.md` § "Operational gaps")
-- `rolling_data` row count should match daily growth (~20 campaigns × 1 row/day × 90 days ≈ 1,800)
-
-### 5. Token expiration risks
-
-Meta long-lived tokens expire periodically. Symptoms:
-- `fetch_ad_data.py` returns HTTP 400 with `OAuthException`
-- The campaign-level `fetchMetaAdsData` posts a 400 to Slack
-
-If suspected, ask Tyler to regenerate `META_ACCESS_TOKEN` in:
-- Apps Script → Project Settings → Script Properties (for the legacy pipeline)
-- GitHub → repo Settings → Secrets → Actions → `META_ACCESS_TOKEN` (for the new ad-level pipeline)
-
-## Output format
+Plain text. No markdown headers. Order: FAIL first, then WARN. Example:
 
 ```
-# Pipeline health — <YYYY-MM-DD>
+⚠️ Pipeline Health — 2026-05-03
 
-## Ad-level snapshot
-- Latest: <date> (<age in hours> ago)  ✓ | ✗
-- Counts: campaigns=<n>, adsets=<n>, ads=<n>
-
-## Derived signals
-- Last computed: <iso>  ✓ | ✗
-- Severity counts: critical=<n>, warning=<n>, ok=<n>
-
-## Apps Script pipeline (legacy, campaign-level)
-- audit-snapshots last refresh: <date> (<age> ago)
-- Note: manual export, may be stale (see STATE_REPORT § Operational gaps)
-
-## Workflows
-- Daily Ad Data Collection: <green / red / not run>
-- Deploy Apps Script: <green / red>
-
-## Recommendations
-- <only if issues found>
+FAIL: Data freshness — last data from 2026-04-30, expected 2026-05-02
+WARN: Meta token expires in 12 days — regenerate before 2026-05-15
 ```
 
-If everything is healthy, the response should be one paragraph: "All pipelines current as of <timestamp>. Latest ad snapshot <date> with N ads. Derived signals last computed <Y minutes ago>." Do not pad.
+If a token regeneration deadline is mentioned, include the calendar date so it's actionable without arithmetic.
+
+## Output — Sheet
+
+POST to `{exec_endpoint}?action=health-write` with payload:
+
+```
+{
+  "rows": [
+    {"date": "2026-05-03", "check": "data_freshness", "status": "PASS", "detail": "..."},
+    ...
+  ]
+}
+```
+
+The endpoint creates the `pipeline_health` tab on first call (header row: `date, check, status, detail, recorded_at`).
+
+## Output — Interactive
+
+Print the full JSON to terminal, then a one-line summary like `4 checks: 3 PASS, 1 WARN`. Show all checks regardless of status — Tyler may want to see PASS detail.
 
 ## Constraints
 
-- This skill is **read-only**. Do not push commits, do not regenerate snapshots, do not edit `Code.js`. If a pipeline is broken, surface the diagnosis and let Tyler decide.
-- Do not call the Meta API directly to check token validity. The fact that the latest snapshot has data is the indirect health signal.
-- If `data/snapshots/` is completely empty, that's expected on a fresh setup. Say so explicitly: "No snapshots yet — first run of the daily-data workflow has not completed."
+- This skill only reads. It does not fix anything. Don't regenerate tokens, don't restart pipelines, don't modify config — just surface the diagnosis.
+- **Silent when healthy in autonomous mode.** A daily "all clear" trains people to ignore the channel. Only post on WARN/FAIL.
+- Never log the Meta token. The `detail` strings should never contain the access token.
+- If `META_ACCESS_TOKEN` is not set, fail loudly with a clear error, not a silent WARN.

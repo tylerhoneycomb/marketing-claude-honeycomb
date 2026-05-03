@@ -43,6 +43,14 @@ CONFIG_PATH = REPO_ROOT / "data" / "config" / "benchmarks.json"
 SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
 CREATIVES_PATH = REPO_ROOT / "data" / "creatives" / "creatives.json"
 
+# Standard Meta lead action types. Not configurable thresholds — these are
+# Meta API enum values that mirror collectMetaRows_ in apps-script/Code.js.
+LEAD_ACTION_TYPES = [
+    "lead",
+    "offsite_conversion.fb_pixel_lead",
+    "onsite_conversion.lead_grouped",
+]
+
 INSIGHTS_FIELDS_ADSET = [
     "campaign_id",
     "campaign_name",
@@ -486,9 +494,9 @@ def run(date: str, dry_run: bool = False,
         sleep_between_calls: float = DEFAULT_SLEEP_BETWEEN_CALLS) -> int:
     config = load_config()
     account_id = resolve_account_id(config)
-    api_version = config["account"]["api_version"]
-    ic_action_type = config["ic_tracking"]["action_type"]
-    lead_action_types = config["ic_tracking"]["lead_action_types"]
+    api_version = config["account"]["meta_api_version"]
+    ic_action_type = "offsite_conversion.custom." + config["ic_tracking"]["custom_conversion_id"]
+    lead_action_types = LEAD_ACTION_TYPES
 
     out_dir = SNAPSHOTS_DIR / date
 
@@ -592,9 +600,9 @@ def run_range(start: str, end: str, dry_run: bool = False,
     """Backfill a date range. Idempotent — skips dates that already have a manifest."""
     config = load_config()
     account_id = resolve_account_id(config)
-    api_version = config["account"]["api_version"]
-    ic_action_type = config["ic_tracking"]["action_type"]
-    lead_action_types = config["ic_tracking"]["lead_action_types"]
+    api_version = config["account"]["meta_api_version"]
+    ic_action_type = "offsite_conversion.custom." + config["ic_tracking"]["custom_conversion_id"]
+    lead_action_types = LEAD_ACTION_TYPES
 
     all_dates = enumerate_dates(start, end)
     pending = [d for d in all_dates if not has_snapshot(d)]
