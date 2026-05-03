@@ -10,7 +10,7 @@ Checks:
   1. data_freshness    — most recent date in rolling_data vs expected
   2. meta_token        — debug_token: validity + expiry
   3. ic_conversion_event — IC custom conversion exists in the account
-  4. dashboard_endpoint — /exec?action=leaderboard returns valid JSON
+  4. dashboard_endpoint — /exec?action=rollup returns valid JSON
 
 Environment:
   META_ACCESS_TOKEN  required
@@ -190,7 +190,12 @@ def check_dashboard_endpoint(exec_endpoint: str, timeout_s: int) -> dict[str, An
     name = "dashboard_endpoint"
     started = datetime.now()
     try:
-        resp = requests.get(exec_endpoint, params={"action": "leaderboard"},
+        # `rollup` returns weekly_rollup rows — the action the dashboard
+        # itself hits most heavily, so this is a representative health
+        # signal. (Earlier this was `leaderboard`, but that action doesn't
+        # actually exist in handleDashboardApi_; the dashboard builds its
+        # leaderboard view client-side from rollup data.)
+        resp = requests.get(exec_endpoint, params={"action": "rollup"},
                             timeout=timeout_s)
     except requests.Timeout:
         return {"name": name, "status": "FAIL",
