@@ -6,8 +6,8 @@ name: Agent — Fatigue Monitor
 # over-query Meta — fatigue moves slowly.
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: '30 13 * * 1,4'  # Mon + Thu 9:30 AM ET (UTC-4) / 8:30 AM ET during DST
+  schedule:
+    - cron: '30 13 * * 1,4'  # Mon + Thu 9:30 AM ET (UTC-4) / 8:30 AM ET during DST
 
 permissions:
   contents: read
