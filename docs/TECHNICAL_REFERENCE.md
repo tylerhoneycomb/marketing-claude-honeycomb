@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-03_
+_Last updated: 2026-05-03 (autonomous agent workflow)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -723,6 +723,15 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Triggers: issue comments, PR review comments, issues, PR reviews containing `@claude`.
 - Invokes Claude Code agent for automated assistance.
 - Permissions: `contents:write`, `pull-requests:write`, `issues:write`, `id-token:write`.
+
+**`agent-pipeline-health.yml`** _(added 2026-05-03)_
+
+- Triggers: `workflow_dispatch` only. Cron `0 13 * * *` (9 AM ET) is staged in the file but commented out until first runs are verified.
+- Steps: checkout → setup Python 3.12 → `pip install requests==2.32.3` → `anthropics/claude-code-action@v1` with a fixed `prompt` instructing it to run the `pipeline-health` skill per `SKILL.md`.
+- Secrets required: `ANTHROPIC_API_KEY` (already present), `META_ACCESS_TOKEN` (added 2026-05-03 for the `daily-data.yml` workflow). Optional: `SLACK_WEBHOOK_URL` — if absent, Claude skips the Slack post and only surfaces results in the workflow log.
+- Permissions: `contents: read` only (skill is read-only).
+- Concurrency group `agent-pipeline-health` so back-to-back dispatches queue rather than race.
+- This is the v1 of the autonomous-agent pattern. Daily-check and fatigue-monitor will get `agent-daily-check.yml` / `agent-fatigue-monitor.yml` files following the same template once this proves stable.
 
 ### 10.2 Audit snapshots — `exportAuditSnapshot()` (Code.js:~3980)
 

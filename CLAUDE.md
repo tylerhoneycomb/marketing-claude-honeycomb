@@ -149,8 +149,23 @@ defined in `Code.js`. To add a new write endpoint:
 ### Execution modes
 
 - **Interactive:** Tyler prompts Claude Code directly. Output goes to terminal.
-- **Autonomous:** GitHub Action runs `anthropics/claude-code-action@v1` on cron.
-  Same skill, same behavior. Output goes to Slack.
+- **Autonomous:** GitHub Action runs `anthropics/claude-code-action@v1` on
+  cron or manual dispatch. Same skill files, same behavior. Output goes to
+  Slack on WARN/FAIL (silent on PASS) and to the workflow log either way.
+
+### Autonomous workflows
+
+Each skill that needs a scheduled run gets its own workflow file under
+`.github/workflows/agent-<skill>.yml`. Current:
+
+- `agent-pipeline-health.yml` — runs `pipeline-health` skill. Manual-only
+  (`workflow_dispatch`) until verified; cron block staged but commented out.
+
+Each agent workflow needs these GitHub Secrets on the repo:
+- `ANTHROPIC_API_KEY` — already set (used by the existing `claude.yml` too)
+- `META_ACCESS_TOKEN` — same secret used by `daily-data.yml`
+- `SLACK_WEBHOOK_URL` — optional; if unset, skills skip Slack and surface
+  output in the workflow log only
 
 ### Meta API conventions
 
