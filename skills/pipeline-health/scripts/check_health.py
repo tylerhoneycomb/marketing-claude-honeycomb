@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Pipeline health checks for the Honeycomb ads system.
 
-Runs four checks and prints structured JSON to stdout. The skill (SKILL.md)
-parses the JSON, decides what to post to Slack, and writes the rows to the
-Sheet via the /exec endpoint. This script does no posting itself — it only
-produces the data.
+Runs four checks, posts the results to the `pipeline_health` Sheet tab, and
+prints structured JSON to stdout. The skill (SKILL.md) reads the JSON and
+composes the Slack message — but the Sheet write is the script's job, so it
+happens deterministically every run.
 
 Checks:
   1. data_freshness    — most recent date in rolling_data vs expected
@@ -15,10 +15,15 @@ Checks:
 Environment:
   META_ACCESS_TOKEN  required
   EXEC_ENDPOINT      optional override; defaults to benchmarks.json `exec_endpoint`
+
+Flags:
+  --no-sheet-write   Skip the POST to /exec?action=health-write (useful for
+                     dry-runs and local development).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import logging
 import os
@@ -215,7 +220,44 @@ def check_dashboard_endpoint(exec_endpoint: str, timeout_s: int) -> dict[str, An
             "detail": f"valid JSON in {elapsed:.1f}s"}
 
 
-def main() -> int:
+def write_to_sheet(exec_endpoint: str, today_local: str,
+                   checks: list[dict[str, Any]]) -> dict[str, Any]:
+    """POST one row per check to ?action=health-write. Best-effort — a
+    network error here does not invalidate the JSON we already computed."""
+    rows = [{
+        "date": today_local,
+        "check": c["name"],
+        "status": c["status"],
+        "detail": c["detail"],
+    } for c in checks]
+    try:
+        resp = requests.post(
+            exec_endpoint,
+            params={"action": "health-write"},
+            json={"rows": rows},
+            timeout=20,
+        )
+    except requests.RequestException as exc:
+        return {"posted": False, "error": str(exc)}
+
+    if resp.status_code != 200:
+        return {"posted": False,
+                "error": f"HTTP {resp.status_code}: {resp.text[:200]}"}
+    try:
+        body = resp.json()
+    except ValueError:
+        return {"posted": False, "error": "non-JSON response from /exec"}
+    if isinstance(body, dict) and body.get("error"):
+        return {"posted": False, "error": body["error"]}
+    return {"posted": True, "written": (body or {}).get("written", len(rows))}
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description="Run pipeline-health checks.")
+    parser.add_argument("--no-sheet-write", action="store_true",
+                        help="Skip POST to ?action=health-write (dry-run mode).")
+    args = parser.parse_args(argv)
+
     logging.basicConfig(level=logging.WARNING,
                         format="%(asctime)s %(levelname)s %(message)s")
 
@@ -243,7 +285,13 @@ def main() -> int:
                                  health_cfg["endpoint_timeout_seconds"]),
     ]
 
-    print(json.dumps({"date": today_local, "checks": checks}, indent=2))
+    payload: dict[str, Any] = {"date": today_local, "checks": checks}
+    if args.no_sheet_write:
+        payload["sheet_write"] = {"posted": False, "skipped": True}
+    else:
+        payload["sheet_write"] = write_to_sheet(exec_endpoint, today_local, checks)
+
+    print(json.dumps(payload, indent=2))
     return 0
 
 

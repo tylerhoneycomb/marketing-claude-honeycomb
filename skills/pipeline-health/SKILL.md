@@ -11,15 +11,17 @@ Answer one question: is the system working right now? Run this before any other 
 
 ## Scripts
 
-`scripts/check_health.py` runs four health checks against the Google Sheet, the Meta API, and the dashboard endpoint, and prints structured JSON to stdout.
+`scripts/check_health.py` runs four health checks against the Google Sheet, the Meta API, and the dashboard endpoint. It POSTs one row per check to the `pipeline_health` Sheet tab and prints structured JSON to stdout for Slack composition.
 
 ```
 python3 skills/pipeline-health/scripts/check_health.py
+# or, to skip the Sheet write while developing:
+python3 skills/pipeline-health/scripts/check_health.py --no-sheet-write
 ```
 
 Requires:
 - `META_ACCESS_TOKEN` env var
-- `EXEC_ENDPOINT` env var (optional — falls back to `account.exec_endpoint` from `benchmarks.json`)
+- `EXEC_ENDPOINT` env var (optional — falls back to `exec_endpoint` from `benchmarks.json`)
 - `data/config/benchmarks.json` for thresholds
 
 The four checks:
@@ -28,13 +30,26 @@ The four checks:
 3. **ic_conversion_event** — calls Meta `customconversions`, verifies the IC custom conversion ID is present and active.
 4. **dashboard_endpoint** — calls `?action=leaderboard` with the configured timeout, verifies a JSON response.
 
-Each check returns `{name, status, detail}` where `status` is `PASS`, `WARN`, or `FAIL`.
+The script's stdout JSON looks like:
+
+```json
+{
+  "date": "2026-05-03",
+  "checks": [
+    {"name": "data_freshness", "status": "PASS", "detail": "..."},
+    ...
+  ],
+  "sheet_write": {"posted": true, "written": 4}
+}
+```
+
+`sheet_write.posted` reports whether the historical log row was committed. If `posted: false` with an `error`, surface that in Slack alongside the WARN/FAIL — it means the Sheet log is broken even though the checks ran.
 
 ## Interpreting output
 
 - **All PASS:** system is healthy. In autonomous mode, do nothing — silent success. In interactive mode, print results to terminal.
 - **Any WARN or FAIL:** compose a Slack message that lists ONLY the non-PASS checks. Use the `detail` string verbatim. Post via the Slack webhook.
-- **Always write all results** (including PASS) to the Sheet via `{exec_endpoint}?action=health-write` for the historical log. One row per check.
+- **Sheet log:** the script handles writing to `pipeline_health` automatically. Don't re-POST. If `sheet_write.posted` is `false`, that's itself a problem to flag.
 
 ## Output — Slack (only on WARN/FAIL)
 
@@ -51,18 +66,7 @@ If a token regeneration deadline is mentioned, include the calendar date so it's
 
 ## Output — Sheet
 
-POST to `{exec_endpoint}?action=health-write` with payload:
-
-```
-{
-  "rows": [
-    {"date": "2026-05-03", "check": "data_freshness", "status": "PASS", "detail": "..."},
-    ...
-  ]
-}
-```
-
-The endpoint creates the `pipeline_health` tab on first call (header row: `date, check, status, detail, recorded_at`).
+Handled by the script. Each run POSTs one row per check to `?action=health-write` (creates the `pipeline_health` tab on first call). Header row: `date, check, status, detail, recorded_at`. Don't issue your own POST — read `sheet_write.posted` in the script's JSON to confirm it succeeded.
 
 ## Output — Interactive
 
