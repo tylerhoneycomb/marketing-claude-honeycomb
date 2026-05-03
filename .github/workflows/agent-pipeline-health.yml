@@ -5,9 +5,8 @@ name: Agent — Pipeline Health
 # block to run daily at 9 AM ET (after the 7 AM Apps Script data pull).
 on:
   workflow_dispatch:
-  # schedule:
-  #   - cron: '0 13 * * *'  # 9 AM ET (UTC-4) / 8 AM ET during DST
-
+  schedule:
+    - cron: '0 13 * * *'  # 9 AM ET (UTC-4) / 8 AM ET during DST
 permissions:
   contents: read
   # `claude-code-action@v1` fetches an OIDC token at startup for its
