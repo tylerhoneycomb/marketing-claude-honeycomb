@@ -28,6 +28,9 @@ on:
 
 permissions:
   contents: write
+  # Allows the "Post status to tracking issue" step to comment on
+  # issue #48 via gh CLI + ${{ github.token }}.
+  issues: write
 
 concurrency:
   group: daily-data
@@ -98,3 +101,35 @@ jobs:
           done
           echo "git push failed after 4 attempts"
           exit 1
+
+      # Post status to the agent-loop tracking issue (#48). continue-on-error
+      # so a closed/missing issue doesn't fail the run. if: always() so we
+      # report failures too.
+      - name: Post status to tracking issue
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS: ${{ job.status }}
+          SNAPSHOT_DATE_INPUT: ${{ github.event.inputs.snapshot_date }}
+          START_DATE: ${{ github.event.inputs.start_date }}
+          END_DATE: ${{ github.event.inputs.end_date }}
+        run: |
+          set +e
+          DATE_LABEL="${SNAPSHOT_DATE_INPUT:-$(date -u -d 'yesterday' +%Y-%m-%d)}"
+          MANIFEST="data/snapshots/${DATE_LABEL}/_manifest.json"
+          DETAIL=""
+          if [ -f "$MANIFEST" ]; then
+            DETAIL="$(jq -r '"campaigns=\(.counts.campaigns // 0) adsets=\(.counts.adsets // 0) ads=\(.counts.ads // 0) ad_insights=\(.counts.ad_insights // 0)"' "$MANIFEST")"
+          fi
+          if [ -n "$START_DATE" ] && [ -n "$END_DATE" ]; then
+            HEADER="**daily-data** (backfill ${START_DATE} → ${END_DATE}) — ${STATUS}"
+          else
+            HEADER="**daily-data** (${DATE_LABEL}) — ${STATUS}"
+          fi
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "$HEADER"
+            echo "$DETAIL"
+            echo "[run]($RUN_URL)"
+          } | gh issue comment 48 --repo "${{ github.repository }}" --body-file - || true
