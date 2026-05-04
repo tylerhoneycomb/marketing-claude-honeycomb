@@ -152,7 +152,7 @@ def main() -> int:
         if len(sample) >= SAMPLE_SIZE:
             break
 
-    client = MetaClient(account_id, api_version, token, sleep_seconds=0.4)
+    client = MetaClient(account_id, api_version, token, sleep_between_calls=0.4)
 
     print(f"=== Investigating {len(sample)} creatives ===\n")
 
