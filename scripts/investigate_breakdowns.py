@@ -105,137 +105,154 @@ def find_ad_with_traffic() -> str | None:
     return None
 
 
-def investigate_breakdowns(client: MetaClient, ad_id: str,
-                           ic_action_type: str) -> None:
-    print("=" * 70)
-    print(f"Q1. Asset-level breakdown insights for ad {ad_id}")
-    print("=" * 70)
+def try_breakdown(client: MetaClient, ad_id: str, label: str,
+                  breakdowns: str | None, include_actions: bool,
+                  ic_action_type: str) -> dict[str, Any]:
+    """Run one breakdown configuration and return a summary dict.
 
+    Returns:
+        {ok: bool, error: str | None, rows: int, distinct_assets: int,
+         imp_combos: int, ic_combos: int}
+    """
     until = date.today() - timedelta(days=1)
     since = until - timedelta(days=29)
+    fields = ["ad_id", "ad_name", "impressions", "clicks", "spend"]
+    if include_actions:
+        fields.append("actions")
+
     url = f"{client.base}/{ad_id}/insights"
-    params = {
-        "fields": ",".join(ASSET_INSIGHT_FIELDS),
-        "breakdowns": ASSET_BREAKDOWNS,
+    params: dict[str, Any] = {
+        "fields": ",".join(fields),
         "time_range": json.dumps({"since": since.isoformat(),
                                   "until": until.isoformat()}),
         "level": "ad",
         "limit": 500,
     }
-    print(f"GET {url}")
-    print(f"  fields:     {','.join(ASSET_INSIGHT_FIELDS)}")
-    print(f"  breakdowns: {ASSET_BREAKDOWNS}")
-    print(f"  time_range: {since} → {until}")
+    if breakdowns:
+        params["breakdowns"] = breakdowns
 
     try:
         body = client._request(url, params)
     except Exception as exc:
-        print(f"\n  ERROR: {exc}")
-        print("  → Meta may not support these breakdowns for asset_feed_spec")
-        print("    ads. Reassess pipeline architecture before proceeding.")
-        return
+        msg = str(exc)
+        return {"ok": False, "error": msg[:300], "rows": 0,
+                "distinct_assets": 0, "imp_combos": 0, "ic_combos": 0}
 
-    rows = body.get("data", []) or []
-    print(f"\n  Returned {len(rows)} row(s).")
+    rows = body.get("data") or []
     if not rows:
-        print("  → Either the ad had no impressions in the window or Meta")
-        print("    declined the breakdown. If consistent across other ads,")
-        print("    flag and reassess.")
-        return
+        return {"ok": True, "error": None, "rows": 0,
+                "distinct_assets": 0, "imp_combos": 0, "ic_combos": 0}
 
-    # Are asset IDs actually populated? If every row has the same
-    # asset_id values, breakdowns aren't really splitting.
-    asset_field_population: Counter[str] = Counter()
-    distinct_assets: dict[str, set[str]] = {
-        "body_asset": set(),
-        "title_asset": set(),
-        "description_asset": set(),
-        "image_asset": set(),
-    }
-    impressions_by_combo: dict[tuple, int] = {}
-    conversions_by_combo: dict[tuple, int] = {}
+    # Pull distinct asset IDs from whatever breakdown was requested.
+    breakdown_keys = (breakdowns or "").split(",") if breakdowns else []
+    distinct: set[str] = set()
+    for r in rows:
+        for k in breakdown_keys:
+            v = r.get(k)
+            if isinstance(v, dict) and v.get("id"):
+                distinct.add(f"{k}:{v['id']}")
+            elif isinstance(v, str):
+                distinct.add(f"{k}:{v}")
 
-    for row in rows:
-        for key in ("body_asset", "title_asset",
-                    "description_asset", "image_asset"):
-            val = row.get(key)
-            if val is not None and val != {}:
-                asset_field_population[key] += 1
-                # Asset breakdown returns a dict like
-                # {"id": "1234", "text": "..."}.
-                aid = (val.get("id") if isinstance(val, dict)
-                       else str(val))
-                if aid:
-                    distinct_assets[key].add(aid)
+    imp_combos = sum(1 for r in rows if int(r.get("impressions") or 0) > 0)
 
-        combo = tuple(
-            (row.get(k) or {}).get("id") if isinstance(row.get(k), dict)
-            else None
-            for k in ("body_asset", "title_asset",
-                      "description_asset", "image_asset")
-        )
-        impressions_by_combo[combo] = (
-            impressions_by_combo.get(combo, 0)
-            + int(row.get("impressions") or 0))
+    ic_combos = 0
+    if include_actions:
+        for r in rows:
+            for a in (r.get("actions") or []):
+                if a.get("action_type") == ic_action_type:
+                    try:
+                        if int(float(a.get("value") or 0)) > 0:
+                            ic_combos += 1
+                            break
+                    except (TypeError, ValueError):
+                        pass
 
-        # Extract IC conversions from actions[]
-        actions = row.get("actions") or []
-        ic = 0
-        for a in actions:
-            if a.get("action_type") == ic_action_type:
-                try:
-                    ic += int(float(a.get("value") or 0))
-                except (TypeError, ValueError):
-                    pass
-        conversions_by_combo[combo] = (
-            conversions_by_combo.get(combo, 0) + ic)
+    return {"ok": True, "error": None, "rows": len(rows),
+            "distinct_assets": len(distinct),
+            "imp_combos": imp_combos, "ic_combos": ic_combos,
+            "sample": rows[0] if rows else None}
 
-    print("\n  Asset-field population across rows:")
-    for key in ("body_asset", "title_asset",
-                "description_asset", "image_asset"):
-        n = asset_field_population[key]
-        distinct = len(distinct_assets[key])
-        print(f"    {key:22s}  {n}/{len(rows)} rows populated, "
-              f"{distinct} distinct asset id(s)")
 
-    # Spread of delivery — are impressions concentrated in one combo
-    # (Meta picked a winner and stopped exploring) or spread across many?
-    combos_with_impressions = sum(1 for v in impressions_by_combo.values()
-                                  if v > 0)
-    combos_with_conversions = sum(1 for v in conversions_by_combo.values()
-                                  if v > 0)
-    print(f"\n  Distinct asset-combinations:        {len(impressions_by_combo)}")
-    print(f"  Combos with > 0 impressions:        {combos_with_impressions}")
-    print(f"  Combos with > 0 IC conversions:     {combos_with_conversions}")
+def investigate_breakdowns(client: MetaClient, ad_id: str,
+                           ic_action_type: str) -> None:
+    print("=" * 70)
+    print(f"Q1. Asset-level breakdown insights for ad {ad_id}")
+    print("=" * 70)
+    print("Round-3 strategy: previous attempt with all 4 asset breakdowns")
+    print("at once failed because the implicit action_type breakdown")
+    print("(added when you query `actions`) collides with multiple asset")
+    print("breakdowns simultaneously. This run probes which configurations")
+    print("Meta accepts.\n")
 
-    # Top 3 combos by impressions — sanity check that real asset IDs
-    # are coming back.
-    top = sorted(impressions_by_combo.items(),
-                 key=lambda kv: kv[1], reverse=True)[:3]
-    print("\n  Top 3 asset combinations by impressions:")
-    for combo, imps in top:
-        body_id, title_id, desc_id, img_id = combo
-        ic = conversions_by_combo.get(combo, 0)
-        print(f"    body={body_id} title={title_id} "
-              f"desc={desc_id} image={img_id} → "
-              f"{imps} imp, {ic} IC")
+    configs: list[tuple[str, str | None, bool]] = [
+        # (label, breakdowns, include_actions)
+        ("baseline (no breakdown, with actions)", None, True),
+        ("body_asset only, with actions", "body_asset", True),
+        ("title_asset only, with actions", "title_asset", True),
+        ("description_asset only, with actions", "description_asset", True),
+        ("image_asset only, with actions", "image_asset", True),
+        ("body_asset + title_asset, with actions", "body_asset,title_asset", True),
+        ("body_asset + image_asset, with actions",
+         "body_asset,image_asset", True),
+        ("all 4 asset breakdowns, NO actions",
+         "body_asset,title_asset,description_asset,image_asset", False),
+    ]
 
-    print("\n  Sample raw row (first):")
-    print(f"    {json.dumps(rows[0], indent=2, default=str)[:900]}")
+    results: list[tuple[str, dict[str, Any]]] = []
+    for label, bds, with_actions in configs:
+        print(f"  Testing: {label}")
+        res = try_breakdown(client, ad_id, label, bds, with_actions,
+                            ic_action_type)
+        results.append((label, res))
+        if res["ok"]:
+            print(f"    OK — rows={res['rows']} "
+                  f"distinct_assets={res['distinct_assets']} "
+                  f"imp_combos={res['imp_combos']} "
+                  f"ic_combos={res['ic_combos']}")
+        else:
+            print(f"    FAILED — {res['error']}")
+        print()
+
+    # Find the most useful working config: ideally one that gives us
+    # rows broken down by asset AND includes IC conversions.
+    print("=" * 70)
+    print("Summary table:")
+    print("=" * 70)
+    print(f"  {'config':50s} {'ok':4s} {'rows':6s} {'distinct':10s} "
+          f"{'with_imp':10s} {'with_ic':8s}")
+    for label, r in results:
+        ok = "Y" if r["ok"] else "N"
+        print(f"  {label[:50]:50s} {ok:4s} {r['rows']:6d} "
+              f"{r['distinct_assets']:10d} "
+              f"{r['imp_combos']:10d} {r['ic_combos']:8d}")
+
+    # Sample row from the most informative working call
+    informative = [r for label, r in results
+                   if r["ok"] and r["rows"] > 0 and r["distinct_assets"] > 1]
+    if informative:
+        best = max(informative, key=lambda r: r["distinct_assets"])
+        print("\n  Sample row from the call with most distinct assets:")
+        print(f"    {json.dumps(best.get('sample'), indent=2, default=str)[:900]}")
 
     print("\n  → Verdict:")
-    if (combos_with_impressions >= 3
-            and any(len(s) >= 2 for s in distinct_assets.values())):
-        print("    GREEN — breakdowns work. Multiple distinct asset IDs")
-        print("    populated, multiple combos delivered. Per-variant CPICP")
-        print("    is achievable.")
-    elif combos_with_impressions == 1:
-        print("    YELLOW — only 1 combo delivered. Meta may have")
-        print("    converged on a winner. Test with a younger ad or one")
-        print("    in learning phase before declaring this unworkable.")
+    body_only = next((r for label, r in results
+                      if "body_asset only" in label), None)
+    if body_only and body_only["ok"] and body_only["distinct_assets"] >= 2:
+        print(f"    GREEN — single-dimension breakdowns work. Use 4 separate")
+        print(f"    calls per ad (body, title, description, image) for")
+        print(f"    per-dimension marginal CPICP. body_asset alone returned")
+        print(f"    {body_only['distinct_assets']} distinct asset(s) across")
+        print(f"    {body_only['rows']} row(s).")
+    elif body_only and body_only["ok"] and body_only["distinct_assets"] < 2:
+        print("    YELLOW — call succeeded but only 1 distinct body asset")
+        print("    delivered. Either Meta converged on a single body, or")
+        print("    the breakdown isn't actually splitting. Test on an")
+        print("    earlier-stage ad before declaring this unworkable.")
     else:
-        print("    RED — breakdowns are not splitting the data the way")
-        print("    we need. Reassess the pipeline architecture.")
+        print("    RED — single-dimension breakdowns also fail. Architecture")
+        print("    must be reassessed. Likely fall back to ad-level")
+        print("    attribution + qualitative variant analysis.")
 
 
 def investigate_image_resolution(client: MetaClient, account_id: str,
