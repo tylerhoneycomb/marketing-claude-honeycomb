@@ -1,0 +1,43 @@
+name: Investigate breakdowns + image resolution
+
+# Round 2 of the Creative Intelligence pipeline investigation.
+# Round 1 (PR #50/#51) confirmed where copy text lives. Round 2
+# answers two load-bearing questions before pipeline implementation:
+#
+#   1. Does Meta expose ASSET-LEVEL BREAKDOWN insights for asset_feed_
+#      spec ads (body_asset, title_asset, description_asset,
+#      image_asset)? Required for true variant-level CPICP attribution.
+#   2. Does image_hash → /act_X/adimages return full-size URLs we can
+#      use for visual analysis (vs the lower-res thumbnail_url)?
+#
+# One-off — delete script + this workflow once the pipeline lands.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: investigate-breakdowns
+  cancel-in-progress: false
+
+jobs:
+  investigate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests==2.32.3
+
+      - name: Run investigation
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+        run: |
+          python3 scripts/investigate_breakdowns.py
