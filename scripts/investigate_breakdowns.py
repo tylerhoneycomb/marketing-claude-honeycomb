@@ -50,17 +50,17 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from lib.meta import MetaClient, ic_action_type_from_config, load_config  # noqa: E402
 
 ASSET_BREAKDOWNS = "body_asset,title_asset,description_asset,image_asset"
-ASSET_FIELDS = [
+# Note: asset breakdown dimensions are NOT listed in fields=. Meta
+# returns them as row columns automatically when you set breakdowns=.
+# Listing them in fields= triggers HTTP 400 ("not valid for fields
+# param"). Standard insight metrics still need to be requested.
+ASSET_INSIGHT_FIELDS = [
     "ad_id",
     "ad_name",
     "impressions",
     "clicks",
     "spend",
     "actions",
-    "body_asset",
-    "title_asset",
-    "description_asset",
-    "image_asset",
 ]
 
 # Same expanded creative field set as round 1 — we need
@@ -115,7 +115,7 @@ def investigate_breakdowns(client: MetaClient, ad_id: str,
     since = until - timedelta(days=29)
     url = f"{client.base}/{ad_id}/insights"
     params = {
-        "fields": ",".join(ASSET_FIELDS),
+        "fields": ",".join(ASSET_INSIGHT_FIELDS),
         "breakdowns": ASSET_BREAKDOWNS,
         "time_range": json.dumps({"since": since.isoformat(),
                                   "until": until.isoformat()}),
@@ -123,7 +123,7 @@ def investigate_breakdowns(client: MetaClient, ad_id: str,
         "limit": 500,
     }
     print(f"GET {url}")
-    print(f"  fields:     {','.join(ASSET_FIELDS)}")
+    print(f"  fields:     {','.join(ASSET_INSIGHT_FIELDS)}")
     print(f"  breakdowns: {ASSET_BREAKDOWNS}")
     print(f"  time_range: {since} → {until}")
 
