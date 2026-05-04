@@ -1,0 +1,41 @@
+name: Investigate creative fields
+
+# One-off diagnostic for Skill 4 (Creative Intelligence). Manually
+# dispatched against the branch where investigate_creative_fields.py
+# lives. The script samples 20 cached creatives, hits the Meta Graph
+# API with an expanded field list, and prints which fields actually
+# populate copy text. Output appears in the workflow log under the
+# "Run investigation" step.
+#
+# This workflow has no schedule and is intentionally one-off — delete
+# it once we've settled the data-source question.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: investigate-creative-fields
+  cancel-in-progress: false
+
+jobs:
+  investigate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install requests==2.32.3
+
+      - name: Run investigation
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+        run: |
+          python3 scripts/investigate_creative_fields.py
