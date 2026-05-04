@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-03 (autonomous agent workflow)_
+_Last updated: 2026-05-04_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -79,6 +79,8 @@ Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` oper
 - **fatigue-monitor** _(shipped 2026-05-03)_ — pulls 14 days of ad-level insights, computes each ad's peak-window baseline (days 4–7 after launch), and classifies the current 7 days as `saturated` / `fatigued` / `early_fatigue` / `underperforming` / `healthy`. Cross-references pending budget proposals via `Code.js?action=budget-queue-read` and surfaces conflicts. Writes per-ad rows to a new `fatigue_log` Sheet tab via `Code.js?action=fatigue-write`. Caches creative metadata in `data/creatives/creatives.json` so thumbnails + ad copy are pulled once per creative, not per run.
 
 Skills query Meta live for operational decisions; the snapshot pipeline above provides the historical backbone. Both share a single Meta client at `scripts/lib/meta.py` (HTTP retries, paging, throttle handling, IC extraction, row normalization).
+
+A one-off diagnostic script, `scripts/investigate_creative_fields.py`, is also present. It samples 20 cached creatives and tests an expanded Meta field list to determine which fields reliably populate copy text (title, body, link). It is temporary — used to finalize the creative fields constant in `scripts/lib/meta.py` — and is marked for deletion once that question is settled.
 
 ### Autonomous skill execution (new, 2026-05-03)
 

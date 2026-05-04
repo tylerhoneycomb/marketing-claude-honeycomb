@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-03 (autonomous agent workflow)_
+_Last updated: 2026-05-04_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -88,16 +88,30 @@ marketing-claude-honeycomb/
 ├── docs/
 │   ├── STATE_REPORT.md      # Non-technical project state
 │   └── TECHNICAL_REFERENCE.md  # This document
-├── scripts/                 # NEW (2026-05-02) Ad-level Python pipeline
+├── scripts/                 # Ad-level Python pipeline (added 2026-05-02)
 │   ├── fetch_ad_data.py     # Daily Meta ad-set + ad insights pull
 │   ├── compute_signals.py   # Derived fatigue / winner-bleeder signals
-│   └── run_daily.sh         # Orchestrator (fetch → compute)
-├── skills/                  # NEW (2026-05-02) Agent skill definitions
-│   ├── daily-check/SKILL.md
-│   ├── fatigue-monitor/SKILL.md
-│   ├── budget-optimizer/SKILL.md
-│   ├── ad-copy-generator/SKILL.md
-│   └── pipeline-health/SKILL.md
+│   ├── run_daily.sh         # Orchestrator (fetch → compute)
+│   ├── investigate_creative_fields.py  # One-off diagnostic: sample creatives + test expanded Meta field list (temporary)
+│   └── lib/
+│       ├── __init__.py
+│       └── meta.py          # Shared Meta Graph API client (added 2026-05-03)
+├── skills/                  # Agent skill definitions (added 2026-05-02)
+│   ├── pipeline-health/
+│   │   ├── SKILL.md
+│   │   └── scripts/check_health.py
+│   ├── daily-check/
+│   │   ├── SKILL.md
+│   │   └── scripts/
+│   │       ├── fetch_daily_data.py
+│   │       └── analyze_daily.py
+│   └── fatigue-monitor/
+│       ├── SKILL.md
+│       ├── references/fatigue_thresholds.md
+│       └── scripts/
+│           ├── fetch_fatigue_data.py
+│           ├── compute_baselines.py
+│           └── classify_fatigue.py
 ├── data/                    # NEW (2026-05-02) Agent data repository
 │   ├── config/benchmarks.json     # All thresholds (single source)
 │   ├── snapshots/<YYYY-MM-DD>/    # Daily JSON snapshots from Meta
@@ -113,10 +127,14 @@ marketing-claude-honeycomb/
 │       ├── winner_bleeder.json
 │       └── summary.json
 ├── .github/workflows/
-│   ├── deploy-apps-script.yml  # Push Code.js via clasp on merge to main
-│   ├── deploy-webapp.yml       # Publish dashboard to GitHub Pages on merge to main
-│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (manual-only)
-│   └── claude.yml              # @claude mentions in issues/PRs
+│   ├── deploy-apps-script.yml       # Push Code.js via clasp on merge to main
+│   ├── deploy-webapp.yml            # Publish dashboard to GitHub Pages on merge to main
+│   ├── daily-data.yml               # Ad-level data pull (manual-only; cron staged, commented out)
+│   ├── claude.yml                   # @claude mentions in issues/PRs
+│   ├── agent-pipeline-health.yml    # Autonomous pipeline-health skill run
+│   ├── agent-daily-check.yml        # Autonomous daily-check skill run
+│   ├── agent-fatigue-monitor.yml    # Autonomous fatigue-monitor skill run (Mon + Thu)
+│   └── investigate-creative-fields.yml  # One-off diagnostic; temporary, pending removal
 ├── ad-copy/          # (empty placeholder) Meta ad copy by vertical
 ├── workflows/        # (empty placeholder) Automation scripts
 ├── audiences/        # (empty placeholder) Audience segmentation — never commit PII
@@ -197,7 +215,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 
 ### 3.3 `campaign_mapping` — Campaign → UTM → conversion event lookup
 
-**4 columns. One row per Meta campaign.**
+**5 columns. One row per Meta campaign.**
 
 | # | Column | Type | Notes |
 |---|---|---|---|
@@ -749,6 +767,13 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Prompt: run the three scripts in sequence (fetch → baselines → classify) → compose summary grouped by severity, skip healthy ads, prominently surface budget conflicts.
 - Concurrency group `agent-fatigue-monitor`.
 
+**`investigate-creative-fields.yml`** _(temporary diagnostic)_
+
+- Triggers: `workflow_dispatch` only. No schedule. Intentionally one-off.
+- Purpose: samples 20 cached creatives and queries Meta with an expanded field list to determine which fields populate copy text (title, body, link). Output appears in the workflow log only — no persistence.
+- Marked for deletion once the copy-text data sources are settled and `scripts/lib/meta.py`'s `CREATIVE_FIELDS` constant is finalized.
+- Secrets required: `META_ACCESS_TOKEN`.
+
 ### 10.1.1 Apps Script fallback dispatch (added 2026-05-03)
 
 GitHub Actions cron is best-effort. To make scheduled runs more reliable, Apps Script time-based triggers act as a fallback. The pattern lives in `apps-script/Code.js`:
@@ -891,6 +916,8 @@ Each daily directory `data/snapshots/<YYYY-MM-DD>/` contains:
 | `ad_insights.json` | Per-(date, ad) row with the same metric set | Meta `/insights?level=ad` |
 | `_manifest.json` | `{snapshot_date, exported_at, counts: {...}, files: [...]}` | Written by `fetch_ad_data.py` |
 
+> **Historical note:** Snapshots before 2026-05-02 contain only `campaigns.json`, `adset_insights.json`, `ad_insights.json`, and `_manifest.json`. The `ads.json` and `adsets.json` files (object-graph data) were added when the pipeline was expanded on 2026-05-02. Skills and scripts that need adset or ad objects should guard against missing files when scanning historical dates.
+
 `data/creatives/creatives.json` is a single file accreted across runs:
 
 ```json
@@ -999,7 +1026,7 @@ Skills are self-contained packages: a `SKILL.md` (with YAML frontmatter — `nam
 | `daily-check` | shipped 2026-05-03 | Morning briefing: pacing vs weekly target, portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
 | `fatigue-monitor` | shipped 2026-05-03 | Three-script pipeline: 14-day fetch, baseline computation (Path A in-range / B historical-batched / C estimated), classification across 5 severity classes with budget-queue conflict cross-reference. Writes to `fatigue_log`. |
 
-The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earlier versions of the three above) were built against a less-refined spec and are being replaced session-by-session. `compute_signals.py`'s `data/derived/` outputs are now an audit trail rather than the canonical signal source — the skills compute their own canonical versions.
+`compute_signals.py`'s `data/derived/` outputs are an audit trail rather than the canonical signal source — the skills compute their own canonical versions. Earlier placeholder skills (`budget-optimizer`, `ad-copy-generator`) were removed; they were built against a less-refined spec and never shipped.
 
 ### 11.7 Workflow (`.github/workflows/daily-data.yml`)
 
@@ -1017,10 +1044,13 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 
 | Function | Location | Purpose |
 |---|---|---|
-| `MetaClient` | `scripts/fetch_ad_data.py` | Thin Graph API wrapper with paging + 4-retry exponential backoff |
-| `MetaClient.insights(level, fields, date)` | `scripts/fetch_ad_data.py` | Single-day insights pull at `level=adset` or `level=ad` |
-| `MetaClient.adsets()` / `ads()` / `creative(id)` | `scripts/fetch_ad_data.py` | Object-graph fetches |
-| `extract_conversions` | `scripts/fetch_ad_data.py` | Mirrors `collectMetaRows_` IC + lead extraction |
+| `MetaClient` | `scripts/lib/meta.py` | Shared Graph API wrapper with paging + exponential backoff. Used by snapshot pipeline AND all skills. |
+| `MetaClient.insights(level, fields, since, until, time_increment)` | `scripts/lib/meta.py` | Insights pull at `level=adset` or `level=ad` |
+| `MetaClient.adsets()` / `ads()` / `creative(id)` | `scripts/lib/meta.py` | Object-graph fetches |
+| `extract_conversions` | `scripts/lib/meta.py` | Mirrors `collectMetaRows_` IC + lead extraction |
+| `normalize_insights_row` / `normalize_adset` / `normalize_ad` / `normalize_creative` | `scripts/lib/meta.py` | Flatten Meta JSON into project row shape |
+| `ic_action_type_from_config` | `scripts/lib/meta.py` | Reconstructs `offsite_conversion.custom.<id>` from `benchmarks.json` |
+| `load_config` / `yesterday_utc` | `scripts/lib/meta.py` | Config loader and date helper |
 | `merge_creatives` | `scripts/fetch_ad_data.py` | Accumulates creative metadata; preserves `first_seen_date` |
 | `linear_trend_slope` | `scripts/compute_signals.py` | Best-fit slope for CTR-over-days |
 | `compute_ad_metrics` | `scripts/compute_signals.py` | Per-ad rolling metrics |
