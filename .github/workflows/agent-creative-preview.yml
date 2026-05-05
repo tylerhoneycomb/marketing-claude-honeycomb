@@ -1,0 +1,136 @@
+name: Agent — Creative Preview ($0, no LLM)
+
+# Manually-triggered, free-of-LLM-cost preview of the Creative
+# Intelligence dataset. Runs build_creative_dataset.py (Meta only,
+# $0) and scripts/preview_dataset.py (pure Python, $0). Produces a
+# deterministic Markdown brief at data/previews/<date>.md and
+# commits it back to main.
+#
+# Use this to validate that the pipeline produces something
+# valuable BEFORE committing to the LLM-augmented Creative
+# Intelligence run (~$5/run for ~400 variant categorizations on
+# claude-sonnet-4-5). If the preview reads well, the LLM run is a
+# polish layer; if not, no money was spent finding out.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: agent-creative-preview
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests==2.32.3
+
+      # Build the variant corpus from snapshots + Meta. This refreshes
+      # data/creatives/creatives.json into the new asset_feed_spec
+      # shape, downloads any missing image_hash images, and emits
+      # /tmp/creative_dataset.json. Same step as the LLM workflow's
+      # initial build pass — proves the cache-refresh mechanics work.
+      - name: Build creative dataset
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+        run: |
+          python3 skills/creative-intelligence/scripts/build_creative_dataset.py \
+            --output /tmp/creative_dataset.json
+
+      # Render the deterministic Markdown preview. Pure Python, no
+      # API calls, no model spend. Captures portfolio rollup,
+      # side-by-side pairs (the cleanest causal-ish signal), and
+      # per-vertical winners/losers split at median CPICP with
+      # structural-pattern deltas between cohorts.
+      - name: Render preview
+        run: |
+          mkdir -p data/previews
+          OUT="data/previews/$(date -u +%Y-%m-%d).md"
+          python3 scripts/preview_dataset.py /tmp/creative_dataset.json > "$OUT"
+          echo "wrote $OUT ($(wc -l < "$OUT") lines)"
+
+      # Status one-liner: pull a few summary numbers out of the
+      # dataset for the issue-#48 comment.
+      - name: Compute status one-liner
+        if: always()
+        run: |
+          python3 - <<'PY' > /tmp/agent_status.txt
+          import json
+          try:
+              d = json.load(open('/tmp/creative_dataset.json'))
+              parts = [
+                  f"verticals={len({a['vertical'] for a in d.get('ads', []) if a.get('vertical')})}",
+                  f"ads={d.get('ad_count', 0)}",
+                  f"variants={d.get('variant_count', 0)}",
+                  f"side_by_side_pairs={d.get('pair_group_count', 0)}",
+                  f"top_decile={len(d.get('top_decile_ads', []))}",
+                  f"bottom_decile={len(d.get('bottom_decile_ads', []))}",
+                  "mode=deterministic_preview_no_llm",
+              ]
+              print(" ".join(parts))
+          except Exception as e:
+              print(f"ERROR: status computation failed — {e}")
+          PY
+          cat /tmp/agent_status.txt
+
+      # Commit the dataset cache changes (refreshed creatives.json,
+      # downloaded images) AND the preview file. fetch+rebase+push
+      # so concurrent merges don't lose the commit.
+      - name: Commit preview + cache
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/creatives/ data/previews/
+          if git diff --cached --quiet; then
+            echo "no changes to commit"
+            echo " preview_commit=no_changes" >> /tmp/agent_status.txt
+            exit 0
+          fi
+          git commit -m "agent-creative-preview: $(date -u +%Y-%m-%d) (\$0)"
+          for i in 1 2 3 4; do
+            if git fetch origin main \
+               && git rebase origin/main \
+               && git push; then
+              echo " preview_commit=ok" >> /tmp/agent_status.txt
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((2 ** i))
+          done
+          echo "git push failed after 4 attempts"
+          echo " preview_commit=push_failed" >> /tmp/agent_status.txt
+          exit 1
+
+      - name: Post status to tracking issue
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS: ${{ job.status }}
+        run: |
+          DETAIL="$(cat /tmp/agent_status.txt 2>/dev/null || echo '(no status file)')"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "**creative-preview** — ${STATUS}"
+            echo "$DETAIL"
+            echo "[run]($RUN_URL)"
+          } | gh issue comment 48 --repo "${{ github.repository }}" --body-file - || true
