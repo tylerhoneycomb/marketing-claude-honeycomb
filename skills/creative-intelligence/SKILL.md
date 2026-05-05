@@ -9,17 +9,29 @@ description: Weekly Monday brief on what creative copy + visual patterns are win
 
 Tell Tyler what to write next. Reads the variant-grain corpus dataset; correlates copy + visual patterns with per-ad CPICP across the lookback window; produces briefs that quote actual winning copy alongside its real numbers and structural fingerprint. Categories are how we navigate the dataset; they are NOT the answer. A brief that says "lead with owner_story angle" is a failure — the right answer is "lead with the owner's name and years in business; bodies like 'Sarah's been brewing for 12 years' produced 3 ICPs at $42 CPICP across the 4 brewery ads they appeared in".
 
-## Scripts
+## Pipeline
 
-Three invocations in sequence. Build runs first so the creative cache is fully refreshed (asset_feed_spec arrays + image_hashes populated for every active creative), then categorize tags any new variants/images, then build re-runs to re-emit the dataset JSON with the new tags attached. The second build call is essentially free — cache and images are already on disk, it just re-emits the JSON.
+The autonomous workflow runs three deterministic Python steps as ordinary workflow steps BEFORE Claude is invoked, then a final claude-code-action step composes the brief from the resulting JSON. Claude does not run the scripts — they're already done by the time the brief composition starts. This split exists because the categorizer's Anthropic SDK calls fail with `APIConnectionError` when run from inside claude-code-action's subprocess shell (suspected env-var inheritance issue), but work reliably when run as ordinary workflow steps.
+
+Workflow step order:
 
 ```
+# Step 1 — workflow step: refresh creative cache + build corpus
 python3 skills/creative-intelligence/scripts/build_creative_dataset.py --output /tmp/creative_dataset.json
+
+# Step 2 — workflow step: LLM tagging (continue-on-error)
 python3 skills/creative-intelligence/scripts/categorize_creative.py
+
+# Step 3 — workflow step: re-emit dataset with tags attached
 python3 skills/creative-intelligence/scripts/build_creative_dataset.py --output /tmp/creative_dataset.json
+
+# Step 4 — claude-code-action: compose brief from /tmp/creative_dataset.json,
+#                              POST to Sheet, optional Slack, write status
 ```
 
-The order matters. `categorize_creative.py` reads `data/creatives/creatives.json` and only categorizes variants whose creative entry has the new asset_feed_spec arrays populated. `build_creative_dataset.py` is the script that refreshes those arrays via Meta calls. Running categorize first against an unrefreshed cache (e.g. the first-ever run) means the categorizer has zero work to do, and the dataset emits without LLM tags.
+For interactive runs from a terminal, the same three scripts can be run by hand in the same order; SKILL.md prompt instructions for Claude become "compose a brief from the dataset" rather than "run these scripts."
+
+The order matters even when run by hand: `categorize_creative.py` reads `data/creatives/creatives.json` and only categorizes variants whose creative entry has the asset_feed_spec arrays populated. `build_creative_dataset.py` is the script that refreshes those arrays via Meta calls. Running categorize first against an unrefreshed cache (the first-ever run) means the categorizer has zero work to do and the dataset emits without LLM tags.
 
 Requires:
 - `META_ACCESS_TOKEN` env var (for the dataset builder's Meta calls)

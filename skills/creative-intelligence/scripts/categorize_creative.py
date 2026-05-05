@@ -378,7 +378,17 @@ def main(argv: list[str] | None = None) -> int:
 
     # Lazy import — keeps --dry-run usable without the SDK installed.
     import anthropic  # noqa: PLC0415
-    client = anthropic.Anthropic(api_key=api_key)
+    # Explicit base_url defeats any ANTHROPIC_BASE_URL env-var override.
+    # The first production run of this skill (2026-05-05) failed with
+    # 526/526 APIConnectionError when the script ran inside
+    # claude-code-action's Bash subprocess; the suspected cause was an
+    # inherited base-URL or proxy env that broke direct SDK
+    # connections. Keeping this explicit even though the workflow has
+    # since been restructured to run scripts as ordinary steps.
+    client = anthropic.Anthropic(
+        api_key=api_key,
+        base_url="https://api.anthropic.com",
+    )
 
     counts = {"text_ok": 0, "text_fail": 0,
               "image_ok": 0, "image_fail": 0}
