@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-05 (Creative Intelligence skill shipped)_
+_Last updated: 2026-05-05 (Creative Intelligence shipped + workflow-schedule docs corrected)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -68,7 +68,7 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 
 - **`daily-data.yml` GitHub Action** — pulls ad-set + ad-level insights from Meta for yesterday's date (or a `start_date`/`end_date` range for backfills), plus creative metadata for any newly discovered ads, and commits everything to `data/snapshots/<YYYY-MM-DD>/`.
 - **Signal computation** — `scripts/compute_signals.py` reads the most recent ~7 days of snapshots and writes derived files (`data/derived/fatigue_signals.json`, `winner_bleeder.json`, `summary.json`) as an audit trail. The new agent skills compute their own canonical signals; these derived files exist for historical analysis and trend lookback beyond Meta's 14-day insight window.
-- **Currently manual** — the workflow runs only on `workflow_dispatch` (manually triggered) until the first few outputs are confirmed correct. A daily cron (8 AM ET) is staged in the workflow file but commented out.
+- **Autonomous** — the workflow runs daily at 8 AM ET on cron and commits each snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills.
 
 ### Agent skills (new, 2026-05-03)
 
@@ -85,9 +85,9 @@ Skills query Meta live for operational decisions; the snapshot pipeline above pr
 
 Each skill that needs scheduled runs gets a workflow file under `.github/workflows/agent-<skill>.yml` that wraps `anthropics/claude-code-action@v1`. The action receives a fixed prompt that tells it to run the skill per its `SKILL.md`, pulls `META_ACCESS_TOKEN` (and optional `SLACK_WEBHOOK_URL`) from repo secrets, and surfaces results in the workflow log. Slack posting on WARN/FAIL is opt-in via the secret.
 
-- **`agent-pipeline-health.yml`** _(shipped 2026-05-03)_ — manual-only (`workflow_dispatch`); daily cron staged for 9 AM ET, commented out. v1 of the autonomous-agent pattern.
-- **`agent-daily-check.yml`** _(shipped 2026-05-03)_ — manual-only; daily cron staged for 8:30 AM ET, commented out.
-- **`agent-fatigue-monitor.yml`** _(shipped 2026-05-03)_ — manual-only; twice-weekly cron staged for Mon + Thu 9:30 AM ET (fatigue moves slowly, daily would over-query Meta).
+- **`agent-pipeline-health.yml`** _(shipped 2026-05-03)_ — daily cron active at 9 AM ET (UTC 13:00). v1 of the autonomous-agent pattern.
+- **`agent-daily-check.yml`** _(shipped 2026-05-03)_ — daily cron active at 8:30 AM ET (UTC 12:30).
+- **`agent-fatigue-monitor.yml`** _(shipped 2026-05-03)_ — twice-weekly cron active for Mon + Thu 9:30 AM ET (UTC 13:30) — fatigue moves slowly, daily would over-query Meta.
 - **`agent-creative-intelligence.yml`** _(shipped 2026-05-05)_ — weekly cron active for Monday 10 AM ET (UTC 14:00). Weekly cadence matches the corpus-aggregation attribution model — variant-level performance signals shift over weeks, not days. Includes a "commit cache updates" step that pushes the refreshed image cache and categorizations cache back to main so subsequent runs skip the expensive first-time work.
 
 All four use the same template baked from the pipeline-health iteration cycle: `id-token: write` permission for OIDC auth, `--permission-mode bypassPermissions` so Claude can run Bash in CI, `show_full_output: true` + `display_report: true` so Claude's output surfaces in the workflow log, and an `if: always()` step that dumps `claude-execution-output.json` for diagnostics if anything fails.
@@ -124,7 +124,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 ### Operational gaps
 
-- **Ad-level pipeline schedule is manual.** `.github/workflows/daily-data.yml` runs only on workflow_dispatch. Once we've eyeballed the first few snapshots, the cron block needs to be uncommented to make it run daily.
+- **Ad-level pipeline is autonomous.** `.github/workflows/daily-data.yml` runs daily at 8 AM ET on cron and commits each snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
 - **Two Meta tokens to keep current.** The legacy campaign-level pipeline reads `META_ACCESS_TOKEN` from Apps Script Script Properties; the new ad-level pipeline reads it from a GitHub Secret with the same name. Token rotation now has to happen in two places.
 - **No alerting on pipeline failures.** If the daily 7 AM pull breaks (e.g., expired Meta token), you only find out when someone notices the Slack digest didn't arrive or the dashboard shows stale data. No proactive "hey, this job failed" alert.
 - **No alerting on attribution-quality drops.** The 33% collapse that week could have gone unnoticed for days. A threshold-based alert ("IC attribution below 50% — investigate") would catch this earlier.
