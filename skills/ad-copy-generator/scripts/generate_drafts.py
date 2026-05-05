@@ -548,6 +548,24 @@ def main(argv: list[str] | None = None) -> int:
         format="%(asctime)s %(levelname)s %(message)s")
 
     dataset = load_dataset(args.input)
+
+    # Stale-cache guard: if the dataset has ads but no variants, the
+    # creatives.json cache hasn't been refreshed by
+    # build_creative_dataset.py against Meta yet (it's still in the
+    # pre-asset_feed_spec-reshape shape). Generating drafts in that
+    # state would just error per-vertical with cryptic "no winners"
+    # messages. Surface the real cause up front.
+    variant_count = len(dataset.get("variants") or [])
+    ad_count = len(dataset.get("ads") or [])
+    if ad_count > 0 and variant_count == 0:
+        sys.stderr.write(
+            f"ERROR: dataset at {args.input} has {ad_count} ads but 0 "
+            f"variants. The creative cache hasn't been refreshed "
+            f"against Meta yet. Run agent-creative-intelligence (or "
+            f"build_creative_dataset.py with META_ACCESS_TOKEN set) "
+            f"first.\n")
+        return 2
+
     voice, compliance = load_references()
 
     client: Any | None = None
