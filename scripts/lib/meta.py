@@ -107,8 +107,10 @@ CREATIVE_FIELDS = [
     "name",
     "thumbnail_url",
     "image_hash",
+    "image_url",
     "object_story_spec",
     "effective_object_story_id",
+    "asset_feed_spec",
     "title",
     "body",
     "call_to_action_type",
@@ -281,6 +283,43 @@ class MetaClient:
         url = f"{self.base}/{creative_id}"
         return self._request(url, params)
 
+    def resolve_image_hashes(self, hashes: list[str],
+                             chunk_size: int = 50) -> dict[str, dict[str, Any]]:
+        """Resolve image_hash values to full-size image records.
+
+        Asset Feed dynamic creative ads embed image references as
+        bare hashes in asset_feed_spec.images[]. The top-level
+        image_url is empty for these ads. /act_X/adimages takes a
+        hashes=[...] param and returns one record per hash with the
+        full-size url, dimensions, and metadata.
+
+        Returns: dict keyed by hash. Hashes that don't resolve are
+        omitted. Results are aggregated across multiple paged
+        requests if the input exceeds chunk_size.
+        """
+        if not hashes:
+            return {}
+        unique = list({h for h in hashes if h})
+        out: dict[str, dict[str, Any]] = {}
+        url = f"{self.base}/{self.account_id}/adimages"
+        fields = "hash,url,permalink_url,width,height,name"
+        for i in range(0, len(unique), chunk_size):
+            batch = unique[i:i + chunk_size]
+            params = {
+                "hashes": json.dumps(batch),
+                "fields": fields,
+            }
+            try:
+                body = self._request(url, params)
+            except RuntimeError as exc:
+                logging.warning("resolve_image_hashes: batch failed: %s", exc)
+                continue
+            for rec in (body.get("data") or []):
+                h = rec.get("hash")
+                if h:
+                    out[h] = rec
+        return out
+
 
 # ─── Action / row extraction ───────────────────────────────────────────────
 
@@ -366,16 +405,133 @@ def normalize_ad(row: dict[str, Any]) -> dict[str, Any]:
 
 
 def normalize_creative(row: dict[str, Any]) -> dict[str, Any]:
+    """Flatten a creative row into the shape downstream consumers expect.
+
+    Honeycomb's ad mix is dominated by Asset Feed dynamic creative
+    (asset_feed_spec) — each ad carries up to 5 bodies + 5 titles +
+    5 descriptions + 10 images, and Meta's optimizer mixes-and-
+    matches at delivery time. The `bodies`, `titles`, `descriptions`,
+    `image_hashes` arrays preserve the raw variant pool for the
+    Creative Intelligence skill.
+
+    Top-level scalar fields (`title`, `body`, `image_hash`,
+    `call_to_action_type`) are aliased to index 0 of their array for
+    backward compatibility with callers that consume a single value
+    (the fatigue-monitor skill, the snapshot pipeline). For static
+    link ads without an asset_feed_spec we fall back to the legacy
+    object_story_spec.link_data path.
+    """
     story = row.get("object_story_spec") or {}
     link_data = story.get("link_data") or {}
-    cta = link_data.get("call_to_action") or {}
+    cta_legacy = link_data.get("call_to_action") or {}
+    afs = row.get("asset_feed_spec") or {}
+
+    def _texts(items: list[dict[str, Any]] | None) -> list[str]:
+        if not items:
+            return []
+        return [str(it.get("text")).strip()
+                for it in items
+                if isinstance(it, dict) and it.get("text")
+                and str(it.get("text")).strip()]
+
+    bodies = _texts(afs.get("bodies"))
+    titles = _texts(afs.get("titles"))
+    descriptions = _texts(afs.get("descriptions"))
+    image_hashes = [
+        h for h in (
+            (img or {}).get("hash") for img in (afs.get("images") or []))
+        if h
+    ]
+    cta_types = [
+        c.get("type") for c in (afs.get("call_to_action_types") or [])
+        if isinstance(c, dict) and c.get("type")
+    ]
+    link_urls = [
+        u.get("website_url") or u.get("link")
+        for u in (afs.get("link_urls") or [])
+        if isinstance(u, dict) and (u.get("website_url") or u.get("link"))
+    ]
+
+    image_url = (row.get("image_url")
+                 or link_data.get("picture")
+                 or row.get("thumbnail_url"))
+
     return {
         "creative_id": row.get("id"),
         "name": row.get("name"),
         "thumbnail_url": row.get("thumbnail_url"),
-        "image_hash": row.get("image_hash") or link_data.get("image_hash"),
-        "title": row.get("title") or link_data.get("name"),
-        "body": row.get("body") or link_data.get("message"),
-        "link_url": row.get("link_url") or link_data.get("link"),
-        "call_to_action_type": row.get("call_to_action_type") or cta.get("type"),
+        "image_url": image_url,
+        "effective_object_story_id": row.get("effective_object_story_id"),
+        # Asset-feed variant arrays (raw text preserved end-to-end):
+        "bodies": bodies,
+        "titles": titles,
+        "descriptions": descriptions,
+        "image_hashes": image_hashes,
+        "cta_types": cta_types,
+        "link_urls": link_urls,
+        # Backward-compat scalar aliases — first variant for asset-feed
+        # ads, legacy fields for static link ads:
+        "image_hash": (image_hashes[0] if image_hashes
+                       else row.get("image_hash")
+                       or link_data.get("image_hash")),
+        "title": titles[0] if titles else (
+            row.get("title") or link_data.get("name")),
+        "body": bodies[0] if bodies else (
+            row.get("body") or link_data.get("message")),
+        "link_url": link_urls[0] if link_urls else (
+            row.get("link_url") or link_data.get("link")),
+        "call_to_action_type": (cta_types[0] if cta_types
+                                else row.get("call_to_action_type")
+                                or cta_legacy.get("type")),
     }
+
+
+def download_image(creative_id_or_hash: str, url: str | None,
+                   dest_dir: Path) -> Path | None:
+    """Download a creative image to dest_dir/<creative_id_or_hash>.jpg.
+
+    Idempotent (skips if file already exists and is non-empty), atomic
+    (tmp + rename), and best-effort (one retry on transient error;
+    logs a warning and returns None on hard failure rather than
+    aborting the caller).
+
+    Honeycomb's ads expose full-size URLs only via /act_X/adimages
+    after resolving image_hash; thumbnail_url is the fallback when
+    that resolution isn't available. This helper is URL-agnostic —
+    callers pick the source.
+    """
+    if not url:
+        return None
+    dest_dir.mkdir(parents=True, exist_ok=True)
+    target = dest_dir / f"{creative_id_or_hash}.jpg"
+    if target.exists() and target.stat().st_size > 0:
+        return target
+
+    last_err: Exception | None = None
+    for attempt in range(2):
+        try:
+            resp = requests.get(url, timeout=20, stream=True)
+            if resp.status_code != 200:
+                last_err = RuntimeError(
+                    f"HTTP {resp.status_code} on {url[:120]}")
+                if resp.status_code in (429, 500, 502, 503, 504):
+                    time.sleep(2 ** attempt)
+                    continue
+                break
+            tmp = target.with_suffix(".jpg.tmp")
+            with tmp.open("wb") as f:
+                for chunk in resp.iter_content(chunk_size=65536):
+                    if chunk:
+                        f.write(chunk)
+            tmp.rename(target)
+            return target
+        except requests.RequestException as exc:
+            last_err = exc
+            if attempt == 0:
+                time.sleep(1)
+                continue
+            break
+
+    logging.warning("download_image: failed for %s: %s",
+                    creative_id_or_hash, last_err)
+    return None
