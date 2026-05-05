@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-03 (autonomous agent workflow)_
+_Last updated: 2026-05-05 (Creative Intelligence skill shipped)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -95,8 +95,10 @@ marketing-claude-honeycomb/
 ├── skills/                  # NEW (2026-05-02) Agent skill definitions
 │   ├── daily-check/SKILL.md
 │   ├── fatigue-monitor/SKILL.md
-│   ├── budget-optimizer/SKILL.md
-│   ├── ad-copy-generator/SKILL.md
+│   ├── creative-intelligence/   # NEW (2026-05-05)
+│   │   ├── SKILL.md
+│   │   ├── references/      # copy_angle + visual_style markdown
+│   │   └── scripts/         # build_creative_dataset.py, categorize_creative.py
 │   └── pipeline-health/SKILL.md
 ├── data/                    # NEW (2026-05-02) Agent data repository
 │   ├── config/benchmarks.json     # All thresholds (single source)
@@ -653,6 +655,7 @@ All return `ContentService.createTextOutput(JSON.stringify(payload))` with MIME 
 | `daily-check-write` | POST or GET | JSON body `{row:{...}}` or query params (`date`, `pacing_status`, `total_spend`, `total_icps`, `portfolio_cpicp`, `fatigue_flag_count`) | Appends one summary row to `daily_check_log` tab (auto-created). Header row: `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at`. |
 | `budget-queue-read` | GET | `campaign_id` (optional) | Returns `{pending: [...], count: N}` from `budget_queue`. Each row: `token, created_at, analysis_date, execution_scheduled, campaign_id, campaign_name, current_budget_cents, proposed_budget_cents, change_cents, change_pct, direction (increase/decrease/flat), signal_reasons, status`. Used by `fatigue-monitor` to flag conflicts. |
 | `fatigue-write` | POST or GET | JSON body `{rows:[...]}` or `rows=<json>` | Appends per-ad rows to `fatigue_log` tab (auto-created). Header row: `date, ad_id, ad_name, campaign, classification, ctr_baseline, ctr_current, ctr_decline_pct, frequency, cpc_baseline, cpc_current, days_active, baseline_type, budget_conflict, recorded_at`. |
+| `creative-intelligence-write` | POST or GET | JSON body `{rows:[...]}` or `rows=<json>` | Appends per-vertical rows to `creative_intelligence_log` tab (auto-created). Used by `creative-intelligence` skill. Header row: `date, vertical, ad_count, median_cpicp, spend_total, ic_total, top_body_variant_id, top_body_text, top_body_cpicp, top_visual_hash, top_visual_style, bottom_decile_count, recorded_at`. |
 
 ### 9.3 `buildDashboardContext_()` (Code.js:3836)
 
@@ -749,6 +752,15 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Prompt: run the three scripts in sequence (fetch → baselines → classify) → compose summary grouped by severity, skip healthy ads, prominently surface budget conflicts.
 - Concurrency group `agent-fatigue-monitor`.
 
+**`agent-creative-intelligence.yml`** _(added 2026-05-05)_
+
+- Same template + an extra `pip install anthropic==0.98.1` because the categorizer hits the Anthropic API directly (in addition to claude-code-action's own runtime).
+- Triggers: `workflow_dispatch` AND active cron `0 14 * * 1` (Mon 10 AM ET / 9 AM EST). Weekly cadence matches the corpus-aggregation attribution model.
+- timeout-minutes: 45 (longest of any skill: ~$5 of Anthropic categorization on first run + 30-day snapshot aggregation + creative cache refresh + image downloads via /adimages resolution).
+- Prompt: run `categorize_creative.py` (hash-deduped LLM tags) → `build_creative_dataset.py --output /tmp/creative_dataset.json` (corpus aggregation + side-by-side pairs + decile lists) → compose brief that quotes actual winning copy + cites real numbers + honors confidence labels (≥10 ads + ≥25 IC = confident; ≥5 + ≥10 = directional; below = insufficient hypothesis-only).
+- Includes a `commit cache updates` step that pushes refreshed `data/creatives/` (creatives.json, images/, categorizations.json) back to main so subsequent runs skip the expensive first-time work.
+- Concurrency group `agent-creative-intelligence`.
+
 ### 10.1.1 Apps Script fallback dispatch (added 2026-05-03)
 
 GitHub Actions cron is best-effort. To make scheduled runs more reliable, Apps Script time-based triggers act as a fallback. The pattern lives in `apps-script/Code.js`:
@@ -760,11 +772,12 @@ GitHub Actions cron is best-effort. To make scheduled runs more reliable, Apps S
 | `triggerAgentPipelineHealthIfNeeded` | Daily 12-1 PM ET. 18-hour lookback. |
 | `triggerAgentDailyCheckIfNeeded` | Daily 12-1 PM ET. 18-hour lookback. |
 | `triggerAgentFatigueMonitorIfNeeded` | Daily 1-2 PM ET, but early-outs unless ISO day-of-week is 1 (Mon) or 4 (Thu). 12-hour lookback. |
+| `triggerAgentCreativeIntelligenceIfNeeded` | Daily 1-2 PM ET, but early-outs unless ISO day-of-week is 1 (Mon). 12-hour lookback. Weekly cadence matches the corpus-aggregation attribution model. |
 | `testAgentDispatch` | Diagnostic: lists workflows via the API to verify the PAT has the right scope. Run before `createAllTriggers()` on first install. |
 
 Setup is one-time:
 1. Run `testAgentDispatch()` from the Apps Script editor — confirms `GITHUB_PAT` has Actions: Read+Write (classic PAT with `repo` works).
-2. Run `createAllTriggers()` — installs the three new triggers alongside the existing `runDailyPipeline` and `generateWeeklyNarrative` triggers.
+2. Run `createAllTriggers()` — installs the four agent-fallback triggers alongside the existing `runDailyPipeline` and `generateWeeklyNarrative` triggers.
 
 Idempotency: `createAllTriggers()` deletes any existing triggers it owns before recreating them, so it's safe to re-run.
 
@@ -891,19 +904,59 @@ Each daily directory `data/snapshots/<YYYY-MM-DD>/` contains:
 | `ad_insights.json` | Per-(date, ad) row with the same metric set | Meta `/insights?level=ad` |
 | `_manifest.json` | `{snapshot_date, exported_at, counts: {...}, files: [...]}` | Written by `fetch_ad_data.py` |
 
-`data/creatives/creatives.json` is a single file accreted across runs:
+`data/creatives/creatives.json` is a single file accreted across runs. Schema reshaped 2026-05-05 to expose the asset_feed_spec variant arrays the Creative Intelligence skill needs (the previous scalar-only shape was losing ~95% of the copy data per ad):
 
 ```json
 {
   "updated_at": "<iso>",
   "count": <n>,
   "creatives": [
-    {"creative_id", "name", "thumbnail_url", "image_hash",
-     "title", "body", "link_url", "call_to_action_type",
+    {"creative_id", "name", "thumbnail_url", "image_url",
+     "effective_object_story_id",
+     // Asset-feed variant arrays (raw text preserved end-to-end):
+     "bodies": [...], "titles": [...], "descriptions": [...],
+     "image_hashes": [...], "cta_types": [...], "link_urls": [...],
+     // Backward-compat scalar aliases (index 0 of arrays for asset-
+     // feed creatives; legacy fields for static link ads):
+     "image_hash", "title", "body", "link_url", "call_to_action_type",
      "first_seen_date", "last_seen_date"}
   ]
 }
 ```
+
+`data/creatives/images/<image_hash>.jpg` — full-size creative images downloaded via `/adimages` resolution (1440px width on average). Cache key is the Meta image_hash. Idempotent download via `lib.meta.download_image` — existing files are skipped. Populated lazily by `build_creative_dataset.py`. The agent-creative-intelligence workflow commits new images back to main so subsequent runs skip the resolve+download.
+
+`data/creatives/categorizations.json` — LLM tags produced by `skills/creative-intelligence/scripts/categorize_creative.py`:
+
+```json
+{
+  "updated_at": "<iso>",
+  "count": <n>,
+  "categorizations": {
+    "<variant_id>": {
+      "kind": "copy",
+      "variant_id": "<sha256-prefix-16>",
+      "dimension": "body|title|description",
+      "text": "...",
+      "copy_angle": "owner_story|benefit_led|urgency|social_proof|question|product_feature|community_local",
+      "rationale": "...",
+      "categorized_at": "<iso>",
+      "model": "claude-sonnet-4-5"
+    },
+    "<image_hash>": {
+      "kind": "visual",
+      "image_hash": "...",
+      "image_path": "data/creatives/images/<hash>.jpg",
+      "visual_style": "real_person|product_shot|lifestyle|storefront|graphic|text_heavy",
+      "rationale": "...",
+      "categorized_at": "<iso>",
+      "model": "claude-sonnet-4-5"
+    }
+  }
+}
+```
+
+Same file holds both text and image categorizations, namespaced via the `kind` field. Hash-deduped — the boilerplate "MCAs drain your margins…" body that appears in 50+ ads gets categorized once. Atomic incremental writes mean partial-run failures don't lose work.
 
 ### 11.3 Derived signals (`data/derived/`)
 
@@ -1029,8 +1082,20 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 | `expected_data_date` | `skills/pipeline-health/scripts/check_health.py` | Computes the date `rolling_data` should have, accounting for the 7 AM ET pull cutoff |
 | `weekday_gap` | `skills/pipeline-health/scripts/check_health.py` | Counts business days missed between latest data and expected date |
 | `check_data_freshness` / `check_meta_token` / `check_ic_conversion_event` / `check_dashboard_endpoint` | `skills/pipeline-health/scripts/check_health.py` | Four health checks; each returns `{name, status, detail}` |
+| `compute_features(text)` | `scripts/lib/text_features.py` | Deterministic structural features per variant text (char/word/sentence count, opening word, syntactic markers). Pure Python, no LLM call. |
+| `variant_id(text)` | `scripts/lib/text_features.py` | Whitespace-collapsed + lowercased SHA-256 prefix (16 hex chars). Stable join key between dataset builder and categorizer. |
+| `MetaClient.resolve_image_hashes(hashes)` | `scripts/lib/meta.py` | Resolves `image_hash` values to full-size URLs via `/act_X/adimages?hashes=[...]`. Auto-chunks at 50 hashes per request. Returns `{hash: {url, width, height, ...}}`. |
+| `download_image(creative_id_or_hash, url, dest_dir)` | `scripts/lib/meta.py` | Idempotent atomic download to `<dest_dir>/<key>.jpg`. Skips existing non-empty files; one retry on transient errors; logs and returns None on hard failure rather than aborting the caller. |
+| `extract_vertical(campaign_name)` | `skills/creative-intelligence/scripts/build_creative_dataset.py` | Pulls vertical slug from `AD-/ICD-/Rev-<vertical>-Q<N>-<YYYY>` patterns (with optional `PAUSED -` prefix and legacy `Wineries / vineyards` fallback). Lowercased human-readable. |
+| `aggregate_ad_performance(snapshot_dates)` | `skills/creative-intelligence/scripts/build_creative_dataset.py` | Sums per-ad impressions/spend/IC across the snapshot window. Tracks first/last active date and `days_active`. |
+| `build_variant_corpus(ad_to_creative, cache)` | `skills/creative-intelligence/scripts/build_creative_dataset.py` | For each unique variant text, builds `{variant_id, dimension, text, structural, appears_in_ads}`. The corpus index is the spine of variant-level attribution. |
+| `aggregate_variant_performance(variants, ad_performance)` | `skills/creative-intelligence/scripts/build_creative_dataset.py` | In-place: sums spend/impressions/IC across each variant's ad list. The corpus-aggregation attribution model in code form. |
+| `find_side_by_side_pairs(ad_to_creative, cache, ad_performance)` | `skills/creative-intelligence/scripts/build_creative_dataset.py` | Finds ad pairs sharing an `image_hash` but differing on body text. The "same audience, same image, different copy" comparison. |
+| `categorize_text` / `categorize_image` | `skills/creative-intelligence/scripts/categorize_creative.py` | One Anthropic API call per variant. Forced tool_use for structured JSON output; validates `tag` against the COPY_ANGLES / VISUAL_STYLES enum; one retry on transient errors. |
+| `store_result(cache, key, entry)` | `skills/creative-intelligence/scripts/categorize_creative.py` | Thread-safe atomic incremental cache write under a `Lock`. Persists every successful categorization immediately so partial failures don't lose work. |
 | `getRollingLatestDate_` | `apps-script/Code.js` | `?action=rolling-latest-date` handler — returns latest date in `rolling_data` |
 | `handleHealthWrite_` | `apps-script/Code.js` | `?action=health-write` handler (GET or POST) — appends to `pipeline_health` tab, creates tab on first call |
+| `handleCreativeIntelligenceWrite_` | `apps-script/Code.js` | `?action=creative-intelligence-write` handler — appends to `creative_intelligence_log` tab, creates tab on first call |
 
 ### 11.9 Tabs added by skills
 
@@ -1039,6 +1104,7 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 | `pipeline_health` | `pipeline-health` skill via `?action=health-write` (auto-created in `handleHealthWrite_`) | `date, check, status, detail, recorded_at` |
 | `daily_check_log` | `daily-check` skill via `?action=daily-check-write` (auto-created in `handleDailyCheckWrite_`) | `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at` |
 | `fatigue_log` | `fatigue-monitor` skill via `?action=fatigue-write` (auto-created in `handleFatigueWrite_`) | `date, ad_id, ad_name, campaign, classification, ctr_baseline, ctr_current, ctr_decline_pct, frequency, cpc_baseline, cpc_current, days_active, baseline_type, budget_conflict, recorded_at` |
+| `creative_intelligence_log` | `creative-intelligence` skill via `?action=creative-intelligence-write` (auto-created in `handleCreativeIntelligenceWrite_`) | `date, vertical, ad_count, median_cpicp, spend_total, ic_total, top_body_variant_id, top_body_text, top_body_cpicp, top_visual_hash, top_visual_style, bottom_decile_count, recorded_at` |
 
 ### 11.10 Shared client (`scripts/lib/meta.py`, added 2026-05-03)
 

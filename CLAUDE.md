@@ -43,7 +43,7 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 - `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
-- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`.
+- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`.
 - `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair.
 - `/data/` — Agent data repository.
   - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest)
@@ -165,6 +165,10 @@ Each skill that needs a scheduled run gets its own workflow file under
 - `agent-fatigue-monitor.yml` — runs `fatigue-monitor` skill. Manual-only;
   cron block staged for Mon + Thu 9:30 AM ET (twice-weekly — fatigue
   moves slowly, daily would over-query Meta).
+- `agent-creative-intelligence.yml` — runs `creative-intelligence` skill.
+  Schedule active for Mondays at 10 AM ET (UTC 14:00). Weekly cadence
+  matches the corpus-aggregation attribution model — variant-level
+  performance signals shift over weeks, not days.
 
 Every agent workflow uses the same template (lessons learned from the
 agent-pipeline-health iteration cycle):
@@ -211,7 +215,8 @@ run rather than racing.
 ### Agent loop status tracking — issue #48
 
 Every autonomous workflow run (`daily-data`, `agent-pipeline-health`,
-`agent-daily-check`, `agent-fatigue-monitor`) posts a status comment to
+`agent-daily-check`, `agent-fatigue-monitor`, `agent-creative-intelligence`)
+posts a status comment to
 [issue #48](https://github.com/tylerhoneycomb/marketing-claude-honeycomb/issues/48)
 on completion (`if: always()` so failures report too,
 `continue-on-error: true` so a missing/closed issue can't break the
@@ -219,8 +224,10 @@ run). Each comment includes:
 
 - Workflow name + run conclusion (`success` / `failure`)
 - A one-line skill-specific summary (e.g.
-  `PASS 4/0/0` for pipeline-health, or
-  `evaluated=12 fatigued=2 conflicts=1` for fatigue-monitor)
+  `PASS 4/0/0` for pipeline-health,
+  `evaluated=12 fatigued=2 conflicts=1` for fatigue-monitor, or
+  `verticals=8 variants=247 winners_top=owner_story` for
+  creative-intelligence)
 - Direct link to the workflow run
 
 Agent workflow prompts instruct Claude to write the one-liner summary
@@ -232,7 +239,7 @@ Reading the issue comments is the fastest way to verify the agent loop
 is firing correctly — sort by oldest-first for a chronological log.
 Close + reopen a fresh issue when the comment volume gets noisy
 (close the old one, create a new one, update the issue number in all
-four workflow YAML files).
+five workflow YAML files).
 
 ### Meta API conventions
 
@@ -261,6 +268,19 @@ four workflow YAML files).
   (one consolidated query for all Path-B ads), or estimated. Cross-references
   pending budget proposals via `?action=budget-queue-read` and flags
   conflicts (e.g. fatiguing ad in a campaign with a pending budget INCREASE).
+- **creative-intelligence** — weekly Monday brief on what creative copy and
+  visual patterns are winning across the portfolio. Per [docs/CREATIVE_INTELLIGENCE_DESIGN.md](./docs/CREATIVE_INTELLIGENCE_DESIGN.md)
+  the attribution spine is corpus-level text aggregation, not per-ad asset_id
+  breakdown — three rounds of Meta investigation showed asset breakdowns
+  don't return reliable per-variant conversion data for asset_feed_spec ads.
+  Two-script pipeline: `categorize_creative.py` calls Anthropic API once
+  per unique variant text + image (hash-deduped, atomic incremental writes
+  to `data/creatives/categorizations.json`); `build_creative_dataset.py`
+  joins snapshots + creative cache + categorizations and emits the
+  variant-grain corpus to `/tmp/creative_dataset.json`. SKILL.md output
+  rules require briefs that quote actual winning copy + cite real numbers
+  + honor confidence labels (≥10 ads + ≥25 IC = confident; ≥5 + ≥10 =
+  directional; below = insufficient hypothesis-only).
 
 ### Shared client
 
