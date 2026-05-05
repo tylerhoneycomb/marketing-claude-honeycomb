@@ -46,7 +46,6 @@ Environment:
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import logging
 import os
@@ -67,7 +66,7 @@ from lib.meta import (  # noqa: E402
     load_config,
     normalize_creative,
 )
-from lib.text_features import compute_features  # noqa: E402
+from lib.text_features import compute_features, variant_id  # noqa: E402
 
 CREATIVES_PATH = REPO_ROOT / "data" / "creatives" / "creatives.json"
 CATEGORIES_PATH = REPO_ROOT / "data" / "creatives" / "categorizations.json"
@@ -94,14 +93,6 @@ LEGACY_VERTICAL_PATTERNS: list[tuple[re.Pattern[str], str]] = [
 # top_decile_ads / bottom_decile_ads.
 MIN_SPEND_FOR_DECILE = 50.0
 MIN_DAYS_ACTIVE_FOR_DECILE = 5
-
-
-def variant_id(text: str) -> str:
-    """Stable 16-hex-char hash of normalized variant text. Collapses
-    whitespace and lowercases so trivial whitespace differences don't
-    produce distinct variant IDs."""
-    norm = " ".join(text.strip().split()).lower()
-    return hashlib.sha256(norm.encode("utf-8")).hexdigest()[:16]
 
 
 def extract_vertical(campaign_name: str | None) -> str:
@@ -543,11 +534,18 @@ def main(argv: list[str] | None = None) -> int:
     variants = build_variant_corpus(ad_to_creative, cache)
     aggregate_variant_performance(variants, ad_performance)
 
+    # Tags are keyed by variant_id (text) OR image_hash (visual). The
+    # categorizer namespaces them with `kind: copy` vs `kind: visual`
+    # so we can attach the right field on each side.
     tags = load_categorizations()
     for vid, entry in variants.items():
         tag = tags.get(vid)
-        entry["llm_copy_angle"] = tag.get("copy_angle") if tag else None
-        entry["llm_visual_style"] = tag.get("visual_style") if tag else None
+        if tag and tag.get("kind") == "copy":
+            entry["llm_copy_angle"] = tag.get("copy_angle")
+            entry["llm_copy_rationale"] = tag.get("rationale")
+        else:
+            entry["llm_copy_angle"] = None
+            entry["llm_copy_rationale"] = None
 
     pairs = find_side_by_side_pairs(ad_to_creative, cache, ad_performance)
     top_ads, bottom_ads = compute_decile_lists(ad_performance)
@@ -566,6 +564,18 @@ def main(argv: list[str] | None = None) -> int:
             for h in (creative.get("image_hashes") or [])
             if h in image_paths
         ]
+        # Visual styles come from the same categorizations cache,
+        # keyed by image_hash. Each ad has up to 10 images, each with
+        # its own style — the analysis layer wants the full list.
+        visual_styles = []
+        for h in (creative.get("image_hashes") or []):
+            tag = tags.get(h)
+            if tag and tag.get("kind") == "visual":
+                visual_styles.append({
+                    "image_hash": h,
+                    "visual_style": tag.get("visual_style"),
+                    "rationale": tag.get("rationale"),
+                })
         cpicp = (round(perf["spend"] / perf["ic_conversions"], 2)
                  if perf.get("ic_conversions") else None)
         ads_out.append({
@@ -589,6 +599,7 @@ def main(argv: list[str] | None = None) -> int:
             "description_count": len(descriptions),
             "image_hashes": creative.get("image_hashes") or [],
             "local_image_paths": local_paths,
+            "visual_styles": visual_styles,
             "variant_ids": {
                 "bodies": [variant_id(t) for t in bodies],
                 "titles": [variant_id(t) for t in titles],

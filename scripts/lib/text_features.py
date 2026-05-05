@@ -14,6 +14,7 @@ LLM categorization layer, not here.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from typing import Any
 
@@ -32,6 +33,16 @@ IMPERATIVE_OPENERS = {
 
 def _strip_punct(token: str) -> str:
     return re.sub(r"^[^\w$]+|[^\w%]+$", "", token)
+
+
+def variant_id(text: str) -> str:
+    """Stable 16-hex-char hash of normalized variant text. Whitespace
+    collapsed and lowercased so trivial differences (extra spaces,
+    capitalization) don't fragment the variant index. Used as the
+    join key between the dataset builder, the LLM categorizer, and
+    the creative cache."""
+    norm = " ".join(text.strip().split()).lower()
+    return hashlib.sha256(norm.encode("utf-8")).hexdigest()[:16]
 
 
 def compute_features(text: str | None) -> dict[str, Any] | None:
