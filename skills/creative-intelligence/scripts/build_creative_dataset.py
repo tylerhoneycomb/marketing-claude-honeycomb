@@ -86,6 +86,10 @@ VERTICAL_RE = re.compile(
 LEGACY_VERTICAL_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bwiner", re.IGNORECASE), "wineries"),
 ]
+# Verticals to exclude from the dataset. "template" campaigns are
+# infrastructure (e.g. Template-IC Conversion Event-4.8.2026 holds
+# the IC pixel rather than running ads), not real audience segments.
+EXCLUDED_VERTICALS = {"template", "unknown"}
 
 # Floors below which per-ad performance is too thin to trust for
 # decile ranking. Variants in low-spend ads still appear in the
@@ -505,6 +509,22 @@ def main(argv: list[str] | None = None) -> int:
     }
     ad_vertical = {ad_id: extract_vertical(perf.get("campaign_name"))
                    for ad_id, perf in ad_performance.items()}
+
+    # Drop ads in excluded verticals (template, unknown) BEFORE the
+    # variant corpus is built — keeps the dataset focused on real
+    # audience segments and prevents Template-IC infrastructure
+    # campaigns from appearing as a one-off "vertical" in briefs.
+    excluded_ad_ids = {
+        ad_id for ad_id, v in ad_vertical.items()
+        if v in EXCLUDED_VERTICALS
+    }
+    if excluded_ad_ids:
+        logging.warning("Excluding %d ads in template/unknown verticals",
+                        len(excluded_ad_ids))
+        for ad_id in excluded_ad_ids:
+            ad_performance.pop(ad_id, None)
+            ad_to_creative.pop(ad_id, None)
+            ad_vertical.pop(ad_id, None)
 
     cache = load_creatives_cache()
     creative_ids_needed = {

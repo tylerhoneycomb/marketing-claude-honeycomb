@@ -11,12 +11,15 @@ Tell Tyler what to write next. Reads the variant-grain corpus dataset; correlate
 
 ## Scripts
 
-Two scripts, run in this order. The first hits the Anthropic API for any new variants/images; the second hits Meta + builds the dataset.
+Three invocations in sequence. Build runs first so the creative cache is fully refreshed (asset_feed_spec arrays + image_hashes populated for every active creative), then categorize tags any new variants/images, then build re-runs to re-emit the dataset JSON with the new tags attached. The second build call is essentially free — cache and images are already on disk, it just re-emits the JSON.
 
 ```
+python3 skills/creative-intelligence/scripts/build_creative_dataset.py --output /tmp/creative_dataset.json
 python3 skills/creative-intelligence/scripts/categorize_creative.py
 python3 skills/creative-intelligence/scripts/build_creative_dataset.py --output /tmp/creative_dataset.json
 ```
+
+The order matters. `categorize_creative.py` reads `data/creatives/creatives.json` and only categorizes variants whose creative entry has the new asset_feed_spec arrays populated. `build_creative_dataset.py` is the script that refreshes those arrays via Meta calls. Running categorize first against an unrefreshed cache (e.g. the first-ever run) means the categorizer has zero work to do, and the dataset emits without LLM tags.
 
 Requires:
 - `META_ACCESS_TOKEN` env var (for the dataset builder's Meta calls)
@@ -24,7 +27,7 @@ Requires:
 - `EXEC_ENDPOINT` env var (optional — falls back to `exec_endpoint` in `data/config/benchmarks.json`)
 - `SLACK_WEBHOOK_URL` env var (optional — Slack post is gated on this)
 
-The first run is the slowest: ~$5 of Anthropic calls to categorize 200-400 unique variants and 50-150 unique images. Subsequent runs hit cache for everything except new variants and process in seconds.
+Scheduled via `.github/workflows/agent-creative-intelligence.yml` for Monday 14:00 UTC. The first run is the slowest: ~$5 of Anthropic calls to categorize 200-400 unique variants and 50-150 unique images, plus the Meta-side cache refresh + image downloads. Subsequent runs hit cache for everything except new variants and process in seconds.
 
 ## Architecture (in one paragraph)
 

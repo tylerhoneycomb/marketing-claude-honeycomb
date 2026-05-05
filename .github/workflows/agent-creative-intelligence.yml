@@ -1,15 +1,16 @@
 name: Agent — Creative Intelligence
 
-# Manual-only until first autonomous runs are verified.
-# Once the skill output is confirmed clean, uncomment the schedule
-# block to run weekly on Mondays at 10 AM ET (UTC 14:00).
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 14 * * 1'  # Mon 10 AM ET (UTC-4) / 9 AM ET during DST
+    # Mon 14:00 UTC = 10 AM EDT (UTC-4, summer) / 9 AM EST (UTC-5, winter).
+    - cron: '0 14 * * 1'
 
 permissions:
-  contents: read
+  # `contents: write` lets the "Commit cache updates" step push the
+  # refreshed creative cache + downloaded images + categorizations
+  # back to main. Mirrors daily-data.yml, which has the same need.
+  contents: write
   # Required by claude-code-action@v1 for OIDC auth at startup.
   id-token: write
   # Allows the "Post status to tracking issue" step to comment on
@@ -67,28 +68,35 @@ jobs:
             Run the creative-intelligence skill exactly as documented
             in skills/creative-intelligence/SKILL.md.
 
-            Two scripts run in sequence. The first (categorize) hits
-            the Anthropic API for any new variants/images and persists
-            tags into data/creatives/categorizations.json. The second
-            (build_creative_dataset) refreshes the creative cache from
-            Meta, resolves + downloads any new images, builds the
-            variant corpus, and emits /tmp/creative_dataset.json. You
-            then read that JSON + the cached images at
-            data/creatives/images/ and produce the brief.
+            Three script invocations in sequence. build runs FIRST so
+            the creative cache is fully refreshed (asset_feed_spec
+            arrays + image_hashes populated for every active creative),
+            then categorize tags any new variants/images, then build
+            re-runs to re-emit the dataset JSON with the new tags
+            attached. The second build call is essentially free
+            (cache + images already on disk; just re-emits the JSON).
 
             Steps:
-            1. `python3 skills/creative-intelligence/scripts/categorize_creative.py`
-            2. `python3 skills/creative-intelligence/scripts/build_creative_dataset.py --output /tmp/creative_dataset.json`
-            3. Read /tmp/creative_dataset.json. Compose the brief
+            1. `python3 skills/creative-intelligence/scripts/build_creative_dataset.py --output /tmp/creative_dataset.json`
+               — refreshes the creative cache from Meta, resolves +
+               downloads any new images, builds the variant corpus.
+            2. `python3 skills/creative-intelligence/scripts/categorize_creative.py`
+               — calls the Anthropic API for any new variants/images,
+               persists tags into data/creatives/categorizations.json.
+            3. `python3 skills/creative-intelligence/scripts/build_creative_dataset.py --output /tmp/creative_dataset.json`
+               — re-emits the dataset with the now-cached tags
+               attached. Required so /tmp/creative_dataset.json has
+               LLM tags from the first run onward.
+            4. Read /tmp/creative_dataset.json. Compose the brief
                following the output rules in SKILL.md.
-            4. POST the per-vertical Sheet rows to
+            5. POST the per-vertical Sheet rows to
                `?action=creative-intelligence-write`. The endpoint URL
                is in data/config/benchmarks.json under exec_endpoint
                (or in the EXEC_ENDPOINT env var).
-            5. If `SLACK_WEBHOOK_URL` env var is set and non-empty,
+            6. If `SLACK_WEBHOOK_URL` env var is set and non-empty,
                POST a condensed brief to that webhook via curl. Skip
                Slack silently if unset.
-            6. Write the status one-liner to /tmp/agent_status.txt
+            7. Write the status one-liner to /tmp/agent_status.txt
                (see SKILL.md "Status reporter" section for the exact
                format).
 
@@ -146,7 +154,10 @@ jobs:
 
       # Commit any new image downloads, creative cache updates, and
       # categorization cache entries so subsequent runs skip the
-      # expensive first-time work.
+      # expensive first-time work. Mirrors daily-data.yml's commit
+      # step including the 4-attempt push retry — a transient push
+      # failure shouldn't lose a cache full of expensive
+      # categorizations.
       - name: Commit cache updates
         if: always()
         continue-on-error: true
@@ -154,14 +165,21 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/creatives/ || true
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/creatives/
           if git diff --cached --quiet; then
             echo "no cache changes to commit"
-          else
-            git commit -m "agent-creative-intelligence: cache refresh $(date -u +%Y-%m-%d)"
-            git push
+            exit 0
           fi
+          git commit -m "agent-creative-intelligence: cache refresh $(date -u +%Y-%m-%d)"
+          for i in 1 2 3 4; do
+            if git push; then
+              exit 0
+            fi
+            sleep $((2 ** i))
+          done
+          echo "git push failed after 4 attempts"
+          exit 1
 
       # Post status to the agent-loop tracking issue (#48).
       - name: Post status to tracking issue
