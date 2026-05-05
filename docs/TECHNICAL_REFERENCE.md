@@ -754,10 +754,11 @@ Builds a compact text snapshot for the chat LLM. Sections:
 
 **`agent-creative-intelligence.yml`** _(added 2026-05-05)_
 
-- Same template + an extra `pip install anthropic==0.98.1` because the categorizer hits the Anthropic API directly (in addition to claude-code-action's own runtime).
+- Departs from the other agent workflows' template. The other skills run their Python scripts inside `claude-code-action`'s Bash prompt; this skill runs the scripts as ordinary workflow steps BEFORE invoking `claude-code-action`. Reason: the first production run on 2026-05-05 hit `APIConnectionError` on 526/526 categorizer calls when the script ran inside the action's subprocess shell. Fatigue-monitor's Meta calls work fine from the same subprocess context, so it's specifically Anthropic SDK calls that fail — suspected cause is an inherited `ANTHROPIC_BASE_URL` or HTTP-proxy env var from the action that breaks direct SDK connections.
+- Pipeline: `pip install requests==2.32.3 anthropic==0.98.1` → `build_creative_dataset.py` (refresh cache + emit dataset) → `categorize_creative.py` (LLM tagging, `continue-on-error: true` so a failure here doesn't kill the brief) → `build_creative_dataset.py` (re-emit with tags) → `claude-code-action@v1` whose prompt only composes the brief from `/tmp/creative_dataset.json`.
+- The categorizer constructs its Anthropic client with explicit `base_url="https://api.anthropic.com"` to defeat any stray env-var override (belt-and-suspenders alongside the workflow restructure).
 - Triggers: `workflow_dispatch` AND active cron `0 14 * * 1` (Mon 10 AM ET / 9 AM EST). Weekly cadence matches the corpus-aggregation attribution model.
 - timeout-minutes: 45 (longest of any skill: ~$5 of Anthropic categorization on first run + 30-day snapshot aggregation + creative cache refresh + image downloads via /adimages resolution).
-- Prompt: run `categorize_creative.py` (hash-deduped LLM tags) → `build_creative_dataset.py --output /tmp/creative_dataset.json` (corpus aggregation + side-by-side pairs + decile lists) → compose brief that quotes actual winning copy + cites real numbers + honors confidence labels (≥10 ads + ≥25 IC = confident; ≥5 + ≥10 = directional; below = insufficient hypothesis-only).
 - Includes a `commit cache updates` step that pushes refreshed `data/creatives/` (creatives.json, images/, categorizations.json) back to main so subsequent runs skip the expensive first-time work.
 - Concurrency group `agent-creative-intelligence`.
 

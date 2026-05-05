@@ -28,6 +28,17 @@ jobs:
     # text variants + 50-150 unique images on Sonnet 4.5) plus the
     # 30-day snapshot aggregation + creative cache refresh + image
     # download. Subsequent runs are minutes (cache hits).
+    #
+    # Architecture: scripts run as ordinary workflow steps BEFORE
+    # claude-code-action is invoked. The first attempt at this skill
+    # ran the scripts inside the action's Bash prompt; the
+    # categorizer's Anthropic SDK calls all failed with
+    # APIConnectionError, suspected cause being claude-code-action's
+    # subprocess inheriting wrapped HTTP env vars (likely
+    # ANTHROPIC_BASE_URL or a proxy) that broke direct SDK
+    # connections. Running the scripts as separate workflow steps
+    # uses the runner's normal env, which works for both Meta calls
+    # and Anthropic calls.
     timeout-minutes: 45
     steps:
       - name: Checkout
@@ -46,16 +57,51 @@ jobs:
         # than added repo-wide.
         run: pip install requests==2.32.3 anthropic==0.98.1
 
-      - name: Run creative-intelligence skill via Claude Code
+      # Step 1: refresh the creative cache + build the variant corpus.
+      # Hits Meta (cache refresh + /adimages resolution + image
+      # downloads). On first run this is the slowest step (~5-10 min);
+      # subsequent runs hit the cache and complete in <30 seconds.
+      - name: Build creative dataset (initial pass)
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+        run: |
+          python3 skills/creative-intelligence/scripts/build_creative_dataset.py \
+            --output /tmp/creative_dataset.json
+
+      # Step 2: LLM categorize any new variants/images. Hits Anthropic
+      # API once per unique variant text + image. Hash-deduped via the
+      # categorizations.json cache so subsequent runs only categorize
+      # genuinely new content. continue-on-error so a Connection
+      # blip doesn't kill the brief — the dataset still has raw text
+      # + structural features which Tyler's reframe identified as the
+      # primary signal anyway. The brief notes when tags are absent.
+      - name: Categorize variants + images
+        continue-on-error: true
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          python3 skills/creative-intelligence/scripts/categorize_creative.py
+
+      # Step 3: re-emit the dataset with LLM tags now attached. If
+      # categorize succeeded this adds llm_copy_angle and
+      # llm_visual_style decorations; if it failed this is a no-op
+      # re-emit (cache is fresh from step 1, no Meta calls).
+      - name: Re-build dataset with LLM tags
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+        run: |
+          python3 skills/creative-intelligence/scripts/build_creative_dataset.py \
+            --output /tmp/creative_dataset.json
+
+      # Step 4: Claude composes the brief from the dataset + cached
+      # images, POSTs per-vertical rollups to the Sheet, optionally
+      # Slack-posts a condensed version, writes the status one-liner.
+      # NO scripts run here — that's the whole point of the
+      # restructure. Claude only does brief composition + comms.
+      - name: Compose brief via Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
         env:
-          # Same secret the daily-data + other agent workflows use.
-          # The skill scripts read it directly via os.environ.
-          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
-          # Required: the categorizer's Anthropic SDK reads this from
-          # env. Same key claude-code-action uses for its own runtime.
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # Optional. If unset, Claude skips Slack posting and only
           # surfaces results in this workflow's logs.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -65,40 +111,31 @@ jobs:
           display_report: "true"
           claude_args: "--permission-mode bypassPermissions"
           prompt: |
-            Run the creative-intelligence skill exactly as documented
-            in skills/creative-intelligence/SKILL.md.
+            Compose the Creative Intelligence brief per
+            skills/creative-intelligence/SKILL.md.
 
-            Three script invocations in sequence. build runs FIRST so
-            the creative cache is fully refreshed (asset_feed_spec
-            arrays + image_hashes populated for every active creative),
-            then categorize tags any new variants/images, then build
-            re-runs to re-emit the dataset JSON with the new tags
-            attached. The second build call is essentially free
-            (cache + images already on disk; just re-emits the JSON).
+            The dataset builder and categorizer have already run as
+            previous workflow steps. /tmp/creative_dataset.json is on
+            disk with raw text + structural features + (when
+            available) LLM tags. Cached images are at
+            data/creatives/images/<image_hash>.jpg. Do NOT re-run the
+            scripts — read the dataset directly.
 
             Steps:
-            1. `python3 skills/creative-intelligence/scripts/build_creative_dataset.py --output /tmp/creative_dataset.json`
-               — refreshes the creative cache from Meta, resolves +
-               downloads any new images, builds the variant corpus.
-            2. `python3 skills/creative-intelligence/scripts/categorize_creative.py`
-               — calls the Anthropic API for any new variants/images,
-               persists tags into data/creatives/categorizations.json.
-            3. `python3 skills/creative-intelligence/scripts/build_creative_dataset.py --output /tmp/creative_dataset.json`
-               — re-emits the dataset with the now-cached tags
-               attached. Required so /tmp/creative_dataset.json has
-               LLM tags from the first run onward.
-            4. Read /tmp/creative_dataset.json. Compose the brief
-               following the output rules in SKILL.md.
-            5. POST the per-vertical Sheet rows to
+            1. Read /tmp/creative_dataset.json. If the variants[]
+               array has llm_copy_angle: null on every entry, the
+               categorizer step failed (check its log) — compose the
+               brief from raw text + structural features only and
+               note the missing tags in the status one-liner.
+            2. Compose the brief following the output rules in
+               SKILL.md.
+            3. POST the per-vertical Sheet rows to
                `?action=creative-intelligence-write`. The endpoint URL
-               is in data/config/benchmarks.json under exec_endpoint
-               (or in the EXEC_ENDPOINT env var).
-            6. If `SLACK_WEBHOOK_URL` env var is set and non-empty,
+               is in data/config/benchmarks.json under exec_endpoint.
+            4. If `SLACK_WEBHOOK_URL` env var is set and non-empty,
                POST a condensed brief to that webhook via curl. Skip
                Slack silently if unset.
-            7. Write the status one-liner to /tmp/agent_status.txt
-               (see SKILL.md "Status reporter" section for the exact
-               format).
+            5. Write the status one-liner to /tmp/agent_status.txt.
 
             Output rules — MUST follow:
             - Always quote actual ad copy in the brief, never just
@@ -120,23 +157,19 @@ jobs:
               the cleanest causal signal in the dataset.
 
             Constraints:
-            - Read-only on Meta and the repo (except writing
-              /tmp/agent_status.txt and /tmp/creative_dataset.json).
-              Do not modify any source files. Do not push commits.
-            - Do not call the Meta API directly outside the scripts.
-              build_creative_dataset.py owns all Meta calls including
-              the creative cache refresh, the /adimages resolution,
-              and the image downloads.
-            - If either script exits non-zero, surface the stderr
-              message, write a status one-liner indicating the
-              failure, and stop. Do not attempt to compose a brief
-              from incomplete data.
+            - Read-only on the repo (except writing
+              /tmp/agent_status.txt). Do not modify any source files.
+              Do not push commits.
+            - Do not run the dataset builder or categorizer — the
+              workflow has already run them. Do not call Meta or
+              Anthropic directly; both have been called by the
+              previous steps.
 
             Status reporter:
             - Before exiting, write a single-line status to
               /tmp/agent_status.txt, e.g.:
                 "verticals=8 variants=247 confident=2 directional=4 insufficient=2 winners_top=owner_story bottom_decile_count=14"
-                "ERROR: build_creative_dataset.py exited non-zero — see workflow log"
+                "verticals=15 variants=426 confident=1 directional=3 insufficient=11 note=categorize_failed_no_llm_tags"
               The workflow's status reporter step picks this up and
               posts it to the agent-loop tracking issue (#48).
 
