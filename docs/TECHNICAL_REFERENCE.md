@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-05 (Creative Intelligence skill shipped)_
+_Last updated: 2026-05-05 (Creative Intelligence shipped + workflow-schedule docs corrected)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -72,7 +72,7 @@ Google Sheets is the system of record for the campaign-level pipeline. The repo 
 - **Two systems of record.** The Google Sheet stores campaign-level data; the Git repo's `data/` directory stores ad-level data. The ad-level pipeline does not write to the Sheet, and the campaign-level pipeline does not write to `data/`.
 - **Deployments are git-native.** Merging to `main` triggers GitHub Actions that push Apps Script via `clasp` and publish the dashboard to GitHub Pages. Nobody edits the Apps Script web editor directly.
 - **Two execution contexts for the Apps Script layer:** (1) time-based triggers run on Google's schedule, (2) HTTP GET/POST to the published Web App `/exec` URL drives the dashboard and Slack approval links.
-- **Ad-level pipeline is workflow_dispatch-only at present.** Until the first few snapshot outputs are verified, `.github/workflows/daily-data.yml` runs only when manually invoked. The cron block is commented out in the workflow file.
+- **Ad-level pipeline is autonomous.** `.github/workflows/daily-data.yml` runs daily at 8 AM ET (UTC 12:00) on cron and commits each snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
 
 ## 2. Repository Structure
 
@@ -117,7 +117,7 @@ marketing-claude-honeycomb/
 ├── .github/workflows/
 │   ├── deploy-apps-script.yml  # Push Code.js via clasp on merge to main
 │   ├── deploy-webapp.yml       # Publish dashboard to GitHub Pages on merge to main
-│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (manual-only)
+│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (daily cron)
 │   └── claude.yml              # @claude mentions in issues/PRs
 ├── ad-copy/          # (empty placeholder) Meta ad copy by vertical
 ├── workflows/        # (empty placeholder) Automation scripts
@@ -729,7 +729,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
 
 **`agent-pipeline-health.yml`** _(added 2026-05-03)_
 
-- Triggers: `workflow_dispatch` only. Cron `0 13 * * *` (9 AM ET) is staged in the file but commented out until first runs are verified.
+- Triggers: `workflow_dispatch` + active cron `0 13 * * *` (9 AM ET / UTC 13:00).
 - Steps: checkout → setup Python 3.12 → `pip install requests==2.32.3` → `anthropics/claude-code-action@v1` with a fixed `prompt` instructing it to run the `pipeline-health` skill per `SKILL.md` → "Dump Claude execution log" step that cats `/tmp/claude-execution-output.json` (`if: always()`).
 - Secrets required: `ANTHROPIC_API_KEY`, `META_ACCESS_TOKEN`. Optional: `SLACK_WEBHOOK_URL` — if absent, Claude skips the Slack post and only surfaces results in the workflow log.
 - Permissions: `contents: read` (skill is read-only) + `id-token: write` (required by `claude-code-action@v1` for OIDC auth at startup).
@@ -739,7 +739,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
 **`agent-daily-check.yml`** _(added 2026-05-03)_
 
 - Same template as `agent-pipeline-health.yml` (id-token, bypassPermissions, show_full_output, display_report, dump-log step).
-- Triggers: `workflow_dispatch` only. Cron `30 12 * * *` (8:30 AM ET) staged but commented out.
+- Triggers: `workflow_dispatch` + active cron `30 12 * * *` (8:30 AM ET / UTC 12:30).
 - timeout-minutes: 25 (fetch + analyze + 5 Meta API calls).
 - Prompt: run `fetch_daily_data.py > /tmp/daily_data.json` → `analyze_daily.py --input /tmp/daily_data.json` → compose sectioned summary (PACING, PORTFOLIO, WINNERS, BLEEDERS, FATIGUE WATCH, LEARNING, STALE).
 - Concurrency group `agent-daily-check`.
@@ -747,7 +747,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
 **`agent-fatigue-monitor.yml`** _(added 2026-05-03)_
 
 - Same template.
-- Triggers: `workflow_dispatch` only. Cron `30 13 * * 1,4` (Mon + Thu 9:30 AM ET) staged but commented out — twice-weekly because fatigue moves slowly and daily would over-query Meta.
+- Triggers: `workflow_dispatch` + active cron `30 13 * * 1,4` (Mon + Thu 9:30 AM ET / UTC 13:30) — twice-weekly because fatigue moves slowly and daily would over-query Meta.
 - timeout-minutes: 30 (the longest skill: 14-day fetch + creative metadata + Path-B historical query + classification).
 - Prompt: run the three scripts in sequence (fetch → baselines → classify) → compose summary grouped by severity, skip healthy ads, prominently surface budget conflicts.
 - Concurrency group `agent-fatigue-monitor`.
@@ -1056,7 +1056,7 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 
 ### 11.7 Workflow (`.github/workflows/daily-data.yml`)
 
-- **Trigger:** `workflow_dispatch` only (current). The cron block (`0 12 * * *` UTC = 8 AM ET) is staged but commented out until the first runs are verified clean.
+- **Trigger:** `workflow_dispatch` + active cron `0 12 * * *` UTC (8 AM ET).
 - **Steps:** checkout → setup Python 3.12 → `pip install requests==2.32.3` → `python scripts/fetch_ad_data.py` → `python scripts/compute_signals.py` → commit `data/` and push to the current branch.
 - **Secrets:** `META_ACCESS_TOKEN` (GitHub Secret on the repo, separate from the Apps Script Script Property of the same name). `META_AD_ACCOUNT_ID` is also read from env if set, falling back to `account.id` in `benchmarks.json`.
 - **Permissions:** `contents: write` (needed to push the daily commit).

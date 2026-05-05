@@ -123,7 +123,7 @@ The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent lo
 - **The agent never writes to Meta directly.** All budget recommendations flow through the existing Slack approval pipeline in `apps-script/Code.js`. The agent's role is to surface signals and propose actions, not to execute changes against the Meta API.
 - **Learning-phase protection.** Never propose budget changes to ad sets where `learning_stage_info.status == "LEARNING"`. The `compute_signals.py` step already filters these and marks them `actionable: false`; defensively re-check in any skill that proposes ad-set actions.
 - **Signal floors.** Fatigue signals require ≥ 3 days of data and ≥ 1,000 impressions before they're considered actionable. Don't promote a row whose `actionable` field is `false`, even if it has a flag set.
-- **Daily-data workflow is manual-only for now.** `.github/workflows/daily-data.yml` runs only on workflow_dispatch until we've confirmed the first few snapshot outputs are clean. To enable the schedule, uncomment the `schedule` block in the workflow file.
+- **Daily-data workflow runs autonomously.** `.github/workflows/daily-data.yml` is on a daily 8 AM ET cron and commits the snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
 
 ## Agent Skills
 
@@ -158,15 +158,15 @@ defined in `Code.js`. To add a new write endpoint:
 Each skill that needs a scheduled run gets its own workflow file under
 `.github/workflows/agent-<skill>.yml`. Current:
 
-- `agent-pipeline-health.yml` — runs `pipeline-health` skill. Manual-only
-  (`workflow_dispatch`) until verified; cron block staged but commented out.
-- `agent-daily-check.yml` — runs `daily-check` skill. Manual-only;
-  cron block staged for 8:30 AM ET daily.
-- `agent-fatigue-monitor.yml` — runs `fatigue-monitor` skill. Manual-only;
-  cron block staged for Mon + Thu 9:30 AM ET (twice-weekly — fatigue
-  moves slowly, daily would over-query Meta).
+- `agent-pipeline-health.yml` — runs `pipeline-health` skill. Daily cron
+  active at 9 AM ET (UTC 13:00).
+- `agent-daily-check.yml` — runs `daily-check` skill. Daily cron active
+  at 8:30 AM ET (UTC 12:30).
+- `agent-fatigue-monitor.yml` — runs `fatigue-monitor` skill. Twice-
+  weekly cron active for Mon + Thu 9:30 AM ET (UTC 13:30) — fatigue
+  moves slowly, daily would over-query Meta.
 - `agent-creative-intelligence.yml` — runs `creative-intelligence` skill.
-  Schedule active for Mondays at 10 AM ET (UTC 14:00). Weekly cadence
+  Weekly cron active for Mondays at 10 AM ET (UTC 14:00). Weekly cadence
   matches the corpus-aggregation attribution model — variant-level
   performance signals shift over weeks, not days.
 
