@@ -93,10 +93,19 @@ jobs:
             COMMIT_MSG="data: ad-level snapshot ${DATE_LABEL}"
           fi
           git commit -m "$COMMIT_MSG"
+          # fetch+rebase before each push retry handles main moving
+          # during the run (when scheduled cron coincides with a PR
+          # merge). The naive retry-same-push pattern silently
+          # failed on 2026-05-05 when the agent-creative-intelligence
+          # run pushed back ~10 minutes after Tyler merged a chain
+          # of PRs.
           for i in 1 2 3 4; do
-            if git push; then
+            if git fetch origin main \
+               && git rebase origin/main \
+               && git push; then
               exit 0
             fi
+            git rebase --abort 2>/dev/null || true
             sleep $((2 ** i))
           done
           echo "git push failed after 4 attempts"
