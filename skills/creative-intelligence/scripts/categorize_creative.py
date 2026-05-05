@@ -193,10 +193,22 @@ def categorize_text(client: Any, model: str, defs: str,
     last_err: Any = None
     for attempt in range(2):
         try:
+            # Prompt caching on the system message: it's identical
+            # across every variant in this run (definitions + enum
+            # list + format instructions), so flagging it as
+            # ephemeral cache hits cuts effective token cost ~10x
+            # after the first call. Fixes the rate-limit failures
+            # seen on 2026-05-05 (95/526 calls hit 429 against the
+            # 30k tokens/min limit because each call sent the full
+            # 5000-token system message uncached).
             resp = client.messages.create(
                 model=model,
                 max_tokens=512,
-                system=sys_msg,
+                system=[{
+                    "type": "text",
+                    "text": sys_msg,
+                    "cache_control": {"type": "ephemeral"},
+                }],
                 tools=[CATEGORIZE_TOOL],
                 tool_choice={"type": "tool", "name": "categorize"},
                 messages=[{"role": "user", "content": user_msg}],
@@ -245,10 +257,17 @@ def categorize_image(client: Any, model: str, defs: str,
     last_err: Any = None
     for attempt in range(2):
         try:
+            # Same prompt-caching pattern as categorize_text — the
+            # visual_style system message is identical across every
+            # image, so caching it cuts effective rate-limit cost.
             resp = client.messages.create(
                 model=model,
                 max_tokens=512,
-                system=sys_msg,
+                system=[{
+                    "type": "text",
+                    "text": sys_msg,
+                    "cache_control": {"type": "ephemeral"},
+                }],
                 tools=[CATEGORIZE_TOOL],
                 tool_choice={"type": "tool", "name": "categorize"},
                 messages=[{"role": "user", "content": [
