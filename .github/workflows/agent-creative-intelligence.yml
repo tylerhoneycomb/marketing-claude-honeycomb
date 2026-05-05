@@ -187,10 +187,13 @@ jobs:
 
       # Commit any new image downloads, creative cache updates, and
       # categorization cache entries so subsequent runs skip the
-      # expensive first-time work. Mirrors daily-data.yml's commit
-      # step including the 4-attempt push retry — a transient push
-      # failure shouldn't lose a cache full of expensive
-      # categorizations.
+      # expensive first-time work. The push retry uses fetch+rebase
+      # because main can move during the run (the first run on
+      # 2026-05-05 was scheduled to push back ~10 minutes after
+      # Tyler merged 4 PRs in quick succession; the naive retry
+      # just retried the same stale push and silently failed all 4
+      # times). Reports the commit's outcome in /tmp/agent_status.txt
+      # so the issue-#48 status comment makes failures visible.
       - name: Commit cache updates
         if: always()
         continue-on-error: true
@@ -202,16 +205,22 @@ jobs:
           git add data/creatives/
           if git diff --cached --quiet; then
             echo "no cache changes to commit"
+            echo " cache_commit=no_changes" >> /tmp/agent_status.txt
             exit 0
           fi
           git commit -m "agent-creative-intelligence: cache refresh $(date -u +%Y-%m-%d)"
           for i in 1 2 3 4; do
-            if git push; then
+            if git fetch origin main \
+               && git rebase origin/main \
+               && git push; then
+              echo " cache_commit=ok" >> /tmp/agent_status.txt
               exit 0
             fi
+            git rebase --abort 2>/dev/null || true
             sleep $((2 ** i))
           done
           echo "git push failed after 4 attempts"
+          echo " cache_commit=push_failed" >> /tmp/agent_status.txt
           exit 1
 
       # Post status to the agent-loop tracking issue (#48).
