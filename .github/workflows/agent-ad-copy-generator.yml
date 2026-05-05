@@ -1,0 +1,139 @@
+name: Agent — Ad-Copy Generator
+
+# Manually-triggered draft generation. Drafts are markdown for human
+# review and never auto-published — running this on a schedule
+# would just produce drafts nobody reads. Tyler invokes this after
+# the Monday Creative Intelligence brief, picking which verticals
+# warrant new drafts.
+on:
+  workflow_dispatch:
+    inputs:
+      vertical:
+        description: 'Single vertical (e.g. "breweries"). Leave blank to draft for ALL eligible verticals.'
+        required: false
+        default: ''
+      num_drafts:
+        description: 'Drafts per vertical (default 5).'
+        required: false
+        default: '5'
+      min_vertical_ads:
+        description: 'Minimum ads per vertical (only used in all-verticals mode). Default 5.'
+        required: false
+        default: '5'
+      model:
+        description: 'Anthropic model (default claude-sonnet-4-5).'
+        required: false
+        default: 'claude-sonnet-4-5'
+
+permissions:
+  # Required to commit the generated drafts back to main.
+  contents: write
+  # For the issue-#48 status comment.
+  issues: write
+
+concurrency:
+  group: agent-ad-copy-generator
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        # `anthropic` for the drafting API call. `requests` is
+        # transitively required by the dataset builder we re-run
+        # below.
+        run: pip install requests==2.32.3 anthropic==0.98.1
+
+      # Re-emit /tmp/creative_dataset.json from the cached creatives
+      # (no Meta calls — agent-creative-intelligence already
+      # refreshed the cache on its last run and committed it back
+      # to main). --skip-meta means we read from disk only.
+      - name: Re-emit dataset from cache
+        run: |
+          python3 skills/creative-intelligence/scripts/build_creative_dataset.py \
+            --skip-meta --output /tmp/creative_dataset.json
+
+      - name: Generate drafts
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -n "${{ github.event.inputs.vertical }}" ]; then
+            python3 skills/ad-copy-generator/scripts/generate_drafts.py \
+              --vertical "${{ github.event.inputs.vertical }}" \
+              --num-drafts "${{ github.event.inputs.num_drafts }}" \
+              --model "${{ github.event.inputs.model }}"
+          else
+            python3 skills/ad-copy-generator/scripts/generate_drafts.py \
+              --all-verticals \
+              --min-vertical-ads "${{ github.event.inputs.min_vertical_ads }}" \
+              --num-drafts "${{ github.event.inputs.num_drafts }}" \
+              --model "${{ github.event.inputs.model }}"
+          fi
+
+      # Status reporter: count drafts written + flagged.
+      - name: Compute status one-liner
+        if: always()
+        run: |
+          DRAFT_COUNT=$(ls data/drafts/$(date -u +%Y-%m-%d)-*.md 2>/dev/null | wc -l || echo 0)
+          FLAG_COUNT=$(grep -l '⚠️' data/drafts/$(date -u +%Y-%m-%d)-*.md 2>/dev/null | wc -l || echo 0)
+          if [ -n "${{ github.event.inputs.vertical }}" ]; then
+            VERTICAL="vertical=${{ github.event.inputs.vertical }}"
+          else
+            VERTICAL="all_verticals=true"
+          fi
+          echo "${VERTICAL} drafts_written=${DRAFT_COUNT} files_with_compliance_flags=${FLAG_COUNT}" \
+            > /tmp/agent_status.txt
+          cat /tmp/agent_status.txt
+
+      # Commit any new draft files. Same retry pattern as
+      # daily-data.yml so a transient push failure doesn't lose
+      # the markdown.
+      - name: Commit drafts
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/drafts/
+          if git diff --cached --quiet; then
+            echo "no draft changes to commit"
+            exit 0
+          fi
+          git commit -m "agent-ad-copy-generator: drafts $(date -u +%Y-%m-%d)"
+          for i in 1 2 3 4; do
+            if git push; then
+              exit 0
+            fi
+            sleep $((2 ** i))
+          done
+          echo "git push failed after 4 attempts"
+          exit 1
+
+      - name: Post status to tracking issue
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS: ${{ job.status }}
+        run: |
+          DETAIL="$(cat /tmp/agent_status.txt 2>/dev/null || echo '(no status file)')"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "**ad-copy-generator** — ${STATUS}"
+            echo "$DETAIL"
+            echo "[run]($RUN_URL)"
+          } | gh issue comment 48 --repo "${{ github.repository }}" --body-file - || true
