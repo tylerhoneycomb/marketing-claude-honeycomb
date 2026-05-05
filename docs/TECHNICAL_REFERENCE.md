@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-05 (Creative Intelligence shipped + workflow-schedule docs corrected)_
+_Last updated: 2026-05-05 (Creative Intelligence + ad-copy-generator shipped; workflow-schedule docs corrected)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -761,6 +761,15 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - timeout-minutes: 45 (longest of any skill: ~$5 of Anthropic categorization on first run + 30-day snapshot aggregation + creative cache refresh + image downloads via /adimages resolution).
 - Includes a `commit cache updates` step that pushes refreshed `data/creatives/` (creatives.json, images/, categorizations.json) back to main so subsequent runs skip the expensive first-time work.
 - Concurrency group `agent-creative-intelligence`.
+
+**`agent-ad-copy-generator.yml`** _(added 2026-05-05)_
+
+- `workflow_dispatch` only — drafts are markdown for human review and never auto-published, so a schedule would just produce drafts nobody reads. Tyler invokes this after the Monday Creative Intelligence brief once he's decided which verticals warrant new drafts.
+- Inputs: `vertical` (single-vertical mode if non-blank, else `--all-verticals`), `num_drafts` (default 5), `min_vertical_ads` (default 5), `model` (default `claude-sonnet-4-5`).
+- Pipeline: `pip install requests==2.32.3 anthropic==0.98.1` → `build_creative_dataset.py --skip-meta` (re-emits the dataset from the locally-cached creatives.json — no Meta calls; uses the cache from the most recent `agent-creative-intelligence` commit) → `generate_drafts.py` with the dispatch inputs → "Compute status one-liner" step counts written drafts + flagged files → "Commit drafts" step pushes `data/drafts/<date>-<vertical>.md` back to main with the same 4-attempt retry pattern as `daily-data.yml` → status comment to issue #48.
+- timeout-minutes: 20 (no Meta calls, ~$0.50-0.80 of Anthropic, fast).
+- Permissions: `contents: write` (commit drafts) + `issues: write` (status comment). No `id-token: write` because this workflow doesn't use `claude-code-action` — the script calls Anthropic directly.
+- Concurrency group `agent-ad-copy-generator`.
 
 ### 10.1.1 Apps Script fallback dispatch (added 2026-05-03)
 
