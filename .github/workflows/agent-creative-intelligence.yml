@@ -93,7 +93,55 @@ jobs:
           python3 skills/creative-intelligence/scripts/build_creative_dataset.py \
             --output /tmp/creative_dataset.json
 
-      # Step 4: Claude composes the brief from the dataset + cached
+      # Step 4: commit the cache changes BEFORE claude-code-action
+      # runs. The first attempt at this skill ran the commit step
+      # AFTER claude-code-action; the action strips git auth
+      # credentials in some way (the persisted http extraheader from
+      # actions/checkout disappears), causing every git push attempt
+      # to fail with "Invalid username or token. Password
+      # authentication is not supported." The fix is structural:
+      # commit while we still have valid checkout credentials, then
+      # let Claude do its read-only brief-composition work.
+      #
+      # Bonus: if Claude fails for any reason (rate limits, model
+      # outage, prompt issues), the $5 of categorization investment
+      # is still preserved on main. Previous order discarded the
+      # cache on Claude failure too.
+      #
+      # Status marker goes to /tmp/cache_commit_status.txt (separate
+      # file from Claude's /tmp/agent_status.txt) so Claude's brief
+      # composition can't accidentally overwrite the commit outcome.
+      # The status reporter step at the end reads both.
+      - name: Commit cache updates
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/creatives/
+          if git diff --cached --quiet; then
+            echo "no cache changes to commit"
+            echo "cache_commit=no_changes" > /tmp/cache_commit_status.txt
+            exit 0
+          fi
+          git commit -m "agent-creative-intelligence: cache refresh $(date -u +%Y-%m-%d)"
+          for i in 1 2 3 4; do
+            if git fetch origin main \
+               && git rebase origin/main \
+               && git push; then
+              echo "cache_commit=ok" > /tmp/cache_commit_status.txt
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((2 ** i))
+          done
+          echo "git push failed after 4 attempts"
+          echo "cache_commit=push_failed" > /tmp/cache_commit_status.txt
+          exit 1
+
+      # Step 5: Claude composes the brief from the dataset + cached
       # images, POSTs per-vertical rollups to the Sheet, optionally
       # Slack-posts a condensed version, writes the status one-liner.
       # NO scripts run here — that's the whole point of the
@@ -115,7 +163,8 @@ jobs:
             skills/creative-intelligence/SKILL.md.
 
             The dataset builder and categorizer have already run as
-            previous workflow steps. /tmp/creative_dataset.json is on
+            previous workflow steps, AND the cache has already been
+            committed back to main. /tmp/creative_dataset.json is on
             disk with raw text + structural features + (when
             available) LLM tags. Cached images are at
             data/creatives/images/<image_hash>.jpg. Do NOT re-run the
@@ -159,7 +208,8 @@ jobs:
             Constraints:
             - Read-only on the repo (except writing
               /tmp/agent_status.txt). Do not modify any source files.
-              Do not push commits.
+              Do not push commits — the commit step already ran in
+              an earlier workflow step.
             - Do not run the dataset builder or categorizer — the
               workflow has already run them. Do not call Meta or
               Anthropic directly; both have been called by the
@@ -171,7 +221,9 @@ jobs:
                 "verticals=8 variants=247 confident=2 directional=4 insufficient=2 winners_top=owner_story bottom_decile_count=14"
                 "verticals=15 variants=426 confident=1 directional=3 insufficient=11 note=categorize_failed_no_llm_tags"
               The workflow's status reporter step picks this up and
-              posts it to the agent-loop tracking issue (#48).
+              posts it to the agent-loop tracking issue (#48),
+              alongside the cache_commit=ok|push_failed marker from
+              the commit step that ran before you.
 
       - name: Dump Claude execution log
         if: always()
@@ -185,45 +237,12 @@ jobs:
             ls -la /home/runner/work/_temp/ || true
           fi
 
-      # Commit any new image downloads, creative cache updates, and
-      # categorization cache entries so subsequent runs skip the
-      # expensive first-time work. The push retry uses fetch+rebase
-      # because main can move during the run (the first run on
-      # 2026-05-05 was scheduled to push back ~10 minutes after
-      # Tyler merged 4 PRs in quick succession; the naive retry
-      # just retried the same stale push and silently failed all 4
-      # times). Reports the commit's outcome in /tmp/agent_status.txt
-      # so the issue-#48 status comment makes failures visible.
-      - name: Commit cache updates
-        if: always()
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/creatives/
-          if git diff --cached --quiet; then
-            echo "no cache changes to commit"
-            echo " cache_commit=no_changes" >> /tmp/agent_status.txt
-            exit 0
-          fi
-          git commit -m "agent-creative-intelligence: cache refresh $(date -u +%Y-%m-%d)"
-          for i in 1 2 3 4; do
-            if git fetch origin main \
-               && git rebase origin/main \
-               && git push; then
-              echo " cache_commit=ok" >> /tmp/agent_status.txt
-              exit 0
-            fi
-            git rebase --abort 2>/dev/null || true
-            sleep $((2 ** i))
-          done
-          echo "git push failed after 4 attempts"
-          echo " cache_commit=push_failed" >> /tmp/agent_status.txt
-          exit 1
-
-      # Post status to the agent-loop tracking issue (#48).
+      # Post status to the agent-loop tracking issue (#48). Combines
+      # the brief one-liner (Claude wrote /tmp/agent_status.txt) with
+      # the cache-commit outcome (the earlier commit step wrote
+      # /tmp/cache_commit_status.txt). Both are read separately so
+      # Claude's overwrite of agent_status.txt can't clobber the
+      # commit outcome.
       - name: Post status to tracking issue
         if: always()
         continue-on-error: true
@@ -231,10 +250,11 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           STATUS: ${{ job.status }}
         run: |
-          DETAIL="$(cat /tmp/agent_status.txt 2>/dev/null || echo '(no status file)')"
+          BRIEF="$(cat /tmp/agent_status.txt 2>/dev/null || echo '(no brief status)')"
+          COMMIT="$(cat /tmp/cache_commit_status.txt 2>/dev/null || echo 'cache_commit=unknown')"
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           {
             echo "**creative-intelligence** — ${STATUS}"
-            echo "$DETAIL"
+            echo "${BRIEF} ${COMMIT}"
             echo "[run]($RUN_URL)"
           } | gh issue comment 48 --repo "${{ github.repository }}" --body-file - || true
