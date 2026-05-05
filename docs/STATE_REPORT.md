@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-03 (autonomous agent workflow)_
+_Last updated: 2026-05-05 (Creative Intelligence skill shipped)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -77,6 +77,7 @@ Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` oper
 - **pipeline-health** _(shipped 2026-05-03)_ — runs four checks (data freshness, Meta token validity, IC conversion event existence, dashboard endpoint health) and writes results to a new `pipeline_health` Sheet tab via `Code.js?action=health-write`. Posts to Slack only on WARN/FAIL.
 - **daily-check** _(shipped 2026-05-03)_ — pulls 7 days of campaign/adset/ad insights, computes pacing vs weekly target, portfolio CPICP rankings, top 3 winners + bleeders, early fatigue flags, learning-phase ad sets, and stale creatives. Writes a summary row to a new `daily_check_log` Sheet tab via `Code.js?action=daily-check-write`. Runs alongside the existing campaign-level Apps Script daily digest — does not replace it.
 - **fatigue-monitor** _(shipped 2026-05-03)_ — pulls 14 days of ad-level insights, computes each ad's peak-window baseline (days 4–7 after launch), and classifies the current 7 days as `saturated` / `fatigued` / `early_fatigue` / `underperforming` / `healthy`. Cross-references pending budget proposals via `Code.js?action=budget-queue-read` and surfaces conflicts. Writes per-ad rows to a new `fatigue_log` Sheet tab via `Code.js?action=fatigue-write`. Caches creative metadata in `data/creatives/creatives.json` so thumbnails + ad copy are pulled once per creative, not per run.
+- **creative-intelligence** _(shipped 2026-05-05)_ — weekly Monday brief on what creative copy and visual patterns are winning across the portfolio. Tells Tyler what to write next by quoting actual winning copy alongside its real numbers (CPICP, IC count, ad count) and structural fingerprint (length, opening word, syntactic markers). The attribution model is corpus-level text aggregation: when the same body text appears across many ads, sum spend + IC across all of them to produce a meaningful per-variant CPICP. Three rounds of Meta API investigation proved that asset-level breakdown insights — the original spec's spine — won't return reliable per-variant conversion data for Honeycomb's `asset_feed_spec` ad mix; the design pivot is captured in [docs/CREATIVE_INTELLIGENCE_DESIGN.md](./CREATIVE_INTELLIGENCE_DESIGN.md). Two-script pipeline: `categorize_creative.py` (Anthropic API once per unique variant text + image, hash-deduped, ~$5 first run on Sonnet 4.5) and `build_creative_dataset.py` (joins snapshots + creative cache + categorizations, downloads full-size images via `/adimages` resolution, finds same-image-different-body side-by-side pairs). Writes per-vertical rollups to a new `creative_intelligence_log` Sheet tab. SKILL.md output rules require briefs that quote actual copy + cite real numbers + honor confidence labels — never recommend categories.
 
 Skills query Meta live for operational decisions; the snapshot pipeline above provides the historical backbone. Both share a single Meta client at `scripts/lib/meta.py` (HTTP retries, paging, throttle handling, IC extraction, row normalization).
 
@@ -87,8 +88,9 @@ Each skill that needs scheduled runs gets a workflow file under `.github/workflo
 - **`agent-pipeline-health.yml`** _(shipped 2026-05-03)_ — manual-only (`workflow_dispatch`); daily cron staged for 9 AM ET, commented out. v1 of the autonomous-agent pattern.
 - **`agent-daily-check.yml`** _(shipped 2026-05-03)_ — manual-only; daily cron staged for 8:30 AM ET, commented out.
 - **`agent-fatigue-monitor.yml`** _(shipped 2026-05-03)_ — manual-only; twice-weekly cron staged for Mon + Thu 9:30 AM ET (fatigue moves slowly, daily would over-query Meta).
+- **`agent-creative-intelligence.yml`** _(shipped 2026-05-05)_ — weekly cron active for Monday 10 AM ET (UTC 14:00). Weekly cadence matches the corpus-aggregation attribution model — variant-level performance signals shift over weeks, not days. Includes a "commit cache updates" step that pushes the refreshed image cache and categorizations cache back to main so subsequent runs skip the expensive first-time work.
 
-All three use the same template baked from the pipeline-health iteration cycle: `id-token: write` permission for OIDC auth, `--permission-mode bypassPermissions` so Claude can run Bash in CI, `show_full_output: true` + `display_report: true` so Claude's output surfaces in the workflow log, and an `if: always()` step that dumps `claude-execution-output.json` for diagnostics if anything fails.
+All four use the same template baked from the pipeline-health iteration cycle: `id-token: write` permission for OIDC auth, `--permission-mode bypassPermissions` so Claude can run Bash in CI, `show_full_output: true` + `display_report: true` so Claude's output surfaces in the workflow log, and an `if: always()` step that dumps `claude-execution-output.json` for diagnostics if anything fails.
 
 ### Cron fallback via Apps Script (added 2026-05-03)
 

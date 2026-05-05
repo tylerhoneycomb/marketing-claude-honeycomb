@@ -2290,7 +2290,8 @@ function createAllTriggers() {
     generateWeeklyNarrative: true,
     triggerAgentPipelineHealthIfNeeded: true,
     triggerAgentDailyCheckIfNeeded: true,
-    triggerAgentFatigueMonitorIfNeeded: true
+    triggerAgentFatigueMonitorIfNeeded: true,
+    triggerAgentCreativeIntelligenceIfNeeded: true
   };
 
   ScriptApp.getProjectTriggers().forEach(function (t) {
@@ -2314,6 +2315,8 @@ function createAllTriggers() {
   ScriptApp.newTrigger('triggerAgentDailyCheckIfNeeded')
     .timeBased().everyDays(1).atHour(12).create();
   ScriptApp.newTrigger('triggerAgentFatigueMonitorIfNeeded')
+    .timeBased().everyDays(1).atHour(13).create();
+  ScriptApp.newTrigger('triggerAgentCreativeIntelligenceIfNeeded')
     .timeBased().everyDays(1).atHour(13).create();
 
   var triggers = ScriptApp.getProjectTriggers();
@@ -2470,6 +2473,27 @@ function triggerAgentFatigueMonitorIfNeeded() {
     return;
   }
   triggerAgentWorkflow_('agent-fatigue-monitor.yml');
+}
+
+
+// Weekly Monday fallback for agent-creative-intelligence.yml. The
+// GitHub cron is Monday 14:00 UTC (10 AM EDT / 9 AM EST). This
+// Apps Script trigger fires daily and early-outs unless it's Monday,
+// then dispatches via workflow_dispatch only if no recent successful
+// run exists.
+function triggerAgentCreativeIntelligenceIfNeeded() {
+  Logger.log('=== triggerAgentCreativeIntelligenceIfNeeded ===');
+  var dow = parseInt(Utilities.formatDate(
+    new Date(), Session.getScriptTimeZone(), 'u'), 10);
+  if (dow !== 1) {
+    Logger.log('Not Monday (ISO dow=' + dow + ') — skipping.');
+    return;
+  }
+  if (workflowRanWithinHours_('agent-creative-intelligence.yml', 12)) {
+    Logger.log('Recent successful or in-progress run exists — skipping.');
+    return;
+  }
+  triggerAgentWorkflow_('agent-creative-intelligence.yml');
 }
 
 
@@ -3848,7 +3872,8 @@ function handleDashboardApi_(e) {
     'health-write': true,
     'daily-check-write': true,
     'budget-queue-read': true,
-    'fatigue-write': true
+    'fatigue-write': true,
+    'creative-intelligence-write': true
   };
 
   if (!action || !dashboardActions[action]) return null;
@@ -4032,6 +4057,13 @@ function handleDashboardApi_(e) {
   // form-encoded `rows=<json>` param.
   if (action === 'fatigue-write') {
     return handleFatigueWrite_(e);
+  }
+
+  // `creative-intelligence` skill writes one row per vertical per
+  // weekly run to `creative_intelligence_log`. Same payload shape as
+  // fatigue-write.
+  if (action === 'creative-intelligence-write') {
+    return handleCreativeIntelligenceWrite_(e);
   }
 
   try {
@@ -4369,6 +4401,79 @@ function handleFatigueWrite_(e) {
 }
 
 
+// Append-only: writes one creative_intelligence row per vertical
+// per weekly run. Creates the tab on first call. The
+// `creative-intelligence` skill writes rows for ALL verticals so the
+// per-vertical trend over weeks is preserved for week-over-week
+// deltas. Same dual-wire pattern as the other *-write handlers.
+function handleCreativeIntelligenceWrite_(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('creative_intelligence_log');
+  if (!sheet) {
+    sheet = ss.insertSheet('creative_intelligence_log');
+    sheet.appendRow([
+      'date', 'vertical',
+      'ad_count', 'median_cpicp',
+      'spend_total', 'ic_total',
+      'top_body_variant_id', 'top_body_text', 'top_body_cpicp',
+      'top_visual_hash', 'top_visual_style',
+      'bottom_decile_count',
+      'recorded_at'
+    ]);
+  }
+
+  var rows = [];
+  var p = (e && e.parameter) || {};
+
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && Array.isArray(parsed.rows)) rows = parsed.rows;
+    } catch (parseErr) {
+      // fall through to query-string parsing
+    }
+  }
+  if (!rows.length && p.rows) {
+    try {
+      rows = JSON.parse(p.rows);
+      if (!Array.isArray(rows)) {
+        return jsonResponse_({ error: 'rows must be a JSON array' });
+      }
+    } catch (err) {
+      return jsonResponse_({ error: 'rows is not valid JSON: ' + err.message });
+    }
+  }
+
+  if (!rows.length) {
+    return jsonResponse_({ error: 'no rows provided (use JSON body {rows:[...]} or rows=<json>)' });
+  }
+
+  var nowIso = new Date().toISOString();
+  var written = 0;
+  for (var ri = 0; ri < rows.length; ri++) {
+    var row = rows[ri] || {};
+    if (!row.vertical) continue;
+    sheet.appendRow([
+      String(row.date || ''),
+      String(row.vertical),
+      Number(row.ad_count) || 0,
+      row.median_cpicp == null ? '' : Number(row.median_cpicp),
+      row.spend_total == null ? '' : Number(row.spend_total),
+      Number(row.ic_total) || 0,
+      String(row.top_body_variant_id || ''),
+      String(row.top_body_text || ''),
+      row.top_body_cpicp == null ? '' : Number(row.top_body_cpicp),
+      String(row.top_visual_hash || ''),
+      String(row.top_visual_style || ''),
+      Number(row.bottom_decile_count) || 0,
+      nowIso
+    ]);
+    written++;
+  }
+  return jsonResponse_({ ok: true, written: written });
+}
+
+
 // ─── GENERIC SHEET → JSON CONVERTER ─────────────────────────
 // Reads a sheet, normalizes headers to snake_case keys, and
 // returns an array of row objects. Dates are formatted as
@@ -4558,6 +4663,9 @@ function doPost(e) {
   }
   if (action === 'fatigue-write') {
     return handleFatigueWrite_(e);
+  }
+  if (action === 'creative-intelligence-write') {
+    return handleCreativeIntelligenceWrite_(e);
   }
 
   return jsonResponse_({ error: 'Unknown POST action: ' + action });
