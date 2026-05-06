@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-05 (Creative Intelligence + ad-copy-generator shipped; workflow-schedule docs corrected)_
+_Last updated: 2026-05-06 (Creative Intelligence + ad-copy-generator validated end-to-end; architectural findings documented)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -752,24 +752,43 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Prompt: run the three scripts in sequence (fetch → baselines → classify) → compose summary grouped by severity, skip healthy ads, prominently surface budget conflicts.
 - Concurrency group `agent-fatigue-monitor`.
 
-**`agent-creative-intelligence.yml`** _(added 2026-05-05)_
+**`agent-creative-intelligence.yml`** _(added 2026-05-05, validated 2026-05-05)_
 
-- Departs from the other agent workflows' template. The other skills run their Python scripts inside `claude-code-action`'s Bash prompt; this skill runs the scripts as ordinary workflow steps BEFORE invoking `claude-code-action`. Reason: the first production run on 2026-05-05 hit `APIConnectionError` on 526/526 categorizer calls when the script ran inside the action's subprocess shell. Fatigue-monitor's Meta calls work fine from the same subprocess context, so it's specifically Anthropic SDK calls that fail — suspected cause is an inherited `ANTHROPIC_BASE_URL` or HTTP-proxy env var from the action that breaks direct SDK connections.
-- Pipeline: `pip install requests==2.32.3 anthropic==0.98.1` → `build_creative_dataset.py` (refresh cache + emit dataset) → `categorize_creative.py` (LLM tagging, `continue-on-error: true` so a failure here doesn't kill the brief) → `build_creative_dataset.py` (re-emit with tags) → `claude-code-action@v1` whose prompt only composes the brief from `/tmp/creative_dataset.json`.
+- Departs from the other agent workflows' template — runs Python scripts as ordinary workflow steps BEFORE invoking `claude-code-action`, AND commits cache changes BEFORE the action runs too. Two distinct production-run findings forced this architecture:
+  - **Run 1 (2026-05-05 morning)** — categorizer hit `APIConnectionError` on 526/526 calls when running inside the action's Bash subprocess. Fatigue-monitor's Meta calls work fine from the same subprocess context, so it's specifically Anthropic SDK calls that fail. Suspected cause: subprocess inheritance of an `ANTHROPIC_BASE_URL` or HTTP-proxy env var the action sets for its own runtime. Fix: move scripts to ordinary workflow steps + add explicit `base_url="https://api.anthropic.com"` belt-and-suspenders in the categorizer.
+  - **Run 2 (2026-05-05 afternoon)** — categorize succeeded (with rate-limit issues — see below) but the cache `git push` failed all 4 retries with `Invalid username or token. Password authentication is not supported.` The persisted http extraheader credentials from `actions/checkout@v4` survive through Python script steps but get stripped or invalidated AFTER `claude-code-action@v1` runs. Daily-data.yml has no claude-code-action and commits successfully; this workflow had `Commit cache updates` AFTER the action and was getting auth-rejected. Fix: move `Commit cache updates` to BEFORE `claude-code-action`. Bonus: if Claude's brief composition fails for any reason, the $5 of categorization is preserved on main.
+- Pipeline (final order): `pip install requests==2.32.3 anthropic==0.98.1` → `build_creative_dataset.py` (refresh cache + emit dataset) → `categorize_creative.py` (LLM tagging, `continue-on-error: true` so a failure here doesn't kill the brief) → `build_creative_dataset.py` (re-emit with tags) → **`Commit cache updates`** (pushes `data/creatives/` to main with `fetch+rebase+push` retry while credentials still valid) → `claude-code-action@v1` (brief composition only, reads `/tmp/creative_dataset.json`) → `Dump Claude execution log` → `Post status to tracking issue` (combines `/tmp/agent_status.txt` from Claude with `/tmp/cache_commit_status.txt` from the commit step).
+- **Prompt caching:** the categorizer wraps its system message (≈5000 tokens of voice guide + compliance rules + definitions + enums) in `cache_control: {"type": "ephemeral"}`. Anthropic caches it after the first call and bills subsequent reads at ~10% of the normal rate. Production run 3 (2026-05-05 evening) confirmed: ~99% categorize success rate (vs 82% before caching), ~$1-2 cost (vs ~$5), well under the 30k tokens/min rate limit.
 - The categorizer constructs its Anthropic client with explicit `base_url="https://api.anthropic.com"` to defeat any stray env-var override (belt-and-suspenders alongside the workflow restructure).
 - Triggers: `workflow_dispatch` AND active cron `0 14 * * 1` (Mon 10 AM ET / 9 AM EST). Weekly cadence matches the corpus-aggregation attribution model.
-- timeout-minutes: 45 (longest of any skill: ~$5 of Anthropic categorization on first run + 30-day snapshot aggregation + creative cache refresh + image downloads via /adimages resolution).
-- Includes a `commit cache updates` step that pushes refreshed `data/creatives/` (creatives.json, images/, categorizations.json) back to main so subsequent runs skip the expensive first-time work.
-- Concurrency group `agent-creative-intelligence`.
+- timeout-minutes: 45 (longest of any skill: Anthropic categorization on first-ever run + 30-day snapshot aggregation + creative cache refresh + image downloads via /adimages resolution).
+- Concurrency group `agent-creative-intelligence`. Validated end-to-end on 2026-05-05: cache_commit=ok, confident=4 portfolio findings, sheet_rows=15, github-actions[bot] commit `ea115069` landed on main with 525-entry categorizations.json.
 
-**`agent-ad-copy-generator.yml`** _(added 2026-05-05)_
+**`agent-creative-preview.yml`** _(added 2026-05-05)_
+
+- $0 alternative path. Same checkout + Meta call + cache-commit mechanics as `agent-creative-intelligence.yml`, but skips `categorize_creative.py` and `claude-code-action`. Runs `build_creative_dataset.py` (Meta only, free) → `preview_dataset.py` (pure Python, free) → commits the resulting Markdown brief to `data/previews/<date>.md`.
+- Reason it exists: lets an operator validate the cache-commit path and the deterministic signal (raw text + numbers + structural patterns + side-by-side pairs) without spending Anthropic dollars. Used on 2026-05-05 to verify the auth fix in PR #68 worked before re-dispatching the LLM workflow.
+- Triggers: `workflow_dispatch` only.
+- Permissions: `contents: write` (commit) + `issues: write` (status comment). No `id-token: write` because no claude-code-action.
+- timeout-minutes: 25.
+
+**`agent-ad-copy-generator.yml`** _(added 2026-05-05, validated 2026-05-06)_
 
 - `workflow_dispatch` only — drafts are markdown for human review and never auto-published, so a schedule would just produce drafts nobody reads. Tyler invokes this after the Monday Creative Intelligence brief once he's decided which verticals warrant new drafts.
 - Inputs: `vertical` (single-vertical mode if non-blank, else `--all-verticals`), `num_drafts` (default 5), `min_vertical_ads` (default 5), `model` (default `claude-sonnet-4-5`).
-- Pipeline: `pip install requests==2.32.3 anthropic==0.98.1` → `build_creative_dataset.py --skip-meta` (re-emits the dataset from the locally-cached creatives.json — no Meta calls; uses the cache from the most recent `agent-creative-intelligence` commit) → `generate_drafts.py` with the dispatch inputs → "Compute status one-liner" step counts written drafts + flagged files → "Commit drafts" step pushes `data/drafts/<date>-<vertical>.md` back to main with the same 4-attempt retry pattern as `daily-data.yml` → status comment to issue #48.
-- timeout-minutes: 20 (no Meta calls, ~$0.50-0.80 of Anthropic, fast).
+- Pipeline: `pip install requests==2.32.3 anthropic==0.98.1` → `build_creative_dataset.py --skip-meta` (re-emits the dataset from the locally-cached creatives.json — no Meta calls; uses the cache from the most recent `agent-creative-intelligence` commit) → `generate_drafts.py` with the dispatch inputs → "Compute status one-liner" step counts written drafts + flagged files → "Commit drafts" step pushes `data/drafts/<date>-<vertical>.md` back to main with the `fetch+rebase+push` retry pattern → status comment to issue #48.
+- timeout-minutes: 20 (no Meta calls, ~$0.10-0.80 of Anthropic, fast). Validated 2026-05-06: vertical=breweries produced 1 markdown file at `data/drafts/2026-05-06-breweries.md` with 5 drafts (1 flagged by the compliance regex backstop on "no personal guarantee" — a false positive the human reviewer adjudicates).
 - Permissions: `contents: write` (commit drafts) + `issues: write` (status comment). No `id-token: write` because this workflow doesn't use `claude-code-action` — the script calls Anthropic directly.
 - Concurrency group `agent-ad-copy-generator`.
+
+### 10.1.0.5 Architectural pattern: scripts before claude-code-action _(established 2026-05-05)_
+
+Two production-run findings established a recommended pattern for any new agent skill that involves either (a) heavy outbound HTTPS to non-Anthropic services or (b) committing artifacts back to main:
+
+1. **Run Python scripts as ordinary workflow steps**, not inside `claude-code-action`'s Bash prompt. The action's subprocess shell appears to inherit env vars (suspected `ANTHROPIC_BASE_URL` or HTTP-proxy) that break the Anthropic SDK's direct connections from subprocesses. Verified: 526/526 APIConnectionError when scripts run inside the action's prompt; 0/526 when they run as separate workflow steps.
+2. **Commit any cache/artifact changes BEFORE invoking claude-code-action**. The action strips or invalidates the http extraheader credentials that `actions/checkout@v4` persists. A `git push` AFTER the action fails with `Password authentication is not supported`; the same push BEFORE the action succeeds. Daily-data.yml works because it has no claude-code-action.
+
+The pipeline-health, daily-check, and fatigue-monitor skills predate this finding. They run scripts inside the action's prompt and don't commit cache. They work fine because they don't trigger either failure mode (no Anthropic SDK subprocess calls; no commit-back). New skills with either dependency should follow the Creative Intelligence pattern.
 
 ### 10.1.1 Apps Script fallback dispatch (added 2026-05-03)
 

@@ -169,6 +169,42 @@ Each skill that needs a scheduled run gets its own workflow file under
   Weekly cron active for Mondays at 10 AM ET (UTC 14:00). Weekly cadence
   matches the corpus-aggregation attribution model — variant-level
   performance signals shift over weeks, not days.
+- `agent-creative-preview.yml` — `workflow_dispatch` only. $0 alternative
+  path: same checkout + Meta + cache-commit mechanics as
+  `agent-creative-intelligence.yml` but skips Anthropic calls. Runs the
+  dataset builder + a deterministic pure-Python preview script. Used to
+  validate cache-commit mechanics without spending model dollars.
+- `agent-ad-copy-generator.yml` — `workflow_dispatch` only. Drafts ad
+  copy from the Creative Intelligence cache; never auto-published.
+
+### New-skill architectural pattern _(established 2026-05-05)_
+
+Two distinct production-run findings established a recommended pattern
+for any new skill that involves either Anthropic SDK calls from a
+subprocess OR committing artifacts back to main:
+
+1. **Run Python scripts as ordinary workflow steps**, not inside
+   `claude-code-action`'s Bash prompt. Verified: 526/526
+   APIConnectionError when scripts run inside the action's prompt;
+   0/526 when they run as separate workflow steps. Suspected cause is
+   subprocess inheritance of an `ANTHROPIC_BASE_URL` or HTTP-proxy env
+   var the action sets.
+2. **Commit any cache/artifact changes BEFORE invoking
+   claude-code-action**. The action strips or invalidates the http
+   extraheader credentials that `actions/checkout@v4` persists; pushes
+   AFTER it fail with `Password authentication is not supported`.
+3. **Use prompt caching on identical-across-run system messages.**
+   `cache_control: {"type": "ephemeral"}` cuts effective per-call token
+   cost ~10× after the first call. Saves money AND keeps total
+   tokens-per-min under Anthropic's 30k limit on workflows with many
+   parallel calls. Confirmed for `categorize_creative.py`: cost dropped
+   from ~$5 to ~$1-2/run, rate-limit failures from 18% to ~1%.
+
+The pipeline-health, daily-check, and fatigue-monitor skills predate
+these findings. They run scripts inside the action's prompt and don't
+commit cache. They work fine because they don't trigger either failure
+mode (no Anthropic SDK subprocess calls; no commit-back). New skills
+with either dependency should follow the Creative Intelligence pattern.
 
 Every agent workflow uses the same template (lessons learned from the
 agent-pipeline-health iteration cycle):
@@ -215,8 +251,9 @@ run rather than racing.
 ### Agent loop status tracking — issue #48
 
 Every autonomous workflow run (`daily-data`, `agent-pipeline-health`,
-`agent-daily-check`, `agent-fatigue-monitor`, `agent-creative-intelligence`)
-posts a status comment to
+`agent-daily-check`, `agent-fatigue-monitor`, `agent-creative-intelligence`,
+`agent-creative-preview`, `agent-ad-copy-generator`) posts a status
+comment to
 [issue #48](https://github.com/tylerhoneycomb/marketing-claude-honeycomb/issues/48)
 on completion (`if: always()` so failures report too,
 `continue-on-error: true` so a missing/closed issue can't break the
@@ -226,8 +263,12 @@ run). Each comment includes:
 - A one-line skill-specific summary (e.g.
   `PASS 4/0/0` for pipeline-health,
   `evaluated=12 fatigued=2 conflicts=1` for fatigue-monitor, or
-  `verticals=8 variants=247 winners_top=owner_story` for
-  creative-intelligence)
+  `verticals=15 variants=426 confident=4 winners_top=benefit_led
+  cache_commit=ok` for creative-intelligence — the latter combines
+  Claude's brief one-liner with the cache-commit step's outcome on a
+  single line, since the commit step writes to a separate file
+  (`/tmp/cache_commit_status.txt`) so Claude can't accidentally
+  overwrite it)
 - Direct link to the workflow run
 
 Agent workflow prompts instruct Claude to write the one-liner summary
@@ -239,7 +280,9 @@ Reading the issue comments is the fastest way to verify the agent loop
 is firing correctly — sort by oldest-first for a chronological log.
 Close + reopen a fresh issue when the comment volume gets noisy
 (close the old one, create a new one, update the issue number in all
-five workflow YAML files).
+seven workflow YAML files: daily-data, agent-pipeline-health,
+agent-daily-check, agent-fatigue-monitor, agent-creative-intelligence,
+agent-creative-preview, agent-ad-copy-generator).
 
 ### Meta API conventions
 
