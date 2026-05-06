@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-06 (Creative Intelligence + ad-copy-generator validated end-to-end; architectural findings documented)_
+_Last updated: 2026-05-06 (budget optimization moved to daily cadence; Creative Intelligence + ad-copy-generator validated end-to-end)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -485,8 +485,8 @@ All triggers are set up via `createAllTriggers()` and `createBudgetTriggers()` (
 |---|---|---|
 | Daily, 7 AM | `runDailyPipeline()` (Code.js:1971) | Fetch Meta + HubSpot, rebuild weekly rollup, post daily digest |
 | Mondays, 8 AM | `generateWeeklyNarrative()` (Code.js:1303) | Generate narrative for most-recent-completed week, post to Slack |
-| Wed + Fri, 6 AM | `runBudgetAnalysis()` (Code.js:2135) | Compute signals, propose budget changes, post Slack approval |
-| Thu + Sat, 3 AM | `executeBudgetChanges()` (Code.js:2836) | Apply approved changes to Meta, mark queue rows, post summary |
+| Daily, 6 AM | `runBudgetAnalysis()` (Code.js:2135) | Compute signals, propose budget changes, post Slack approval |
+| Daily, 3 AM | `executeBudgetChanges()` (Code.js:2836) | Apply approved changes to Meta, mark queue rows, post summary |
 
 ### 7.2 Daily pipeline (7 AM) — `runDailyPipeline()`
 
@@ -542,7 +542,7 @@ Four Script Properties drive the approval state:
               (no pending)
                    │
                    ▼
-       runBudgetAnalysis() runs Wed/Fri 6 AM
+       runBudgetAnalysis() runs daily 6 AM
                    │
                    ▼
     BUDGET_PENDING_TOKEN = <uuid>
@@ -556,7 +556,7 @@ Four Script Properties drive the approval state:
   BUDGET_APPROVED_TOKEN  BUDGET_REJECTED_TOKEN
          │                     │
          ▼                     ▼
-   executeBudgetChanges() runs Thu/Sat 3 AM
+   executeBudgetChanges() runs daily 3 AM
          │                     │
    Apply Meta budgets     Mark rows rejected
    Mark rows executed     Clear state
@@ -607,7 +607,7 @@ Returns an array of changed campaigns with `changeCents`, `proposedDailyBudgetCe
 
 ### 8.5 Execution — `executeBudgetChanges()` (Code.js:2836)
 
-Runs Thu/Sat 3 AM:
+Runs daily at 3 AM:
 
 1. **Orphan expiry:** walk `budget_queue`, mark any `pending` row with a token different from `BUDGET_PENDING_TOKEN` as `expired`.
 2. Check state:

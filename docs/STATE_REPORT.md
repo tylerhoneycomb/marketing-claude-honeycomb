@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-06 (Creative Intelligence + ad-copy-generator validated end-to-end; architectural findings documented)_
+_Last updated: 2026-05-06 (budget optimization moved to daily cadence; Creative Intelligence + ad-copy-generator validated end-to-end)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -38,17 +38,17 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 - Sends all the numbers to Claude (Anthropic's AI) with a prompt that asks for a short narrative: what happened, what to watch, what to do.
 - Writes the narrative into a log sheet and posts it to Slack.
 
-### Every Wednesday and Friday at 6 AM (automatic)
+### Every day at 6 AM (automatic)
 
 - Looks at the last 14 days of performance.
 - Decides which campaigns are doing well vs. poorly.
 - Proposes small budget adjustments (±2% per cycle, max ±4%) to reallocate money toward winners.
 - Sends the proposal to Slack with "Approve" and "Reject" buttons.
 
-### Every Thursday and Saturday at 3 AM (automatic)
+### Every day at 3 AM (automatic)
 
-- If the proposal was approved by a human in Slack, applies the budget changes directly to Meta.
-- If rejected or ignored, marks them as cancelled.
+- If yesterday's proposal was approved by a human in Slack, applies the budget changes directly to Meta.
+- If rejected or ignored within the ~21-hour approval window, marks them as cancelled.
 - Posts a confirmation to Slack either way.
 
 ### On-demand via dashboard
