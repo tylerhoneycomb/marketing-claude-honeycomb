@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-06 (budget optimization moved to daily cadence; Creative Intelligence + ad-copy-generator validated end-to-end)_
+_Last updated: 2026-05-06 (budget cadence active + Apps Script triggers installed; tech-debt index refreshed)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -884,7 +884,11 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 | Meta token stored in two places | Apps Script Properties + GitHub Secrets | After ad-level pipeline added 2026-05-02, rotation must update both `META_ACCESS_TOKEN` locations |
 | IC custom conversion ID hardcoded in `benchmarks.json` | `data/config/benchmarks.json` | Ad-level pipeline cannot read `campaign_mapping` (lives in Sheets) so it pins to a single `custom_conversion_id`. Will miss new IC conversions added later. |
 | Ad-level fatigue logic duplicates 14-day-window concept from Apps Script budget | `scripts/compute_signals.py` vs `Code.js:computeBudgetSignals_` | Two implementations of "rolling-window-based health signal" can drift |
-| `daily-data.yml` cron disabled | `.github/workflows/daily-data.yml` | Manual-only until first runs verified; uncomment cron block once stable |
+| ~~`daily-data.yml` cron disabled~~ | ~~`.github/workflows/daily-data.yml`~~ | **Resolved 2026-05-04.** Cron `0 12 * * *` (daily 8 AM ET) active and validated; the bot's snapshot commits land on main every morning. |
+| `claude-code-action@v1` strips git credentials AND breaks Anthropic SDK in subprocesses | `.github/workflows/agent-creative-intelligence.yml` | The action's own internals are opaque; workaround is the architectural pattern documented in §10.1.0.5 (run scripts as workflow steps, commit before the action). If/when we ship Skill 6+ with Anthropic-subprocess or commit-back needs, this constrains the workflow shape. Worth revisiting when claude-code-action releases a new major version. |
+| `build_creative_dataset.py` is invoked twice in `agent-creative-intelligence.yml` | `.github/workflows/agent-creative-intelligence.yml` | First invocation refreshes the cache + emits a baseline dataset (null tags); categorize then runs; second invocation re-emits with tags attached. The second run repeats all the snapshot aggregation + corpus building work to attach tags that could be merged in-place. ~5-10 second waste per Monday run. Could be optimized by adding a `--attach-tags-only` flag that skips snapshot reads. |
+| Compliance regex backstop has known false positives | `skills/ad-copy-generator/scripts/generate_drafts.py` | E.g. "no personal guarantee" trips the `\bguarantee\b` pattern even though it's the OPPOSITE of a return-guarantee promise. The reviewer checklist catches these, but the ⚠️ flag is noisy. Could refine the regex to require return-context keywords nearby (`return`, `APY`, etc) instead of bare `\bguarantee\b`. |
+| Categorizer's prompt caching is fragile to system-message drift | `skills/creative-intelligence/scripts/categorize_creative.py` | The 30k tokens/min Anthropic rate limit is only survivable because the 5000-token system message is identical across all 526 calls in a run, hitting Anthropic's prompt cache at ~10% effective cost. If a future change makes the system message vary per-call (e.g. injecting variant context), caching breaks and the skill regresses to ~$5/run + 18% rate-limit failures. Test by running the categorize step locally with the new prompt shape against `--max-new 50` BEFORE shipping such a change. |
 
 ### 10.5 Testing & verification
 

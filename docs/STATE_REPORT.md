@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-06 (budget optimization moved to daily cadence; Creative Intelligence + ad-copy-generator validated end-to-end)_
+_Last updated: 2026-05-06 (budget cadence active + Apps Script triggers installed; tech-debt index refreshed)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
