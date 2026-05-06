@@ -256,8 +256,8 @@ function syncCampaignMappings_() {
   Logger.log('--- syncCampaignMappings_ ---');
 
   // Once-per-day guard: buildCampaignUTMMap_ is called by both
-  // buildWeeklyRollup and computeBudgetSignals_. On Wed/Fri both
-  // run (budget 6am, pipeline 7am). Sync only needs to run once.
+  // buildWeeklyRollup and computeBudgetSignals_. Both run daily
+  // (budget 6am, pipeline 7am). Sync only needs to run once.
   var tz = Session.getScriptTimeZone();
   var todayStr = Utilities.formatDate(new Date(), tz, 'yyyy-MM-dd');
   var lastSync = PROPS.getProperty('SYNC_LAST_RUN_DATE');
@@ -3779,17 +3779,17 @@ function createBudgetTriggers() {
     }
   });
 
+  // Daily cadence: analysis at 6 AM, execution at 3 AM the next day.
+  // Each proposal posts to Slack at ~6 AM and either gets approved
+  // before 3 AM the next day (~21-hour approval window) or expires
+  // unprocessed. The previous Wed/Fri + Thu/Sat schedule gave a
+  // longer approval window but only ran the optimizer twice a week;
+  // daily means proposals reflect the most recent ad performance.
   ScriptApp.newTrigger('runBudgetAnalysis')
-    .timeBased().onWeekDay(ScriptApp.WeekDay.WEDNESDAY).atHour(6).create();
-
-  ScriptApp.newTrigger('runBudgetAnalysis')
-    .timeBased().onWeekDay(ScriptApp.WeekDay.FRIDAY).atHour(6).create();
+    .timeBased().everyDays(1).atHour(6).create();
 
   ScriptApp.newTrigger('executeBudgetChanges')
-    .timeBased().onWeekDay(ScriptApp.WeekDay.THURSDAY).atHour(3).create();
-
-  ScriptApp.newTrigger('executeBudgetChanges')
-    .timeBased().onWeekDay(ScriptApp.WeekDay.SATURDAY).atHour(3).create();
+    .timeBased().everyDays(1).atHour(3).create();
 
   var triggers = ScriptApp.getProjectTriggers();
   Logger.log('Total active triggers after setup: ' + triggers.length);
@@ -3885,7 +3885,7 @@ function handleDashboardApi_(e) {
 
   // Budget analysis trigger — calls the existing
   // runBudgetAnalysis() function from the intelligence
-  // layer. This is the same function the Wed/Fri cron
+  // layer. This is the same function the daily cron
   // trigger calls; we're just letting the dashboard
   // invoke it on demand.
   if (action === 'run_budget_analysis') {
