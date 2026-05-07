@@ -65,10 +65,17 @@ def normalize_insights_row(row: dict[str, Any], date: str, ic_action_type: str,
 
 
 def write_json(path: Path, payload: Any) -> None:
+    # Atomic write: serialize to a sibling tmp then rename. Without this,
+    # a workflow timeout (180-min cap) or runner kill mid-write leaves a
+    # half-written .json that breaks compute_signals.py with
+    # JSONDecodeError on the next run, and the partial file would still
+    # be picked up by `git add data/snapshots`.
     path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w") as f:
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    with tmp.open("w") as f:
         json.dump(payload, f, indent=2, sort_keys=True)
         f.write("\n")
+    tmp.replace(path)
 
 
 def merge_creatives(today: str, new_creatives: list[dict[str, Any]]) -> dict[str, Any]:

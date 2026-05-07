@@ -13,3 +13,10 @@ Thumbs.db
 .vscode/
 .idea/
 *.swp
+
+# Atomic-write tmp files. fetch_ad_data.py and
+# categorize_creative.py both write to <name>.tmp then rename. A
+# crash mid-write leaves the orphan tmp on disk; without this rule
+# the daily-data / creative-intelligence commit steps would
+# `git add` it.
+*.json.tmp
