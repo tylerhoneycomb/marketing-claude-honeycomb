@@ -3684,6 +3684,19 @@ function doGet(e) {
   }
 
   if (action === 'confirm_approve' || action === 'confirm_reject') {
+    // Re-validate the token against the current pending. Without this,
+    // a confirmation page rendered for token tA can outlive a daily-
+    // cadence rotation: by the time the user clicks the confirm button,
+    // pending may already be tB, and writing APPROVED/REJECTED for tA
+    // causes the next 3 AM run to silently expire tB.
+    var pendingForConfirm = PROPS.getProperty('BUDGET_PENDING_TOKEN');
+    if (!pendingForConfirm || token !== pendingForConfirm) {
+      return HtmlService.createHtmlOutput(
+        '<h2>Token mismatch.</h2>' +
+        '<p>This proposal has already been actioned, expired, or replaced ' +
+        'by a newer one. No changes were made.</p>');
+    }
+
     var confirmAction = action === 'confirm_approve' ? 'approve' : 'reject';
 
     var user = Session.getActiveUser().getEmail() || 'unknown user';
