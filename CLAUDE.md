@@ -26,38 +26,55 @@ This monorepo contains marketing automation, ad copy, workflows, and tooling for
 
 ## Living Documentation
 
-Two documents in `/docs/` describe the project's state and internals. **Both MUST be kept in sync with the code.** When you make changes that affect functionality, data model, APIs, deployment, or significant function contracts, update the relevant sections of these docs in the same PR:
+Three documents in `/docs/` describe the project's state and internals. **All MUST be kept in sync with the code.** When you make changes that affect functionality, data model, APIs, deployment, or significant function contracts, update the relevant sections of these docs in the same PR:
 
 - `/docs/STATE_REPORT.md` — plain-English overview of functionality, limitations, and known risks. Audience: non-technical stakeholders. Update when functionality changes, limitations are resolved, or new risks emerge.
 - `/docs/TECHNICAL_REFERENCE.md` — engineering reference: architecture, data model, APIs, deployment, function index, technical debt. Audience: developers. Update when schema changes, constants change, new integrations are added, or any function listed in the function reference index is significantly modified.
+- `/docs/CREATIVE_INTELLIGENCE_DESIGN.md` — design decision record for the Creative Intelligence skill's attribution model. Update only if the attribution model or pipeline shape changes (e.g. if Meta asset breakdowns become viable for IC conversion data).
 
-Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it on every meaningful change. If an update introduces or resolves technical debt, also update the tech-debt index in `TECHNICAL_REFERENCE.md` §10.4.
+All three documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it on every meaningful change. If an update introduces or resolves technical debt, also update the tech-debt index in `TECHNICAL_REFERENCE.md` §10.4.
 
 ## Repo Structure
 
 - `/apps-script/` — Full Apps Script intelligence layer, deployed via clasp + GitHub Actions
-  - `Code.js` — The complete intelligence script (~3,600 lines). Edit here, never in the Apps Script web editor
+  - `Code.js` — The complete intelligence script (~4,200 lines). Edit here, never in the Apps Script web editor
   - `.clasp.json` — Points clasp at the Apps Script project (do not edit)
   - `appsscript.json` — Apps Script manifest (scopes, runtime, Web App settings)
-- `/docs/` — Living documentation (`STATE_REPORT.md`, `TECHNICAL_REFERENCE.md`) — keep in sync with code changes
+- `/docs/` — Living documentation — keep in sync with code changes
+  - `STATE_REPORT.md` — plain-English system state for non-technical stakeholders
+  - `TECHNICAL_REFERENCE.md` — engineering reference: architecture, data model, APIs, functions, tech debt
+  - `CREATIVE_INTELLIGENCE_DESIGN.md` — design decision record: why corpus-level text aggregation replaced asset-level breakdowns as the attribution spine
 - `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
-- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`.
-- `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair.
+- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash, and optionally a `references/` directory with supporting definitions. Current skills: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`.
+- `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline.
+  - `fetch_ad_data.py` — daily Meta ad-set + ad insights pull; writes `data/snapshots/<date>/`
+  - `compute_signals.py` — derives fatigue/winner-bleeder signals; writes `data/derived/`
+  - `preview_dataset.py` — deterministic Markdown preview of the Creative Intelligence dataset (no LLM, $0)
+  - `run_daily.sh` — orchestrates fetch → compute
+  - `lib/meta.py` — shared Meta Graph API client (retries, paging, IC extraction, image downloads)
+  - `lib/text_features.py` — deterministic structural features + stable `variant_id` hash per copy variant
 - `/data/` — Agent data repository.
-  - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest)
-  - `data/creatives/creatives.json` — creative metadata, accreted over time
-  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`)
+  - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest). Read-only — committed by the `daily-data.yml` GitHub Action.
+  - `data/creatives/creatives.json` — creative metadata accreted over time; includes `asset_feed_spec` variant arrays
+  - `data/creatives/categorizations.json` — LLM copy-angle + visual-style tags keyed by variant_id or image_hash (hash-deduped, incremental)
+  - `data/creatives/images/<hash>.jpg` — full-size ad images (1440px, lazy-downloaded by `build_creative_dataset.py`)
+  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`). Regenerable from snapshots.
   - `data/config/benchmarks.json` — all thresholds; never hardcode them in scripts
-- `/ad-copy/` — Meta (Facebook/Instagram) ad copy organized by vertical
-- `/workflows/` — Automation scripts and marketing workflows
-- `/audiences/` — Audience lists and segmentation data (never commit PII)
-- `/reports/` — Campaign performance reports
+  - `data/drafts/<YYYY-MM-DD>-<vertical>.md` — ad-copy drafts written by the `ad-copy-generator` skill. Require human review before use.
+  - `data/previews/<YYYY-MM-DD>.md` — dataset preview Markdown written by `agent-creative-preview.yml`
 - `.github/workflows/` — GitHub Actions CI/CD
-  - `deploy-webapp.yml` — Auto-deploys dashboard to GitHub Pages on changes to webapp/
-  - `deploy-apps-script.yml` — Auto-deploys Apps Script via clasp on changes to apps-script/
-  - `daily-data.yml` — Manual-only (workflow_dispatch) ad-level data pull; will be flipped to a daily cron once the snapshot output is verified
+  - `deploy-webapp.yml` — auto-deploys dashboard to GitHub Pages on changes to webapp/
+  - `deploy-apps-script.yml` — auto-deploys Apps Script via clasp on changes to apps-script/
+  - `daily-data.yml` — ad-level data pull, runs daily at 8 AM ET on cron + `workflow_dispatch` for backfills
+  - `claude.yml` — enables `@claude` mentions in issues and PRs
+  - `agent-pipeline-health.yml` — runs `pipeline-health` skill daily at 9 AM ET
+  - `agent-daily-check.yml` — runs `daily-check` skill daily at 8:30 AM ET
+  - `agent-fatigue-monitor.yml` — runs `fatigue-monitor` skill Mon + Thu at 9:30 AM ET
+  - `agent-creative-intelligence.yml` — runs `creative-intelligence` skill Mondays at 10 AM ET
+  - `agent-creative-preview.yml` — `workflow_dispatch` only; $0 dataset preview path
+  - `agent-ad-copy-generator.yml` — `workflow_dispatch` only; draft ad copy for a target vertical
 
 ## Apps Script Deployment (clasp)
 

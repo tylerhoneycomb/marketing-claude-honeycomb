@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-06 (budget cadence active + Apps Script triggers installed; tech-debt index refreshed)_
+_Last updated: 2026-05-07 (doc audit: corrected skill count, repo tree gaps resolved)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -72,7 +72,7 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 
 ### Agent skills (new, 2026-05-03)
 
-Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` operating manual and Python scripts that handle Meta API calls and computation. Claude Code reads them at session start and runs the scripts via bash. Three skills are scoped:
+Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` operating manual and Python scripts that handle Meta API calls and computation. Claude Code reads them at session start and runs the scripts via bash. Five skills are shipped:
 
 - **pipeline-health** _(shipped 2026-05-03)_ — runs four checks (data freshness, Meta token validity, IC conversion event existence, dashboard endpoint health) and writes results to a new `pipeline_health` Sheet tab via `Code.js?action=health-write`. Posts to Slack only on WARN/FAIL.
 - **daily-check** _(shipped 2026-05-03)_ — pulls 7 days of campaign/adset/ad insights, computes pacing vs weekly target, portfolio CPICP rankings, top 3 winners + bleeders, early fatigue flags, learning-phase ad sets, and stale creatives. Writes a summary row to a new `daily_check_log` Sheet tab via `Code.js?action=daily-check-write`. Runs alongside the existing campaign-level Apps Script daily digest — does not replace it.
