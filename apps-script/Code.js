@@ -42,6 +42,25 @@ const ROLLING_DAYS = 14;      // signal window
 const FREQ_WATCH_THRESHOLD = 2.0;     // modifier
 const FREQ_HIGH_THRESHOLD = 3.0;     // override
 
+// Portfolio-scaling constants (Session 2). The 12% cap is the single hard
+// rail that gates every per-campaign budget movement summed across all
+// sources (optimizer increase/decrease, knockdown, strategic reallocation).
+// Mirrors data/config/benchmarks.json:scaling.max_weekly_total_change_pct.
+// Dual-source by design — Python reads JSON, Code.js reads this constant.
+// Change both if you ever change one.
+const SCALING_MAX_WEEKLY_PCT = 0.12;
+const SCALING_PROFILES_URL = 'https://raw.githubusercontent.com/' +
+  'tylerhoneycomb/marketing-claude-honeycomb/main/' +
+  'data/derived/scaling_profiles.json';
+const SCALING_PROFILES_MAX_AGE_DAYS = 14;
+// Script Property keys used by the strategic reallocation flow:
+//   SCALING_PENDING_TOKEN, SCALING_APPROVED_TOKEN, SCALING_REJECTED_TOKEN
+//   SCALING_LOCKOUT_UNTIL  (ISO timestamp; optimizer skips affected
+//                            campaigns until this passes)
+//   SCALING_AFFECTED_CAMPAIGN_IDS  (comma-separated)
+//   SCALING_PROFILES_CACHE  (JSON string of last successful profile fetch)
+//   SCALING_PROFILES_CACHED_AT  (ISO timestamp of that fetch)
+
 const ANTHROPIC_MODEL = 'claude-opus-4-7';  // used by narrative, chat, budget commentary, daily digest
 
 // IC-specific conversion tracking
@@ -2291,7 +2310,8 @@ function createAllTriggers() {
     triggerAgentPipelineHealthIfNeeded: true,
     triggerAgentDailyCheckIfNeeded: true,
     triggerAgentFatigueMonitorIfNeeded: true,
-    triggerAgentCreativeIntelligenceIfNeeded: true
+    triggerAgentCreativeIntelligenceIfNeeded: true,
+    triggerAgentPortfolioScalingIfNeeded: true
   };
 
   ScriptApp.getProjectTriggers().forEach(function (t) {
@@ -2317,6 +2337,8 @@ function createAllTriggers() {
   ScriptApp.newTrigger('triggerAgentFatigueMonitorIfNeeded')
     .timeBased().everyDays(1).atHour(13).create();
   ScriptApp.newTrigger('triggerAgentCreativeIntelligenceIfNeeded')
+    .timeBased().everyDays(1).atHour(13).create();
+  ScriptApp.newTrigger('triggerAgentPortfolioScalingIfNeeded')
     .timeBased().everyDays(1).atHour(13).create();
 
   var triggers = ScriptApp.getProjectTriggers();
@@ -2494,6 +2516,28 @@ function triggerAgentCreativeIntelligenceIfNeeded() {
     return;
   }
   triggerAgentWorkflow_('agent-creative-intelligence.yml');
+}
+
+
+// Weekly Tuesday fallback for agent-portfolio-scaling.yml. GitHub cron
+// is Tue 13:30 UTC (9:30 AM EDT / 8:30 AM EST). The Apps Script trigger
+// fires daily and early-outs unless it's Tuesday. 12-hour window =
+// "did it run today?" — short window because Tuesday is the only day
+// the workflow runs and we want to fire the fallback within ~3 hours
+// of the GitHub cron's intended slot.
+function triggerAgentPortfolioScalingIfNeeded() {
+  Logger.log('=== triggerAgentPortfolioScalingIfNeeded ===');
+  var dow = parseInt(Utilities.formatDate(
+    new Date(), Session.getScriptTimeZone(), 'u'), 10);
+  if (dow !== 2) {
+    Logger.log('Not Tuesday (ISO dow=' + dow + ') — skipping.');
+    return;
+  }
+  if (workflowRanWithinHours_('agent-portfolio-scaling.yml', 12)) {
+    Logger.log('Recent successful or in-progress run exists — skipping.');
+    return;
+  }
+  triggerAgentWorkflow_('agent-portfolio-scaling.yml');
 }
 
 
@@ -2840,6 +2884,157 @@ function computeWeeklyICPPace_() {
 
 
 // ============================================================
+// PORTFOLIO SCALING — profile loader + headroom helpers (Session 2)
+// ============================================================
+//
+// Used by runBudgetAnalysis to (a) tag proposals with the per-campaign
+// vertical classification, (b) enforce the 12% weekly cap on cumulative
+// budget movement summed across all sources, and (c) skip campaigns the
+// strategic reallocation just touched (Wed-Mon lockout window).
+//
+// All three behaviors degrade gracefully when scaling_profiles.json is
+// missing or stale: tagging is omitted (no scaling_classification field),
+// the 12% cap still runs (it's a hard rail, not a feature gated on the
+// data file), and lockout is empty if the property isn't set.
+
+function loadScalingProfiles_() {
+  // First check the Script Property cache to avoid hammering GitHub on
+  // every run. Cache is overwritten with each successful fetch.
+  var cached = PROPS.getProperty('SCALING_PROFILES_CACHE');
+  var cachedAt = PROPS.getProperty('SCALING_PROFILES_CACHED_AT');
+  var maxAgeMs = SCALING_PROFILES_MAX_AGE_DAYS * 86400 * 1000;
+
+  if (cached && cachedAt) {
+    var age = new Date().getTime() - new Date(cachedAt).getTime();
+    if (age < 3600 * 1000) {  // <1hr-old cache: just use it.
+      try { return JSON.parse(cached); }
+      catch (parseErr) {
+        Logger.log('SCALING_PROFILES_CACHE corrupt, refetching: ' + parseErr.message);
+      }
+    }
+  }
+
+  try {
+    var resp = UrlFetchApp.fetch(SCALING_PROFILES_URL, {
+      muteHttpExceptions: true,
+      followRedirects: true
+    });
+    if (resp.getResponseCode() !== 200) {
+      Logger.log('loadScalingProfiles_: HTTP ' + resp.getResponseCode() +
+        ' from ' + SCALING_PROFILES_URL);
+      return cached ? safeJsonParse_(cached) : null;
+    }
+    var body = resp.getContentText();
+    var parsed = JSON.parse(body);
+    if (parsed && parsed.computed_at) {
+      var ageDays = (new Date().getTime() - new Date(parsed.computed_at).getTime()) / 86400000;
+      if (ageDays > SCALING_PROFILES_MAX_AGE_DAYS) {
+        Logger.log('loadScalingProfiles_: profiles stale (' +
+          ageDays.toFixed(1) + ' days). Skipping scaling overlay.');
+        return null;
+      }
+    }
+    PROPS.setProperty('SCALING_PROFILES_CACHE', body);
+    PROPS.setProperty('SCALING_PROFILES_CACHED_AT', new Date().toISOString());
+    return parsed;
+  } catch (e) {
+    Logger.log('loadScalingProfiles_ failed: ' + e.message);
+    return cached ? safeJsonParse_(cached) : null;
+  }
+}
+
+function safeJsonParse_(s) {
+  try { return JSON.parse(s); } catch (e) { return null; }
+}
+
+function getScalingLockoutSet_() {
+  // Returns a campaign_id → true map of campaigns currently subject to
+  // the strategic-reallocation lockout. Empty map when lockout has
+  // expired or was never set. The optimizer will skip these campaigns.
+  var until = PROPS.getProperty('SCALING_LOCKOUT_UNTIL');
+  if (!until) return {};
+  if (new Date() >= new Date(until)) {
+    Logger.log('Scaling lockout expired (' + until + '). Optimizer free to act.');
+    return {};
+  }
+  var idsCsv = PROPS.getProperty('SCALING_AFFECTED_CAMPAIGN_IDS') || '';
+  var set = {};
+  idsCsv.split(',').forEach(function (id) {
+    var trimmed = String(id).trim();
+    if (trimmed) set[trimmed] = true;
+  });
+  Logger.log('Scaling lockout active until ' + until + ' (' +
+    Object.keys(set).length + ' campaigns).');
+  return set;
+}
+
+function previousTuesdayUTC_() {
+  // Most recent Tuesday strictly before now (or 7 days ago if today is
+  // Tuesday). Mirrors the Python `previous_tuesday` in
+  // compute_scaling_profiles.py so the headroom window aligns.
+  var now = new Date();
+  var day = now.getUTCDay();   // 0=Sun, 1=Mon, 2=Tue
+  var daysSince = (day - 2 + 7) % 7;
+  if (daysSince === 0) daysSince = 7;
+  var prev = new Date(now.getTime() - daysSince * 86400000);
+  return new Date(Date.UTC(prev.getUTCFullYear(),
+                           prev.getUTCMonth(),
+                           prev.getUTCDate()));
+}
+
+function getCampaignWeeklyConsumed_(campaignId, sinceDate) {
+  // Sum |change_pct| (as a fraction) across all `executed` budget_queue
+  // rows for this campaign with analysis_date >= sinceDate. Counts
+  // optimizer movements + knockdown + any prior strategic — every
+  // source contributes against the shared 12% cap. Mirrors the Python
+  // compute_per_campaign_headroom in compute_scaling_profiles.py.
+  // Reads BUDGET_SHEET directly (no /exec hop — same Apps Script project).
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var qSheet = ss.getSheetByName(BUDGET_SHEET);
+  if (!qSheet || qSheet.getLastRow() < 2) return 0;
+
+  var sinceStr = Utilities.formatDate(
+    sinceDate, Session.getScriptTimeZone(), 'yyyy-MM-dd');
+  var data = qSheet.getDataRange().getValues();
+  var sum = 0;
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+    if (String(r[4]).trim() !== String(campaignId)) continue;
+    if (String(r[11]).toLowerCase() !== 'executed') continue;
+    var analysisDate = r[2];
+    var dStr = (analysisDate instanceof Date)
+      ? Utilities.formatDate(analysisDate, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+      : String(analysisDate).substring(0, 10);
+    if (dStr < sinceStr) continue;
+    // sheet stores change_pct as a percent value (e.g. 2.0 = 2%) per
+    // writeToQueue_ at Code.js:3185.
+    sum += Math.abs(Number(r[9]) || 0) / 100;
+  }
+  return sum;
+}
+
+function getCampaignVertical_(profiles, campaignId) {
+  if (!profiles || !profiles.campaigns) return null;
+  var c = profiles.campaigns[String(campaignId)];
+  return c ? c.vertical : null;
+}
+
+function getVerticalClassification_(profiles, vertical) {
+  if (!profiles || !vertical || !profiles.verticals) return null;
+  var v = profiles.verticals[vertical];
+  if (!v) return null;
+  return {
+    classification: v.classification,
+    confidence: v.confidence,
+    new_audience_needed: !!v.new_audience_needed,
+    cpicp: v.cpicp,
+    elasticity_r: v.elasticity_r,
+    spend_share_pct: v.spend_share_pct
+  };
+}
+
+
+// ============================================================
 // META BUDGET FETCH
 // ============================================================
 
@@ -2892,6 +3087,16 @@ function getCurrentMetaBudgets_() {
 function computeRecommendations_(currentBudgets, signals) {
   Logger.log('--- computeRecommendations_ ---');
 
+  // ── Session 2: portfolio-scaling overlay loads ────────────────
+  // Profiles, lockout, headroom-window date. All three degrade
+  // gracefully — missing profiles means no tags but cap + lockout
+  // still run; missing lockout means open optimizer; cap is always on.
+  var scalingProfiles = loadScalingProfiles_();
+  var lockoutSet = getScalingLockoutSet_();
+  var prevTue = previousTuesdayUTC_();
+  var lockedOutCount = 0;
+  // ──────────────────────────────────────────────────────────────
+
   var eligible = [];
   Object.keys(currentBudgets).forEach(function (cid) {
     var budget = currentBudgets[cid];
@@ -2904,6 +3109,16 @@ function computeRecommendations_(currentBudgets, signals) {
     if (signal.lifetimeConversions < LIFETIME_MIN_CONVERSIONS) {
       Logger.log(budget.name + ': ' + signal.lifetimeConversions +
         ' lifetime conversions (min ' + LIFETIME_MIN_CONVERSIONS + ') — ineligible.');
+      return;
+    }
+    // Strategic-reallocation lockout (Session 2): Wed-Mon, this campaign
+    // was just touched by the strategic reallocation and needs a
+    // stabilization window before the optimizer acts on it again.
+    if (lockoutSet[cid]) {
+      Logger.log(budget.name + ': locked out by strategic reallocation ' +
+        '(SCALING_LOCKOUT_UNTIL=' + PROPS.getProperty('SCALING_LOCKOUT_UNTIL') +
+        ') — skipping.');
+      lockedOutCount++;
       return;
     }
 
@@ -2920,7 +3135,8 @@ function computeRecommendations_(currentBudgets, signals) {
     });
   });
 
-  Logger.log('Eligible campaigns: ' + eligible.length);
+  Logger.log('Eligible campaigns: ' + eligible.length +
+    (lockedOutCount > 0 ? ' (' + lockedOutCount + ' locked out)' : ''));
   if (eligible.length === 0) return [];
 
   eligible.forEach(function (c) {
@@ -3116,6 +3332,62 @@ function computeRecommendations_(currentBudgets, signals) {
     }
   });
 
+  // ── Session 2: 12% weekly cap (hard rail across all sources) ─────
+  // After all other adjustments (knockdown + 4% cap + redistribution),
+  // check each campaign's cumulative consumed pct since previous Tuesday.
+  // If proposed change would breach the 12% cap, scale it down to the
+  // remaining headroom, or skip entirely if no headroom remains. This
+  // sums optimizer + knockdown + strategic reallocation movements.
+  eligible.forEach(function (c) {
+    if (c.changeCents === undefined || c.changeCents === 0) return;
+    var consumed = getCampaignWeeklyConsumed_(c.campaignId, prevTue);
+    var proposedPct = Math.abs(c.changeCents / c.currentDailyBudgetCents);
+    if (consumed + proposedPct <= SCALING_MAX_WEEKLY_PCT) return;
+
+    var allowed = Math.max(0, SCALING_MAX_WEEKLY_PCT - consumed);
+    if (allowed <= 0) {
+      Logger.log('12% cap: ' + c.name + ' already at ' +
+        (consumed * 100).toFixed(1) + '% — proposal dropped.');
+      c.reasons.push('12% weekly cap reached (' +
+        (consumed * 100).toFixed(1) + '% consumed) — change suppressed');
+      c.changeCents = 0;
+      c.proposedDailyBudgetCents = c.currentDailyBudgetCents;
+      return;
+    }
+    var sign = c.changeCents > 0 ? 1 : -1;
+    var allowedCents = Math.round(c.currentDailyBudgetCents * allowed) * sign;
+    Logger.log('12% cap on ' + c.name + ': consumed ' +
+      (consumed * 100).toFixed(1) + '% + proposed ' +
+      (proposedPct * 100).toFixed(1) + '% > 12%. Scaled to ±' +
+      (allowed * 100).toFixed(1) + '%.');
+    c.reasons.push('12% weekly cap: ±' +
+      (proposedPct * 100).toFixed(1) + '% → ±' +
+      (allowed * 100).toFixed(1) + '% (' +
+      (consumed * 100).toFixed(1) + '% already consumed this week)');
+    c.changeCents = allowedCents;
+    c.proposedDailyBudgetCents = c.currentDailyBudgetCents + allowedCents;
+  });
+
+  // ── Session 2: tag each eligible campaign with its vertical's
+  // scaling classification (informational only — no logic change).
+  // Held campaigns get tagged too so the Slack summary can show them.
+  if (scalingProfiles) {
+    eligible.forEach(function (c) {
+      var vertical = getCampaignVertical_(scalingProfiles, c.campaignId);
+      var cls = getVerticalClassification_(scalingProfiles, vertical);
+      if (cls) {
+        c.scalingClassification = cls.classification;
+        c.scalingConfidence = cls.confidence;
+        c.scalingNewAudienceNeeded = cls.new_audience_needed;
+        c.scalingVertical = vertical;
+        var tag = vertical + ': ' + cls.classification +
+          (cls.confidence === 'directional' ? ' [directional]' : '') +
+          (cls.new_audience_needed ? ' + new-audience-needed' : '');
+        c.reasons.push(tag);
+      }
+    });
+  }
+
   var changed = eligible.filter(function (c) {
     return c.changeCents !== undefined && c.changeCents !== 0;
   });
@@ -3141,7 +3413,13 @@ function computeRecommendations_(currentBudgets, signals) {
 // QUEUE WRITE
 // ============================================================
 
-function writeToQueue_(recommendations) {
+function writeToQueue_(recommendations, source) {
+  // `source` (Session 2 schema addition): 'optimizer' for daily budget
+  // optimizer rows, 'strategic' for portfolio-scaling weekly reallocations.
+  // Existing rows from before this column existed are read as 'optimizer'
+  // by both readers; defaults to 'optimizer' if unspecified at write.
+  source = source || 'optimizer';
+
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var qSheet = ss.getSheetByName(BUDGET_SHEET);
   if (!qSheet) qSheet = ss.insertSheet(BUDGET_SHEET);
@@ -3151,8 +3429,15 @@ function writeToQueue_(recommendations) {
       'token', 'created_at', 'analysis_date', 'execution_scheduled',
       'campaign_id', 'campaign_name',
       'current_budget_cents', 'proposed_budget_cents', 'change_cents', 'change_pct',
-      'signal_reasons', 'status'
+      'signal_reasons', 'status', 'source'
     ]);
+  } else {
+    // Backfill the `source` header on first run after this code ships
+    // (existing sheets created before Session 2 only have 12 columns).
+    var headerLastCol = qSheet.getLastColumn();
+    if (headerLastCol < 13) {
+      qSheet.getRange(1, 13).setValue('source');
+    }
   }
 
   var token = Utilities.getUuid().replace(/-/g, '').substring(0, 16);
@@ -3172,13 +3457,14 @@ function writeToQueue_(recommendations) {
       r.currentDailyBudgetCents, r.proposedDailyBudgetCents,
       r.changeCents, pct,
       r.reasons.join(' | '),
-      'pending'
+      'pending', source
     ];
   });
 
-  qSheet.getRange(qSheet.getLastRow() + 1, 1, rows.length, 12).setValues(rows);
+  qSheet.getRange(qSheet.getLastRow() + 1, 1, rows.length, 13).setValues(rows);
   PROPS.setProperty('BUDGET_PENDING_TOKEN', token);
-  Logger.log('Queue written. ' + rows.length + ' rows. Token: ' + token);
+  Logger.log('Queue written. ' + rows.length + ' rows. Token: ' + token +
+    ' source: ' + source);
   return token;
 }
 
@@ -3413,12 +3699,32 @@ function executeBudgetChanges() {
 
   if (!qSheet) { Logger.log('ERROR: budget_queue not found.'); return; }
 
+  var results = applyBudgetQueueRows_(qSheet, function (row) {
+    return String(row[0]) === pendingToken && String(row[11]) === 'pending';
+  });
+
+  PROPS.deleteProperty('BUDGET_PENDING_TOKEN');
+  PROPS.deleteProperty('BUDGET_APPROVED_TOKEN');
+
+  postExecutionSummaryToSlack_(results);
+  Logger.log('=== executeBudgetChanges complete. ' + results.length + ' campaigns processed. ===');
+}
+
+
+// ============================================================
+// SHARED EXECUTION LOOP (used by executeBudgetChanges AND
+// executeStrategicChanges). The filter callback decides which rows
+// to apply this run; everything else — Meta API write, status
+// transition to 'executed' / 'failed', the inter-row sleep, the
+// results array — is identical for both.
+// ============================================================
+
+function applyBudgetQueueRows_(qSheet, filterFn) {
   var qData = qSheet.getDataRange().getValues();
   var results = [];
 
   for (var qi = 1; qi < qData.length; qi++) {
-    if (String(qData[qi][0]) !== pendingToken) continue;
-    if (String(qData[qi][11]) !== 'pending') continue;
+    if (!filterFn(qData[qi])) continue;
 
     var campaignId = String(qData[qi][4]);
     var campaignName = String(qData[qi][5]);
@@ -3428,17 +3734,19 @@ function executeBudgetChanges() {
     var success = applyBudgetChange_(campaignId, proposedCents);
     var newStatus = success ? 'executed' : 'failed';
 
+    // Status is column 12 (1-indexed). The new `source` column is 13;
+    // we don't touch it here — it was set at write time.
     qSheet.getRange(qi + 1, 12).setValue(newStatus);
-    results.push({ name: campaignName, current: currentCents, proposed: proposedCents, success: success });
+    results.push({
+      name: campaignName,
+      current: currentCents,
+      proposed: proposedCents,
+      success: success
+    });
 
     Utilities.sleep(300);
   }
-
-  PROPS.deleteProperty('BUDGET_PENDING_TOKEN');
-  PROPS.deleteProperty('BUDGET_APPROVED_TOKEN');
-
-  postExecutionSummaryToSlack_(results);
-  Logger.log('=== executeBudgetChanges complete. ' + results.length + ' campaigns processed. ===');
+  return results;
 }
 
 
@@ -3643,7 +3951,7 @@ function buildBudgetWeeklySummary_() {
   lines.push('');
   lines.push('*Anticipated spend this week:*  $' + anticipatedWeeklySpend +
     '/week  ($' + (currentTotalDailyCents / 100).toFixed(0) + '/day current)');
-  lines.push('_Next proposal: Wednesday morning_');
+  lines.push('_Next proposal: tomorrow morning (daily cadence)_');
 
   return lines.join('\n');
 }
@@ -3681,6 +3989,45 @@ function doGet(e) {
 
   if (action === 'approve' || action === 'reject') {
     return showBudgetConfirmationPage_(e, action);
+  }
+
+  // Strategic reallocation approval (Session 2). Parallel to the
+  // optimizer flow above but operates on SCALING_PENDING_TOKEN; the
+  // approved-token property and execution trigger are also separate.
+  if (action === 'approve_scaling' || action === 'reject_scaling') {
+    return showScalingConfirmationPage_(e, action.replace('_scaling', ''));
+  }
+  if (action === 'confirm_approve_scaling' || action === 'confirm_reject_scaling') {
+    var pendingScalingToken = PROPS.getProperty('SCALING_PENDING_TOKEN');
+    if (!pendingScalingToken || token !== pendingScalingToken) {
+      return HtmlService.createHtmlOutput(
+        '<h2>Token mismatch.</h2>' +
+        '<p>This strategic proposal has already been actioned, expired, or ' +
+        'replaced. No changes were made.</p>');
+    }
+    var scalingConfirmAction = action === 'confirm_approve_scaling' ? 'approve' : 'reject';
+    var sUser = Session.getActiveUser().getEmail() || 'unknown user';
+
+    if (scalingConfirmAction === 'approve') {
+      PROPS.setProperty('SCALING_APPROVED_TOKEN', token);
+      PROPS.setProperty('SCALING_LAST_APPROVED_BY', sUser);
+      PROPS.setProperty('SCALING_LAST_APPROVED_AT', new Date().toISOString());
+      postToSlack_('*Honeycomb Scaling* ✅ Strategic reallocation approved by ' +
+        sUser + '. Changes will execute Wednesday at 3:00 AM. ' +
+        'Optimizer locked out on affected campaigns until Tuesday.');
+      return HtmlService.createHtmlOutput(
+        '<h2>✅ Strategic reallocation approved.</h2>' +
+        '<p>Changes will execute Wednesday at 3:00 AM. Optimizer is now ' +
+        'paused on affected campaigns through end-of-Monday.</p>');
+    }
+
+    PROPS.setProperty('SCALING_REJECTED_TOKEN', token);
+    postToSlack_('*Honeycomb Scaling* ❌ Strategic reallocation rejected by ' +
+      sUser + '. Optimizer continues normal cadence.');
+    return HtmlService.createHtmlOutput(
+      '<h2>❌ Strategic reallocation rejected.</h2>' +
+      '<p>No strategic changes will be applied this week. Daily optimizer ' +
+      'continues normally.</p>');
   }
 
   if (action === 'confirm_approve' || action === 'confirm_reject') {
@@ -3777,6 +4124,59 @@ function showBudgetConfirmationPage_(e, action) {
 }
 
 
+// Confirmation page for the strategic-reallocation flow (Session 2).
+// Mirror of showBudgetConfirmationPage_ but on SCALING_PENDING_TOKEN.
+function showScalingConfirmationPage_(e, action) {
+  var token = e && e.parameter && e.parameter.token;
+  if (!token) {
+    return HtmlService.createHtmlOutput('<h2>Invalid link.</h2><p>Missing token.</p>');
+  }
+  var pendingToken = PROPS.getProperty('SCALING_PENDING_TOKEN');
+  if (!pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>No pending strategic proposal.</h2>' +
+      '<p>This proposal may have already been actioned or expired.</p>');
+  }
+  if (token !== pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>Token mismatch.</h2>' +
+      '<p>This link is invalid or has already been used.</p>');
+  }
+
+  var isApprove = action === 'approve';
+  var color = isApprove ? '#10b981' : '#ef4444';
+  var label = isApprove ? 'APPROVE STRATEGIC REALLOCATION' : 'REJECT STRATEGIC REALLOCATION';
+  var description = isApprove
+    ? 'This will approve the pending strategic reallocation. Changes will ' +
+      'execute Wednesday at 3:00 AM. The optimizer will be paused on ' +
+      'affected campaigns through end-of-Monday.'
+    : 'This will reject the pending strategic reallocation. No reallocation ' +
+      'will be applied. The daily optimizer continues normal cadence.';
+
+  var baseUrl = WEB_APP_URL || ScriptApp.getService().getUrl();
+  var confirmUrl = baseUrl + '?action=confirm_' + action + '_scaling&token=' + token;
+
+  var html =
+    '<!doctype html><html><head>' +
+    '<meta charset="utf-8">' +
+    '<title>Honeycomb Scaling — Confirm</title>' +
+    '<meta name="robots" content="noindex">' +
+    '<style>body{font-family:system-ui,sans-serif;max-width:480px;margin:60px auto;padding:0 20px;text-align:center}' +
+    'h2{margin-bottom:8px}p{color:#555;margin:12px 0 24px}' +
+    'a.btn{display:inline-block;padding:14px 32px;background:' + color +
+    ';color:#fff;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600}' +
+    'a.btn:hover{opacity:0.9}</style></head><body>' +
+    '<h2>Honeycomb Strategic Reallocation</h2>' +
+    '<p>' + description + '</p>' +
+    '<a class="btn" href="' + confirmUrl + '" target="_top">' + label + '</a>' +
+    '<p style="margin-top:32px;font-size:13px;color:#999">Click the button above to confirm. ' +
+    'This page exists to prevent automated systems from accidentally approving changes.</p>' +
+    '</body></html>';
+
+  return HtmlService.createHtmlOutput(html);
+}
+
+
 // ============================================================
 // TRIGGER SETUP — BUDGET SYSTEM
 // ============================================================
@@ -3786,7 +4186,8 @@ function createBudgetTriggers() {
 
   ScriptApp.getProjectTriggers().forEach(function (t) {
     var fn = t.getHandlerFunction();
-    if (fn === 'runBudgetAnalysis' || fn === 'executeBudgetChanges') {
+    if (fn === 'runBudgetAnalysis' || fn === 'executeBudgetChanges' ||
+        fn === 'executeStrategicChanges') {
       ScriptApp.deleteTrigger(t);
       Logger.log('Removed existing trigger: ' + fn);
     }
@@ -3804,9 +4205,152 @@ function createBudgetTriggers() {
   ScriptApp.newTrigger('executeBudgetChanges')
     .timeBased().everyDays(1).atHour(3).create();
 
+  // Strategic reallocation execution. The Tuesday-morning agent posts
+  // the proposal (writing SCALING_PENDING_TOKEN); Tyler approves Tuesday
+  // afternoon; Wed 3 AM applies the changes and writes lockout properties.
+  // The trigger fires daily at 3 AM and no-ops cheaply when there's no
+  // pending token (most days) — the per-day cost is one Script Property
+  // read. We don't restrict to Wednesdays at the trigger level because
+  // a manual workflow_dispatch on a non-Tuesday should still execute on
+  // the next 3 AM after approval.
+  ScriptApp.newTrigger('executeStrategicChanges')
+    .timeBased().everyDays(1).atHour(3).create();
+
   var triggers = ScriptApp.getProjectTriggers();
   Logger.log('Total active triggers after setup: ' + triggers.length);
   triggers.forEach(function (t) { Logger.log('  ' + t.getHandlerFunction()); });
+}
+
+
+// ============================================================
+// STRATEGIC EXECUTION — Wed 3 AM (Session 2)
+// ============================================================
+//
+// Mirror of executeBudgetChanges but for strategic-reallocation rows.
+// Both functions delegate per-row Meta API writes to applyBudgetQueueRows_
+// so the execution loop is shared.
+//
+// On successful approval-and-execution, writes the lockout window into
+// SCALING_LOCKOUT_UNTIL + SCALING_AFFECTED_CAMPAIGN_IDS so the daily
+// optimizer sees the locked campaigns and skips them through end-of-Monday.
+
+function executeStrategicChanges() {
+  Logger.log('=== executeStrategicChanges ===');
+  validateTokens_();
+
+  var pendingToken = PROPS.getProperty('SCALING_PENDING_TOKEN');
+  var approvedToken = PROPS.getProperty('SCALING_APPROVED_TOKEN');
+  var rejectedToken = PROPS.getProperty('SCALING_REJECTED_TOKEN');
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var qSheet = ss.getSheetByName(BUDGET_SHEET);
+
+  // Orphan expiry pass — strategic rows from a prior pending token that
+  // was superseded but never executed. Mirror of the optimizer's pass at
+  // executeBudgetChanges. Without this, stale pending strategic rows
+  // accumulate in budget_queue forever.
+  if (qSheet) {
+    var qAll = qSheet.getDataRange().getValues();
+    for (var qi0 = 1; qi0 < qAll.length; qi0++) {
+      var rowToken = String(qAll[qi0][0]);
+      var rowStatus = String(qAll[qi0][11]);
+      var rowSource = String(qAll[qi0][12] || '').toLowerCase();
+      if (rowSource === 'strategic' && rowStatus === 'pending' &&
+          rowToken !== pendingToken) {
+        qSheet.getRange(qi0 + 1, 12).setValue('expired');
+        Logger.log('Expired orphaned strategic row: token ' + rowToken +
+          ' campaign ' + String(qAll[qi0][5]));
+      }
+    }
+  }
+
+  if (!pendingToken) {
+    Logger.log('No pending strategic token. Nothing scheduled.');
+    return;
+  }
+
+  if (!qSheet) {
+    Logger.log('ERROR: budget_queue not found.');
+    return;
+  }
+
+  if (approvedToken !== pendingToken) {
+    var reason = (rejectedToken === pendingToken) ? 'rejected' : 'no approval received';
+    Logger.log('Strategic token ' + pendingToken + ' was ' + reason + '. Skipping execution.');
+
+    // Mark all pending strategic rows for this token as rejected/expired.
+    var qData0 = qSheet.getDataRange().getValues();
+    var termStatus = (rejectedToken === pendingToken) ? 'rejected' : 'expired';
+    for (var qi1 = 1; qi1 < qData0.length; qi1++) {
+      if (String(qData0[qi1][0]) === pendingToken && String(qData0[qi1][11]) === 'pending') {
+        qSheet.getRange(qi1 + 1, 12).setValue(termStatus);
+      }
+    }
+
+    postToSlack_('*Honeycomb Scaling — ' +
+      Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'EEE MMM d') + '*\n' +
+      (rejectedToken === pendingToken
+        ? '❌ Strategic reallocation rejected. No reallocation applied.'
+        : '⏰ No approval received by 3:00 AM Wednesday. Reallocation expired.'));
+    PROPS.deleteProperty('SCALING_PENDING_TOKEN');
+    PROPS.deleteProperty('SCALING_REJECTED_TOKEN');
+    PROPS.deleteProperty('SCALING_PENDING_LOCKOUT_UNTIL');
+    PROPS.deleteProperty('SCALING_PENDING_AFFECTED_IDS');
+    return;
+  }
+
+  // Approved AND it's the active pending token — execute.
+  var results = applyBudgetQueueRows_(qSheet, function (row) {
+    return String(row[0]) === pendingToken &&
+           String(row[11]) === 'pending' &&
+           String(row[12] || '').toLowerCase() === 'strategic';
+  });
+
+  // Promote stashed lockout metadata to the live keys.
+  var lockoutUntil = PROPS.getProperty('SCALING_PENDING_LOCKOUT_UNTIL');
+  var affectedIds = PROPS.getProperty('SCALING_PENDING_AFFECTED_IDS');
+  if (lockoutUntil) {
+    PROPS.setProperty('SCALING_LOCKOUT_UNTIL', lockoutUntil);
+  }
+  if (affectedIds) {
+    PROPS.setProperty('SCALING_AFFECTED_CAMPAIGN_IDS', affectedIds);
+  }
+
+  PROPS.deleteProperty('SCALING_PENDING_TOKEN');
+  PROPS.deleteProperty('SCALING_APPROVED_TOKEN');
+  PROPS.deleteProperty('SCALING_PENDING_LOCKOUT_UNTIL');
+  PROPS.deleteProperty('SCALING_PENDING_AFFECTED_IDS');
+
+  postStrategicExecutionSummaryToSlack_(results, lockoutUntil);
+  Logger.log('=== executeStrategicChanges complete. ' + results.length +
+    ' campaigns processed. Lockout until ' + lockoutUntil + ' ===');
+}
+
+
+function postStrategicExecutionSummaryToSlack_(results, lockoutUntil) {
+  var successes = results.filter(function (r) { return r.success; });
+  var failures = results.filter(function (r) { return !r.success; });
+
+  var text = '*Honeycomb Scaling — Strategic Reallocation Applied (' +
+    Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'EEE MMM d') + ')*\n';
+  text += successes.length + ' of ' + results.length + ' campaigns updated.\n\n';
+
+  successes.forEach(function (r) {
+    var arrow = r.proposed > r.current ? '↑' : '↓';
+    text += arrow + ' ' + r.name + ':  $' + (r.current / 100).toFixed(0) +
+      ' → $' + (r.proposed / 100).toFixed(0) + '/day\n';
+  });
+
+  if (failures.length > 0) {
+    text += '\n⚠️ Failed (' + failures.length + ') — check Apps Script logs:\n';
+    failures.forEach(function (r) { text += '  ' + r.name + '\n'; });
+  }
+
+  if (lockoutUntil) {
+    text += '\nOptimizer locked out on these campaigns until ' +
+      String(lockoutUntil).substring(0, 10) + '.';
+  }
+  postToSlack_(text);
 }
 
 
@@ -4079,6 +4623,12 @@ function handleDashboardApi_(e) {
     return handleCreativeIntelligenceWrite_(e);
   }
 
+  // `portfolio-scaling` skill writes one scaling_log row per vertical
+  // per Tuesday run. Same dual-wire pattern.
+  if (action === 'scaling-write') {
+    return handleScalingWrite_(e);
+  }
+
   try {
     var result;
     switch (action) {
@@ -4105,6 +4655,12 @@ function handleDashboardApi_(e) {
         break;
       case 'budget-queue-read':
         result = getBudgetQueuePending_(e.parameter);
+        break;
+      case 'scaling-queue-read':
+        result = getScalingQueueRows_(e.parameter);
+        break;
+      case 'scaling-log-read':
+        result = getScalingLogRows_(e.parameter);
         break;
     }
     return jsonResponse_(result);
@@ -4303,12 +4859,12 @@ function getBudgetQueuePending_(params) {
   if (!sheet || sheet.getLastRow() < 2) return { pending: [] };
 
   var data = sheet.getDataRange().getValues();
-  // Schema (writeToQueue_, Code.js:2913):
+  // Schema (writeToQueue_):
   //   0:token 1:created_at 2:analysis_date 3:execution_scheduled
   //   4:campaign_id 5:campaign_name
   //   6:current_budget_cents 7:proposed_budget_cents
   //   8:change_cents 9:change_pct
-  //   10:signal_reasons 11:status
+  //   10:signal_reasons 11:status 12:source (added Session 2)
   var filterCampaignId = params && params.campaign_id
     ? String(params.campaign_id).trim() : null;
 
@@ -4333,7 +4889,9 @@ function getBudgetQueuePending_(params) {
       change_pct: Number(r[9]) || 0,
       direction: changeCents > 0 ? 'increase' : (changeCents < 0 ? 'decrease' : 'flat'),
       signal_reasons: String(r[10]),
-      status: 'pending'
+      status: 'pending',
+      // Pre-Session-2 rows have no column 13; default to 'optimizer'.
+      source: r.length > 12 && r[12] ? String(r[12]) : 'optimizer'
     });
   }
   return { pending: pending, count: pending.length };
@@ -4484,6 +5042,312 @@ function handleCreativeIntelligenceWrite_(e) {
     written++;
   }
   return jsonResponse_({ ok: true, written: written });
+}
+
+
+// Receives the Tuesday-morning strategic-reallocation proposal from the
+// portfolio-scaling agent workflow. Writes one row per affected campaign
+// to budget_queue with status=pending, source=strategic, and a freshly
+// minted token. Stashes the lockout metadata under that token's
+// Script Properties for executeStrategicChanges to apply on Wed 3 AM.
+//
+// Payload (POST JSON body):
+//   {
+//     "rows": [{ campaign_id, campaign_name, current_daily_cents,
+//                proposed_daily_cents, change_cents, change_pct,
+//                signal_reasons }, ...],
+//     "lockout_until": "2026-05-19T00:00:00Z",
+//     "affected_campaign_ids": ["...", "..."]
+//   }
+//
+// Returns: { ok, token, written, approve_url, reject_url }
+function handleScalingQueueWrite_(e) {
+  if (!e || !e.postData || !e.postData.contents) {
+    return jsonResponse_({ error: 'POST body required' });
+  }
+  var payload;
+  try { payload = JSON.parse(e.postData.contents); }
+  catch (parseErr) {
+    return jsonResponse_({ error: 'Invalid JSON: ' + parseErr.message });
+  }
+  var rows = payload && payload.rows;
+  if (!Array.isArray(rows) || rows.length === 0) {
+    return jsonResponse_({ error: 'rows must be a non-empty array' });
+  }
+  var lockoutUntil = payload.lockout_until;
+  var affectedIds = payload.affected_campaign_ids;
+  if (!lockoutUntil || !Array.isArray(affectedIds)) {
+    return jsonResponse_({
+      error: 'lockout_until (ISO string) and affected_campaign_ids ' +
+             '(array) required'
+    });
+  }
+
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var qSheet = ss.getSheetByName(BUDGET_SHEET);
+  if (!qSheet) qSheet = ss.insertSheet(BUDGET_SHEET);
+
+  // Auto-init header on first run (matches writeToQueue_).
+  if (qSheet.getLastRow() === 0) {
+    qSheet.appendRow([
+      'token', 'created_at', 'analysis_date', 'execution_scheduled',
+      'campaign_id', 'campaign_name',
+      'current_budget_cents', 'proposed_budget_cents',
+      'change_cents', 'change_pct',
+      'signal_reasons', 'status', 'source'
+    ]);
+  } else if (qSheet.getLastColumn() < 13) {
+    qSheet.getRange(1, 13).setValue('source');
+  }
+
+  var token = Utilities.getUuid().replace(/-/g, '').substring(0, 16);
+  var now = new Date();
+  var tz = Session.getScriptTimeZone();
+  var todayStr = Utilities.formatDate(now, tz, 'yyyy-MM-dd');
+  // Strategic execution runs Wed 3 AM regardless of when this is
+  // written (Tuesday morning). Compute the next Wednesday.
+  var nextWedDate = new Date(now.getTime());
+  while (nextWedDate.getDay() !== 3) {
+    nextWedDate = new Date(nextWedDate.getTime() + 86400000);
+  }
+  var execStr = Utilities.formatDate(nextWedDate, tz, 'yyyy-MM-dd') + ' 03:00';
+
+  var sheetRows = rows.map(function (r) {
+    return [
+      token, now.toISOString(), todayStr, execStr,
+      String(r.campaign_id || ''), String(r.campaign_name || ''),
+      Number(r.current_daily_cents) || 0,
+      Number(r.proposed_daily_cents) || 0,
+      Number(r.change_cents) || 0,
+      Number(r.change_pct) || 0,
+      String(r.signal_reasons || ''),
+      'pending', 'strategic'
+    ];
+  });
+
+  qSheet.getRange(qSheet.getLastRow() + 1, 1, sheetRows.length, 13)
+    .setValues(sheetRows);
+
+  // Stash lockout metadata under token-scoped properties.
+  PROPS.setProperty('SCALING_PENDING_TOKEN', token);
+  PROPS.setProperty('SCALING_PENDING_LOCKOUT_UNTIL', String(lockoutUntil));
+  PROPS.setProperty('SCALING_PENDING_AFFECTED_IDS',
+    affectedIds.map(String).join(','));
+
+  var baseUrl = WEB_APP_URL || ScriptApp.getService().getUrl();
+  Logger.log('Strategic queue written. ' + sheetRows.length +
+    ' rows. Token: ' + token + ' lockout_until=' + lockoutUntil);
+
+  return jsonResponse_({
+    ok: true,
+    token: token,
+    written: sheetRows.length,
+    approve_url: baseUrl + '?action=approve_scaling&token=' + token,
+    reject_url: baseUrl + '?action=reject_scaling&token=' + token,
+    lockout_until: lockoutUntil
+  });
+}
+
+
+// Append-only: writes one scaling_log row per vertical per Tuesday run.
+// Creates the tab on first call. The `portfolio-scaling` skill writes
+// rows for every vertical (including insufficient-data ones) so the
+// week-over-week structural trend is preserved.
+function handleScalingWrite_(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('scaling_log');
+  if (!sheet) {
+    sheet = ss.insertSheet('scaling_log');
+    sheet.appendRow([
+      'date', 'vertical',
+      'classification', 'confidence',
+      'elasticity_r', 'ic_rate', 'cpicp', 'spend_share_pct',
+      'avg_frequency', 'frequency_trend', 'cpm_trend',
+      'new_audience_needed',
+      'weeks_with_conversions',
+      'contributed_to_pool', 'received_from_pool',
+      'recorded_at'
+    ]);
+  }
+
+  var rows = [];
+  var p = (e && e.parameter) || {};
+
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && Array.isArray(parsed.rows)) rows = parsed.rows;
+    } catch (parseErr) {
+      // fall through
+    }
+  }
+  if (!rows.length && p.rows) {
+    try {
+      rows = JSON.parse(p.rows);
+      if (!Array.isArray(rows)) {
+        return jsonResponse_({ error: 'rows must be a JSON array' });
+      }
+    } catch (err) {
+      return jsonResponse_({ error: 'rows is not valid JSON: ' + err.message });
+    }
+  }
+  if (!rows.length) {
+    return jsonResponse_({ error: 'no rows provided (use JSON body {rows:[...]} or rows=<json>)' });
+  }
+
+  var nowIso = new Date().toISOString();
+  var written = 0;
+  for (var ri = 0; ri < rows.length; ri++) {
+    var row = rows[ri] || {};
+    if (!row.vertical) continue;
+    sheet.appendRow([
+      String(row.date || ''),
+      String(row.vertical),
+      String(row.classification || ''),
+      String(row.confidence || ''),
+      row.elasticity_r == null ? '' : Number(row.elasticity_r),
+      row.ic_rate == null ? '' : Number(row.ic_rate),
+      row.cpicp == null ? '' : Number(row.cpicp),
+      row.spend_share_pct == null ? '' : Number(row.spend_share_pct),
+      row.avg_frequency == null ? '' : Number(row.avg_frequency),
+      String(row.frequency_trend || ''),
+      String(row.cpm_trend || ''),
+      row.new_audience_needed === true ? 'TRUE' : 'FALSE',
+      Number(row.weeks_with_conversions) || 0,
+      row.contributed_to_pool === true ? 'TRUE' : 'FALSE',
+      row.received_from_pool === true ? 'TRUE' : 'FALSE',
+      nowIso
+    ]);
+    written++;
+  }
+  return jsonResponse_({ ok: true, written: written });
+}
+
+
+// Read-only: returns budget_queue rows whose `analysis_date` is on or
+// after `since` (YYYY-MM-DD). Unlike `budget-queue-read` (which filters
+// to `pending` only), this returns ALL statuses — the caller filters
+// to `executed` for headroom math, or inspects `signal_reasons` for
+// knockdown attribution. Optional `campaign_id` narrows the result.
+function getScalingQueueRows_(params) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(BUDGET_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) return { rows: [], count: 0 };
+
+  // Schema (writeToQueue_, Code.js:3150):
+  //   0:token 1:created_at 2:analysis_date 3:execution_scheduled
+  //   4:campaign_id 5:campaign_name
+  //   6:current_budget_cents 7:proposed_budget_cents
+  //   8:change_cents 9:change_pct
+  //   10:signal_reasons 11:status 12:source
+
+  var sinceStr = params && params.since
+    ? String(params.since).trim().substring(0, 10)
+    : null;
+  var filterCampaignId = params && params.campaign_id
+    ? String(params.campaign_id).trim() : null;
+  var filterSource = params && params.source
+    ? String(params.source).trim().toLowerCase() : null;
+
+  var data = sheet.getDataRange().getValues();
+  var rows = [];
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+
+    var analysisDate = r[2];
+    var dateStr = (analysisDate instanceof Date)
+      ? Utilities.formatDate(analysisDate, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+      : String(analysisDate).substring(0, 10);
+    if (sinceStr && dateStr < sinceStr) continue;
+
+    var campaignId = String(r[4]).trim();
+    if (filterCampaignId && campaignId !== filterCampaignId) continue;
+
+    var rowSource = r.length > 12 && r[12]
+      ? String(r[12]).toLowerCase() : 'optimizer';
+    if (filterSource && rowSource !== filterSource) continue;
+
+    var changeCents = Number(r[8]) || 0;
+    rows.push({
+      token: String(r[0]),
+      created_at: r[1] instanceof Date ? r[1].toISOString() : String(r[1]),
+      analysis_date: dateStr,
+      execution_scheduled: String(r[3]),
+      campaign_id: campaignId,
+      campaign_name: String(r[5]),
+      current_budget_cents: Number(r[6]) || 0,
+      proposed_budget_cents: Number(r[7]) || 0,
+      change_cents: changeCents,
+      change_pct: Number(r[9]) || 0,
+      direction: changeCents > 0 ? 'increase' : (changeCents < 0 ? 'decrease' : 'flat'),
+      signal_reasons: String(r[10]),
+      status: String(r[11]),
+      source: rowSource
+    });
+  }
+  return { rows: rows, count: rows.length, since: sinceStr };
+}
+
+
+// Read-only: returns scaling_log rows (most recent first), optionally
+// filtered by `since` (YYYY-MM-DD) and/or `vertical`. Surfaced to the
+// Hive Mind chat handler so the system prompt can pull historical
+// scaling classifications on demand without inflating every chat turn's
+// context. See doGet system prompt addition for invocation guidance.
+function getScalingLogRows_(params) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('scaling_log');
+  if (!sheet || sheet.getLastRow() < 2) {
+    return { rows: [], count: 0 };
+  }
+
+  var sinceStr = params && params.since
+    ? String(params.since).trim().substring(0, 10) : null;
+  var filterVertical = params && params.vertical
+    ? String(params.vertical).trim().toLowerCase() : null;
+  var limit = params && params.limit ? parseInt(params.limit) : 200;
+  if (!(limit > 0 && limit <= 1000)) limit = 200;
+
+  var data = sheet.getDataRange().getValues();
+  var headers = data[0].map(function (h) { return String(h).trim(); });
+  // Schema (handleScalingWrite_):
+  //   0:date 1:vertical 2:classification 3:confidence
+  //   4:elasticity_r 5:ic_rate 6:cpicp 7:spend_share_pct
+  //   8:avg_frequency 9:frequency_trend 10:cpm_trend
+  //   11:new_audience_needed 12:weeks_with_conversions
+  //   13:contributed_to_pool 14:received_from_pool 15:recorded_at
+
+  var rows = [];
+  for (var i = data.length - 1; i >= 1; i--) {  // newest first
+    var r = data[i];
+    var dateStr = (r[0] instanceof Date)
+      ? Utilities.formatDate(r[0], Session.getScriptTimeZone(), 'yyyy-MM-dd')
+      : String(r[0]).substring(0, 10);
+    if (sinceStr && dateStr < sinceStr) continue;
+    var v = String(r[1]).trim().toLowerCase();
+    if (filterVertical && v !== filterVertical) continue;
+    rows.push({
+      date: dateStr,
+      vertical: v,
+      classification: String(r[2]),
+      confidence: String(r[3]),
+      elasticity_r: r[4] === '' ? null : Number(r[4]),
+      ic_rate: r[5] === '' ? null : Number(r[5]),
+      cpicp: r[6] === '' ? null : Number(r[6]),
+      spend_share_pct: r[7] === '' ? null : Number(r[7]),
+      avg_frequency: r[8] === '' ? null : Number(r[8]),
+      frequency_trend: String(r[9]),
+      cpm_trend: String(r[10]),
+      new_audience_needed: String(r[11]).toUpperCase() === 'TRUE',
+      weeks_with_conversions: Number(r[12]) || 0,
+      contributed_to_pool: String(r[13]).toUpperCase() === 'TRUE',
+      received_from_pool: String(r[14]).toUpperCase() === 'TRUE',
+      recorded_at: r[15] instanceof Date
+        ? r[15].toISOString() : String(r[15])
+    });
+    if (rows.length >= limit) break;
+  }
+  return { rows: rows, count: rows.length };
 }
 
 
@@ -4680,6 +5544,15 @@ function doPost(e) {
   if (action === 'creative-intelligence-write') {
     return handleCreativeIntelligenceWrite_(e);
   }
+  if (action === 'scaling-write') {
+    return handleScalingWrite_(e);
+  }
+  // Tuesday-morning agent workflow POSTs the strategic reallocation
+  // proposal here. Returns a token; the agent embeds the token in the
+  // approve/reject URLs of the Slack brief.
+  if (action === 'scaling-queue-write') {
+    return handleScalingQueueWrite_(e);
+  }
 
   return jsonResponse_({ error: 'Unknown POST action: ' + action });
 }
@@ -4724,6 +5597,44 @@ function handleChatRequest_(e) {
 
     var contextBlock = buildDashboardContext_();
 
+    // Conditionally augment the context with the latest scaling_log rows
+    // when the user's question is structural in nature. Per directive B,
+    // we don't bake these into every chat turn — only when the keywords
+    // suggest the question needs structural capacity context.
+    var msgLower = userMessage.toLowerCase();
+    var SCALING_KEYWORDS = [
+      'scaling', 'scalable', 'saturating', 'saturated',
+      'over-invested', 'overinvested', 'elasticity',
+      'headroom', 'capacity', 'classification',
+      'structural', 'reallocation', 'audience-needed'
+    ];
+    var needsScalingContext = SCALING_KEYWORDS.some(function (kw) {
+      return msgLower.indexOf(kw) >= 0;
+    });
+    if (needsScalingContext) {
+      try {
+        var scalingResp = getScalingLogRows_({ limit: 30 });
+        if (scalingResp && scalingResp.rows && scalingResp.rows.length > 0) {
+          // Group by date so the model sees the most recent week as a
+          // single block, then prior weeks for trend.
+          var scalingLines = scalingResp.rows.map(function (r) {
+            return r.date + ' | ' + r.vertical + ' | ' + r.classification +
+              ' (' + r.confidence + ')' +
+              (r.elasticity_r != null ? ' r=' + r.elasticity_r : '') +
+              (r.cpicp != null ? ' cpicp=$' + r.cpicp : '') +
+              (r.new_audience_needed ? ' new-audience-needed' : '');
+          });
+          contextBlock += '\n\n' +
+            '──────────────────────────────────────────\n' +
+            'SCALING LOG (last ~30 vertical-classifications, newest first):\n' +
+            '──────────────────────────────────────────\n' +
+            scalingLines.join('\n');
+        }
+      } catch (scalingErr) {
+        Logger.log('chat: scaling-log injection failed: ' + scalingErr.message);
+      }
+    }
+
     var systemPrompt = [
       'You are "Hive Mind," an analytics assistant for the Honeycomb Credit marketing team.',
       'The user is looking at their Meta ads dashboard and wants help interpreting the underlying data.',
@@ -4755,6 +5666,9 @@ function handleChatRequest_(e) {
       '',
       'DAILY DATA (available in the context block below):',
       'The context includes the last 30 days of daily per-campaign performance data (spend, impressions, clicks, conversions, IC conversions) plus a daily portfolio summary. Use this data to answer questions about recent daily trends, yesterday\'s performance, day-over-day changes, and intra-week patterns. For longer-term analysis (multi-week trends, CPICP, attribution), prefer the weekly rollup data which includes estimated_icps and attribution metrics that daily data does not have.',
+      '',
+      'PORTFOLIO SCALING DATA (conditionally appended below):',
+      'When the user asks about scaling classifications (scalable / stable / saturating / over-invested), elasticity, vertical capacity / headroom, or structural questions about which verticals can absorb more spend, the SCALING LOG section will appear below the routine dashboard data. It carries per-vertical classification, confidence, elasticity_r, CPICP, and the new_audience_needed modifier across the last ~30 weekly rows (newest first). Use it to answer structural questions; do not infer scaling state from CPICP / spend trends alone when the SCALING LOG is present. If the section is absent, the question wasn\'t flagged as structural — answer using the routine data.',
       '',
       'HOW TO RESPOND:',
       '- Be concise. Think "quick Slack message," not "long email."',

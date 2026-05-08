@@ -1,0 +1,249 @@
+name: Agent — Portfolio Scaling
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Tuesdays at 9:30 AM ET (UTC-4 EDT in summer / UTC-5 EST in winter
+    # → fixed 13:30 UTC). Pairs with executeStrategicChanges in Code.js
+    # which fires Wed 3 AM after Tyler approves the brief Tuesday.
+    - cron: '30 13 * * 2'
+
+permissions:
+  # `contents: write` lets the "Commit derived data" step push the
+  # newly-computed scaling_profiles.json + reallocation.json back to
+  # main. Same pattern as agent-creative-intelligence.yml.
+  contents: write
+  # Required by claude-code-action@v1 for OIDC auth at startup.
+  id-token: write
+  # Allows the "Post status to tracking issue" step to comment on
+  # issue #48 via gh CLI + ${{ github.token }}.
+  issues: write
+
+concurrency:
+  group: agent-portfolio-scaling
+  cancel-in-progress: false
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    # No Anthropic spend in the Python steps (this skill is structural
+    # math, not LLM categorization). Anthropic is only called inside
+    # claude-code-action for the brief composition. Cheap run overall.
+    #
+    # Architecture: scripts run as ordinary workflow steps BEFORE
+    # claude-code-action is invoked. See CLAUDE.md §"New-skill
+    # architectural pattern" — the Anthropic SDK fails inside
+    # claude-code-action's Bash subprocess, and commits after the
+    # action lose their git auth credentials. Both lessons baked in here.
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install requests==2.32.3
+
+      # Step 1: structural diagnoses per vertical. Reads weekly_rollup +
+      # snapshots + Meta API + executed budget_queue history; writes
+      # data/derived/scaling_profiles.json. Cheap (one Meta call
+      # batch + sheet reads).
+      - name: Compute scaling profiles
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+        run: |
+          python3 skills/portfolio-scaling/scripts/compute_scaling_profiles.py
+
+      # Step 2: turn the structural read into a budget proposal.
+      # `--write-log` POSTs per-vertical rows to
+      # ?action=scaling-write so the scaling_log Sheet tab carries
+      # the week-over-week structural trend even if Claude's brief
+      # composition fails downstream.
+      - name: Compute reallocation
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+        run: |
+          python3 skills/portfolio-scaling/scripts/compute_reallocation.py \
+            --write-log
+
+      # Step 3: commit BEFORE claude-code-action. The action strips git
+      # auth credentials in some way (the persisted http extraheader
+      # from actions/checkout disappears) — pushes after fail with
+      # "Password authentication is not supported." Commit while we
+      # still have valid checkout credentials. Same fix as
+      # agent-creative-intelligence.yml.
+      #
+      # Status marker goes to /tmp/data_commit_status.txt (separate
+      # from /tmp/agent_status.txt) so Claude's brief composition
+      # can't accidentally overwrite the commit outcome.
+      - name: Commit derived data
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/derived/scaling_profiles.json data/derived/reallocation.json
+          if git diff --cached --quiet; then
+            echo "no derived data changes to commit"
+            echo "data_commit=no_changes" > /tmp/data_commit_status.txt
+            exit 0
+          fi
+          git commit -m "agent-portfolio-scaling: weekly run $(date -u +%Y-%m-%d)"
+          for i in 1 2 3 4; do
+            if git fetch origin main \
+               && git rebase origin/main \
+               && git push; then
+              echo "data_commit=ok" > /tmp/data_commit_status.txt
+              exit 0
+            fi
+            git rebase --abort 2>/dev/null || true
+            sleep $((2 ** i))
+          done
+          echo "git push failed after 4 attempts"
+          echo "data_commit=push_failed" > /tmp/data_commit_status.txt
+          exit 1
+
+      # Step 4: Claude composes the four-section Slack brief from the
+      # committed JSON, registers the proposal via /exec, and Slack-
+      # posts the brief with approve/reject URLs returned by the
+      # registration call.
+      - name: Compose brief via Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        env:
+          # Optional. Without it, Claude logs the composed brief and
+          # the registration call but skips the Slack POST.
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          show_full_output: "true"
+          display_report: "true"
+          claude_args: "--permission-mode bypassPermissions"
+          prompt: |
+            Compose the Portfolio Scaling weekly brief per
+            skills/portfolio-scaling/SKILL.md.
+
+            The structural-diagnosis and reallocation scripts have
+            already run as previous workflow steps and the resulting
+            JSON has been committed to main.
+            data/derived/scaling_profiles.json and
+            data/derived/reallocation.json are on disk. Do NOT re-run
+            either script — read the JSON directly.
+
+            Steps:
+            1. Read data/derived/scaling_profiles.json and
+               data/derived/reallocation.json.
+            2. If reallocation.decreases AND reallocation.increases are
+               both empty, there's nothing to propose this week. Skip
+               the registration step (step 3); compose a short
+               diagnostic-only brief noting "no actionable
+               reallocation this week" plus the scaling labels and any
+               audience actions; Slack-post it; write the status
+               one-liner; exit. Do NOT POST to scaling-queue-write
+               with empty rows.
+            3. Otherwise, register the proposal: POST the rows from
+               reallocation.decreases + reallocation.increases (one
+               row per affected campaign) to
+               <exec_endpoint>?action=scaling-queue-write with this
+               JSON body:
+                 {
+                   "rows": [
+                     { "campaign_id", "campaign_name",
+                       "current_daily_cents", "proposed_daily_cents",
+                       "change_cents", "change_pct",
+                       "signal_reasons": "<vertical>: <classification>
+                                          | <reason from JSON>" },
+                     ...
+                   ],
+                   "lockout_until": "<reallocation.lockout_until>",
+                   "affected_campaign_ids":
+                     <reallocation.affected_campaign_ids>
+                 }
+               The endpoint URL is in
+               data/config/benchmarks.json under exec_endpoint. The
+               response carries `token`, `approve_url`, `reject_url`
+               which you'll embed in the Slack message.
+            4. Compose the four-section Slack brief per SKILL.md
+               §"Slack output rules": (a) Scaling labels per vertical,
+               (b) Strategic reallocation summary with headroom
+               consumed per affected campaign, (c) Audience actions
+               for any new_audience_needed verticals, (d) Last week's
+               evaluation IF the prior Tuesday's reallocation was
+               approved (pull historical context via
+               ?action=scaling-log-read&since=<14_days_ago>).
+            5. POST the brief to SLACK_WEBHOOK_URL via curl. Include
+               the approve_url and reject_url from step 3 inline so
+               Tyler can click directly. Skip Slack silently if
+               SLACK_WEBHOOK_URL is unset/empty.
+            6. Write the status one-liner to /tmp/agent_status.txt.
+
+            Output rules — MUST follow:
+            - Cite real numbers from the JSON. Don't invent or round
+              imprecisely. Strategic reallocation amounts are integer
+              cents in the JSON; convert to dollars at the
+              presentation layer (cents / 100).
+            - Honor confidence labels in the scaling labels section:
+              tag `directional` verticals explicitly, skip
+              `insufficient` ones from the labels section entirely.
+            - When reallocation.pool.knockdown_risk is true, add a
+              one-line "may trigger 1% knockdown next cycle" note
+              after the reallocation summary.
+            - For new_audience_needed verticals, the action is "duplicate
+              ad set with broader targeting"; include the
+              creative_prescription line from the JSON if present
+              (creative_source: creative_intelligence_cache means it
+              came from Monday's brief).
+
+            Constraints:
+            - Read-only on the repo. Do not modify any source files.
+              Do not push commits — the commit step already ran.
+            - Do not run the Python scripts — the workflow has
+              already run them.
+            - Do not call Meta directly. The Python scripts already
+              made all needed Meta calls.
+
+            Status reporter:
+            - Before exiting, write a single-line status to
+              /tmp/agent_status.txt, e.g.:
+                "verticals=15 scalable=4 saturating=2 over_invested=1 new_audience_needed=1 freed=$12/day allocated=$10/day net=net_negative knockdown_risk=false"
+                "verticals=12 scalable=3 saturating=0 over_invested=0 new_audience_needed=0 no_actionable_reallocation"
+              The workflow's status reporter step picks this up and
+              posts it to issue #48 alongside the data_commit marker.
+
+      - name: Dump Claude execution log
+        if: always()
+        run: |
+          LOG=/home/runner/work/_temp/claude-execution-output.json
+          if [ -f "$LOG" ]; then
+            echo "=== claude-execution-output.json ==="
+            cat "$LOG"
+          else
+            echo "No claude-execution-output.json at $LOG"
+            ls -la /home/runner/work/_temp/ || true
+          fi
+
+      # Post status to issue #48. Combines Claude's one-liner with the
+      # data-commit outcome from the earlier step.
+      - name: Post status to tracking issue
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS: ${{ job.status }}
+        run: |
+          BRIEF="$(cat /tmp/agent_status.txt 2>/dev/null || echo '(no brief status)')"
+          COMMIT="$(cat /tmp/data_commit_status.txt 2>/dev/null || echo 'data_commit=unknown')"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "**portfolio-scaling** — ${STATUS}"
+            echo "${BRIEF} ${COMMIT}"
+            echo "[run]($RUN_URL)"
+          } | gh issue comment 48 --repo "${{ github.repository }}" --body-file - || true

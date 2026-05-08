@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-06 (budget cadence active + Apps Script triggers installed; tech-debt index refreshed)_
+_Last updated: 2026-05-08 (portfolio-scaling skill: 13th `source` column on budget_queue, executeStrategicChanges trigger, scaling-write/scaling-queue-read/scaling-queue-write/scaling-log-read /exec actions, SCALING_MAX_WEEKLY_PCT constant, applyBudgetQueueRows_ extracted helper)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -276,25 +276,57 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 
 ### 3.6 `budget_queue` — Pending and executed budget changes
 
-**12 columns. One row per proposed change. Append only.**
+**13 columns. One row per proposed change. Append only.** _(13th column added Session 2 of portfolio-scaling rollout, 2026-05-08)_
 
 | # | Column | Type | Notes |
 |---|---|---|---|
 | 0 | token | String (16-char hex) | Groups a batch of proposals |
 | 1 | created_at | ISO timestamp | |
 | 2 | analysis_date | Date | |
-| 3 | execution_scheduled | Date | Tomorrow at 3 AM |
+| 3 | execution_scheduled | Date | Tomorrow at 3 AM (optimizer); next Wed 3 AM (strategic) |
 | 4 | campaign_id | String | |
 | 5 | campaign_name | String | |
 | 6 | current_budget_cents | Integer | |
 | 7 | proposed_budget_cents | Integer | |
 | 8 | change_cents | Integer | Can be negative |
-| 9 | change_pct | Float | |
-| 10 | signal_reasons | String | Pipe-separated reasons from the rules engine |
+| 9 | change_pct | Float | Stored as a percent (e.g. `2.0` for 2%, NOT `0.02`) |
+| 10 | signal_reasons | String | Pipe-separated reasons. `"1% portfolio knockdown"` substring identifies knockdown rows for headroom math. |
 | 11 | status | Enum | `pending` → `approved` → `executed` / `failed`, or `pending` → `rejected` / `expired` |
+| 12 | source | Enum | `optimizer` (default; daily budget optimizer) or `strategic` (weekly portfolio-scaling reallocation). Legacy rows from before column 12 existed are read as `optimizer`. |
 
-- **Writer:** `writeToQueue_()` (Code.js:2619).
-- **State machine driven by Script Properties:** `BUDGET_PENDING_TOKEN`, `BUDGET_APPROVED_TOKEN`, `BUDGET_REJECTED_TOKEN` — see §7 Budget Automation.
+- **Writers:** `writeToQueue_(recommendations, source)` (`source` defaults to `'optimizer'`) for the daily optimizer; `handleScalingQueueWrite_(e)` for the Tuesday strategic proposal.
+- **Per-row execution helper:** `applyBudgetQueueRows_(qSheet, filterFn)` writes Meta API changes + status transitions. Both `executeBudgetChanges` and `executeStrategicChanges` delegate to it with their own filter callbacks.
+- **State machine driven by Script Properties:**
+  - Optimizer: `BUDGET_PENDING_TOKEN`, `BUDGET_APPROVED_TOKEN`, `BUDGET_REJECTED_TOKEN`.
+  - Strategic: `SCALING_PENDING_TOKEN`, `SCALING_APPROVED_TOKEN`, `SCALING_REJECTED_TOKEN`. On strategic execution, `SCALING_PENDING_LOCKOUT_UNTIL` and `SCALING_PENDING_AFFECTED_IDS` are promoted to `SCALING_LOCKOUT_UNTIL` and `SCALING_AFFECTED_CAMPAIGN_IDS` (the live keys read by the daily optimizer's lockout filter).
+- See §7 Budget Automation and §8 Portfolio Scaling.
+
+### 3.7 `scaling_log` — Per-vertical scaling classifications
+
+**16 columns. One row per vertical per Tuesday run. Append only.** _(added 2026-05-08)_
+
+| # | Column | Type |
+|---|---|---|
+| 0 | date | Date (YYYY-MM-DD) |
+| 1 | vertical | String (lowercase slug) |
+| 2 | classification | Enum: `scalable` / `stable` / `saturating` / `over-invested` / `insufficient` |
+| 3 | confidence | Enum: `confident` / `directional` / `insufficient` |
+| 4 | elasticity_r | Float (Pearson, can be negative) |
+| 5 | ic_rate | Float (IC / total conversions) |
+| 6 | cpicp | Float (dollars) |
+| 7 | spend_share_pct | Float |
+| 8 | avg_frequency | Float (spend-weighted, last 4 weeks) |
+| 9 | frequency_trend | Enum: `rising` / `flat` / `falling` |
+| 10 | cpm_trend | Enum: `rising` / `flat` / `falling` |
+| 11 | new_audience_needed | String `'TRUE'` / `'FALSE'` |
+| 12 | weeks_with_conversions | Integer |
+| 13 | contributed_to_pool | String `'TRUE'` / `'FALSE'` |
+| 14 | received_from_pool | String `'TRUE'` / `'FALSE'` |
+| 15 | recorded_at | ISO timestamp |
+
+- **Writer:** `handleScalingWrite_(e)` (POST `?action=scaling-write`). Auto-creates the tab on first call.
+- **Reader:** `getScalingLogRows_(params)` (GET `?action=scaling-log-read&since=YYYY-MM-DD&vertical=<slug>&limit=N`). Returns rows newest-first.
+- **Booleans are stored as strings** (`'TRUE'`/`'FALSE'`) for predictable read-back from non-Sheets clients; no existing precedent for boolean cells in Code.js to be inconsistent with.
 
 ## 4. Configuration
 
@@ -322,6 +354,9 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | `FREQ_HIGH_THRESHOLD` | `3.0` | Frequency override (reduce) |
 | `ANTHROPIC_MODEL` | `'claude-opus-4-7'` | Claude model for all Anthropic API calls (narrative, chat, budget commentary, daily digest). Change here to upgrade everywhere. |
 | `IC_CONVERSION_EVENT_PATTERN` | `'investment crowdfunding'` | Substring match (case-insensitive) against `campaign_mapping.conversion_event`. Matches "Investment Crowdfunding Prequal Decision". Changed from `'investment_crowdfunding'` (underscore) on 2026-04-21 to fix an IC tracking outage that ran 4/15–4/20 — see the discontinuity comment in `Code.js`. |
+| `SCALING_MAX_WEEKLY_PCT` | `0.12` | Total |change_pct| per campaign per week, summed across optimizer + knockdown + strategic. Hard rail. **Intentionally dual-source with `data/config/benchmarks.json:scaling.max_weekly_total_change_pct`** — Python scripts read JSON, Apps Script reads this constant. Change both if you ever change one. |
+| `SCALING_PROFILES_URL` | raw GitHub URL | `data/derived/scaling_profiles.json` on `main`. Read by `loadScalingProfiles_()` for the optimizer's classification tagging. |
+| `SCALING_PROFILES_MAX_AGE_DAYS` | `14` | Stale-profile guard. Profiles older than this disable the optimizer's tagging overlay (the 12% cap and lockout still run unconditionally). |
 
 ### 4.2 Script Properties (secrets + runtime state)
 
@@ -342,10 +377,17 @@ Stored via `PropertiesService.getScriptProperties()` (`PROPS` in code). Set manu
 
 | Key | Purpose |
 |---|---|
-| `BUDGET_PENDING_TOKEN` | Active proposal token (one at a time) |
-| `BUDGET_APPROVED_TOKEN` | Set when someone approves in Slack |
+| `BUDGET_PENDING_TOKEN` | Active optimizer proposal token (one at a time) |
+| `BUDGET_APPROVED_TOKEN` | Set when someone approves the optimizer proposal in Slack |
 | `BUDGET_REJECTED_TOKEN` | Set when someone rejects in Slack |
 | `BUDGET_LAST_RUN_AT`, `BUDGET_LAST_APPROVED_BY`, `BUDGET_LAST_APPROVED_AT` | Audit trail |
+| `SCALING_PENDING_TOKEN` | Active strategic-reallocation proposal token (one at a time, separate from optimizer's token) |
+| `SCALING_APPROVED_TOKEN`, `SCALING_REJECTED_TOKEN` | Strategic approve/reject state |
+| `SCALING_PENDING_LOCKOUT_UNTIL`, `SCALING_PENDING_AFFECTED_IDS` | Lockout metadata stashed at queue-write time; promoted to live keys on successful execution |
+| `SCALING_LOCKOUT_UNTIL` | ISO timestamp; daily optimizer skips affected campaigns until this passes |
+| `SCALING_AFFECTED_CAMPAIGN_IDS` | Comma-separated list of locked-out campaign IDs |
+| `SCALING_LAST_APPROVED_BY`, `SCALING_LAST_APPROVED_AT` | Audit trail |
+| `SCALING_PROFILES_CACHE`, `SCALING_PROFILES_CACHED_AT` | In-memory cache of `data/derived/scaling_profiles.json` (1hr TTL before refetch from raw GitHub) |
 | `SPEND_TARGET_PENDING_TOKEN`, `PENDING_SPEND_TARGET`, `PENDING_SPEND_TOLERANCE` | Spend-target override state machine |
 | `DASHBOARD_TARGET_WEEKLY_SPEND`, `DASHBOARD_WEEKLY_SPEND_TOLERANCE` | Runtime overrides of the hardcoded constants |
 | `SYNC_LAST_RUN_DATE` | Once-per-day guard for `syncCampaignMappings_` |
@@ -483,10 +525,12 @@ All triggers are set up via `createAllTriggers()` and `createBudgetTriggers()` (
 
 | Schedule | Function | Purpose |
 |---|---|---|
-| Daily, 7 AM | `runDailyPipeline()` (Code.js:1971) | Fetch Meta + HubSpot, rebuild weekly rollup, post daily digest |
-| Mondays, 8 AM | `generateWeeklyNarrative()` (Code.js:1303) | Generate narrative for most-recent-completed week, post to Slack |
-| Daily, 6 AM | `runBudgetAnalysis()` (Code.js:2135) | Compute signals, propose budget changes, post Slack approval |
-| Daily, 3 AM | `executeBudgetChanges()` (Code.js:2836) | Apply approved changes to Meta, mark queue rows, post summary |
+| Daily, 7 AM | `runDailyPipeline()` | Fetch Meta + HubSpot, rebuild weekly rollup, post daily digest |
+| Mondays, 8 AM | `generateWeeklyNarrative()` | Generate narrative for most-recent-completed week, post to Slack |
+| Daily, 6 AM | `runBudgetAnalysis()` | Compute signals, propose budget changes, post Slack approval |
+| Daily, 3 AM | `executeBudgetChanges()` | Apply approved optimizer changes to Meta, mark queue rows, post summary |
+| Daily, 3 AM | `executeStrategicChanges()` _(added 2026-05-08)_ | Apply approved strategic-reallocation rows; cheap no-op when no `SCALING_PENDING_TOKEN` exists. On execution, promotes `SCALING_PENDING_LOCKOUT_UNTIL` / `SCALING_PENDING_AFFECTED_IDS` to live keys, posts strategic execution summary to Slack. |
+| Daily, 1 PM ET | `triggerAgentPortfolioScalingIfNeeded()` _(added 2026-05-08)_ | Apps Script fallback for `agent-portfolio-scaling.yml`. Early-outs unless ISO weekday is Tuesday; then dispatches `workflow_dispatch` only if no recent successful run in the last 12 hours. |
 
 ### 7.2 Daily pipeline (7 AM) — `runDailyPipeline()`
 
@@ -622,6 +666,44 @@ Dashboard can propose a new weekly spend target via `handleDashboardApi_` action
 
 `computeRecommendations_()` reads these overrides via `getTargetWeeklySpend_()` / `getWeeklySpendTolerance_()` so the dashboard can adjust budget goals without code changes.
 
+### 8.7 Portfolio scaling integration _(added 2026-05-08)_
+
+The portfolio-scaling skill (`skills/portfolio-scaling/`) adds a structural overlay on top of the optimizer. Three behaviors are wired into `computeRecommendations_()`; all three degrade gracefully when `data/derived/scaling_profiles.json` is missing or stale.
+
+**Inputs at the start of `computeRecommendations_()`:**
+
+```js
+var scalingProfiles = loadScalingProfiles_();  // raw GitHub fetch + 1hr cache
+var lockoutSet      = getScalingLockoutSet_();  // {} when SCALING_LOCKOUT_UNTIL absent or past
+var prevTue         = previousTuesdayUTC_();    // headroom window start
+```
+
+**1. Lockout filter (eligibility loop).** Campaigns whose IDs appear in `SCALING_AFFECTED_CAMPAIGN_IDS` while `SCALING_LOCKOUT_UNTIL` is in the future are excluded from `eligible[]` with a logged reason. The optimizer doesn't propose any change for them.
+
+**2. 12% weekly cap (final pass).** After the 4% reduction cap has applied, each remaining proposal is checked against `getCampaignWeeklyConsumed_(campaignId, prevTue)`:
+
+- Sums `|change_pct| / 100` (sheet stores `change_pct` as a percent value, e.g. `2.0` for 2%) across all `executed` rows in `budget_queue` since previous Tuesday for that campaign. Counts optimizer + knockdown + strategic movements.
+- If `consumed + |proposed_pct| > SCALING_MAX_WEEKLY_PCT (0.12)`, the proposal is scaled down to `(SCALING_MAX_WEEKLY_PCT - consumed)` of `currentDailyBudgetCents`. If `consumed >= SCALING_MAX_WEEKLY_PCT` already, the proposal is suppressed (`changeCents = 0`).
+- This pass runs **unconditionally** — even if `scalingProfiles` is null. The cap is a hard rail, not a feature gated on the data file.
+
+**3. Classification tagging (informational, gated on profiles).** When `scalingProfiles` is non-null, each eligible campaign gets `c.scalingClassification`, `c.scalingConfidence`, `c.scalingNewAudienceNeeded`, `c.scalingVertical` populated, and a tag string appended to `c.reasons` (e.g. `"breweries: scalable + new-audience-needed"`). No logic change — the tag surfaces in the Slack proposal text only.
+
+**Strategic execution path:**
+
+- **Tuesday AM** — `agent-portfolio-scaling.yml` runs `compute_scaling_profiles.py` + `compute_reallocation.py`, commits derived JSON to main, then `claude-code-action` POSTs the proposal to `/exec?action=scaling-queue-write`.
+- **`handleScalingQueueWrite_()`** — generates a token, writes pending rows to `budget_queue` with `source='strategic'`, sets `SCALING_PENDING_TOKEN` + `SCALING_PENDING_LOCKOUT_UNTIL` + `SCALING_PENDING_AFFECTED_IDS`. Returns `approve_url` + `reject_url` for the agent to embed in the Slack brief.
+- **Tyler approves** — `doGet` action `approve_scaling` → `showScalingConfirmationPage_()` → `confirm_approve_scaling` → sets `SCALING_APPROVED_TOKEN`.
+- **Wed 3 AM** — `executeStrategicChanges()` runs:
+  1. Orphan expiry pass for stale strategic-pending rows.
+  2. If `SCALING_APPROVED_TOKEN === SCALING_PENDING_TOKEN`: applies via `applyBudgetQueueRows_(qSheet, filterFn)` where `filterFn` matches `token + status='pending' + source='strategic'`.
+  3. Promotes `SCALING_PENDING_LOCKOUT_UNTIL` → `SCALING_LOCKOUT_UNTIL` and `SCALING_PENDING_AFFECTED_IDS` → `SCALING_AFFECTED_CAMPAIGN_IDS`. The daily optimizer's lockout filter (behavior #1 above) consumes these.
+  4. Posts `postStrategicExecutionSummaryToSlack_()` with the changes applied + lockout window.
+- **Lockout expires** at `SCALING_LOCKOUT_UNTIL` (typically next Tuesday 00:00 UTC), unblocking the optimizer's Tuesday morning cycle.
+
+**Shared helper:** `applyBudgetQueueRows_(qSheet, filterFn)` — extracted from `executeBudgetChanges` so both triggers share the per-row Meta API write + status transition + 300ms inter-row sleep. Filter callback decides which rows this run applies.
+
+**Hive Mind chat integration:** `handleChatRequest_()` detects scaling-related keywords in the user message (`scaling`, `scalable`, `saturating`, `over-invested`, `elasticity`, `headroom`, `capacity`, `classification`, `structural`, `reallocation`, `audience-needed`). When matched, fetches the latest 30 rows from `getScalingLogRows_()` and appends them to the context block before calling Anthropic. Per directive, this is keyword-gated rather than baked into every chat turn.
+
 ## 9. Web App & Dashboard
 
 ### 9.1 Apps Script Web App entry points
@@ -656,6 +738,10 @@ All return `ContentService.createTextOutput(JSON.stringify(payload))` with MIME 
 | `budget-queue-read` | GET | `campaign_id` (optional) | Returns `{pending: [...], count: N}` from `budget_queue`. Each row: `token, created_at, analysis_date, execution_scheduled, campaign_id, campaign_name, current_budget_cents, proposed_budget_cents, change_cents, change_pct, direction (increase/decrease/flat), signal_reasons, status`. Used by `fatigue-monitor` to flag conflicts. |
 | `fatigue-write` | POST or GET | JSON body `{rows:[...]}` or `rows=<json>` | Appends per-ad rows to `fatigue_log` tab (auto-created). Header row: `date, ad_id, ad_name, campaign, classification, ctr_baseline, ctr_current, ctr_decline_pct, frequency, cpc_baseline, cpc_current, days_active, baseline_type, budget_conflict, recorded_at`. |
 | `creative-intelligence-write` | POST or GET | JSON body `{rows:[...]}` or `rows=<json>` | Appends per-vertical rows to `creative_intelligence_log` tab (auto-created). Used by `creative-intelligence` skill. Header row: `date, vertical, ad_count, median_cpicp, spend_total, ic_total, top_body_variant_id, top_body_text, top_body_cpicp, top_visual_hash, top_visual_style, bottom_decile_count, recorded_at`. |
+| `scaling-write` | POST or GET | JSON body `{rows:[...]}` or `rows=<json>` | Appends per-vertical rows to `scaling_log` tab (auto-created, see §3.7). Used by `portfolio-scaling` skill. |
+| `scaling-queue-read` | GET | `since` (YYYY-MM-DD) optional, `campaign_id` optional, `source` optional (`optimizer` / `strategic`) | Returns `{rows: [...], count: N, since}` from `budget_queue`. Unlike `budget-queue-read` (which filters to `pending` only), this returns **all statuses** so callers can sum executed rows for headroom math. Each row: same fields as `budget-queue-read` plus `source`. Used by `compute_scaling_profiles.py`. |
+| `scaling-queue-write` | POST | JSON body `{rows: [{campaign_id, campaign_name, current_daily_cents, proposed_daily_cents, change_cents, change_pct, signal_reasons}, ...], lockout_until: "ISO", affected_campaign_ids: [...]}` | Writes pending strategic rows to `budget_queue` with `source='strategic'` and a fresh token. Stashes lockout metadata under `SCALING_PENDING_*` properties. Returns `{ok, token, written, approve_url, reject_url, lockout_until}`. Called by the Tuesday agent workflow. |
+| `scaling-log-read` | GET | `since` (YYYY-MM-DD) optional, `vertical` (slug) optional, `limit` (default 200, max 1000) optional | Returns `{rows: [...], count: N}` from `scaling_log`, newest-first. Used by Hive Mind chat for scaling-keyword queries. |
 
 ### 9.3 `buildDashboardContext_()` (Code.js:3836)
 
@@ -859,6 +945,18 @@ Key functions you'll reach for most often:
 | `exportAuditSnapshot` | Code.js:~3980 | GitHub audit export entry point |
 | `pushSnapshotToGitHub_` | Code.js:~4067 | GitHub Git Data API push |
 | `getTargetWeeklySpend_` | Code.js:4152 | Read runtime spend override |
+| `loadScalingProfiles_` | Code.js:~2875 | Fetch scaling_profiles.json from raw GitHub with Script Property cache (1hr TTL); returns `null` when stale or unavailable |
+| `getScalingLockoutSet_` | Code.js:~2925 | `{campaign_id: true}` map of currently-locked-out campaigns (empty when lockout absent or expired) |
+| `previousTuesdayUTC_` | Code.js:~2946 | UTC Tuesday strictly before now; mirrors Python `previous_tuesday` so headroom windows align |
+| `getCampaignWeeklyConsumed_` | Code.js:~2960 | Sum `|change_pct|/100` across `executed` rows since previous Tuesday for one campaign |
+| `applyBudgetQueueRows_` | Code.js:~3697 | Shared per-row apply loop. Both `executeBudgetChanges` and `executeStrategicChanges` delegate here with their own filter callback. |
+| `handleScalingQueueWrite_` | Code.js:~4480 | POST /exec?action=scaling-queue-write — writes strategic proposal rows + token + lockout metadata |
+| `handleScalingWrite_` | Code.js:~4570 | POST /exec?action=scaling-write — appends per-vertical scaling_log rows |
+| `getScalingQueueRows_` | Code.js:~4640 | GET /exec?action=scaling-queue-read — all-status budget_queue rows since date, optional source/campaign_id filter |
+| `getScalingLogRows_` | Code.js:~4700 | GET /exec?action=scaling-log-read — scaling_log rows newest-first, optional since/vertical filter |
+| `executeStrategicChanges` | Code.js:~4209 | Strategic-reallocation execution entry point (daily 3 AM trigger, no-ops without pending strategic token) |
+| `showScalingConfirmationPage_` | Code.js:~4104 | Two-step approval HTML page for strategic reallocations |
+| `triggerAgentPortfolioScalingIfNeeded` | Code.js:~2520 | Apps Script fallback dispatch for `agent-portfolio-scaling.yml` (Tuesdays at ~1 PM ET) |
 
 ### 10.4 Technical debt index
 
