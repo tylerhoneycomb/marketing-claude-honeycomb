@@ -3951,7 +3951,7 @@ function buildBudgetWeeklySummary_() {
   lines.push('');
   lines.push('*Anticipated spend this week:*  $' + anticipatedWeeklySpend +
     '/week  ($' + (currentTotalDailyCents / 100).toFixed(0) + '/day current)');
-  lines.push('_Next proposal: Wednesday morning_');
+  lines.push('_Next proposal: tomorrow morning (daily cadence)_');
 
   return lines.join('\n');
 }
