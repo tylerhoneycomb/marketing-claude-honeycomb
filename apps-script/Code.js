@@ -2310,7 +2310,8 @@ function createAllTriggers() {
     triggerAgentPipelineHealthIfNeeded: true,
     triggerAgentDailyCheckIfNeeded: true,
     triggerAgentFatigueMonitorIfNeeded: true,
-    triggerAgentCreativeIntelligenceIfNeeded: true
+    triggerAgentCreativeIntelligenceIfNeeded: true,
+    triggerAgentPortfolioScalingIfNeeded: true
   };
 
   ScriptApp.getProjectTriggers().forEach(function (t) {
@@ -2336,6 +2337,8 @@ function createAllTriggers() {
   ScriptApp.newTrigger('triggerAgentFatigueMonitorIfNeeded')
     .timeBased().everyDays(1).atHour(13).create();
   ScriptApp.newTrigger('triggerAgentCreativeIntelligenceIfNeeded')
+    .timeBased().everyDays(1).atHour(13).create();
+  ScriptApp.newTrigger('triggerAgentPortfolioScalingIfNeeded')
     .timeBased().everyDays(1).atHour(13).create();
 
   var triggers = ScriptApp.getProjectTriggers();
@@ -2513,6 +2516,28 @@ function triggerAgentCreativeIntelligenceIfNeeded() {
     return;
   }
   triggerAgentWorkflow_('agent-creative-intelligence.yml');
+}
+
+
+// Weekly Tuesday fallback for agent-portfolio-scaling.yml. GitHub cron
+// is Tue 13:30 UTC (9:30 AM EDT / 8:30 AM EST). The Apps Script trigger
+// fires daily and early-outs unless it's Tuesday. 12-hour window =
+// "did it run today?" — short window because Tuesday is the only day
+// the workflow runs and we want to fire the fallback within ~3 hours
+// of the GitHub cron's intended slot.
+function triggerAgentPortfolioScalingIfNeeded() {
+  Logger.log('=== triggerAgentPortfolioScalingIfNeeded ===');
+  var dow = parseInt(Utilities.formatDate(
+    new Date(), Session.getScriptTimeZone(), 'u'), 10);
+  if (dow !== 2) {
+    Logger.log('Not Tuesday (ISO dow=' + dow + ') — skipping.');
+    return;
+  }
+  if (workflowRanWithinHours_('agent-portfolio-scaling.yml', 12)) {
+    Logger.log('Recent successful or in-progress run exists — skipping.');
+    return;
+  }
+  triggerAgentWorkflow_('agent-portfolio-scaling.yml');
 }
 
 

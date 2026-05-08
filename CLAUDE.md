@@ -176,6 +176,16 @@ Each skill that needs a scheduled run gets its own workflow file under
   validate cache-commit mechanics without spending model dollars.
 - `agent-ad-copy-generator.yml` — `workflow_dispatch` only. Drafts ad
   copy from the Creative Intelligence cache; never auto-published.
+- `agent-portfolio-scaling.yml` — runs `portfolio-scaling` skill.
+  Weekly cron Tuesdays at 9:30 AM ET (UTC 13:30). Two Python steps
+  (compute_scaling_profiles → compute_reallocation), commits derived
+  JSON to main, then claude-code-action composes the four-section
+  Slack brief and registers the proposal via /exec for Tyler's
+  two-step approval. The execution side runs daily at 3 AM as
+  `executeStrategicChanges` in Code.js — daily-with-cheap-no-op
+  rather than weekly Wed-only because daily is more robust against
+  missed-window risk at the same cost (one Script Property read on
+  no-op days).
 
 ### New-skill architectural pattern _(established 2026-05-05)_
 
@@ -252,8 +262,8 @@ run rather than racing.
 
 Every autonomous workflow run (`daily-data`, `agent-pipeline-health`,
 `agent-daily-check`, `agent-fatigue-monitor`, `agent-creative-intelligence`,
-`agent-creative-preview`, `agent-ad-copy-generator`) posts a status
-comment to
+`agent-creative-preview`, `agent-ad-copy-generator`,
+`agent-portfolio-scaling`) posts a status comment to
 [issue #48](https://github.com/tylerhoneycomb/marketing-claude-honeycomb/issues/48)
 on completion (`if: always()` so failures report too,
 `continue-on-error: true` so a missing/closed issue can't break the
@@ -280,9 +290,9 @@ Reading the issue comments is the fastest way to verify the agent loop
 is firing correctly — sort by oldest-first for a chronological log.
 Close + reopen a fresh issue when the comment volume gets noisy
 (close the old one, create a new one, update the issue number in all
-seven workflow YAML files: daily-data, agent-pipeline-health,
+eight workflow YAML files: daily-data, agent-pipeline-health,
 agent-daily-check, agent-fatigue-monitor, agent-creative-intelligence,
-agent-creative-preview, agent-ad-copy-generator).
+agent-creative-preview, agent-ad-copy-generator, agent-portfolio-scaling).
 
 ### Meta API conventions
 
@@ -337,6 +347,27 @@ agent-creative-preview, agent-ad-copy-generator).
   — every draft requires human review per the compliance checklist. The
   skill is `workflow_dispatch`-only; Tyler runs it after the Monday
   Creative Intelligence brief.
+- **portfolio-scaling** — weekly Tuesday brief that adds a structural
+  diagnosis layer on top of the existing budget optimizer. Classifies
+  each vertical as scalable / stable / saturating / over-invested over a
+  12-week trailing window using elasticity (Pearson r of weekly spend vs
+  weekly CPL), median-split CPL degradation, and 4-week
+  frequency/CPM trends. Modifier `new_audience_needed` fires when
+  frequency + CPM both rise over 4+ weeks (vertical-level early warning,
+  before any single campaign hits the optimizer's freq=2.0 threshold).
+  Produces a pool-based budget reallocation: saturating + over-invested
+  verticals contribute decreases sized by elasticity severity, scalable +
+  stable verticals absorb weighted by inverse CPICP. The pool is bounded
+  by the spend tolerance band; can be net-positive or net-negative.
+  **Shares a 12% weekly cap with the daily optimizer** (the cap counts
+  optimizer + knockdown + strategic movement summed across the week).
+  Wed-Mon lockout window prevents the optimizer from acting on
+  affected campaigns immediately after the strategic move; lockout
+  expires at next-Tuesday 00:00 UTC so the optimizer's Tuesday cycle
+  is free. Strategic execution path reuses `applyBudgetQueueRows_`
+  with a `source: strategic` filter on `budget_queue` (a 13th column
+  added to the schema). Tagging: optimizer Slack proposals now show
+  the campaign's vertical classification inline.
 
 ### Shared client
 
