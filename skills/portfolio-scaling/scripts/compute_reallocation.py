@@ -274,6 +274,16 @@ def enforce_tolerance(decreases: list[dict[str, Any]],
          scalable verticals have no remaining capacity.
       3. Prefer net-positive over net-negative: tolerance is slack to
          use if scalable verticals have headroom.
+
+    Convergence: single-pass proportional scaling. The math is exact
+    pre-rounding (scaled allocated/freed exactly cancels the
+    excess/deficit), but `int(round(...))` of per-item change_cents may
+    leave the post-change portfolio total ±N cents outside the band,
+    where N ≤ number of items being scaled. At Honeycomb's scale
+    (typically 10-15 affected campaigns, $5-10/day individual changes),
+    that's at most $0.07/week of slop on a $10,000 target — below the
+    tolerance Tyler cares about. Don't iterate; the rounding noise
+    won't compound meaningfully on a second pass.
     """
     portfolio = profiles["portfolio"]
     current = portfolio["current_total_daily_cents"]

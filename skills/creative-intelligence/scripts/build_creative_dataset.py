@@ -78,6 +78,9 @@ SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
 # AD-Breweries-Q4-2025, AD-BBQ-Q1-2026, AD-Sustainable Main Street-
 # Q1-2026, ICD-Health, Fitness & Personal Care-Q2-2026,
 # PAUSED - AD-Creameries-Q1-2026.
+#
+# DUPLICATED in skills/portfolio-scaling/scripts/compute_scaling_profiles.py.
+# KEEP IN SYNC. Follow-up: extract to scripts/lib/verticals.py.
 VERTICAL_RE = re.compile(
     r"^(?:PAUSED\s*-\s*)?(?:AD|ICD|Rev\d*)-(.+?)-Q\d+-\d{4}$",
     re.IGNORECASE)

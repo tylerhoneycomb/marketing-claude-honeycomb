@@ -52,8 +52,12 @@ SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
 DERIVED_DIR = REPO_ROOT / "data" / "derived"
 DEFAULT_OUTPUT = DERIVED_DIR / "scaling_profiles.json"
 
-# Vertical extraction. Mirrors creative-intelligence/build_creative_dataset.py
-# so vertical assignments are consistent across skills.
+# Vertical extraction. DUPLICATED from
+# skills/creative-intelligence/scripts/build_creative_dataset.py:VERTICAL_RE
+# so the two skills agree on vertical assignment. KEEP IN SYNC: a new
+# campaign-name pattern handled in one file but not the other will
+# produce silently divergent classifications. Follow-up: extract to
+# scripts/lib/verticals.py.
 VERTICAL_RE = re.compile(
     r"^(?:PAUSED\s*-\s*)?(?:AD|ICD|Rev\d*)-(.+?)-Q\d+-\d{4}$",
     re.IGNORECASE)
@@ -376,6 +380,13 @@ def compute_per_campaign_headroom(
     """Sum |change_pct| per campaign across all executed rows in window.
     Knockdown is identified by substring match on signal_reasons — a
     diagnostic flag, not a filter.
+
+    Status filter: only `executed` rows count. Other statuses
+    (`pending`, `approved`, `rejected`, `expired`, `failed`) are
+    excluded because they never moved Meta's actual budget. An
+    `approved`-but-not-yet-executed optimizer proposal does NOT count
+    against this week's cap; it'll count after the 3 AM execution
+    trigger transitions it to `executed` (Code.js:3429).
     """
     consumed: dict[str, float] = defaultdict(float)
     knockdown_seen: dict[str, bool] = defaultdict(bool)
