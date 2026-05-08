@@ -4079,6 +4079,12 @@ function handleDashboardApi_(e) {
     return handleCreativeIntelligenceWrite_(e);
   }
 
+  // `portfolio-scaling` skill writes one scaling_log row per vertical
+  // per Tuesday run. Same dual-wire pattern.
+  if (action === 'scaling-write') {
+    return handleScalingWrite_(e);
+  }
+
   try {
     var result;
     switch (action) {
@@ -4105,6 +4111,9 @@ function handleDashboardApi_(e) {
         break;
       case 'budget-queue-read':
         result = getBudgetQueuePending_(e.parameter);
+        break;
+      case 'scaling-queue-read':
+        result = getScalingQueueRows_(e.parameter);
         break;
     }
     return jsonResponse_(result);
@@ -4487,6 +4496,139 @@ function handleCreativeIntelligenceWrite_(e) {
 }
 
 
+// Append-only: writes one scaling_log row per vertical per Tuesday run.
+// Creates the tab on first call. The `portfolio-scaling` skill writes
+// rows for every vertical (including insufficient-data ones) so the
+// week-over-week structural trend is preserved.
+function handleScalingWrite_(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName('scaling_log');
+  if (!sheet) {
+    sheet = ss.insertSheet('scaling_log');
+    sheet.appendRow([
+      'date', 'vertical',
+      'classification', 'confidence',
+      'elasticity_r', 'ic_rate', 'cpicp', 'spend_share_pct',
+      'avg_frequency', 'frequency_trend', 'cpm_trend',
+      'new_audience_needed',
+      'weeks_with_conversions',
+      'contributed_to_pool', 'received_from_pool',
+      'recorded_at'
+    ]);
+  }
+
+  var rows = [];
+  var p = (e && e.parameter) || {};
+
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && Array.isArray(parsed.rows)) rows = parsed.rows;
+    } catch (parseErr) {
+      // fall through
+    }
+  }
+  if (!rows.length && p.rows) {
+    try {
+      rows = JSON.parse(p.rows);
+      if (!Array.isArray(rows)) {
+        return jsonResponse_({ error: 'rows must be a JSON array' });
+      }
+    } catch (err) {
+      return jsonResponse_({ error: 'rows is not valid JSON: ' + err.message });
+    }
+  }
+  if (!rows.length) {
+    return jsonResponse_({ error: 'no rows provided (use JSON body {rows:[...]} or rows=<json>)' });
+  }
+
+  var nowIso = new Date().toISOString();
+  var written = 0;
+  for (var ri = 0; ri < rows.length; ri++) {
+    var row = rows[ri] || {};
+    if (!row.vertical) continue;
+    sheet.appendRow([
+      String(row.date || ''),
+      String(row.vertical),
+      String(row.classification || ''),
+      String(row.confidence || ''),
+      row.elasticity_r == null ? '' : Number(row.elasticity_r),
+      row.ic_rate == null ? '' : Number(row.ic_rate),
+      row.cpicp == null ? '' : Number(row.cpicp),
+      row.spend_share_pct == null ? '' : Number(row.spend_share_pct),
+      row.avg_frequency == null ? '' : Number(row.avg_frequency),
+      String(row.frequency_trend || ''),
+      String(row.cpm_trend || ''),
+      row.new_audience_needed === true ? 'TRUE' : 'FALSE',
+      Number(row.weeks_with_conversions) || 0,
+      row.contributed_to_pool === true ? 'TRUE' : 'FALSE',
+      row.received_from_pool === true ? 'TRUE' : 'FALSE',
+      nowIso
+    ]);
+    written++;
+  }
+  return jsonResponse_({ ok: true, written: written });
+}
+
+
+// Read-only: returns budget_queue rows whose `analysis_date` is on or
+// after `since` (YYYY-MM-DD). Unlike `budget-queue-read` (which filters
+// to `pending` only), this returns ALL statuses — the caller filters
+// to `executed` for headroom math, or inspects `signal_reasons` for
+// knockdown attribution. Optional `campaign_id` narrows the result.
+function getScalingQueueRows_(params) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(BUDGET_SHEET);
+  if (!sheet || sheet.getLastRow() < 2) return { rows: [], count: 0 };
+
+  // Schema (writeToQueue_, Code.js:3150):
+  //   0:token 1:created_at 2:analysis_date 3:execution_scheduled
+  //   4:campaign_id 5:campaign_name
+  //   6:current_budget_cents 7:proposed_budget_cents
+  //   8:change_cents 9:change_pct
+  //   10:signal_reasons 11:status
+
+  var sinceStr = params && params.since
+    ? String(params.since).trim().substring(0, 10)
+    : null;
+  var filterCampaignId = params && params.campaign_id
+    ? String(params.campaign_id).trim() : null;
+
+  var data = sheet.getDataRange().getValues();
+  var rows = [];
+  for (var i = 1; i < data.length; i++) {
+    var r = data[i];
+
+    var analysisDate = r[2];
+    var dateStr = (analysisDate instanceof Date)
+      ? Utilities.formatDate(analysisDate, Session.getScriptTimeZone(), 'yyyy-MM-dd')
+      : String(analysisDate).substring(0, 10);
+    if (sinceStr && dateStr < sinceStr) continue;
+
+    var campaignId = String(r[4]).trim();
+    if (filterCampaignId && campaignId !== filterCampaignId) continue;
+
+    var changeCents = Number(r[8]) || 0;
+    rows.push({
+      token: String(r[0]),
+      created_at: r[1] instanceof Date ? r[1].toISOString() : String(r[1]),
+      analysis_date: dateStr,
+      execution_scheduled: String(r[3]),
+      campaign_id: campaignId,
+      campaign_name: String(r[5]),
+      current_budget_cents: Number(r[6]) || 0,
+      proposed_budget_cents: Number(r[7]) || 0,
+      change_cents: changeCents,
+      change_pct: Number(r[9]) || 0,
+      direction: changeCents > 0 ? 'increase' : (changeCents < 0 ? 'decrease' : 'flat'),
+      signal_reasons: String(r[10]),
+      status: String(r[11])
+    });
+  }
+  return { rows: rows, count: rows.length, since: sinceStr };
+}
+
+
 // ─── GENERIC SHEET → JSON CONVERTER ─────────────────────────
 // Reads a sheet, normalizes headers to snake_case keys, and
 // returns an array of row objects. Dates are formatted as
@@ -4679,6 +4821,9 @@ function doPost(e) {
   }
   if (action === 'creative-intelligence-write') {
     return handleCreativeIntelligenceWrite_(e);
+  }
+  if (action === 'scaling-write') {
+    return handleScalingWrite_(e);
   }
 
   return jsonResponse_({ error: 'Unknown POST action: ' + action });

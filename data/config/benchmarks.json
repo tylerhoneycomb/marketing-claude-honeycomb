@@ -44,6 +44,21 @@
     "endpoint_timeout_seconds": 10,
     "data_freshness_max_gap_weekdays": 1
   },
+  "scaling": {
+    "max_weekly_total_change_pct": 0.12,
+    "strategic_evaluation_days": 3,
+    "strategic_cadence_days": 7,
+    "elasticity_scalable_threshold": 0.2,
+    "elasticity_saturating_threshold": 0.5,
+    "frequency_trend_saturation_weeks": 4,
+    "cpm_trend_weeks": 4,
+    "elasticity_window_weeks": 12,
+    "min_weeks_confident": 10,
+    "min_weeks_directional": 6,
+    "min_weekly_conversions": 3,
+    "high_spend_cpl_degradation_threshold": 0.30,
+    "campaign_floor_buffer_pct": 0.04
+  },
   "campaign_defaults": {
     "type": "prospecting"
   }

@@ -267,6 +267,18 @@ class MetaClient:
         url = f"{self.base}/{self.account_id}/adsets"
         return self._paginate(url, params)
 
+    def campaigns(self, fields: list[str] | None = None,
+                  filtering: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+        params: dict[str, Any] = {
+            "fields": ",".join(fields or ["id", "name", "daily_budget",
+                                          "lifetime_budget", "effective_status"]),
+            "limit": 200,
+        }
+        if filtering:
+            params["filtering"] = json.dumps(filtering)
+        url = f"{self.base}/{self.account_id}/campaigns"
+        return self._paginate(url, params)
+
     def ads(self, fields: list[str] | None = None,
             filtering: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
         params: dict[str, Any] = {
