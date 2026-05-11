@@ -39,6 +39,15 @@
       "text": "Raise from the order list.",
       "variant_id": "020b4f5ff11e9cec"
     },
+    "026d915c5156ee29644b3553b968fced": {
+      "categorized_at": "2026-05-11T20:24:11.791591+00:00",
+      "image_hash": "026d915c5156ee29644b3553b968fced",
+      "image_path": "data/creatives/images/026d915c5156ee29644b3553b968fced.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "The focal point of this image is clearly the person\u2014a man in glasses wearing a Lake Effect Brewing Company polo, standing with arms crossed in front of brewing equipment. While there is substantial text overlay describing the business success story, the person is the subject and main visual element that carries the ad, making this a real_person shot rather than text_heavy.",
+      "visual_style": "real_person"
+    },
     "02fb9f800a5446e85e28072910c53953": {
       "categorized_at": "2026-05-05T21:37:54.459860+00:00",
       "image_hash": "02fb9f800a5446e85e28072910c53953",
@@ -1247,6 +1256,15 @@
       "text": "Traditional loans aren\u2019t built for breweries. Honeycomb lets brewers raise capital and keep control. See if your brewery pre-qualifies.",
       "variant_id": "34e5bb5dbaedb2a5"
     },
+    "365a9e0cb7a3e34e6b0f30ed376ff0ac": {
+      "categorized_at": "2026-05-11T20:24:12.763809+00:00",
+      "image_hash": "365a9e0cb7a3e34e6b0f30ed376ff0ac",
+      "image_path": "data/creatives/images/365a9e0cb7a3e34e6b0f30ed376ff0ac.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "Although this image features a real person (a woman in a black shirt standing in what appears to be a workshop or studio), the large overlaid text \"$100,000+ Invested In Less Than 12 Hours\" dominates the visual hierarchy and is what the eye lands on first. The prominent stat-led messaging, combined with additional text callouts (\"Next time, will it be you?\" and \"The power of community capital\"), makes the text overlay the primary focal point rather than the person or environment.",
+      "visual_style": "text_heavy"
+    },
     "36af400f55941906": {
       "categorized_at": "2026-05-05T21:32:57.602394+00:00",
       "copy_angle": "product_feature",
@@ -1296,6 +1314,15 @@
       "rationale": "This title leads with the outcome Honeycomb delivers\u2014\"expansion, funded fast\"\u2014emphasizing what the business owner gets (the funding for growth) rather than how it works or who's involved. The focus is squarely on the benefit to the business: capital delivered quickly for their expansion goals.",
       "text": "Your expansion, funded fast.",
       "variant_id": "3823d61e1192b902"
+    },
+    "3862901cf8a1a1c2833b254ead413014": {
+      "categorized_at": "2026-05-11T20:24:11.738291+00:00",
+      "image_hash": "3862901cf8a1a1c2833b254ead413014",
+      "image_path": "data/creatives/images/3862901cf8a1a1c2833b254ead413014.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "This image is dominated by large, bold typography that reads \"Get Rid of The F*cking Red Tape\" against a solid yellow background. The text is the primary visual element and what the eye lands on first, with a smaller supporting line below about community capital financing. This is a pure text-led design where the message itself is the focal point, making it text_heavy rather than graphic.",
+      "visual_style": "text_heavy"
     },
     "3911e79ba83b22a3": {
       "categorized_at": "2026-05-05T21:35:18.978708+00:00",
@@ -1462,6 +1489,15 @@
       "text": "Your neighbors wait 45 minutes for a Friday night pie. They'd wait longer if you asked. What if they could invest in your expansion instead? Honeycomb Credit turns your loyal customers into investors\u2014people who already believe in your pizza funding your next chapter. It's not charity. They earn returns. You get growth capital without the predatory terms. Banks call restaurants \"high-risk.\" Your regulars call you Tuesday night dinner. Pre-qualify and see your options.",
       "variant_id": "40e73c8812604fa7"
     },
+    "41a62da5b6893bb1726b32949150853c": {
+      "categorized_at": "2026-05-11T20:24:11.993685+00:00",
+      "image_hash": "41a62da5b6893bb1726b32949150853c",
+      "image_path": "data/creatives/images/41a62da5b6893bb1726b32949150853c.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "While this image features a real person (a woman standing at a counter in what appears to be a workspace), the large overlaid text \"$100,000+ Invested in less than 12 hours\" dominates the visual hierarchy and is the first thing the eye lands on. The substantial text treatment covering the lower half of the image, combined with the stat-led messaging, makes this a text_heavy execution rather than a real_person shot.",
+      "visual_style": "text_heavy"
+    },
     "436e8fd2fa2b754d": {
       "categorized_at": "2026-05-05T21:30:53.668716+00:00",
       "copy_angle": "benefit_led",
@@ -1551,6 +1587,15 @@
       "text": "Pre-Qualify in Minutes",
       "variant_id": "47c16829eeda54db"
     },
+    "47ec007a6ec2d65520c9e2194e7a8313": {
+      "categorized_at": "2026-05-11T20:24:16.027224+00:00",
+      "image_hash": "47ec007a6ec2d65520c9e2194e7a8313",
+      "image_path": "data/creatives/images/47ec007a6ec2d65520c9e2194e7a8313.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "This image is dominated by large black text on a bright yellow background reading \"Your Business Deserves to Grow. Let's Make It Happen\" with smaller text \"Funding that works for you.\" The text is the clear focal point and visual hierarchy leader, with no photographic elements\u2014just typography on a solid color field. This fits the text_heavy definition of text dominating the visual hierarchy.",
+      "visual_style": "text_heavy"
+    },
     "487427ae6cdb120e": {
       "categorized_at": "2026-05-05T21:30:46.079944+00:00",
       "copy_angle": "community_local",
@@ -1579,6 +1624,15 @@
       "rationale": "The phrase \"Predatory Daily Debt\" directly references the threat of MCAs (merchant cash advances) with daily withdrawals, framing them as an active danger. This fits the urgency angle's focus on threat framing and the MCA pressure that businesses face, similar to corpus examples like \"MCAs drain your margins with daily withdrawals.\"",
       "text": "Swap Predatory Daily Debt for Stable Growth",
       "variant_id": "489eb2f4df850cc8"
+    },
+    "48be502884bea143a3974acf60741f3e": {
+      "categorized_at": "2026-05-11T20:24:16.117119+00:00",
+      "image_hash": "48be502884bea143a3974acf60741f3e",
+      "image_path": "data/creatives/images/48be502884bea143a3974acf60741f3e.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "The focal point of this image is a person\u2014a bearded man in a plaid shirt holding a small animal (appears to be a chicken). While there is text overlay, the person remains the dominant visual subject, carrying the authentic, human-centered appeal of the ad. This distinguishes it from text_heavy, where text would overwhelm the visual hierarchy.",
+      "visual_style": "real_person"
     },
     "49510e449f2bfa15675514aab8521b71": {
       "categorized_at": "2026-05-05T21:38:44.629647+00:00",
@@ -1786,6 +1840,15 @@
       "text": "Fund your second location.",
       "variant_id": "4fc0b6dba29da96a"
     },
+    "4ff2adc3630f3076a7040aabba026482": {
+      "categorized_at": "2026-05-11T20:24:16.820861+00:00",
+      "image_hash": "4ff2adc3630f3076a7040aabba026482",
+      "image_path": "data/creatives/images/4ff2adc3630f3076a7040aabba026482.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "While this image features two real people (likely business owners) as the photographic subject, the large overlaid text dominates the visual hierarchy. The yellow text \"Peaceful Blend Vineyard\" and the multi-line financing statement \"$124,000 without going through a big bank\" plus the bottom question are what the eye lands on first. The text overlay is the primary visual element, making this text_heavy rather than real_person.",
+      "visual_style": "text_heavy"
+    },
     "4ffe707fa50fb3c737227026936e0532": {
       "categorized_at": "2026-05-05T21:38:50.927372+00:00",
       "image_hash": "4ffe707fa50fb3c737227026936e0532",
@@ -1921,6 +1984,15 @@
       "rationale": "This description leads with how Honeycomb works\u2014\"Community-funded growth capital\"\u2014describing the product mechanism rather than a specific benefit or outcome. The call-to-action \"See if you qualify\" reinforces the product-feature framing by focusing on the qualification process rather than what the owner gets to do with the funding.",
       "text": "Community-funded growth capital for pizzerias. See if you qualify.",
       "variant_id": "56164db7c18a804f"
+    },
+    "565527bae323b5ab7a699725f4bc690d": {
+      "categorized_at": "2026-05-11T20:24:17.256019+00:00",
+      "image_hash": "565527bae323b5ab7a699725f4bc690d",
+      "image_path": "data/creatives/images/565527bae323b5ab7a699725f4bc690d.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "Although there is a real person (a woman in a black shirt) in the photo, the overlaid text dominates the visual hierarchy. The large \"$100,000+ Invested In Less Than 12 Hours\" headline and additional text (\"Is it your turn, next?\" and \"Financing built for the distillery industry\") command the viewer's attention first. This is a stat-led creative where the text overlay is the primary visual element.",
+      "visual_style": "text_heavy"
     },
     "5663f99f39ce6c01": {
       "categorized_at": "2026-05-05T21:35:57.167597+00:00",
@@ -2252,6 +2324,15 @@
       "text": "MCAs drain your margins with daily withdrawals and a renewal cycle that never ends. 500+ small businesses have raised community-backed capital through Honeycomb instead - turning loyal customers into investors. See if your bookstore qualifies.",
       "variant_id": "631b70d274ca610f"
     },
+    "638f4c9576ba87876a3c5caa5976f0fd": {
+      "categorized_at": "2026-05-11T20:24:21.609433+00:00",
+      "image_hash": "638f4c9576ba87876a3c5caa5976f0fd",
+      "image_path": "data/creatives/images/638f4c9576ba87876a3c5caa5976f0fd.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "While the image features a photographed ice cream truck/bus with \"Millie's\" branding and decorative ice cream cones on top, the overlaid text dominates the visual hierarchy. The large yellow text reading \"Millies Ice Cream: $62k from 100 investors All without a big bank\" along with the Honeycomb Credit branding and bottom tagline creates a stat-led composition where the text is what the eye lands on first, making this a text_heavy execution rather than a product_shot or lifestyle image.",
+      "visual_style": "text_heavy"
+    },
     "6402dd0a663d99d5": {
       "categorized_at": "2026-05-05T21:31:31.953248+00:00",
       "copy_angle": "benefit_led",
@@ -2546,6 +2627,15 @@
       "text": "Community-backed loans for juice bars and smoothie shops. Prequalify now.",
       "variant_id": "72eb8f83feda64b4"
     },
+    "7326f197e1f808966863cecfa35678fa": {
+      "categorized_at": "2026-05-11T20:24:20.925292+00:00",
+      "image_hash": "7326f197e1f808966863cecfa35678fa",
+      "image_path": "data/creatives/images/7326f197e1f808966863cecfa35678fa.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "The image clearly foregrounds two people\u2014a man and woman in matching green hoodies\u2014as the focal point. They are smiling and posed together, with one holding a wine glass, and their faces, expressions, and posture carry the ad. While there is overlaid text including the business name and funding details, the people remain the dominant visual subject, making this a real_person style rather than text_heavy.",
+      "visual_style": "real_person"
+    },
     "735904a4978ea505": {
       "categorized_at": "2026-05-05T21:35:31.486261+00:00",
       "copy_angle": "benefit_led",
@@ -2555,6 +2645,15 @@
       "rationale": "This copy leads with the alternative-to-banks framing (\"No bank?\") paired directly with what Honeycomb does for the business (\"We fund child care\"). The value proposition is the funding outcome itself, positioning Honeycomb as the solution when traditional banking isn't an option. This is the classic benefit_led structure that frames the offer around what the owner gets.",
       "text": "No bank? We fund child care.",
       "variant_id": "735904a4978ea505"
+    },
+    "735b0b204bd94654ceb16e7015821374": {
+      "categorized_at": "2026-05-11T20:24:21.240052+00:00",
+      "image_hash": "735b0b204bd94654ceb16e7015821374",
+      "image_path": "data/creatives/images/735b0b204bd94654ceb16e7015821374.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "Although this image features a person (business owner) smiling at the camera, the large overlaid text dominates the visual hierarchy. The headline \"$374,000 From Their Community, Square Cafe Turned A Dream Into A Reality\" with yellow highlighting on key phrases takes up most of the frame and is what your eye lands on first, making this a text-heavy treatment rather than a real_person shot.",
+      "visual_style": "text_heavy"
     },
     "738f6f1c0aa996bd": {
       "categorized_at": "2026-05-05T21:35:35.456600+00:00",
@@ -2752,6 +2851,15 @@
       "text": "5-minute eligibility check",
       "variant_id": "7baa690d6824df3e"
     },
+    "7babd2e837eb42b4167c1e37d6be7b9e": {
+      "categorized_at": "2026-05-11T20:24:22.318610+00:00",
+      "image_hash": "7babd2e837eb42b4167c1e37d6be7b9e",
+      "image_path": "data/creatives/images/7babd2e837eb42b4167c1e37d6be7b9e.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "While this image shows a real person (someone wearing a Voodoo Brewing branded hoodie), the massive overlaid text dominates the visual hierarchy. The headline \"Voodoo Brewing Raised $479,000 Without A Big Bank\" and the question \"What can community capital do for you?\" are the first elements that grab attention, along with the Honeycomb Credit branding. The person serves as a supporting background element to the text-driven message.",
+      "visual_style": "text_heavy"
+    },
     "7c10ff202c9c00aff88ce7cf8a8f8025": {
       "categorized_at": "2026-05-05T21:39:20.929183+00:00",
       "image_hash": "7c10ff202c9c00aff88ce7cf8a8f8025",
@@ -2789,6 +2897,15 @@
       "rationale": "The copy centers \"the community that shows up every week\" as the protagonist and funding source. While it mentions what the brewery will fund (product outcomes), the hook is explicitly about the local regulars who are already engaged. This makes the community the hero rather than leading with the business benefit or owner's story.",
       "text": "New fermenter. Canning line. Second taproom. Fund your brewery\u2019s next round from the community that shows up every week.",
       "variant_id": "7da8851d87c890cb"
+    },
+    "7dff534e8aea5bd481cd58963878933f": {
+      "categorized_at": "2026-05-11T20:24:25.669677+00:00",
+      "image_hash": "7dff534e8aea5bd481cd58963878933f",
+      "image_path": "data/creatives/images/7dff534e8aea5bd481cd58963878933f.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "While this image features two people (business owners) in matching Peaceful Blend Vineyard hoodies, the large overlaid headline text dominates the visual hierarchy. The viewer's eye is immediately drawn to \"How Peaceful Blend Vineyard Financed $124,000 Without Going Through A Big Bank\" with the dollar amount highlighted in yellow. The text occupies the majority of the frame and is the primary focus, making this a text_heavy composition rather than a real_person shot.",
+      "visual_style": "text_heavy"
     },
     "7f091e006a765860": {
       "categorized_at": "2026-05-05T21:36:43.975183+00:00",
@@ -3177,6 +3294,15 @@
       "text": "500+ businesses funded. $50M+ raised.",
       "variant_id": "8df1157799e50e1f"
     },
+    "8e6ca9d225eec31e497c91d509364345": {
+      "categorized_at": "2026-05-11T20:24:26.008148+00:00",
+      "image_hash": "8e6ca9d225eec31e497c91d509364345",
+      "image_path": "data/creatives/images/8e6ca9d225eec31e497c91d509364345.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "While this image features a person (a smiling business owner in their workspace), the massive overlaid text \"$100,000+ Invested in less than 12 hours\" and \"Is it your turn next?\" dominates the visual hierarchy and is what the eye lands on first. The text is the primary focal point rather than the person or environment, making this a text-heavy composition used to highlight a stat-driven message.",
+      "visual_style": "text_heavy"
+    },
     "8ed33b88aeb3e5f8": {
       "categorized_at": "2026-05-05T21:33:47.992793+00:00",
       "copy_angle": "urgency",
@@ -3369,6 +3495,15 @@
       "rationale": "While this image features a real person (a smiling woman in a black t-shirt in what appears to be a small business workspace), the large overlaid text \"$100,000+ Invested In Less Than 12 Hours\" and \"Next Time, It Could Be You\" dominates the visual hierarchy. The text is what immediately draws the eye, making this a stat-led creative where the text overlay is the primary focal point despite the photographic subject underneath.",
       "visual_style": "text_heavy"
     },
+    "9859cd347481839df6eb3311caeb951a": {
+      "categorized_at": "2026-05-11T20:24:26.113476+00:00",
+      "image_hash": "9859cd347481839df6eb3311caeb951a",
+      "image_path": "data/creatives/images/9859cd347481839df6eb3311caeb951a.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "The image clearly focuses on a person (presumably the business owner) as the primary subject. He is centrally positioned, smiling directly at the camera with arms crossed in a confident pose. While there is text overlay describing the Nomad Donuts story, the person's face, posture, and presence are the focal point that carries the ad's message of authentic entrepreneurship.",
+      "visual_style": "real_person"
+    },
     "996bfef13ec99f33": {
       "categorized_at": "2026-05-05T21:30:50.183665+00:00",
       "copy_angle": "question",
@@ -3388,6 +3523,15 @@
       "rationale": "The copy leads with \"breweries have raised growth capital with Honeycomb,\" which signals that other businesses in this category have already used this solution. This is aggregate social validation showing others have done this, not a specific community or named testimonial. The plural \"breweries\" and the general statement about past funding activity positions this as social proof rather than a product feature or benefit angle.",
       "text": "From fermenters to taprooms, breweries have raised growth capital with Honeycomb. Check your pre-qualification in minutes.",
       "variant_id": "999d294a149845e0"
+    },
+    "9a2d2ebb4c4d5c425a23d3767b4fa493": {
+      "categorized_at": "2026-05-11T20:24:25.996659+00:00",
+      "image_hash": "9a2d2ebb4c4d5c425a23d3767b4fa493",
+      "image_path": "data/creatives/images/9a2d2ebb4c4d5c425a23d3767b4fa493.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "The focal point of this image is the person in chef's attire (black chef's coat) smiling at the camera while holding plates of food in a kitchen setting. Despite the substantial text overlay and the kitchen environment visible in the background, the person is clearly the subject and dominant visual element that draws the viewer's attention first.",
+      "visual_style": "real_person"
     },
     "9b86548603b9bfc683ea69f4b7a23158": {
       "categorized_at": "2026-05-05T21:39:53.827998+00:00",
@@ -3444,6 +3588,15 @@
       "rationale": "While this image features four people (employees/owners) standing in a grocery store, the large overlaid text dominates the visual hierarchy. The yellow and white text reading \"Brooklyn Grocery Cooperative funded their new location\" and \"Grow sustainably. Grow with community capital\" commands immediate attention and covers much of the frame, making the text the primary visual element rather than the people or setting.",
       "visual_style": "text_heavy"
     },
+    "9e08a4ad69d8409eff9b8b10aac0381b": {
+      "categorized_at": "2026-05-11T20:24:30.403912+00:00",
+      "image_hash": "9e08a4ad69d8409eff9b8b10aac0381b",
+      "image_path": "data/creatives/images/9e08a4ad69d8409eff9b8b10aac0381b.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "Although this image features a real person (someone wearing a Voodoo Brewing hoodie), the large overlaid text dominates the visual hierarchy. The headline \"How Voodoo Brewing Raised $479,000 Without Going Through A Big Bank\" takes up the majority of the frame and is what the eye lands on first, with the \"$479,000\" in yellow standing out prominently. This makes it a text_heavy visual style rather than real_person.",
+      "visual_style": "text_heavy"
+    },
     "9e4a4dff9913ebca": {
       "categorized_at": "2026-05-05T21:32:46.958540+00:00",
       "copy_angle": "product_feature",
@@ -3474,6 +3627,15 @@
       "text": "That new deck oven is calling your name. The bank wants 90 days and your firstborn. The MCA guy wants your soul. There's a third option: your customers. Honeycomb Credit lets your community invest in your pizzeria's growth\u2014and earn returns while you expand. Driftwood Oven funded their entire buildout from 70 local investors in just two weeks. See what you qualify for.",
       "variant_id": "9eff76e3027fb739"
     },
+    "9f193128a838d54f6968204999bc9e6c": {
+      "categorized_at": "2026-05-11T20:24:31.373647+00:00",
+      "image_hash": "9f193128a838d54f6968204999bc9e6c",
+      "image_path": "data/creatives/images/9f193128a838d54f6968204999bc9e6c.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "Although the image features two people in aprons holding coffee cups (which would typically qualify as real_person), the overlaid text dominates the visual hierarchy. The large headline \"How Did Monday Coffee Company Raise $124,500 In Investment?\" with \"Monday Coffee Company\" in bold yellow and \"They Worked With Honeycomb\" at the bottom creates a text-first impression. The text is what your eye lands on first, making this a text_heavy execution with a stat-and-story focus.",
+      "visual_style": "text_heavy"
+    },
     "a0000325ed81ca52": {
       "categorized_at": "2026-05-05T21:31:36.668252+00:00",
       "copy_angle": "benefit_led",
@@ -3493,6 +3655,15 @@
       "rationale": "This title leads with the funding outcome and positions Honeycomb as an alternative to traditional bank financing. The phrase \"beyond the bank\" frames the core value proposition\u2014access to capital outside conventional lending\u2014which is characteristic of benefit_led messaging rather than explaining product mechanics or community involvement.",
       "text": "Winery industry financing beyond the bank",
       "variant_id": "a0b6376a04f544ec"
+    },
+    "a0c3b012837b70d38a8897afb5f913e3": {
+      "categorized_at": "2026-05-11T20:24:30.621655+00:00",
+      "image_hash": "a0c3b012837b70d38a8897afb5f913e3",
+      "image_path": "data/creatives/images/a0c3b012837b70d38a8897afb5f913e3.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "Although this image features a product shot of chocolate ice cream in a waffle cone, the overlaid text completely dominates the visual hierarchy. The large yellow headline \"Millies Ice Cream: From a CSA to 20+ locations\" and the bottom callout \"What can community capital do for you?\" are what the eye lands on first, making the text the primary subject rather than the ice cream itself.",
+      "visual_style": "text_heavy"
     },
     "a0d991e718fce4fb": {
       "categorized_at": "2026-05-05T21:36:08.278612+00:00",
@@ -3746,6 +3917,15 @@
       "rationale": "This title leads with the mechanics of the Honeycomb process\u2014the qualification step\u2014and emphasizes a product characteristic (\"No Strings\"). It focuses on how the product works rather than the outcome or benefit, making it a product_feature angle.",
       "text": "See If You Qualify - No Strings",
       "variant_id": "ad6a001c4e885981"
+    },
+    "ae2014d95a2cd63f5f291b8521e87ed9": {
+      "categorized_at": "2026-05-11T20:24:31.353350+00:00",
+      "image_hash": "ae2014d95a2cd63f5f291b8521e87ed9",
+      "image_path": "data/creatives/images/ae2014d95a2cd63f5f291b8521e87ed9.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "While there is a person in the frame (a smiling woman in a workspace), the overlaid text dominates the visual hierarchy. The large stat \"$100,000+ Invested in less than 12 Hours\" and call-to-action \"Is it your turn, next?\" immediately draw the eye and take up substantial real estate in the center of the image, making the text the primary focal point rather than the person or environment.",
+      "visual_style": "text_heavy"
     },
     "aea457e2da779f7e": {
       "categorized_at": "2026-05-05T21:36:27.525204+00:00",
@@ -4461,6 +4641,15 @@
       "text": "Distillery Owners: Prequalify Today.",
       "variant_id": "cbada350d1d6ef37"
     },
+    "cbf6b5cfc75d7eb190119a042f682685": {
+      "categorized_at": "2026-05-11T20:24:38.249541+00:00",
+      "image_hash": "cbf6b5cfc75d7eb190119a042f682685",
+      "image_path": "data/creatives/images/cbf6b5cfc75d7eb190119a042f682685.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "The focal point of this image is the business owner standing confidently with arms crossed, smiling directly at the camera. While there is environmental context (a chalkboard menu and products in the background), the person is clearly the subject and carries the ad's message about entrepreneurial success. This is a classic owner portrait used to humanize the brand story.",
+      "visual_style": "real_person"
+    },
     "ccb45d92c49b64b6": {
       "categorized_at": "2026-05-05T21:34:03.935938+00:00",
       "copy_angle": "benefit_led",
@@ -4646,6 +4835,15 @@
       "rationale": "This copy leads with the bank-rejection setup (\"The bank said no. Again.\") and pivots to what Honeycomb does for the business: \"Your customers become your supporters\u2014lending directly to your business at fixed rates.\" The framing is consistently about the funding outcome and alternative-to-banks value prop. While it includes a social-proof stat (\"60% revenue increase\"), the dominant angle is the benefit of customer-funded capital versus traditional rejection.",
       "text": "The bank said no. Again.\nNot because your margins are bad\u2014independent butchers average 35%+ gross margins. Not because your customers don't love you. Because an algorithm flagged your code as \"high risk\" and moved on.\nThat's the system working exactly as designed. Against you.\nHoneycomb Credit works differently. Your customers become your supporters\u2014lending directly to your business at fixed rates between \nNo equity.\nNo predatory MCA pulling cash from your register every morning.\nBusinesses funded through Honeycomb see an average 60% revenue increase year-over-year. That's not a coincidence. When your regulars have skin in the game, they become your best marketers.\nSee if you qualify. Takes 2 minutes.",
       "variant_id": "d34939a20aa26d21"
+    },
+    "d36535b9b76f919cc195c5c0996284e0": {
+      "categorized_at": "2026-05-11T20:24:34.892344+00:00",
+      "image_hash": "d36535b9b76f919cc195c5c0996284e0",
+      "image_path": "data/creatives/images/d36535b9b76f919cc195c5c0996284e0.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "This image is a designed graphic composition featuring bold black typography on a bright yellow background. There is no photograph of a real subject\u2014it's purely a typographic layout with the headline \"Your Business Deserves to Grow. Let's Make It Happen.\" and supporting text about community capital. The design-led approach with color blocks and text arrangement makes this a graphic rather than a photo with text overlay.",
+      "visual_style": "graphic"
     },
     "d3cbe480430625a2": {
       "categorized_at": "2026-05-05T21:35:48.834993+00:00",
@@ -4951,6 +5149,15 @@
       "text": "Banks Don\u2019t Get Vineyard Economics",
       "variant_id": "dda24d9aa9ea99f6"
     },
+    "ddc7dd7de8530d5748c9ce21b59f3875": {
+      "categorized_at": "2026-05-11T20:24:36.524130+00:00",
+      "image_hash": "ddc7dd7de8530d5748c9ce21b59f3875",
+      "image_path": "data/creatives/images/ddc7dd7de8530d5748c9ce21b59f3875.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "While this image features a real person (someone wearing a Voodoo Brewing hoodie), the overlaid text dominates the visual hierarchy. The large white text stating \"Voodoo Brewing raised $479,000\" with the yellow-highlighted dollar amount, followed by \"Without going through a big bank\" takes up the majority of the frame and is what the eye lands on first. This is a classic stat-led creative format where the funding achievement is the primary message.",
+      "visual_style": "text_heavy"
+    },
     "debb65deae7e1678": {
       "categorized_at": "2026-05-05T21:32:00.805173+00:00",
       "copy_angle": "social_proof",
@@ -5114,6 +5321,15 @@
       "rationale": "This copy leads with what Honeycomb offers as an alternative to traditional bank financing\u2014\"a better way to finance your bakery.\" The setup (\"Don't go to a bank\") and payoff (\"there's a better way\") structure is classic benefit_led framing, positioning Honeycomb's funding solution as the value proposition rather than centering the owner's story or product mechanics.",
       "text": "Don't go to a bank for your next bakery upgrade \u2014 there's a better way to finance your bakery.",
       "variant_id": "e76540525964412a"
+    },
+    "e80708ef71a418763b8f8803a36d84f7": {
+      "categorized_at": "2026-05-11T20:24:36.155097+00:00",
+      "image_hash": "e80708ef71a418763b8f8803a36d84f7",
+      "image_path": "data/creatives/images/e80708ef71a418763b8f8803a36d84f7.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "The focal point of this image is the person\u2014a man in a plaid shirt standing in what appears to be a distillery or brewery, smiling directly at the camera. While the background includes brewing equipment (stainless steel tanks and production machinery), the person is clearly the subject and carries the ad's human element. The text overlay supports the story but does not dominate the visual hierarchy the way a text_heavy classification would require.",
+      "visual_style": "real_person"
     },
     "e80dd0ae59d92842443f767f25ed26b7": {
       "categorized_at": "2026-05-05T21:40:51.573964+00:00",
@@ -5512,6 +5728,15 @@
       "rationale": "While this image features a real person (a woman in a Remark Glass tank top standing in what appears to be a workshop), the large overlaid text dominates the visual hierarchy. The headline \"$122,400 From 84 Investors\" and supporting copy about scaling sustainable glassmaking take up significant space and are what the eye lands on first, making this a text-heavy ad despite the photographic background.",
       "visual_style": "text_heavy"
     },
+    "fbfe2dbd440ae4e300b318726a3b39cf": {
+      "categorized_at": "2026-05-11T20:24:39.314289+00:00",
+      "image_hash": "fbfe2dbd440ae4e300b318726a3b39cf",
+      "image_path": "data/creatives/images/fbfe2dbd440ae4e300b318726a3b39cf.jpg",
+      "kind": "visual",
+      "model": "claude-sonnet-4-5",
+      "rationale": "The image is dominated by large, bold black typography reading \"Stop Waiting for Banks to Care.\" on a bright yellow background. While there is a smaller tagline at the bottom about community capital, the massive headline text is the clear focal point and what the eye lands on first, making this a text-heavy design rather than a pure graphic composition.",
+      "visual_style": "text_heavy"
+    },
     "fc1a2786728718320a18997e48121d88": {
       "categorized_at": "2026-05-05T21:41:08.193410+00:00",
       "image_hash": "fc1a2786728718320a18997e48121d88",
@@ -5611,6 +5836,6 @@
       "variant_id": "ffe83ec624fb6f30"
     }
   },
-  "count": 576,
-  "updated_at": "2026-05-05T21:41:11.771509+00:00"
+  "count": 601,
+  "updated_at": "2026-05-11T20:24:39.314346+00:00"
 }
