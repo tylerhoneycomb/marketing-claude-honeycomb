@@ -1855,7 +1855,8 @@ function generateNarrativeForWeek_(targetWeek, opts) {
     'Rules: Numbers only from data. No invented figures. No softening.'
   ].join('\n');
 
-  var narrative = '[LLM call failed — see context_block column in intelligence_log for raw data]';
+  var narrative = '';
+  var llmError = null;
 
   try {
     var llmResponse = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
@@ -1875,18 +1876,36 @@ function generateNarrativeForWeek_(targetWeek, opts) {
     });
 
     var llmCode = llmResponse.getResponseCode();
-    var llmJson = JSON.parse(llmResponse.getContentText());
+    var llmJson;
+    try {
+      llmJson = JSON.parse(llmResponse.getContentText());
+    } catch (parseErr) {
+      llmJson = null;
+    }
 
     if (llmCode !== 200) {
-      Logger.log('Anthropic API Error (HTTP ' + llmCode + '): ' + llmResponse.getContentText());
-    } else if (llmJson.content && llmJson.content[0] && llmJson.content[0].text) {
+      llmError = 'HTTP ' + llmCode + ': ' + llmResponse.getContentText().substring(0, 200);
+      Logger.log('Anthropic API Error — ' + llmError);
+    } else if (llmJson && llmJson.content && llmJson.content[0] && llmJson.content[0].text) {
       narrative = llmJson.content[0].text;
       Logger.log('LLM narrative generated successfully');
     } else {
-      Logger.log('Unexpected Anthropic response: ' + llmResponse.getContentText());
+      llmError = 'unexpected response shape: ' + llmResponse.getContentText().substring(0, 200);
+      Logger.log('Unexpected Anthropic response — ' + llmError);
     }
   } catch (e) {
-    Logger.log('Anthropic exception: ' + e.message);
+    llmError = 'exception: ' + e.message;
+    Logger.log('Anthropic exception — ' + llmError);
+  }
+
+  // Previously the fallback string read "[LLM call failed — see
+  // context_block column in intelligence_log for raw data]" with no
+  // indication of WHY. Sun May 10's digest hit this path and Tyler had
+  // to open the sheet to find out the cause. Inline the error so the
+  // Slack post is actionable.
+  if (llmError) {
+    narrative = '[LLM call failed: ' + llmError + ']\n' +
+      '[Raw context preserved in intelligence_log.context_block.]';
   }
 
   // ── Write to intelligence_log ──────────────────────
@@ -3608,10 +3627,17 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
   if (reductions.length > 0) {
     text += '*Reductions (' + reductions.length + ')*\n';
     reductions.forEach(function (r) {
+      // Some "reductions" are sub-dollar after the knockdown round-trip
+      // and display as $154 → $154. Render those without the ↓ arrow
+      // and without a percentage so the message stops contradicting the
+      // AI commentary that calls them "held flat".
+      var displayCurrent = Math.round(r.currentDailyBudgetCents / 100);
+      var displayProposed = Math.round(r.proposedDailyBudgetCents / 100);
+      var displayFlat = displayCurrent === displayProposed;
       var pct = Math.abs(Math.round((r.changeCents / r.currentDailyBudgetCents) * 1000) / 10);
-      text += '↓ *' + r.name + '*\n';
-      text += '   $' + (r.currentDailyBudgetCents / 100).toFixed(0) + '/day → $' +
-        (r.proposedDailyBudgetCents / 100).toFixed(0) + '/day (-' + pct + '%)\n';
+      text += (displayFlat ? '→ ' : '↓ ') + '*' + r.name + '*\n';
+      text += '   $' + displayCurrent + '/day → $' + displayProposed + '/day ' +
+        (displayFlat ? '(held flat)' : '(-' + pct + '%)') + '\n';
       text += '   _' + r.reasons.join(' | ') + '_\n';
     });
     text += '\n';
@@ -3620,10 +3646,13 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
   if (increases.length > 0) {
     text += '*Increases (' + increases.length + ')*\n';
     increases.forEach(function (r) {
+      var displayCurrent = Math.round(r.currentDailyBudgetCents / 100);
+      var displayProposed = Math.round(r.proposedDailyBudgetCents / 100);
+      var displayFlat = displayCurrent === displayProposed;
       var pct = Math.round((r.changeCents / r.currentDailyBudgetCents) * 1000) / 10;
-      text += '↑ *' + r.name + '*\n';
-      text += '   $' + (r.currentDailyBudgetCents / 100).toFixed(0) + '/day → $' +
-        (r.proposedDailyBudgetCents / 100).toFixed(0) + '/day (+' + pct + '%)\n';
+      text += (displayFlat ? '→ ' : '↑ ') + '*' + r.name + '*\n';
+      text += '   $' + displayCurrent + '/day → $' + displayProposed + '/day ' +
+        (displayFlat ? '(held flat)' : '(+' + pct + '%)') + '\n';
       text += '   _' + r.reasons.join(' | ') + '_\n';
     });
     text += '\n';
@@ -3635,7 +3664,7 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
   }
 
   if (replacedPrior) {
-    text += '_Note: this proposal replaces an earlier proposal from today that was not actioned. The previous proposal will be marked expired at next execution._\n\n';
+    text += '_Note: this proposal replaces an earlier proposal from the prior cycle that was not actioned. The previous proposal will be marked expired at next execution._\n\n';
   }
   text += '──────────────────\n';
   text += '✅  Approve: ' + approveUrl + '\n';
@@ -3693,11 +3722,35 @@ function executeBudgetChanges() {
       }
     }
 
-    postToSlack_('*Honeycomb Budget — ' +
-      Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'EEE MMM d') + '*\n' +
+    // Look up the proposal's created_at so the Slack header attributes
+    // it to the proposal day, not the (post-3 AM) executor day. Without
+    // this, "Honeycomb Budget — Sun May 10 ⏰ No approval received" was
+    // actually expiring Sat May 9's proposal — confusing audit trail.
+    var tz = Session.getScriptTimeZone();
+    var proposalDateLabel = null;
+    if (qSheet) {
+      var lookupRows = qSheet.getDataRange().getValues();
+      for (var lx = 1; lx < lookupRows.length; lx++) {
+        if (String(lookupRows[lx][0]) === pendingToken) {
+          var createdAtVal = lookupRows[lx][1] instanceof Date
+            ? lookupRows[lx][1]
+            : new Date(String(lookupRows[lx][1]));
+          if (!isNaN(createdAtVal.getTime())) {
+            proposalDateLabel = Utilities.formatDate(createdAtVal, tz, 'EEE MMM d');
+          }
+          break;
+        }
+      }
+    }
+    var executorDateLabel = Utilities.formatDate(new Date(), tz, 'EEE MMM d');
+    var headerLabel = proposalDateLabel
+      ? proposalDateLabel + ' proposal'
+      : executorDateLabel;
+
+    postToSlack_('*Honeycomb Budget — ' + headerLabel + '*\n' +
       (rejectedToken === pendingToken
         ? '❌ Changes rejected. No updates applied.'
-        : '⏰ No approval received by 3:00 AM. Changes not applied this cycle.'));
+        : '⏰ No approval received by ' + executorDateLabel + ' 3:00 AM. Changes not applied this cycle.'));
     PROPS.deleteProperty('BUDGET_PENDING_TOKEN');
     PROPS.deleteProperty('BUDGET_REJECTED_TOKEN');
     return;

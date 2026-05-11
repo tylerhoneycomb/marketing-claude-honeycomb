@@ -64,7 +64,7 @@ Requires:
 - **Winners / Bleeders:** top 3 of each. These are the specific ads Tyler should look at. If `winners` is empty, that means no ad in the last 7 days hit the floor of ≥5 conversions + ≥1,000 impressions — say so explicitly.
 - **Fatigue flags:** these *preview* the fatigue-monitor skill. Mention them in the briefing but note the full fatigue analysis lives in the separate skill.
 - **Learning phase:** list ad sets currently in learning. State explicitly that no budget changes should be made to these — that's a hard rule.
-- **Stale creatives:** ads active > `fatigue.creative_age_warning_days` (21 by default). Worth a refresh look but not necessarily fatiguing.
+- **Stale creatives:** ads active > `fatigue.creative_age_warning_days` (21 by default). Worth a refresh look but not necessarily fatiguing. **If the list has >15 entries, render the top 15 by days_active descending and collapse the long tail into one summary line** (e.g., `+ 55 more ads at ≤30d`). When most of the tail shares a created_time (cohort launch), name the cohort prefix so the summary is scannable (e.g., `+ 55 more BR-* cohort ads at 30d`). Default rendering of 70+ rows makes the message unreadable.
 - **`sheet_write.posted == false`:** the historical log didn't write. Surface that as its own line in Slack — the briefing is still useful, but Tyler should know the log is broken.
 
 ## Output — Interactive (terminal)
