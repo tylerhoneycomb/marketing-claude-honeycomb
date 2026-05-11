@@ -3567,7 +3567,11 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
       },
       payload: JSON.stringify({
         model: ANTHROPIC_MODEL,
-        max_tokens: 500,
+        // Bumped from 500 → 800 after the Sat May 9 proposal CHANGES
+        // section truncated mid-word ("rank 11/11, C"). With 11
+        // campaigns to summarize plus SITUATION + WATCH sections,
+        // 500 was tight; 800 gives headroom without inflating cost.
+        max_tokens: 800,
         system: systemPrompt,
         messages: [{ role: 'user', content: contextBlock }]
       }),
