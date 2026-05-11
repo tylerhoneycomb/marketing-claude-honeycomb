@@ -166,6 +166,87 @@ def collect_image_hashes(
     return sorted(seen)
 
 
+def _parse_retry_after(exc: Any) -> float | None:
+    """Extract Retry-After (seconds) from an Anthropic SDK exception.
+    Header may be either delta-seconds or an HTTP-date. Returns None
+    when no header is present or it's unparseable."""
+    resp = getattr(exc, "response", None)
+    headers = getattr(resp, "headers", None) if resp is not None else None
+    if not headers:
+        return None
+    ra = headers.get("retry-after") or headers.get("Retry-After")
+    if not ra:
+        return None
+    try:
+        return max(0.0, float(ra))
+    except (TypeError, ValueError):
+        pass
+    try:
+        from email.utils import parsedate_to_datetime
+        target = parsedate_to_datetime(ra)
+        if target is None:
+            return None
+        delta = (target - datetime.now(timezone.utc)).total_seconds()
+        return max(0.0, delta)
+    except (TypeError, ValueError):
+        return None
+
+
+def _call_with_retry(client: Any, request_kwargs: dict[str, Any],
+                     max_attempts: int = 5,
+                     max_backoff: float = 60.0) -> tuple[Any, str | None]:
+    """Anthropic SDK call with retry-aware backoff. Returns
+    (response, error_str). error_str is None on success.
+
+    Distinguishes:
+      - Retryable transient errors (429, 5xx, connection, timeout) →
+        exponential backoff, honoring server-provided Retry-After
+        on 429 when present.
+      - Non-retryable client errors (400, 401, 403, 422) → returned
+        immediately without retry.
+      - Unknown exceptions → returned without retry (fail loud).
+
+    Previous behavior: 2 attempts × fixed 2-second sleep with no
+    error-type discrimination. Brittle when load grows past ~600
+    variants per run, where 429 rate limits become routine.
+    """
+    import anthropic  # lazy to keep --dry-run usable without the SDK
+    last_err: str | None = None
+    for attempt in range(max_attempts):
+        try:
+            resp = client.messages.create(**request_kwargs)
+            return resp, None
+        except anthropic.RateLimitError as exc:
+            ra = _parse_retry_after(exc)
+            sleep_s = ra if ra is not None else 2 ** attempt
+            sleep_s = min(sleep_s, max_backoff)
+            last_err = (f"429 RateLimit (attempt {attempt + 1}/{max_attempts}, "
+                        f"sleep {sleep_s:.1f}s, retry_after={'server' if ra is not None else 'backoff'})")
+        except anthropic.APIConnectionError as exc:
+            sleep_s = min(2 ** attempt, max_backoff)
+            last_err = f"APIConnectionError: {exc} (sleep {sleep_s:.1f}s)"
+        except anthropic.APITimeoutError as exc:
+            sleep_s = min(2 ** attempt, max_backoff)
+            last_err = f"APITimeoutError: {exc} (sleep {sleep_s:.1f}s)"
+        except anthropic.InternalServerError as exc:
+            sleep_s = min(2 ** attempt, max_backoff)
+            last_err = f"InternalServerError: {exc} (sleep {sleep_s:.1f}s)"
+        except (anthropic.BadRequestError, anthropic.AuthenticationError,
+                anthropic.PermissionDeniedError,
+                anthropic.UnprocessableEntityError) as exc:
+            return None, f"non-retryable {type(exc).__name__}: {exc}"
+        except anthropic.APIError as exc:
+            sleep_s = min(2 ** attempt, max_backoff)
+            last_err = f"{type(exc).__name__}: {exc} (sleep {sleep_s:.1f}s)"
+        except Exception as exc:  # noqa: BLE001 — surface unknowns
+            return None, f"unexpected {type(exc).__name__}: {exc}"
+        if attempt < max_attempts - 1:
+            logging.info("Anthropic retry %d/%d: %s",
+                         attempt + 1, max_attempts, last_err)
+            time.sleep(sleep_s)
+    return None, last_err or "exhausted retries"
+
+
 def _extract_tool_use(resp: Any) -> dict[str, Any] | None:
     for block in getattr(resp, "content", None) or []:
         if getattr(block, "type", None) == "tool_use":
@@ -190,49 +271,41 @@ def categorize_text(client: Any, model: str, defs: str,
     )
     user_msg = f"Categorize this {dimension} variant:\n\n{text}"
 
-    last_err: Any = None
-    for attempt in range(2):
-        try:
-            # Prompt caching on the system message: it's identical
-            # across every variant in this run (definitions + enum
-            # list + format instructions), so flagging it as
-            # ephemeral cache hits cuts effective token cost ~10x
-            # after the first call. Fixes the rate-limit failures
-            # seen on 2026-05-05 (95/526 calls hit 429 against the
-            # 30k tokens/min limit because each call sent the full
-            # 5000-token system message uncached).
-            resp = client.messages.create(
-                model=model,
-                max_tokens=512,
-                system=[{
-                    "type": "text",
-                    "text": sys_msg,
-                    "cache_control": {"type": "ephemeral"},
-                }],
-                tools=[CATEGORIZE_TOOL],
-                tool_choice={"type": "tool", "name": "categorize"},
-                messages=[{"role": "user", "content": user_msg}],
-            )
-            inp = _extract_tool_use(resp)
-            if not inp:
-                last_err = "no tool_use block in response"
-                break
-            tag = (inp.get("tag") or "").strip().lower()
-            if tag not in COPY_ANGLES:
-                last_err = f"invalid copy_angle tag: {tag!r}"
-                break
-            return {"copy_angle": tag,
-                    "rationale": inp.get("rationale", "")}
-        except Exception as exc:  # anthropic.APIError + transient network
-            last_err = exc
-            if attempt == 0:
-                time.sleep(2)
-                continue
-            break
+    # Prompt caching on the system message: it's identical across every
+    # variant in this run (definitions + enum list + format
+    # instructions), so flagging it as ephemeral cache hits cuts
+    # effective token cost ~10x after the first call. Fixes the rate-
+    # limit failures seen on 2026-05-05 (95/526 calls hit 429 against
+    # the 30k tokens/min limit because each call sent the full 5000-
+    # token system message uncached).
+    resp, err = _call_with_retry(client, {
+        "model": model,
+        "max_tokens": 512,
+        "system": [{
+            "type": "text",
+            "text": sys_msg,
+            "cache_control": {"type": "ephemeral"},
+        }],
+        "tools": [CATEGORIZE_TOOL],
+        "tool_choice": {"type": "tool", "name": "categorize"},
+        "messages": [{"role": "user", "content": user_msg}],
+    })
+    if err is not None:
+        logging.warning("text categorization failed (dim=%s, text=%r): %s",
+                        dimension, text[:60], err)
+        return None
 
-    logging.warning("text categorization failed (dim=%s, "
-                    "text=%r): %s", dimension, text[:60], last_err)
-    return None
+    inp = _extract_tool_use(resp)
+    if not inp:
+        logging.warning("text categorization failed (dim=%s, text=%r): "
+                        "no tool_use block", dimension, text[:60])
+        return None
+    tag = (inp.get("tag") or "").strip().lower()
+    if tag not in COPY_ANGLES:
+        logging.warning("text categorization failed (dim=%s, text=%r): "
+                        "invalid copy_angle tag %r", dimension, text[:60], tag)
+        return None
+    return {"copy_angle": tag, "rationale": inp.get("rationale", "")}
 
 
 def categorize_image(client: Any, model: str, defs: str,
@@ -254,52 +327,45 @@ def categorize_image(client: Any, model: str, defs: str,
     )
     image_b64 = base64.b64encode(image_path.read_bytes()).decode("ascii")
 
-    last_err: Any = None
-    for attempt in range(2):
-        try:
-            # Same prompt-caching pattern as categorize_text — the
-            # visual_style system message is identical across every
-            # image, so caching it cuts effective rate-limit cost.
-            resp = client.messages.create(
-                model=model,
-                max_tokens=512,
-                system=[{
-                    "type": "text",
-                    "text": sys_msg,
-                    "cache_control": {"type": "ephemeral"},
-                }],
-                tools=[CATEGORIZE_TOOL],
-                tool_choice={"type": "tool", "name": "categorize"},
-                messages=[{"role": "user", "content": [
-                    {"type": "image", "source": {
-                        "type": "base64",
-                        "media_type": "image/jpeg",
-                        "data": image_b64,
-                    }},
-                    {"type": "text",
-                     "text": "Categorize this ad image's visual style."},
-                ]}],
-            )
-            inp = _extract_tool_use(resp)
-            if not inp:
-                last_err = "no tool_use block in response"
-                break
-            tag = (inp.get("tag") or "").strip().lower()
-            if tag not in VISUAL_STYLES:
-                last_err = f"invalid visual_style tag: {tag!r}"
-                break
-            return {"visual_style": tag,
-                    "rationale": inp.get("rationale", "")}
-        except Exception as exc:
-            last_err = exc
-            if attempt == 0:
-                time.sleep(2)
-                continue
-            break
+    # Same prompt-caching pattern as categorize_text — the visual_style
+    # system message is identical across every image, so caching it
+    # cuts effective rate-limit cost.
+    resp, err = _call_with_retry(client, {
+        "model": model,
+        "max_tokens": 512,
+        "system": [{
+            "type": "text",
+            "text": sys_msg,
+            "cache_control": {"type": "ephemeral"},
+        }],
+        "tools": [CATEGORIZE_TOOL],
+        "tool_choice": {"type": "tool", "name": "categorize"},
+        "messages": [{"role": "user", "content": [
+            {"type": "image", "source": {
+                "type": "base64",
+                "media_type": "image/jpeg",
+                "data": image_b64,
+            }},
+            {"type": "text",
+             "text": "Categorize this ad image's visual style."},
+        ]}],
+    })
+    if err is not None:
+        logging.warning("image categorization failed for %s: %s",
+                        image_hash, err)
+        return None
 
-    logging.warning("image categorization failed for %s: %s",
-                    image_hash, last_err)
-    return None
+    inp = _extract_tool_use(resp)
+    if not inp:
+        logging.warning("image categorization failed for %s: "
+                        "no tool_use block", image_hash)
+        return None
+    tag = (inp.get("tag") or "").strip().lower()
+    if tag not in VISUAL_STYLES:
+        logging.warning("image categorization failed for %s: "
+                        "invalid visual_style tag %r", image_hash, tag)
+        return None
+    return {"visual_style": tag, "rationale": inp.get("rationale", "")}
 
 
 def main(argv: list[str] | None = None) -> int:
