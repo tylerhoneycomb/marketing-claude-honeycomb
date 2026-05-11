@@ -2291,6 +2291,12 @@ function postDailyDigest() {
   if (watchLine) text += '\n' + watchLine + '\n';
   if (commentary) text += '\n' + commentary;
 
+  // Footer annotates the data source so users can reconcile against the
+  // separate daily-check skill (which fetches fresh from Meta and tends
+  // to show different numbers as Meta's attribution settles).
+  var nowLabel = Utilities.formatDate(new Date(), tz, 'h:mm a');
+  text += '\n\n_Source: rolling_data sheet (morning pipeline snapshot · digest posted ' + nowLabel + ' ET)_';
+
   postToSlack_(text);
   Logger.log('Daily digest posted to Slack');
 }
@@ -3209,35 +3215,69 @@ function computeRecommendations_(currentBudgets, signals) {
 
     var quartileCut = Math.max(1, Math.floor(n / 4));
 
+    // Hysteresis: under daily cadence, a single noisy day can swing a
+    // campaign's composite rank across tier boundaries (ICD-Craft swung
+    // rank 7→6→2→8 in four cycles in 5/8-5/11). Without smoothing, the
+    // optimizer flip-flops between increase/decrease/hold on the same
+    // campaign within a week. Require a campaign to be in the same
+    // actionable tier (top or bottom) for TWO consecutive cycles before
+    // applying the direction. First-cycle entries get held with a
+    // "pending" note so Tyler can see why.
+    var priorTiersJson = PROPS.getProperty('BUDGET_RANK_TIERS') || '{}';
+    var priorTiers = {};
+    try { priorTiers = JSON.parse(priorTiersJson) || {}; }
+    catch (parseErr) { priorTiers = {}; }
+    var currentTiers = {};
+
     rankable.forEach(function (c, idx) {
       var trendLabel = c.icpTrend !== null
         ? (c.icpTrend >= 0 ? '+' + c.icpTrend.toFixed(1) : c.icpTrend.toFixed(1)) + ' ICP trend'
         : 'no trend data';
 
-      if (idx < quartileCut) {
+      var tier = idx < quartileCut ? 'top'
+               : idx >= n - quartileCut ? 'bottom'
+               : 'middle';
+      currentTiers[c.campaignId] = tier;
+      var priorTier = priorTiers[c.campaignId] || null;
+      var rankStr = 'Composite rank ' + (idx + 1) + '/' + n;
+      var metricStr = ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel;
+
+      if (tier === 'top') {
         if (c.avgFreq >= FREQ_WATCH_THRESHOLD) {
           c.direction = 0;
-          c.reasons.push('Composite rank ' + (idx + 1) + '/' + n +
-            ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel +
+          c.reasons.push(rankStr + metricStr +
             ' | freq ' + c.avgFreq.toFixed(1) + ' — hold, monitor audience');
+        } else if (priorTier !== 'top') {
+          c.direction = 0;
+          c.reasons.push(rankStr + metricStr +
+            ' — top tier, hold (entering ' +
+            (priorTier ? 'from ' + priorTier : 'first cycle') +
+            '; need 2 consecutive cycles before increase)');
         } else {
           c.direction = 1;
-          c.reasons.push('Composite rank ' + (idx + 1) + '/' + n +
-            ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel);
+          c.reasons.push(rankStr + metricStr);
         }
-      } else if (idx >= n - quartileCut) {
-        c.direction = -1;
-        c.reasons.push('Composite rank ' + (idx + 1) + '/' + n +
-          ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel);
-        if (c.avgFreq >= FREQ_WATCH_THRESHOLD) {
-          c.reasons.push('Freq ' + c.avgFreq.toFixed(1) + ' watch');
+      } else if (tier === 'bottom') {
+        if (priorTier !== 'bottom') {
+          c.direction = 0;
+          c.reasons.push(rankStr + metricStr +
+            ' — bottom tier, hold (entering ' +
+            (priorTier ? 'from ' + priorTier : 'first cycle') +
+            '; need 2 consecutive cycles before decrease)');
+        } else {
+          c.direction = -1;
+          c.reasons.push(rankStr + metricStr);
+          if (c.avgFreq >= FREQ_WATCH_THRESHOLD) {
+            c.reasons.push('Freq ' + c.avgFreq.toFixed(1) + ' watch');
+          }
         }
       } else {
         c.direction = 0;
-        c.reasons.push('Composite rank ' + (idx + 1) + '/' + n +
-          ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel + ' — hold');
+        c.reasons.push(rankStr + metricStr + ' — hold');
       }
     });
+
+    PROPS.setProperty('BUDGET_RANK_TIERS', JSON.stringify(currentTiers));
   }
 
   eligible.forEach(function (c) {
@@ -4065,7 +4105,7 @@ function doGet(e) {
         'replaced. No changes were made.</p>');
     }
     var scalingConfirmAction = action === 'confirm_approve_scaling' ? 'approve' : 'reject';
-    var sUser = Session.getActiveUser().getEmail() || 'unknown user';
+    var sUser = resolveApprover_(e);
 
     if (scalingConfirmAction === 'approve') {
       PROPS.setProperty('SCALING_APPROVED_TOKEN', token);
@@ -4105,7 +4145,7 @@ function doGet(e) {
 
     var confirmAction = action === 'confirm_approve' ? 'approve' : 'reject';
 
-    var user = Session.getActiveUser().getEmail() || 'unknown user';
+    var user = resolveApprover_(e);
 
     if (confirmAction === 'approve') {
       PROPS.setProperty('BUDGET_APPROVED_TOKEN', token);
@@ -4159,9 +4199,14 @@ function showBudgetConfirmationPage_(e, action) {
     ? 'This will approve the pending budget changes. They will execute tonight at 3:00 AM.'
     : 'This will reject the pending budget changes. No campaign budgets will be modified.';
 
-  var baseUrl    = WEB_APP_URL || ScriptApp.getService().getUrl();
-  var confirmUrl = baseUrl + '?action=confirm_' + action + '&token=' + token;
+  var baseUrl = WEB_APP_URL || ScriptApp.getService().getUrl();
 
+  // Form submission carries an optional `approver` name field. Slack
+  // link clicks land here unauthenticated against script.google.com,
+  // so Session.getActiveUser().getEmail() is empty and the approval
+  // log read "Approved by unknown user". The text field lets the
+  // approver self-identify; blank submissions still confirm but log
+  // as "Slack approver".
   var html =
     '<!doctype html><html><head>' +
     '<meta charset="utf-8">' +
@@ -4169,13 +4214,20 @@ function showBudgetConfirmationPage_(e, action) {
     '<meta name="robots" content="noindex">' +
     '<style>body{font-family:system-ui,sans-serif;max-width:480px;margin:60px auto;padding:0 20px;text-align:center}' +
     'h2{margin-bottom:8px}p{color:#555;margin:12px 0 24px}' +
-    'a.btn{display:inline-block;padding:14px 32px;background:' + color +
-    ';color:#fff;text-decoration:none;border-radius:8px;font-size:16px;font-weight:600}' +
-    'a.btn:hover{opacity:0.9}</style></head><body>' +
+    'input[type=text]{display:block;margin:0 auto 16px;padding:10px 14px;font-size:14px;border:1px solid #d0d0d0;border-radius:6px;width:100%;max-width:280px;box-sizing:border-box;font-family:inherit}' +
+    'button.btn{display:inline-block;padding:14px 32px;background:' + color +
+    ';color:#fff;border:none;border-radius:8px;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer}' +
+    'button.btn:hover{opacity:0.9}</style></head><body>' +
     '<h2>Honeycomb Budget</h2>' +
     '<p>' + description + '</p>' +
-    '<a class="btn" href="' + confirmUrl + '" target="_top">' + label + '</a>' +
-    '<p style="margin-top:32px;font-size:13px;color:#999">Click the button above to confirm. ' +
+    '<form action="' + baseUrl + '" method="get" target="_top">' +
+    '<input type="hidden" name="action" value="confirm_' + action + '">' +
+    '<input type="hidden" name="token" value="' + token + '">' +
+    '<input type="text" name="approver" placeholder="Your name (optional)" autocomplete="name" maxlength="60">' +
+    '<button type="submit" class="btn">' + label + '</button>' +
+    '</form>' +
+    '<p style="margin-top:32px;font-size:13px;color:#999">Type your name to appear in the approval log. ' +
+    'Leave blank to log as a generic Slack approver. ' +
     'This page exists to prevent automated systems from accidentally approving changes.</p>' +
     '</body></html>';
 
@@ -6172,6 +6224,23 @@ function getTargetWeeklySpend_() {
   return override ? Number(override) : TARGET_WEEKLY_SPEND;
 }
 
+// Resolve the approver identity for a confirmation handler. URL-param
+// `approver` (typed on the confirmation page form) takes precedence;
+// falls back to the script session email (typically empty for Slack-
+// link clicks, since the user is on a different origin from
+// script.google.com), then to a generic placeholder. The old fallback
+// string "unknown user" was uninformative — audit log now says
+// "Slack approver" so it's at least clear WHY identity is unknown.
+function resolveApprover_(e) {
+  var typed = e && e.parameter && e.parameter.approver
+    ? String(e.parameter.approver).trim().substring(0, 60)
+    : '';
+  if (typed) return typed;
+  var sessionEmail = Session.getActiveUser().getEmail();
+  if (sessionEmail) return sessionEmail;
+  return 'Slack approver (no identity captured)';
+}
+
 function getWeeklySpendTolerance_() {
   var override = PROPS.getProperty('DASHBOARD_WEEKLY_SPEND_TOLERANCE');
   return override ? Number(override) : WEEKLY_SPEND_TOLERANCE;
@@ -6271,7 +6340,7 @@ function applyTargetDecision_(e, decision) {
 
   var pendingTarget    = PROPS.getProperty('PENDING_SPEND_TARGET');
   var pendingTolerance = PROPS.getProperty('PENDING_SPEND_TOLERANCE');
-  var user = Session.getActiveUser().getEmail() || 'unknown user';
+  var user = resolveApprover_(e);
 
   // Clean up pending state regardless of decision.
   PROPS.deleteProperty('SPEND_TARGET_PENDING_TOKEN');
