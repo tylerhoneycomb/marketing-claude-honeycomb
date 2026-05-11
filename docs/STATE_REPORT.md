@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-08 (portfolio-scaling skill added; 12% weekly cap shipped on the optimizer; budget_queue gained `source` column)_
+_Last updated: 2026-05-11 (Slack-message audit fixes: knockdown threshold interpolation, sub-dollar "held flat" rendering, expiry message labels with proposal date, weekly-narrative LLM error inlining, data-source footers on Daily Ads + Daily Check, composite-rank hysteresis, approver identity capture, approver-name sanitization, atomic JSON writes shared across data pipeline)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -30,25 +30,26 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 - Pulls yesterday's ad spend, impressions, clicks, and conversions from every active Meta campaign.
 - Pulls new "ICP" records from HubSpot (an ICP = a small business that completed the prequal form and got approved for investment crowdfunding).
 - Rebuilds the weekly rollup — a big table that tells you, for every campaign in every week: how much was spent, how many ICPs were generated, and the cost per ICP (CPICP — the single most important metric).
-- Posts a daily Slack digest summarizing yesterday's performance, this week's pacing, and last 30 days.
+- Posts a daily Slack digest summarizing yesterday's performance, this week's pacing, and last 30 days. The digest now annotates its data source — `rolling_data` sheet (this morning's pipeline snapshot) — so the user can reconcile against the parallel `daily-check` ad-level skill that fetches fresh from Meta later in the morning. The two reports may show different "yesterday spend" values because Meta's attribution can shift between the snapshot and the live read; the footer makes the source unambiguous.
 
 ### Every Monday at 8 AM (automatic)
 
 - Picks the most recently completed week.
 - Sends all the numbers to Claude (Anthropic's AI) with a prompt that asks for a short narrative: what happened, what to watch, what to do.
-- Writes the narrative into a log sheet and posts it to Slack.
+- Writes the narrative into a log sheet and posts it to Slack. If the LLM call fails for any reason (HTTP error, malformed response, exception), the Slack post now inlines the error detail (`[LLM call failed: HTTP 529: ...]`) instead of just pointing at the sheet — so Tyler doesn't have to open `intelligence_log` to see what went wrong.
 
 ### Every day at 6 AM (automatic)
 
 - Looks at the last 14 days of performance.
 - Decides which campaigns are doing well vs. poorly.
 - Proposes small budget adjustments (±2% per cycle, max ±4%) to reallocate money toward winners.
-- Sends the proposal to Slack with "Approve" and "Reject" buttons.
+- **Hysteresis** _(added 2026-05-11)_: a campaign must be in the same actionable tier (top or bottom quartile by composite rank) for **two consecutive cycles** before the optimizer applies an increase or decrease direction. First-cycle entries into an actionable tier are held with a "pending" note in the reasons column so the suppression is visible. Smooths out day-to-day rank thrash that the daily cadence makes more visible.
+- Sends the proposal to Slack with "Approve" and "Reject" buttons. The confirmation page (defeats Slack link-unfurl auto-clicks) now includes an optional text field for the approver's name. Typing a name records it in the audit log; leaving blank logs as a generic "Slack approver" (better than the previous "unknown user" since `Session.getActiveUser().getEmail()` returns empty for cross-domain Slack clicks).
 
 ### Every day at 3 AM (automatic)
 
 - If yesterday's proposal was approved by a human in Slack, applies the budget changes directly to Meta.
-- If rejected or ignored within the ~21-hour approval window, marks them as cancelled.
+- If rejected or ignored within the ~21-hour approval window, marks them as cancelled. The expiry Slack message labels itself with the **proposal's** date plus the executor's wall-clock time so the audit trail isn't ambiguous (previous behavior labeled only the executor date, which under daily cadence looked like the proposal had been posted that morning rather than yesterday).
 - Posts a confirmation to Slack either way.
 - _(new, 2026-05-08)_ A second 3 AM job applies any **strategic reallocation** that was approved earlier in the week. On most days this job no-ops because no strategic proposal is pending. After applying changes, it locks the daily optimizer out of touching the affected campaigns through end-of-Monday so the strategic move has time to stabilize before the optimizer compounds on top of it.
 
