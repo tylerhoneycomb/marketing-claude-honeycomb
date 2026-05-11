@@ -3722,11 +3722,35 @@ function executeBudgetChanges() {
       }
     }
 
-    postToSlack_('*Honeycomb Budget — ' +
-      Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'EEE MMM d') + '*\n' +
+    // Look up the proposal's created_at so the Slack header attributes
+    // it to the proposal day, not the (post-3 AM) executor day. Without
+    // this, "Honeycomb Budget — Sun May 10 ⏰ No approval received" was
+    // actually expiring Sat May 9's proposal — confusing audit trail.
+    var tz = Session.getScriptTimeZone();
+    var proposalDateLabel = null;
+    if (qSheet) {
+      var lookupRows = qSheet.getDataRange().getValues();
+      for (var lx = 1; lx < lookupRows.length; lx++) {
+        if (String(lookupRows[lx][0]) === pendingToken) {
+          var createdAtVal = lookupRows[lx][1] instanceof Date
+            ? lookupRows[lx][1]
+            : new Date(String(lookupRows[lx][1]));
+          if (!isNaN(createdAtVal.getTime())) {
+            proposalDateLabel = Utilities.formatDate(createdAtVal, tz, 'EEE MMM d');
+          }
+          break;
+        }
+      }
+    }
+    var executorDateLabel = Utilities.formatDate(new Date(), tz, 'EEE MMM d');
+    var headerLabel = proposalDateLabel
+      ? proposalDateLabel + ' proposal'
+      : executorDateLabel;
+
+    postToSlack_('*Honeycomb Budget — ' + headerLabel + '*\n' +
       (rejectedToken === pendingToken
         ? '❌ Changes rejected. No updates applied.'
-        : '⏰ No approval received by 3:00 AM. Changes not applied this cycle.'));
+        : '⏰ No approval received by ' + executorDateLabel + ' 3:00 AM. Changes not applied this cycle.'));
     PROPS.deleteProperty('BUDGET_PENDING_TOKEN');
     PROPS.deleteProperty('BUDGET_REJECTED_TOKEN');
     return;
