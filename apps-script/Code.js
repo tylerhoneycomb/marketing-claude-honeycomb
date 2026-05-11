@@ -3215,35 +3215,69 @@ function computeRecommendations_(currentBudgets, signals) {
 
     var quartileCut = Math.max(1, Math.floor(n / 4));
 
+    // Hysteresis: under daily cadence, a single noisy day can swing a
+    // campaign's composite rank across tier boundaries (ICD-Craft swung
+    // rank 7→6→2→8 in four cycles in 5/8-5/11). Without smoothing, the
+    // optimizer flip-flops between increase/decrease/hold on the same
+    // campaign within a week. Require a campaign to be in the same
+    // actionable tier (top or bottom) for TWO consecutive cycles before
+    // applying the direction. First-cycle entries get held with a
+    // "pending" note so Tyler can see why.
+    var priorTiersJson = PROPS.getProperty('BUDGET_RANK_TIERS') || '{}';
+    var priorTiers = {};
+    try { priorTiers = JSON.parse(priorTiersJson) || {}; }
+    catch (parseErr) { priorTiers = {}; }
+    var currentTiers = {};
+
     rankable.forEach(function (c, idx) {
       var trendLabel = c.icpTrend !== null
         ? (c.icpTrend >= 0 ? '+' + c.icpTrend.toFixed(1) : c.icpTrend.toFixed(1)) + ' ICP trend'
         : 'no trend data';
 
-      if (idx < quartileCut) {
+      var tier = idx < quartileCut ? 'top'
+               : idx >= n - quartileCut ? 'bottom'
+               : 'middle';
+      currentTiers[c.campaignId] = tier;
+      var priorTier = priorTiers[c.campaignId] || null;
+      var rankStr = 'Composite rank ' + (idx + 1) + '/' + n;
+      var metricStr = ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel;
+
+      if (tier === 'top') {
         if (c.avgFreq >= FREQ_WATCH_THRESHOLD) {
           c.direction = 0;
-          c.reasons.push('Composite rank ' + (idx + 1) + '/' + n +
-            ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel +
+          c.reasons.push(rankStr + metricStr +
             ' | freq ' + c.avgFreq.toFixed(1) + ' — hold, monitor audience');
+        } else if (priorTier !== 'top') {
+          c.direction = 0;
+          c.reasons.push(rankStr + metricStr +
+            ' — top tier, hold (entering ' +
+            (priorTier ? 'from ' + priorTier : 'first cycle') +
+            '; need 2 consecutive cycles before increase)');
         } else {
           c.direction = 1;
-          c.reasons.push('Composite rank ' + (idx + 1) + '/' + n +
-            ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel);
+          c.reasons.push(rankStr + metricStr);
         }
-      } else if (idx >= n - quartileCut) {
-        c.direction = -1;
-        c.reasons.push('Composite rank ' + (idx + 1) + '/' + n +
-          ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel);
-        if (c.avgFreq >= FREQ_WATCH_THRESHOLD) {
-          c.reasons.push('Freq ' + c.avgFreq.toFixed(1) + ' watch');
+      } else if (tier === 'bottom') {
+        if (priorTier !== 'bottom') {
+          c.direction = 0;
+          c.reasons.push(rankStr + metricStr +
+            ' — bottom tier, hold (entering ' +
+            (priorTier ? 'from ' + priorTier : 'first cycle') +
+            '; need 2 consecutive cycles before decrease)');
+        } else {
+          c.direction = -1;
+          c.reasons.push(rankStr + metricStr);
+          if (c.avgFreq >= FREQ_WATCH_THRESHOLD) {
+            c.reasons.push('Freq ' + c.avgFreq.toFixed(1) + ' watch');
+          }
         }
       } else {
         c.direction = 0;
-        c.reasons.push('Composite rank ' + (idx + 1) + '/' + n +
-          ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel + ' — hold');
+        c.reasons.push(rankStr + metricStr + ' — hold');
       }
     });
+
+    PROPS.setProperty('BUDGET_RANK_TIERS', JSON.stringify(currentTiers));
   }
 
   eligible.forEach(function (c) {
