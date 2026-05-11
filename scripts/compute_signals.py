@@ -186,12 +186,27 @@ def evaluate_fatigue(metrics: dict[str, Any], thresholds: dict[str, Any]) -> dic
     elif freq >= thresholds["frequency_warning"]:
         flags.append("frequency_warning")
 
-    severity = "ok"
+    # Determine the underlying severity from flags regardless of
+    # whether the row passes the actionability floor — so downstream
+    # consumers can distinguish "below floor with flags" from
+    # "below floor with no signals at all" (both used to land in the
+    # "ok" bucket).
+    raw_severity = "ok"
+    if "frequency_critical" in flags or (
+            "ctr_declining" in flags and "frequency_warning" in flags):
+        raw_severity = "critical"
+    elif "ctr_declining" in flags or "frequency_warning" in flags:
+        raw_severity = "warning"
+
     if actionable:
-        if "frequency_critical" in flags or ("ctr_declining" in flags and "frequency_warning" in flags):
-            severity = "critical"
-        elif "ctr_declining" in flags or "frequency_warning" in flags:
-            severity = "warning"
+        severity = raw_severity
+    elif raw_severity != "ok":
+        # Has fatigue signal but below the actionability floor (days
+        # or impressions). Distinct bucket so summary counts don't
+        # conflate this with truly-clean ads.
+        severity = "below_floor"
+    else:
+        severity = "ok"
 
     return {"flags": flags, "severity": severity, "actionable": actionable}
 
@@ -320,12 +335,13 @@ def run(window_days: int) -> int:
     fatigue_rows.sort(
         key=lambda r: (r["severity"] != "critical",
                        r["severity"] != "warning",
+                       r["severity"] != "below_floor",
                        -(r.get("total_impressions") or 0)),
     )
 
     winner_bleeder = compute_winner_bleeder(by_ad, perf_thresholds)
 
-    severity_counts = {"critical": 0, "warning": 0, "ok": 0}
+    severity_counts = {"critical": 0, "warning": 0, "below_floor": 0, "ok": 0}
     for r in fatigue_rows:
         severity_counts[r["severity"]] = severity_counts.get(r["severity"], 0) + 1
 
@@ -358,9 +374,10 @@ def run(window_days: int) -> int:
     })
     atomic_write_json(DERIVED_DIR / "summary.json", summary)
 
-    logging.info("derived signals written: critical=%d warning=%d ok=%d",
+    logging.info("derived signals written: critical=%d warning=%d "
+                 "below_floor=%d ok=%d",
                  severity_counts["critical"], severity_counts["warning"],
-                 severity_counts["ok"])
+                 severity_counts["below_floor"], severity_counts["ok"])
     return 0
 
 
@@ -374,7 +391,8 @@ def empty_run(window_days: int, dates: list[str]) -> None:
         "ad_count": 0,
         "adset_count": 0,
         "campaign_count": 0,
-        "fatigue_severity_counts": {"critical": 0, "warning": 0, "ok": 0},
+        "fatigue_severity_counts": {"critical": 0, "warning": 0,
+                                    "below_floor": 0, "ok": 0},
         "actionable_critical": [],
         "actionable_warning": [],
         "winners": [],

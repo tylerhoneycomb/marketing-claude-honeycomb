@@ -203,7 +203,8 @@ def write_day_snapshot(date: str, adset_insights: list[dict[str, Any]],
 
 
 def run(date: str, dry_run: bool = False,
-        sleep_between_calls: float = DEFAULT_SLEEP_BETWEEN_CALLS) -> int:
+        sleep_between_calls: float = DEFAULT_SLEEP_BETWEEN_CALLS,
+        force: bool = False) -> int:
     config = load_config()
     account_id = resolve_account_id(config)
     api_version = config["account"]["meta_api_version"]
@@ -211,6 +212,19 @@ def run(date: str, dry_run: bool = False,
     lead_action_types = LEAD_ACTION_TYPES
 
     out_dir = SNAPSHOTS_DIR / date
+
+    # `run_range` (backfill) skips dates that already have a manifest.
+    # The single-day path used to silently overwrite, so a manual
+    # workflow_dispatch re-run for the same date would clobber the
+    # prior snapshot without warning. Refuse unless --force is set.
+    if not dry_run and not force and has_snapshot(date):
+        logging.error(
+            "snapshot for %s already exists at %s — refusing to "
+            "overwrite without --force. Pass --force on the command "
+            "line (or set FORCE=1 in the workflow env) to re-fetch.",
+            date, out_dir,
+        )
+        return 2
 
     if dry_run:
         logging.info("dry-run: would fetch %s for %s into %s",
@@ -434,6 +448,12 @@ def main(argv: list[str] | None = None) -> int:
                              f"(default: {DEFAULT_SLEEP_BETWEEN_CALLS}).")
     parser.add_argument("--dry-run", action="store_true",
                         help="Skip API calls; verify config + paths only.")
+    parser.add_argument("--force", action="store_true",
+                        help="Overwrite an existing single-day snapshot. "
+                             "Default behavior is to refuse if "
+                             "data/snapshots/<date>/_manifest.json "
+                             "exists. Backfill (--start/--end) always "
+                             "skips dates that already have a manifest.")
     args = parser.parse_args(argv)
 
     logging.basicConfig(level=logging.INFO,
@@ -448,7 +468,9 @@ def main(argv: list[str] | None = None) -> int:
                          sleep_between_calls=args.sleep)
 
     date = args.date or os.environ.get("SNAPSHOT_DATE") or yesterday_utc()
-    return run(date, dry_run=args.dry_run, sleep_between_calls=args.sleep)
+    force = args.force or os.environ.get("FORCE") == "1"
+    return run(date, dry_run=args.dry_run,
+               sleep_between_calls=args.sleep, force=force)
 
 
 if __name__ == "__main__":

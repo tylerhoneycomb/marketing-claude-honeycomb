@@ -125,15 +125,32 @@ jobs:
           END_DATE: ${{ github.event.inputs.end_date }}
         run: |
           set +e
-          DATE_LABEL="${SNAPSHOT_DATE_INPUT:-$(date -u -d 'yesterday' +%Y-%m-%d)}"
-          MANIFEST="data/snapshots/${DATE_LABEL}/_manifest.json"
           DETAIL=""
-          if [ -f "$MANIFEST" ]; then
-            DETAIL="$(jq -r '"campaigns=\(.counts.campaigns // 0) adsets=\(.counts.adsets // 0) ads=\(.counts.ads // 0) ad_insights=\(.counts.ad_insights // 0)"' "$MANIFEST")"
-          fi
           if [ -n "$START_DATE" ] && [ -n "$END_DATE" ]; then
+            # Backfill mode: sum counts across all per-date manifests
+            # that landed in the range. The previous logic read only
+            # the "yesterday UTC" manifest, which is the wrong date
+            # for a backfill range and often didn't exist at all.
+            TOTAL_DAYS=0
+            CAMPAIGNS=0; ADSETS=0; ADS=0; AD_INS=0
+            for MANIFEST in data/snapshots/*/. ; do :; done  # noop loop to keep set +e clean
+            for MANIFEST in $(ls -1 data/snapshots/*/_manifest.json 2>/dev/null); do
+              D=$(basename "$(dirname "$MANIFEST")")
+              if [[ "$D" < "$START_DATE" || "$D" > "$END_DATE" ]]; then continue; fi
+              TOTAL_DAYS=$((TOTAL_DAYS + 1))
+              CAMPAIGNS=$((CAMPAIGNS + $(jq -r '.counts.campaigns // 0' "$MANIFEST")))
+              ADSETS=$((ADSETS + $(jq -r '.counts.adsets // 0' "$MANIFEST")))
+              ADS=$((ADS + $(jq -r '.counts.ads // 0' "$MANIFEST")))
+              AD_INS=$((AD_INS + $(jq -r '.counts.ad_insights // 0' "$MANIFEST")))
+            done
+            DETAIL="days=${TOTAL_DAYS} campaigns_sum=${CAMPAIGNS} adsets_sum=${ADSETS} ads_sum=${ADS} ad_insights_sum=${AD_INS}"
             HEADER="**daily-data** (backfill ${START_DATE} → ${END_DATE}) — ${STATUS}"
           else
+            DATE_LABEL="${SNAPSHOT_DATE_INPUT:-$(date -u -d 'yesterday' +%Y-%m-%d)}"
+            MANIFEST="data/snapshots/${DATE_LABEL}/_manifest.json"
+            if [ -f "$MANIFEST" ]; then
+              DETAIL="$(jq -r '"campaigns=\(.counts.campaigns // 0) adsets=\(.counts.adsets // 0) ads=\(.counts.ads // 0) ad_insights=\(.counts.ad_insights // 0)"' "$MANIFEST")"
+            fi
             HEADER="**daily-data** (${DATE_LABEL}) — ${STATUS}"
           fi
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

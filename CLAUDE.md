@@ -158,6 +158,16 @@ defined in `Code.js`. To add a new write endpoint:
 Each skill that needs a scheduled run gets its own workflow file under
 `.github/workflows/agent-<skill>.yml`. Current:
 
+> **DST drift caveat:** GitHub cron expressions are UTC-only. All cron
+> times below are tuned for **Eastern Daylight Time** (UTC-4, ~Mar-Nov).
+> During Eastern Standard Time (UTC-5, ~Nov-Mar) every workflow runs
+> **one hour earlier** than the documented ET time — e.g.
+> "9 AM ET" becomes 8 AM during EST. Most workflow YAMLs note this
+> inline; centralizing the caveat here so a winter-time stakeholder
+> isn't surprised. To fix permanently we'd need a DST-aware scheduler
+> (CRON_TZ isn't supported by GitHub Actions); accepted as a known
+> drift.
+
 - `agent-pipeline-health.yml` — runs `pipeline-health` skill. Daily cron
   active at 9 AM ET (UTC 13:00).
 - `agent-daily-check.yml` — runs `daily-check` skill. Daily cron active
