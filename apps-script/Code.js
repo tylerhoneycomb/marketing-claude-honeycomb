@@ -3311,9 +3311,11 @@ function computeRecommendations_(currentBudgets, signals) {
   });
 
   if (knockdownApplied) {
+    var knockdownThresholdWeekly = effectiveTarget + effectiveTolerance;
+    var knockdownThresholdStr = '$' + knockdownThresholdWeekly.toLocaleString('en-US') + '/week';
     eligible.forEach(function (c) {
       if (c.knockdownBudgetCents < c.currentDailyBudgetCents) {
-        c.reasons.push('1% portfolio knockdown: spend above $10,500/week');
+        c.reasons.push('1% portfolio knockdown: spend above ' + knockdownThresholdStr);
       }
     });
   }
@@ -3565,7 +3567,11 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
       },
       payload: JSON.stringify({
         model: ANTHROPIC_MODEL,
-        max_tokens: 500,
+        // Bumped from 500 → 800 after the Sat May 9 proposal CHANGES
+        // section truncated mid-word ("rank 11/11, C"). With 11
+        // campaigns to summarize plus SITUATION + WATCH sections,
+        // 500 was tight; 800 gives headroom without inflating cost.
+        max_tokens: 800,
         system: systemPrompt,
         messages: [{ role: 'user', content: contextBlock }]
       }),
