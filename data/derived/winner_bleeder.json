@@ -1,12 +1,12 @@
 {
-  "computed_at": "2026-05-10T15:32:46.394071+00:00",
+  "computed_at": "2026-05-11T14:39:43.078781+00:00",
   "window_days": 7,
   "rows": [
     {
       "adset_id": "120240869767790631",
       "ad_id": "120240869767780631",
       "ad_name": "Industry Specific - Breweries - Q4 2025",
-      "spend": 1.95,
+      "spend": 1.67,
       "spend_share": 1.0,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
@@ -16,9 +16,9 @@
       "adset_id": "120241323300840631",
       "ad_id": "120241323300850631",
       "ad_name": "Industry Specific - Bakery",
-      "spend": 55.27,
+      "spend": 54.8,
       "spend_share": 1.0,
-      "ctr": 0.013,
+      "ctr": 0.0153,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -26,9 +26,9 @@
       "adset_id": "120241324161100631",
       "ad_id": "120241324161090631",
       "ad_name": "Industry Specific - Breweries - Q4 2025",
-      "spend": 339.27,
+      "spend": 333.13,
       "spend_share": 1.0,
-      "ctr": 0.0182,
+      "ctr": 0.0179,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -36,759 +36,9 @@
       "adset_id": "120241421568920631",
       "ad_id": "120241421568930631",
       "ad_name": "Distiller ads - Q4 2025",
-      "spend": 149.91,
+      "spend": 74.38,
       "spend_share": 1.0,
-      "ctr": 0.0154,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120241421715210631",
-      "ad_id": "120241421715200631",
-      "ad_name": "Distiller ads - Q4 2025",
-      "spend": 0.04,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120241608377990631",
-      "ad_id": "120241608378000631",
-      "ad_name": "Sustainable Main Street - Q1 2026",
-      "spend": 549.03,
-      "spend_share": 1.0,
-      "ctr": 0.0348,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120242871665670631",
-      "ad_id": "120242871665660631",
-      "ad_name": "Farms - Q1 2026",
-      "spend": 344.8,
-      "spend_share": 1.0,
-      "ctr": 0.0259,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120242950140650631",
-      "ad_id": "120242950140670631",
-      "ad_name": "Industry Specific - BBQ - Q1 2026",
-      "spend": 545.1,
-      "spend_share": 1.0,
-      "ctr": 0.0273,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120243070857060631",
-      "ad_id": "120243070857050631",
-      "ad_name": "Industry Specific - BBQ - Q1 2026",
-      "spend": 369.23,
-      "spend_share": 1.0,
-      "ctr": 0.0259,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120243109874850631",
-      "ad_id": "120243109874840631",
-      "ad_name": "Delis / butchers - Q1 2026",
-      "spend": 0.09,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120243111129230631",
-      "ad_id": "120243111129220631",
-      "ad_name": "Delis / butchers - Q1 2026",
-      "spend": 1425.96,
-      "spend_share": 1.0,
-      "ctr": 0.0307,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120244094020700631",
-      "ad_id": "120244094020710631",
-      "ad_name": "Industry Specific - Fitness / wellness - Q1 2026",
-      "spend": 184.47,
-      "spend_share": 1.0,
-      "ctr": 0.0396,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120244137988970631",
-      "ad_id": "120244137988990631",
-      "ad_name": "Juice / smoothie - Q1 2026",
-      "spend": 1068.91,
-      "spend_share": 1.0,
-      "ctr": 0.0288,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120244138133050631",
-      "ad_id": "120244138133060631",
-      "ad_name": "Juice / smoothie - Q1 2026",
-      "spend": 5.28,
-      "spend_share": 1.0,
-      "ctr": 0.0066,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120244509567530631",
-      "ad_id": "120244509567540631",
-      "ad_name": "Industry Specific - Bakery",
-      "spend": 56.01,
-      "spend_share": 1.0,
-      "ctr": 0.0155,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120244510347050631",
-      "ad_id": "120244510347060631",
-      "ad_name": "Industry Specific - Bakery",
-      "spend": 276.69,
-      "spend_share": 1.0,
-      "ctr": 0.0226,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120244510368850631",
-      "ad_id": "120244510368860631",
-      "ad_name": "Industry Specific - Bakery",
-      "spend": 226.78,
-      "spend_share": 1.0,
-      "ctr": 0.0238,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120245893421060631",
-      "ad_id": "120245893421410631",
-      "ad_name": "BR-IndependentCoffeeShops-Cohort3",
-      "spend": 4.8,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893421070631",
-      "ad_id": "120245893421570631",
-      "ad_name": "BR-IndependentCoffeeShops-Cohort5",
-      "spend": 17.08,
-      "spend_share": 1.0,
-      "ctr": 0.0315,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893431240631",
-      "ad_id": "120245893431560631",
-      "ad_name": "BR-Distilleries-Cohort9",
-      "spend": 143.23,
-      "spend_share": 1.0,
-      "ctr": 0.0211,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120245893431210631",
-      "ad_id": "120245893431650631",
-      "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
-      "spend": 266.08,
-      "spend_share": 1.0,
-      "ctr": 0.0193,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120245893431260631",
-      "ad_id": "120245893431690631",
-      "ad_name": "BR-Distilleries-Cohort2",
-      "spend": 197.54,
-      "spend_share": 1.0,
-      "ctr": 0.0108,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120245893431340631",
-      "ad_id": "120245893431780631",
-      "ad_name": "BR-CocktailWineBars-Cohort7",
-      "spend": 14.91,
-      "spend_share": 1.0,
-      "ctr": 0.0098,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893431320631",
-      "ad_id": "120245893431790631",
-      "ad_name": "BR-CocktailWineBars-Cohort4",
-      "spend": 17.02,
-      "spend_share": 1.0,
-      "ctr": 0.0205,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893431360631",
-      "ad_id": "120245893431820631",
-      "ad_name": "BR-CocktailWineBars-Cohort8",
-      "spend": 76.24,
-      "spend_share": 1.0,
-      "ctr": 0.0134,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120245893431410631",
-      "ad_id": "120245893431860631",
-      "ad_name": "BR-CocktailWineBars-Cohort2",
-      "spend": 611.47,
-      "spend_share": 1.0,
-      "ctr": 0.0223,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120245893431470631",
-      "ad_id": "120245893431950631",
-      "ad_name": "BR-CoffeeRoasters-Cohort6",
-      "spend": 12.87,
-      "spend_share": 1.0,
-      "ctr": 0.0047,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893431540631",
-      "ad_id": "120245893431960631",
-      "ad_name": "BR-CocktailWineBars-Cohort11",
-      "spend": 53.22,
-      "spend_share": 1.0,
-      "ctr": 0.0153,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120245893441520631",
-      "ad_id": "120245893441680631",
-      "ad_name": "BR-DanceStudios-Cohort1",
-      "spend": 7.09,
-      "spend_share": 1.0,
-      "ctr": 0.0273,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441210631",
-      "ad_id": "120245893441690631",
-      "ad_name": "BR-DanceStudios-Cohort9",
-      "spend": 1.19,
-      "spend_share": 1.0,
-      "ctr": 0.0455,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441430631",
-      "ad_id": "120245893441700631",
-      "ad_name": "BR-DanceStudios-Cohort3",
-      "spend": 4.97,
-      "spend_share": 1.0,
-      "ctr": 0.0213,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441150631",
-      "ad_id": "120245893441720631",
-      "ad_name": "BR-HairSalons-Cohort5",
-      "spend": 5.51,
-      "spend_share": 1.0,
-      "ctr": 0.0388,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441410631",
-      "ad_id": "120245893441730631",
-      "ad_name": "BR-FlowerShops-Cohort2",
-      "spend": 7.22,
-      "spend_share": 1.0,
-      "ctr": 0.0286,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441080631",
-      "ad_id": "120245893441750631",
-      "ad_name": "BR-FlowerShops-Cohort3",
-      "spend": 0.31,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441070631",
-      "ad_id": "120245893441760631",
-      "ad_name": "BR-FlowerShops-Cohort6",
-      "spend": 0.55,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441490631",
-      "ad_id": "120245893441770631",
-      "ad_name": "BR-FlowerShops-Cohort5",
-      "spend": 9.54,
-      "spend_share": 1.0,
-      "ctr": 0.0215,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441320631",
-      "ad_id": "120245893441780631",
-      "ad_name": "BR-HairSalons-Cohort4",
-      "spend": 3.12,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441330631",
-      "ad_id": "120245893441800631",
-      "ad_name": "BR-HairSalons-Cohort7",
-      "spend": 3.86,
-      "spend_share": 1.0,
-      "ctr": 0.0238,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441040631",
-      "ad_id": "120245893441810631",
-      "ad_name": "BR-IndependentBookstores-Cohort6",
-      "spend": 0.79,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441350631",
-      "ad_id": "120245893441820631",
-      "ad_name": "BR-IndependentBookstores-Cohort8",
-      "spend": 1.77,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441570631",
-      "ad_id": "120245893441830631",
-      "ad_name": "BR-HairSalons-Cohort10",
-      "spend": 18.74,
-      "spend_share": 1.0,
-      "ctr": 0.0208,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441660631",
-      "ad_id": "120245893441850631",
-      "ad_name": "BR-IndependentBookstores-Cohort4",
-      "spend": 2.68,
-      "spend_share": 1.0,
-      "ctr": 0.0204,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441140631",
-      "ad_id": "120245893441860631",
-      "ad_name": "BR-DanceStudios-Cohort11",
-      "spend": 0.7,
-      "spend_share": 1.0,
-      "ctr": 0.0417,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441100631",
-      "ad_id": "120245893441870631",
-      "ad_name": "BR-HairSalons-Cohort1",
-      "spend": 1.42,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441360631",
-      "ad_id": "120245893441890631",
-      "ad_name": "BR-DanceStudios-Cohort4",
-      "spend": 18.17,
-      "spend_share": 1.0,
-      "ctr": 0.0241,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441530631",
-      "ad_id": "120245893441900631",
-      "ad_name": "BR-DanceStudios-Cohort7",
-      "spend": 2.4,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441450631",
-      "ad_id": "120245893441920631",
-      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort3",
-      "spend": 11.45,
-      "spend_share": 1.0,
-      "ctr": 0.0168,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441460631",
-      "ad_id": "120245893441930631",
-      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort4",
-      "spend": 4.19,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441550631",
-      "ad_id": "120245893441940631",
-      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort5",
-      "spend": 6.17,
-      "spend_share": 1.0,
-      "ctr": 0.0226,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441390631",
-      "ad_id": "120245893441950631",
-      "ad_name": "BR-DaySpas-Cohort4",
-      "spend": 0.65,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441610631",
-      "ad_id": "120245893441960631",
-      "ad_name": "BR-DaySpas-Cohort5",
-      "spend": 3.16,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441640631",
-      "ad_id": "120245893441970631",
-      "ad_name": "BR-FlowerShops-Cohort11",
-      "spend": 8.01,
-      "spend_share": 1.0,
-      "ctr": 0.0065,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441060631",
-      "ad_id": "120245893441980631",
-      "ad_name": "BR-FlowerShops-Cohort10",
-      "spend": 4.48,
-      "spend_share": 1.0,
-      "ctr": 0.0154,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441310631",
-      "ad_id": "120245893441990631",
-      "ad_name": "BR-HairSalons-Cohort3",
-      "spend": 87.35,
-      "spend_share": 1.0,
-      "ctr": 0.0183,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120245893441580631",
-      "ad_id": "120245893442000631",
-      "ad_name": "BR-HairSalons-Cohort8",
-      "spend": 10.29,
-      "spend_share": 1.0,
-      "ctr": 0.0273,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441440631",
-      "ad_id": "120245893442030631",
-      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort1",
-      "spend": 4.9,
-      "spend_share": 1.0,
-      "ctr": 0.0455,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441540631",
-      "ad_id": "120245893442050631",
-      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort8",
-      "spend": 10.11,
-      "spend_share": 1.0,
-      "ctr": 0.0072,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441600631",
-      "ad_id": "120245893442060631",
-      "ad_name": "BR-DaySpas-Cohort9",
-      "spend": 3.9,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441190631",
-      "ad_id": "120245893442070631",
-      "ad_name": "BR-DanceStudios-Cohort2",
-      "spend": 16.18,
-      "spend_share": 1.0,
-      "ctr": 0.0243,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441370631",
-      "ad_id": "120245893442080631",
-      "ad_name": "BR-DaySpas-Cohort1",
-      "spend": 0.59,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441250631",
-      "ad_id": "120245893442110631",
-      "ad_name": "BR-DanceStudios-Cohort6",
-      "spend": 1.75,
-      "spend_share": 1.0,
-      "ctr": 0.0303,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441030631",
-      "ad_id": "120245893442120631",
-      "ad_name": "BR-DanceStudios-Cohort8",
-      "spend": 1.37,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441050631",
-      "ad_id": "120245893442140631",
-      "ad_name": "BR-DaySpas-Cohort8",
-      "spend": 0.98,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441230631",
-      "ad_id": "120245893442150631",
-      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort9",
-      "spend": 6.09,
-      "spend_share": 1.0,
-      "ctr": 0.0196,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441420631",
-      "ad_id": "120245893442160631",
-      "ad_name": "BR-DaySpas-Cohort6",
-      "spend": 1.32,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441560631",
-      "ad_id": "120245893442170631",
-      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort11",
-      "spend": 5.64,
-      "spend_share": 1.0,
-      "ctr": 0.0361,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441300631",
-      "ad_id": "120245893442180631",
-      "ad_name": "BR-FlowerShops-Cohort7",
-      "spend": 3.39,
-      "spend_share": 1.0,
-      "ctr": 0.011,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441630631",
-      "ad_id": "120245893442200631",
-      "ad_name": "BR-DaySpas-Cohort2",
-      "spend": 6.22,
-      "spend_share": 1.0,
-      "ctr": 0.02,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441020631",
-      "ad_id": "120245893442210631",
-      "ad_name": "BR-DanceStudios-Cohort10",
-      "spend": 1.41,
-      "spend_share": 1.0,
-      "ctr": 0.0278,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441510631",
-      "ad_id": "120245893442220631",
-      "ad_name": "BR-HairSalons-Cohort11",
-      "spend": 11.16,
-      "spend_share": 1.0,
-      "ctr": 0.0064,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441590631",
-      "ad_id": "120245893442230631",
-      "ad_name": "BR-DaySpas-Cohort7",
-      "spend": 1.7,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441480631",
-      "ad_id": "120245893442240631",
-      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort7",
-      "spend": 3.84,
-      "spend_share": 1.0,
-      "ctr": 0.0109,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441160631",
-      "ad_id": "120245893442260631",
-      "ad_name": "BR-IndependentBookstores-Cohort1",
-      "spend": 0.73,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441340631",
-      "ad_id": "120245893442280631",
-      "ad_name": "BR-IndependentBookstores-Cohort3",
-      "spend": 2.05,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441620631",
-      "ad_id": "120245893442290631",
-      "ad_name": "BR-FlowerShops-Cohort9",
-      "spend": 47.82,
-      "spend_share": 1.0,
-      "ctr": 0.0125,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441650631",
-      "ad_id": "120245893442300631",
-      "ad_name": "BR-FlowerShops-Cohort1",
-      "spend": 12.06,
-      "spend_share": 1.0,
-      "ctr": 0.0155,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441470631",
-      "ad_id": "120245893442310631",
-      "ad_name": "BR-FlowerShops-Cohort8",
-      "spend": 5.63,
-      "spend_share": 1.0,
-      "ctr": 0.009,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120245893441200631",
-      "ad_id": "120245893442320631",
-      "ad_name": "BR-FlowerShops-Cohort4",
-      "spend": 1.03,
-      "spend_share": 1.0,
-      "ctr": 0.087,
-      "ctr_vs_adset_avg": 1.0,
-      "label": null
-    },
-    {
-      "adset_id": "120246516495110631",
-      "ad_id": "120246516495100631",
-      "ad_name": "Fitness Wellness - DC - 2026-04-18 - Community",
-      "spend": 968.79,
-      "spend_share": 1.0,
-      "ctr": 0.048,
+      "ctr": 0.0129,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -803,14 +53,544 @@
       "label": null
     },
     {
+      "adset_id": "120241608377990631",
+      "ad_id": "120241608378000631",
+      "ad_name": "Sustainable Main Street - Q1 2026",
+      "spend": 537.82,
+      "spend_share": 1.0,
+      "ctr": 0.0345,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120242871665670631",
+      "ad_id": "120242871665660631",
+      "ad_name": "Farms - Q1 2026",
+      "spend": 338.51,
+      "spend_share": 1.0,
+      "ctr": 0.0237,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
       "adset_id": "120242950044520631",
       "ad_id": "120242950044510631",
       "ad_name": "Industry Specific - Creameries - Q1 2026",
-      "spend": 612.98,
+      "spend": 731.59,
       "spend_share": 1.0,
-      "ctr": 0.0228,
+      "ctr": 0.0224,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
+    },
+    {
+      "adset_id": "120242950140650631",
+      "ad_id": "120242950140670631",
+      "ad_name": "Industry Specific - BBQ - Q1 2026",
+      "spend": 498.13,
+      "spend_share": 1.0,
+      "ctr": 0.027,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120243070857060631",
+      "ad_id": "120243070857050631",
+      "ad_name": "Industry Specific - BBQ - Q1 2026",
+      "spend": 333.94,
+      "spend_share": 1.0,
+      "ctr": 0.0254,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120243111129230631",
+      "ad_id": "120243111129220631",
+      "ad_name": "Delis / butchers - Q1 2026",
+      "spend": 1417.07,
+      "spend_share": 1.0,
+      "ctr": 0.0301,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120244094020700631",
+      "ad_id": "120244094020710631",
+      "ad_name": "Industry Specific - Fitness / wellness - Q1 2026",
+      "spend": 169.72,
+      "spend_share": 1.0,
+      "ctr": 0.039,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120244137988970631",
+      "ad_id": "120244137988990631",
+      "ad_name": "Juice / smoothie - Q1 2026",
+      "spend": 1049.07,
+      "spend_share": 1.0,
+      "ctr": 0.028,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120244138133050631",
+      "ad_id": "120244138133060631",
+      "ad_name": "Juice / smoothie - Q1 2026",
+      "spend": 4.04,
+      "spend_share": 1.0,
+      "ctr": 0.0185,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120244509567530631",
+      "ad_id": "120244509567540631",
+      "ad_name": "Industry Specific - Bakery",
+      "spend": 65.15,
+      "spend_share": 1.0,
+      "ctr": 0.0167,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120244510347050631",
+      "ad_id": "120244510347060631",
+      "ad_name": "Industry Specific - Bakery",
+      "spend": 259.03,
+      "spend_share": 1.0,
+      "ctr": 0.023,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120244510368850631",
+      "ad_id": "120244510368860631",
+      "ad_name": "Industry Specific - Bakery",
+      "spend": 227.04,
+      "spend_share": 1.0,
+      "ctr": 0.0239,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893421060631",
+      "ad_id": "120245893421410631",
+      "ad_name": "BR-IndependentCoffeeShops-Cohort3",
+      "spend": 4.71,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893421070631",
+      "ad_id": "120245893421570631",
+      "ad_name": "BR-IndependentCoffeeShops-Cohort5",
+      "spend": 14.96,
+      "spend_share": 1.0,
+      "ctr": 0.036,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893431240631",
+      "ad_id": "120245893431560631",
+      "ad_name": "BR-Distilleries-Cohort9",
+      "spend": 147.71,
+      "spend_share": 1.0,
+      "ctr": 0.0216,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431210631",
+      "ad_id": "120245893431650631",
+      "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
+      "spend": 264.73,
+      "spend_share": 1.0,
+      "ctr": 0.0187,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431260631",
+      "ad_id": "120245893431690631",
+      "ad_name": "BR-Distilleries-Cohort2",
+      "spend": 139.42,
+      "spend_share": 1.0,
+      "ctr": 0.014,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431340631",
+      "ad_id": "120245893431780631",
+      "ad_name": "BR-CocktailWineBars-Cohort7",
+      "spend": 14.0,
+      "spend_share": 1.0,
+      "ctr": 0.0107,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893431320631",
+      "ad_id": "120245893431790631",
+      "ad_name": "BR-CocktailWineBars-Cohort4",
+      "spend": 15.92,
+      "spend_share": 1.0,
+      "ctr": 0.0191,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893431360631",
+      "ad_id": "120245893431820631",
+      "ad_name": "BR-CocktailWineBars-Cohort8",
+      "spend": 80.42,
+      "spend_share": 1.0,
+      "ctr": 0.0127,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431410631",
+      "ad_id": "120245893431860631",
+      "ad_name": "BR-CocktailWineBars-Cohort2",
+      "spend": 662.12,
+      "spend_share": 1.0,
+      "ctr": 0.0239,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893431470631",
+      "ad_id": "120245893431950631",
+      "ad_name": "BR-CoffeeRoasters-Cohort6",
+      "spend": 9.28,
+      "spend_share": 1.0,
+      "ctr": 0.0072,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893431540631",
+      "ad_id": "120245893431960631",
+      "ad_name": "BR-CocktailWineBars-Cohort11",
+      "spend": 35.6,
+      "spend_share": 1.0,
+      "ctr": 0.0167,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441520631",
+      "ad_id": "120245893441680631",
+      "ad_name": "BR-DanceStudios-Cohort1",
+      "spend": 4.77,
+      "spend_share": 1.0,
+      "ctr": 0.0317,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441210631",
+      "ad_id": "120245893441690631",
+      "ad_name": "BR-DanceStudios-Cohort9",
+      "spend": 1.12,
+      "spend_share": 1.0,
+      "ctr": 0.05,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441430631",
+      "ad_id": "120245893441700631",
+      "ad_name": "BR-DanceStudios-Cohort3",
+      "spend": 1.97,
+      "spend_share": 1.0,
+      "ctr": 0.0175,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441150631",
+      "ad_id": "120245893441720631",
+      "ad_name": "BR-HairSalons-Cohort5",
+      "spend": 4.79,
+      "spend_share": 1.0,
+      "ctr": 0.0265,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441410631",
+      "ad_id": "120245893441730631",
+      "ad_name": "BR-FlowerShops-Cohort2",
+      "spend": 3.11,
+      "spend_share": 1.0,
+      "ctr": 0.0361,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441070631",
+      "ad_id": "120245893441760631",
+      "ad_name": "BR-FlowerShops-Cohort6",
+      "spend": 0.46,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441490631",
+      "ad_id": "120245893441770631",
+      "ad_name": "BR-FlowerShops-Cohort5",
+      "spend": 1.05,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441320631",
+      "ad_id": "120245893441780631",
+      "ad_name": "BR-HairSalons-Cohort4",
+      "spend": 1.68,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441330631",
+      "ad_id": "120245893441800631",
+      "ad_name": "BR-HairSalons-Cohort7",
+      "spend": 1.95,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441040631",
+      "ad_id": "120245893441810631",
+      "ad_name": "BR-IndependentBookstores-Cohort6",
+      "spend": 0.77,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441350631",
+      "ad_id": "120245893441820631",
+      "ad_name": "BR-IndependentBookstores-Cohort8",
+      "spend": 1.46,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441570631",
+      "ad_id": "120245893441830631",
+      "ad_name": "BR-HairSalons-Cohort10",
+      "spend": 13.85,
+      "spend_share": 1.0,
+      "ctr": 0.0231,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441660631",
+      "ad_id": "120245893441850631",
+      "ad_name": "BR-IndependentBookstores-Cohort4",
+      "spend": 1.78,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441140631",
+      "ad_id": "120245893441860631",
+      "ad_name": "BR-DanceStudios-Cohort11",
+      "spend": 0.47,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441100631",
+      "ad_id": "120245893441870631",
+      "ad_name": "BR-HairSalons-Cohort1",
+      "spend": 1.4,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441360631",
+      "ad_id": "120245893441890631",
+      "ad_name": "BR-DanceStudios-Cohort4",
+      "spend": 14.17,
+      "spend_share": 1.0,
+      "ctr": 0.0201,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441530631",
+      "ad_id": "120245893441900631",
+      "ad_name": "BR-DanceStudios-Cohort7",
+      "spend": 2.03,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441450631",
+      "ad_id": "120245893441920631",
+      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort3",
+      "spend": 7.41,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441460631",
+      "ad_id": "120245893441930631",
+      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort4",
+      "spend": 3.78,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441550631",
+      "ad_id": "120245893441940631",
+      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort5",
+      "spend": 4.91,
+      "spend_share": 1.0,
+      "ctr": 0.0213,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441390631",
+      "ad_id": "120245893441950631",
+      "ad_name": "BR-DaySpas-Cohort4",
+      "spend": 0.63,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441610631",
+      "ad_id": "120245893441960631",
+      "ad_name": "BR-DaySpas-Cohort5",
+      "spend": 2.67,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441640631",
+      "ad_id": "120245893441970631",
+      "ad_name": "BR-FlowerShops-Cohort11",
+      "spend": 5.7,
+      "spend_share": 1.0,
+      "ctr": 0.0098,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441060631",
+      "ad_id": "120245893441980631",
+      "ad_name": "BR-FlowerShops-Cohort10",
+      "spend": 4.1,
+      "spend_share": 1.0,
+      "ctr": 0.0171,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441310631",
+      "ad_id": "120245893441990631",
+      "ad_name": "BR-HairSalons-Cohort3",
+      "spend": 77.66,
+      "spend_share": 1.0,
+      "ctr": 0.018,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120245893441580631",
+      "ad_id": "120245893442000631",
+      "ad_name": "BR-HairSalons-Cohort8",
+      "spend": 3.73,
+      "spend_share": 1.0,
+      "ctr": 0.0152,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441440631",
+      "ad_id": "120245893442030631",
+      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort1",
+      "spend": 3.48,
+      "spend_share": 1.0,
+      "ctr": 0.0597,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441540631",
+      "ad_id": "120245893442050631",
+      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort8",
+      "spend": 5.1,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441600631",
+      "ad_id": "120245893442060631",
+      "ad_name": "BR-DaySpas-Cohort9",
+      "spend": 2.35,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441190631",
+      "ad_id": "120245893442070631",
+      "ad_name": "BR-DanceStudios-Cohort2",
+      "spend": 13.1,
+      "spend_share": 1.0,
+      "ctr": 0.027,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441370631",
+      "ad_id": "120245893442080631",
+      "ad_name": "BR-DaySpas-Cohort1",
+      "spend": 0.47,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
     },
     {
       "adset_id": "120245893441400631",
@@ -823,12 +603,192 @@
       "label": null
     },
     {
+      "adset_id": "120245893441250631",
+      "ad_id": "120245893442110631",
+      "ad_name": "BR-DanceStudios-Cohort6",
+      "spend": 0.7,
+      "spend_share": 1.0,
+      "ctr": 0.0357,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441030631",
+      "ad_id": "120245893442120631",
+      "ad_name": "BR-DanceStudios-Cohort8",
+      "spend": 1.32,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441050631",
+      "ad_id": "120245893442140631",
+      "ad_name": "BR-DaySpas-Cohort8",
+      "spend": 0.76,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441230631",
+      "ad_id": "120245893442150631",
+      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort9",
+      "spend": 5.16,
+      "spend_share": 1.0,
+      "ctr": 0.0123,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441420631",
+      "ad_id": "120245893442160631",
+      "ad_name": "BR-DaySpas-Cohort6",
+      "spend": 1.12,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441560631",
+      "ad_id": "120245893442170631",
+      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort11",
+      "spend": 2.09,
+      "spend_share": 1.0,
+      "ctr": 0.0392,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441300631",
+      "ad_id": "120245893442180631",
+      "ad_name": "BR-FlowerShops-Cohort7",
+      "spend": 2.51,
+      "spend_share": 1.0,
+      "ctr": 0.0167,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441630631",
+      "ad_id": "120245893442200631",
+      "ad_name": "BR-DaySpas-Cohort2",
+      "spend": 4.69,
+      "spend_share": 1.0,
+      "ctr": 0.0328,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441020631",
+      "ad_id": "120245893442210631",
+      "ad_name": "BR-DanceStudios-Cohort10",
+      "spend": 1.28,
+      "spend_share": 1.0,
+      "ctr": 0.0333,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441510631",
+      "ad_id": "120245893442220631",
+      "ad_name": "BR-HairSalons-Cohort11",
+      "spend": 6.52,
+      "spend_share": 1.0,
+      "ctr": 0.0088,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441590631",
+      "ad_id": "120245893442230631",
+      "ad_name": "BR-DaySpas-Cohort7",
+      "spend": 1.0,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441480631",
+      "ad_id": "120245893442240631",
+      "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort7",
+      "spend": 2.05,
+      "spend_share": 1.0,
+      "ctr": 0.0196,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441160631",
+      "ad_id": "120245893442260631",
+      "ad_name": "BR-IndependentBookstores-Cohort1",
+      "spend": 0.59,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441340631",
+      "ad_id": "120245893442280631",
+      "ad_name": "BR-IndependentBookstores-Cohort3",
+      "spend": 1.74,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441620631",
+      "ad_id": "120245893442290631",
+      "ad_name": "BR-FlowerShops-Cohort9",
+      "spend": 36.9,
+      "spend_share": 1.0,
+      "ctr": 0.0116,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441650631",
+      "ad_id": "120245893442300631",
+      "ad_name": "BR-FlowerShops-Cohort1",
+      "spend": 8.68,
+      "spend_share": 1.0,
+      "ctr": 0.0149,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441470631",
+      "ad_id": "120245893442310631",
+      "ad_name": "BR-FlowerShops-Cohort8",
+      "spend": 2.82,
+      "spend_share": 1.0,
+      "ctr": 0.0159,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441200631",
+      "ad_id": "120245893442320631",
+      "ad_name": "BR-FlowerShops-Cohort4",
+      "spend": 0.53,
+      "spend_share": 1.0,
+      "ctr": 0.1176,
+      "ctr_vs_adset_avg": 1.0,
+      "label": null
+    },
+    {
       "adset_id": "120246482969620631",
       "ad_id": "120246482969630631",
       "ad_name": "Creameries - DC - 2026-04-18 - Community",
-      "spend": 25.32,
+      "spend": 25.35,
       "spend_share": 1.0,
-      "ctr": 0.0089,
+      "ctr": 0.0088,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -836,9 +796,19 @@
       "adset_id": "120246482969610631",
       "ad_id": "120246482969640631",
       "ad_name": "Creameries - DC - 2026-04-18 - Pain",
-      "spend": 75.99,
+      "spend": 77.09,
       "spend_share": 1.0,
-      "ctr": 0.0155,
+      "ctr": 0.016,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120246516495110631",
+      "ad_id": "120246516495100631",
+      "ad_name": "Fitness Wellness - DC - 2026-04-18 - Community",
+      "spend": 962.38,
+      "spend_share": 1.0,
+      "ctr": 0.0477,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -863,13 +833,33 @@
       "label": null
     },
     {
+      "adset_id": "120243109874850631",
+      "ad_id": "120243109874840631",
+      "ad_name": "Delis / butchers - Q1 2026",
+      "spend": 0.22,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120245893441080631",
+      "ad_id": "120245893441750631",
+      "ad_name": "BR-FlowerShops-Cohort3",
+      "spend": 0.29,
+      "spend_share": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
       "adset_id": "120247429696850631",
       "ad_id": "120247429696860631",
       "ad_name": "q2-2026_bb_pain_img3",
-      "spend": 0.04,
-      "spend_share": 0.001,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
+      "spend": 0.11,
+      "spend_share": 0.0007,
+      "ctr": 0.25,
+      "ctr_vs_adset_avg": 5.573,
       "label": null
     },
     {
@@ -877,7 +867,7 @@
       "ad_id": "120247429696870631",
       "ad_name": "q2-2026_bb_pain_img5",
       "spend": 0.07,
-      "spend_share": 0.0017,
+      "spend_share": 0.0004,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -886,8 +876,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696890631",
       "ad_name": "q2-2026_bb_outcome_img7",
-      "spend": 0.42,
-      "spend_share": 0.0103,
+      "spend": 1.0,
+      "spend_share": 0.0063,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -896,18 +886,18 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696900631",
       "ad_name": "q2-2026_bb_outcome_img8",
-      "spend": 0.01,
-      "spend_share": 0.0002,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
+      "spend": 0.57,
+      "spend_share": 0.0036,
+      "ctr": 0.0769,
+      "ctr_vs_adset_avg": 1.715,
       "label": null
     },
     {
       "adset_id": "120247429696850631",
       "ad_id": "120247429696910631",
       "ad_name": "q2-2026_bb_outcome_img5",
-      "spend": 0.45,
-      "spend_share": 0.0111,
+      "spend": 0.85,
+      "spend_share": 0.0054,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -916,8 +906,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696920631",
       "ad_name": "q2-2026_bb_proof_img1",
-      "spend": 0.62,
-      "spend_share": 0.0152,
+      "spend": 0.63,
+      "spend_share": 0.004,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -926,8 +916,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696930631",
       "ad_name": "q2-2026_bb_outcome_img10",
-      "spend": 0.3,
-      "spend_share": 0.0074,
+      "spend": 0.83,
+      "spend_share": 0.0052,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -936,8 +926,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696950631",
       "ad_name": "q2-2026_bb_proof_img3",
-      "spend": 0.3,
-      "spend_share": 0.0074,
+      "spend": 0.43,
+      "spend_share": 0.0027,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -946,10 +936,10 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696960631",
       "ad_name": "q2-2026_bb_proof_img6",
-      "spend": 0.61,
-      "spend_share": 0.015,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
+      "spend": 0.95,
+      "spend_share": 0.006,
+      "ctr": 0.1,
+      "ctr_vs_adset_avg": 2.229,
       "label": null
     },
     {
@@ -957,7 +947,7 @@
       "ad_id": "120247429696970631",
       "ad_name": "q2-2026_bb_outcome_img3",
       "spend": 0.79,
-      "spend_share": 0.0194,
+      "spend_share": 0.005,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -966,8 +956,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696980631",
       "ad_name": "q2-2026_bb_outcome_img4",
-      "spend": 0.54,
-      "spend_share": 0.0133,
+      "spend": 0.67,
+      "spend_share": 0.0042,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -976,8 +966,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696990631",
       "ad_name": "q2-2026_bb_proof_img2",
-      "spend": 0.21,
-      "spend_share": 0.0052,
+      "spend": 0.29,
+      "spend_share": 0.0018,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -987,7 +977,7 @@
       "ad_id": "120247429697010631",
       "ad_name": "q2-2026_bb_proof_img5",
       "spend": 1.39,
-      "spend_share": 0.0341,
+      "spend_share": 0.0088,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -996,8 +986,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697020631",
       "ad_name": "q2-2026_bb_proof_img8",
-      "spend": 0.66,
-      "spend_share": 0.0162,
+      "spend": 0.97,
+      "spend_share": 0.0061,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1006,8 +996,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697030631",
       "ad_name": "q2-2026_bb_proof_img9",
-      "spend": 0.02,
-      "spend_share": 0.0005,
+      "spend": 0.25,
+      "spend_share": 0.0016,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1016,8 +1006,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697060631",
       "ad_name": "q2-2026_bb_pain_img1",
-      "spend": 0.82,
-      "spend_share": 0.0201,
+      "spend": 1.28,
+      "spend_share": 0.0081,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1027,19 +1017,19 @@
       "ad_id": "120247429697080631",
       "ad_name": "q2-2026_bb_pain_img7",
       "spend": 0.57,
-      "spend_share": 0.014,
+      "spend_share": 0.0036,
       "ctr": 0.0556,
-      "ctr_vs_adset_avg": 5.773,
+      "ctr_vs_adset_avg": 1.238,
       "label": null
     },
     {
       "adset_id": "120247429696850631",
       "ad_id": "120247429697090631",
       "ad_name": "q2-2026_bb_pain_img8",
-      "spend": 0.73,
-      "spend_share": 0.0179,
-      "ctr": 0.05,
-      "ctr_vs_adset_avg": 5.196,
+      "spend": 1.02,
+      "spend_share": 0.0064,
+      "ctr": 0.0345,
+      "ctr_vs_adset_avg": 0.769,
       "label": null
     },
     {
@@ -1047,7 +1037,7 @@
       "ad_id": "120247429697110631",
       "ad_name": "q2-2026_bb_pain_img10",
       "spend": 0.27,
-      "spend_share": 0.0066,
+      "spend_share": 0.0017,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1057,7 +1047,7 @@
       "ad_id": "120247429697120631",
       "ad_name": "q2-2026_bb_community_img1",
       "spend": 0.54,
-      "spend_share": 0.0133,
+      "spend_share": 0.0034,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1067,7 +1057,7 @@
       "ad_id": "120247429697130631",
       "ad_name": "q2-2026_bb_community_img3",
       "spend": 0.22,
-      "spend_share": 0.0054,
+      "spend_share": 0.0014,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1076,8 +1066,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697150631",
       "ad_name": "q2-2026_bb_pain_img9",
-      "spend": 1.51,
-      "spend_share": 0.0371,
+      "spend": 1.66,
+      "spend_share": 0.0105,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1086,28 +1076,28 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697160631",
       "ad_name": "q2-2026_bb_community_img5",
-      "spend": 5.53,
-      "spend_share": 0.1358,
-      "ctr": 0.0108,
-      "ctr_vs_adset_avg": 1.123,
+      "spend": 6.58,
+      "spend_share": 0.0415,
+      "ctr": 0.0087,
+      "ctr_vs_adset_avg": 0.195,
       "label": null
     },
     {
       "adset_id": "120247429696850631",
       "ad_id": "120247429697190631",
       "ad_name": "q2-2026_bb_community_img7",
-      "spend": 1.06,
-      "spend_share": 0.026,
-      "ctr": 0.1111,
-      "ctr_vs_adset_avg": 11.546,
+      "spend": 1.76,
+      "spend_share": 0.0111,
+      "ctr": 0.1,
+      "ctr_vs_adset_avg": 2.229,
       "label": null
     },
     {
       "adset_id": "120247429696850631",
       "ad_id": "120247429697200631",
       "ad_name": "q2-2026_bb_outcome_img2",
-      "spend": 0.11,
-      "spend_share": 0.0027,
+      "spend": 0.51,
+      "spend_share": 0.0032,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1126,10 +1116,10 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697220631",
       "ad_name": "q2-2026_bb_community_img8",
-      "spend": 0.51,
-      "spend_share": 0.0125,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
+      "spend": 2.37,
+      "spend_share": 0.0149,
+      "ctr": 0.026,
+      "ctr_vs_adset_avg": 0.579,
       "label": null
     },
     {
@@ -1137,7 +1127,7 @@
       "ad_id": "120247429697230631",
       "ad_name": "q2-2026_bb_community_img10",
       "spend": 0.51,
-      "spend_share": 0.0125,
+      "spend_share": 0.0032,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1146,10 +1136,10 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697240631",
       "ad_name": "q2-2026_bb_outcome_img6",
-      "spend": 20.89,
-      "spend_share": 0.5131,
-      "ctr": 0.0324,
-      "ctr_vs_adset_avg": 3.368,
+      "spend": 129.44,
+      "spend_share": 0.816,
+      "ctr": 0.0264,
+      "ctr_vs_adset_avg": 0.589,
       "label": null
     },
     {
@@ -1157,7 +1147,7 @@
       "ad_id": "120247429696880631",
       "ad_name": "q2-2026_bb_outcome_img9",
       "spend": 0.09,
-      "spend_share": 0.0022,
+      "spend_share": 0.0006,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1167,7 +1157,7 @@
       "ad_id": "120247429697000631",
       "ad_name": "q2-2026_bb_proof_img7",
       "spend": 0.04,
-      "spend_share": 0.001,
+      "spend_share": 0.0003,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1176,8 +1166,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697050631",
       "ad_name": "q2-2026_bb_proof_img10",
-      "spend": 0.05,
-      "spend_share": 0.0012,
+      "spend": 0.25,
+      "spend_share": 0.0016,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1187,7 +1177,7 @@
       "ad_id": "120247429697140631",
       "ad_name": "q2-2026_bb_community_img2",
       "spend": 0.4,
-      "spend_share": 0.0098,
+      "spend_share": 0.0025,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -1196,20 +1186,60 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697170631",
       "ad_name": "q2-2026_bb_pain_img6",
-      "spend": 0.41,
-      "spend_share": 0.0101,
-      "ctr": 0.0769,
-      "ctr_vs_adset_avg": 7.994,
+      "spend": 0.43,
+      "spend_share": 0.0027,
+      "ctr": 0.0714,
+      "ctr_vs_adset_avg": 1.592,
       "label": null
     },
     {
       "adset_id": "120247429696850631",
       "ad_id": "120247429697250631",
       "ad_name": "q2-2026_bb_community_img6",
-      "spend": 0.02,
-      "spend_share": 0.0005,
+      "spend": 0.58,
+      "spend_share": 0.0037,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429696940631",
+      "ad_name": "q2-2026_bb_proof_img4",
+      "spend": 0.22,
+      "spend_share": 0.0014,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697040631",
+      "ad_name": "q2-2026_bb_pain_img2",
+      "spend": 0.04,
+      "spend_share": 0.0003,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697070631",
+      "ad_name": "q2-2026_bb_community_img9",
+      "spend": 0.01,
+      "spend_share": 0.0001,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697180631",
+      "ad_name": "q2-2026_bb_community_img4",
+      "spend": 0.03,
+      "spend_share": 0.0002,
+      "ctr": 1.0,
+      "ctr_vs_adset_avg": 22.292,
       "label": null
     }
   ]

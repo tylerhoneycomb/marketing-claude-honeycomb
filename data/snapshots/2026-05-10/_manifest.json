@@ -1,0 +1,19 @@
+{
+  "counts": {
+    "ad_insights": 57,
+    "ads": 388,
+    "adset_insights": 30,
+    "adsets": 350,
+    "campaigns": 11,
+    "new_creatives": 4
+  },
+  "exported_at": "2026-05-11T14:39:42.951831+00:00",
+  "files": [
+    "campaigns.json",
+    "adsets.json",
+    "ads.json",
+    "ad_insights.json",
+    "adset_insights.json"
+  ],
+  "snapshot_date": "2026-05-10"
+}
