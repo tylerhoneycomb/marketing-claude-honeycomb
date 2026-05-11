@@ -3311,9 +3311,11 @@ function computeRecommendations_(currentBudgets, signals) {
   });
 
   if (knockdownApplied) {
+    var knockdownThresholdWeekly = effectiveTarget + effectiveTolerance;
+    var knockdownThresholdStr = '$' + knockdownThresholdWeekly.toLocaleString('en-US') + '/week';
     eligible.forEach(function (c) {
       if (c.knockdownBudgetCents < c.currentDailyBudgetCents) {
-        c.reasons.push('1% portfolio knockdown: spend above $10,500/week');
+        c.reasons.push('1% portfolio knockdown: spend above ' + knockdownThresholdStr);
       }
     });
   }
