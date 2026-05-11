@@ -6232,8 +6232,16 @@ function getTargetWeeklySpend_() {
 // string "unknown user" was uninformative — audit log now says
 // "Slack approver" so it's at least clear WHY identity is unknown.
 function resolveApprover_(e) {
+  // Sanitize any Slack mrkdwn / link-syntax characters out of the
+  // typed name before echoing it into Slack post bodies (e.g.,
+  // "*pwn*", "<@U123>", "<https://evil|click>"). Keep apostrophes
+  // and hyphens so "O'Brien-Smith" survives. Backslash also stripped
+  // to prevent escape-sequence shenanigans.
   var typed = e && e.parameter && e.parameter.approver
-    ? String(e.parameter.approver).trim().substring(0, 60)
+    ? String(e.parameter.approver)
+        .replace(/[<>*_~`|\\]/g, '')
+        .trim()
+        .substring(0, 60)
     : '';
   if (typed) return typed;
   var sessionEmail = Session.getActiveUser().getEmail();
