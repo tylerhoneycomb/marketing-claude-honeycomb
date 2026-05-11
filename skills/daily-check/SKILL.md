@@ -104,6 +104,8 @@ STALE:
 
 Skip empty sections rather than printing "(none)". If everything is empty (no winners, no bleeders, no fatigue), say so in one line: "All ads under signal floors today."
 
+End the Slack message with a one-line footer: `_Source: fresh Meta API call_`. The parallel campaign-level Apps Script "Honeycomb Ads" digest reads from the `rolling_data` sheet snapshot (~7 AM pull), so the two reports may show different "yesterday spend" values for the same day — Meta's attribution shifts between the morning snapshot and your runtime API call. The footer makes the source unambiguous.
+
 ## Output — Sheet
 
 Handled by `analyze_daily.py`. One summary row per run via `?action=daily-check-write` to the `daily_check_log` tab (auto-created on first call). Header: `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at`. Don't issue your own POST.

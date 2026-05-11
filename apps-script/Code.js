@@ -2291,6 +2291,12 @@ function postDailyDigest() {
   if (watchLine) text += '\n' + watchLine + '\n';
   if (commentary) text += '\n' + commentary;
 
+  // Footer annotates the data source so users can reconcile against the
+  // separate daily-check skill (which fetches fresh from Meta and tends
+  // to show different numbers as Meta's attribution settles).
+  var nowLabel = Utilities.formatDate(new Date(), tz, 'h:mm a');
+  text += '\n\n_Source: rolling_data sheet (morning pipeline snapshot · digest posted ' + nowLabel + ' ET)_';
+
   postToSlack_(text);
   Logger.log('Daily digest posted to Slack');
 }
