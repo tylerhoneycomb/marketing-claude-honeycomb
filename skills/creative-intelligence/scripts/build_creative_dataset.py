@@ -67,6 +67,7 @@ from lib.meta import (  # noqa: E402
     normalize_creative,
 )
 from lib.text_features import compute_features, variant_id  # noqa: E402
+from lib.io import atomic_write_json  # noqa: E402
 
 CREATIVES_PATH = REPO_ROOT / "data" / "creatives" / "creatives.json"
 CATEGORIES_PATH = REPO_ROOT / "data" / "creatives" / "categorizations.json"
@@ -213,16 +214,13 @@ def load_creatives_cache() -> dict[str, dict[str, Any]]:
 
 
 def save_creatives_cache(cache: dict[str, dict[str, Any]]) -> None:
-    CREATIVES_PATH.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "count": len(cache),
         "creatives": sorted(cache.values(),
                             key=lambda c: c.get("creative_id") or ""),
     }
-    with CREATIVES_PATH.open("w") as f:
-        json.dump(payload, f, indent=2, sort_keys=True)
-        f.write("\n")
+    atomic_write_json(CREATIVES_PATH, payload, sort_keys=True)
 
 
 def ensure_creative_data(
