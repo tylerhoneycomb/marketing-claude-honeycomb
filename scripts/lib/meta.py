@@ -132,6 +132,16 @@ META_THROTTLE_ERROR_CODES = {
 }
 DEFAULT_SLEEP_BETWEEN_CALLS = 1.0
 MAX_RETRIES = 6
+# Cap per-retry backoff at 5 minutes. Meta's per-app rate-limit
+# windows can be 5-60 minutes long; the previous 60-second cap
+# burned through 6 retries in ~63s, then crashed, when the right
+# behavior was to wait it out.
+MAX_BACKOFF_SECONDS = 300
+# Cap pagination loops as a safeguard against a misbehaving cursor
+# or runaway loop. At limit=200 per page (insights, adsets, ads),
+# this gives 40,000 rows of headroom — far above the current
+# Honeycomb ad-account size.
+MAX_PAGES = 200
 
 
 def load_config() -> dict[str, Any]:
@@ -175,7 +185,7 @@ class MetaClient:
         params["access_token"] = self.token
         last_err: Exception | None = None
         for attempt in range(MAX_RETRIES):
-            backoff = min(2 ** attempt, 60)
+            backoff = min(2 ** attempt, MAX_BACKOFF_SECONDS)
             try:
                 resp = requests.get(url, params=params, timeout=60)
             except requests.RequestException as exc:
@@ -225,12 +235,21 @@ class MetaClient:
         rows: list[dict[str, Any]] = []
         next_url: str | None = url
         next_params: dict[str, Any] | None = params
+        pages_seen = 0
         while next_url:
             page = self._request(next_url, next_params)
             rows.extend(page.get("data", []))
             paging = page.get("paging") or {}
             next_url = paging.get("next")
             next_params = None
+            pages_seen += 1
+            if pages_seen >= MAX_PAGES and next_url:
+                logging.warning(
+                    "_paginate hit MAX_PAGES=%d cap on %s — truncating "
+                    "(%d rows so far). Investigate if this isn't expected.",
+                    MAX_PAGES, url, len(rows),
+                )
+                break
         return rows
 
     def insights(self, level: str, fields: list[str], since: str,

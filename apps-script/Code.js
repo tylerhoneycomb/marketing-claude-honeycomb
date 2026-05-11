@@ -5345,7 +5345,7 @@ function getScalingQueueRows_(params) {
   var sheet = ss.getSheetByName(BUDGET_SHEET);
   if (!sheet || sheet.getLastRow() < 2) return { rows: [], count: 0 };
 
-  // Schema (writeToQueue_, Code.js:3150):
+  // Schema (writeToQueue_ — search for `function writeToQueue_`):
   //   0:token 1:created_at 2:analysis_date 3:execution_scheduled
   //   4:campaign_id 5:campaign_name
   //   6:current_budget_cents 7:proposed_budget_cents
@@ -6232,8 +6232,16 @@ function getTargetWeeklySpend_() {
 // string "unknown user" was uninformative — audit log now says
 // "Slack approver" so it's at least clear WHY identity is unknown.
 function resolveApprover_(e) {
+  // Sanitize any Slack mrkdwn / link-syntax characters out of the
+  // typed name before echoing it into Slack post bodies (e.g.,
+  // "*pwn*", "<@U123>", "<https://evil|click>"). Keep apostrophes
+  // and hyphens so "O'Brien-Smith" survives. Backslash also stripped
+  // to prevent escape-sequence shenanigans.
   var typed = e && e.parameter && e.parameter.approver
-    ? String(e.parameter.approver).trim().substring(0, 60)
+    ? String(e.parameter.approver)
+        .replace(/[<>*_~`|\\]/g, '')
+        .trim()
+        .substring(0, 60)
     : '';
   if (typed) return typed;
   var sessionEmail = Session.getActiveUser().getEmail();

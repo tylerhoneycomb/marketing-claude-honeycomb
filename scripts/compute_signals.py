@@ -21,6 +21,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from lib.io import atomic_write_json  # noqa: E402
+
 REPO_ROOT = Path(__file__).resolve().parent.parent
 CONFIG_PATH = REPO_ROOT / "data" / "config" / "benchmarks.json"
 SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
@@ -343,20 +346,17 @@ def run(window_days: int) -> int:
         "learning_phase_adsets_skipped": learning_skipped,
     }
 
-    DERIVED_DIR.mkdir(parents=True, exist_ok=True)
-    with (DERIVED_DIR / "fatigue_signals.json").open("w") as f:
-        json.dump({"computed_at": summary["computed_at"],
-                   "window_days": window_days,
-                   "rows": fatigue_rows}, f, indent=2)
-        f.write("\n")
-    with (DERIVED_DIR / "winner_bleeder.json").open("w") as f:
-        json.dump({"computed_at": summary["computed_at"],
-                   "window_days": window_days,
-                   "rows": winner_bleeder}, f, indent=2)
-        f.write("\n")
-    with (DERIVED_DIR / "summary.json").open("w") as f:
-        json.dump(summary, f, indent=2)
-        f.write("\n")
+    atomic_write_json(DERIVED_DIR / "fatigue_signals.json", {
+        "computed_at": summary["computed_at"],
+        "window_days": window_days,
+        "rows": fatigue_rows,
+    })
+    atomic_write_json(DERIVED_DIR / "winner_bleeder.json", {
+        "computed_at": summary["computed_at"],
+        "window_days": window_days,
+        "rows": winner_bleeder,
+    })
+    atomic_write_json(DERIVED_DIR / "summary.json", summary)
 
     logging.info("derived signals written: critical=%d warning=%d ok=%d",
                  severity_counts["critical"], severity_counts["warning"],
@@ -382,15 +382,11 @@ def empty_run(window_days: int, dates: list[str]) -> None:
         "learning_phase_adsets_skipped": 0,
         "note": "No snapshots found; derived files initialized empty.",
     }
-    with (DERIVED_DIR / "fatigue_signals.json").open("w") as f:
-        json.dump({"computed_at": now, "window_days": window_days, "rows": []}, f, indent=2)
-        f.write("\n")
-    with (DERIVED_DIR / "winner_bleeder.json").open("w") as f:
-        json.dump({"computed_at": now, "window_days": window_days, "rows": []}, f, indent=2)
-        f.write("\n")
-    with (DERIVED_DIR / "summary.json").open("w") as f:
-        json.dump(summary, f, indent=2)
-        f.write("\n")
+    atomic_write_json(DERIVED_DIR / "fatigue_signals.json",
+                      {"computed_at": now, "window_days": window_days, "rows": []})
+    atomic_write_json(DERIVED_DIR / "winner_bleeder.json",
+                      {"computed_at": now, "window_days": window_days, "rows": []})
+    atomic_write_json(DERIVED_DIR / "summary.json", summary)
 
 
 def main(argv: list[str] | None = None) -> int:

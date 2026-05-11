@@ -41,6 +41,7 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from lib.meta import load_config  # noqa: E402
+from lib.io import atomic_write_json  # noqa: E402
 
 DERIVED_DIR = REPO_ROOT / "data" / "derived"
 DEFAULT_PROFILES = DERIVED_DIR / "scaling_profiles.json"
@@ -514,8 +515,7 @@ def main() -> int:
         "audience_actions": audience_actions,
     }
 
-    DERIVED_DIR.mkdir(parents=True, exist_ok=True)
-    Path(args.output).write_text(json.dumps(output, indent=2, default=str))
+    atomic_write_json(Path(args.output), output, default=str)
     logging.info("Wrote %s — freed=%d allocated=%d net=%d (%s) "
                  "knockdown_risk=%s audience_actions=%d",
                  args.output, freed, allocated, net_change, net_type,

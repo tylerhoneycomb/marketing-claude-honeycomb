@@ -47,6 +47,7 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from lib.meta import MetaClient, load_config  # noqa: E402
+from lib.io import atomic_write_json  # noqa: E402
 
 SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
 DERIVED_DIR = REPO_ROOT / "data" / "derived"
@@ -733,9 +734,8 @@ def main() -> int:
         "campaigns": per_campaign,
     }
 
-    DERIVED_DIR.mkdir(parents=True, exist_ok=True)
     out_path = Path(args.output)
-    out_path.write_text(json.dumps(output, indent=2, default=str))
+    atomic_write_json(out_path, output, default=str)
     logging.info("Wrote %s (%d verticals, %d campaigns)",
                  out_path, len(vertical_metrics), len(per_campaign))
 
