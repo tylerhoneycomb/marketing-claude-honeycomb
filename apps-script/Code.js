@@ -3664,7 +3664,7 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
   }
 
   if (replacedPrior) {
-    text += '_Note: this proposal replaces an earlier proposal from today that was not actioned. The previous proposal will be marked expired at next execution._\n\n';
+    text += '_Note: this proposal replaces an earlier proposal from the prior cycle that was not actioned. The previous proposal will be marked expired at next execution._\n\n';
   }
   text += '──────────────────\n';
   text += '✅  Approve: ' + approveUrl + '\n';
