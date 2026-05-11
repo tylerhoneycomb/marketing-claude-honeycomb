@@ -3627,10 +3627,17 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
   if (reductions.length > 0) {
     text += '*Reductions (' + reductions.length + ')*\n';
     reductions.forEach(function (r) {
+      // Some "reductions" are sub-dollar after the knockdown round-trip
+      // and display as $154 → $154. Render those without the ↓ arrow
+      // and without a percentage so the message stops contradicting the
+      // AI commentary that calls them "held flat".
+      var displayCurrent = Math.round(r.currentDailyBudgetCents / 100);
+      var displayProposed = Math.round(r.proposedDailyBudgetCents / 100);
+      var displayFlat = displayCurrent === displayProposed;
       var pct = Math.abs(Math.round((r.changeCents / r.currentDailyBudgetCents) * 1000) / 10);
-      text += '↓ *' + r.name + '*\n';
-      text += '   $' + (r.currentDailyBudgetCents / 100).toFixed(0) + '/day → $' +
-        (r.proposedDailyBudgetCents / 100).toFixed(0) + '/day (-' + pct + '%)\n';
+      text += (displayFlat ? '→ ' : '↓ ') + '*' + r.name + '*\n';
+      text += '   $' + displayCurrent + '/day → $' + displayProposed + '/day ' +
+        (displayFlat ? '(held flat)' : '(-' + pct + '%)') + '\n';
       text += '   _' + r.reasons.join(' | ') + '_\n';
     });
     text += '\n';
@@ -3639,10 +3646,13 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
   if (increases.length > 0) {
     text += '*Increases (' + increases.length + ')*\n';
     increases.forEach(function (r) {
+      var displayCurrent = Math.round(r.currentDailyBudgetCents / 100);
+      var displayProposed = Math.round(r.proposedDailyBudgetCents / 100);
+      var displayFlat = displayCurrent === displayProposed;
       var pct = Math.round((r.changeCents / r.currentDailyBudgetCents) * 1000) / 10;
-      text += '↑ *' + r.name + '*\n';
-      text += '   $' + (r.currentDailyBudgetCents / 100).toFixed(0) + '/day → $' +
-        (r.proposedDailyBudgetCents / 100).toFixed(0) + '/day (+' + pct + '%)\n';
+      text += (displayFlat ? '→ ' : '↑ ') + '*' + r.name + '*\n';
+      text += '   $' + displayCurrent + '/day → $' + displayProposed + '/day ' +
+        (displayFlat ? '(held flat)' : '(+' + pct + '%)') + '\n';
       text += '   _' + r.reasons.join(' | ') + '_\n';
     });
     text += '\n';
