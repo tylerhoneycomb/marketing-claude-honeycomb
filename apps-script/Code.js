@@ -1855,7 +1855,8 @@ function generateNarrativeForWeek_(targetWeek, opts) {
     'Rules: Numbers only from data. No invented figures. No softening.'
   ].join('\n');
 
-  var narrative = '[LLM call failed — see context_block column in intelligence_log for raw data]';
+  var narrative = '';
+  var llmError = null;
 
   try {
     var llmResponse = UrlFetchApp.fetch('https://api.anthropic.com/v1/messages', {
@@ -1875,18 +1876,36 @@ function generateNarrativeForWeek_(targetWeek, opts) {
     });
 
     var llmCode = llmResponse.getResponseCode();
-    var llmJson = JSON.parse(llmResponse.getContentText());
+    var llmJson;
+    try {
+      llmJson = JSON.parse(llmResponse.getContentText());
+    } catch (parseErr) {
+      llmJson = null;
+    }
 
     if (llmCode !== 200) {
-      Logger.log('Anthropic API Error (HTTP ' + llmCode + '): ' + llmResponse.getContentText());
-    } else if (llmJson.content && llmJson.content[0] && llmJson.content[0].text) {
+      llmError = 'HTTP ' + llmCode + ': ' + llmResponse.getContentText().substring(0, 200);
+      Logger.log('Anthropic API Error — ' + llmError);
+    } else if (llmJson && llmJson.content && llmJson.content[0] && llmJson.content[0].text) {
       narrative = llmJson.content[0].text;
       Logger.log('LLM narrative generated successfully');
     } else {
-      Logger.log('Unexpected Anthropic response: ' + llmResponse.getContentText());
+      llmError = 'unexpected response shape: ' + llmResponse.getContentText().substring(0, 200);
+      Logger.log('Unexpected Anthropic response — ' + llmError);
     }
   } catch (e) {
-    Logger.log('Anthropic exception: ' + e.message);
+    llmError = 'exception: ' + e.message;
+    Logger.log('Anthropic exception — ' + llmError);
+  }
+
+  // Previously the fallback string read "[LLM call failed — see
+  // context_block column in intelligence_log for raw data]" with no
+  // indication of WHY. Sun May 10's digest hit this path and Tyler had
+  // to open the sheet to find out the cause. Inline the error so the
+  // Slack post is actionable.
+  if (llmError) {
+    narrative = '[LLM call failed: ' + llmError + ']\n' +
+      '[Raw context preserved in intelligence_log.context_block.]';
   }
 
   // ── Write to intelligence_log ──────────────────────
