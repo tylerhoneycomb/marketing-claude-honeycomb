@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-11 (Slack-message audit fixes: knockdown threshold interpolation, sub-dollar "held flat" rendering, expiry message labels with proposal date, weekly-narrative LLM error inlining, data-source footers on Daily Ads + Daily Check, composite-rank hysteresis, approver identity capture, approver-name sanitization, atomic JSON writes shared across data pipeline)_
+_Last updated: 2026-05-12 (Documentation audit: updated Apps Script fallback description from "three" to "five" fallback trigger functions to reflect creative-intelligence and portfolio-scaling additions)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -113,7 +113,7 @@ The five workflows fall into two patterns:
 
 ### Cron fallback via Apps Script (added 2026-05-03)
 
-GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped, and **silently disabled after 60 days of repo inactivity**. To make scheduled runs more reliable, Apps Script time-based triggers (running on Google's cron infrastructure) act as a fallback. Three new functions in `apps-script/Code.js` (`triggerAgent*IfNeeded`) fire ~3 hours after the GitHub cron is supposed to run, check the GitHub API for a recent successful or in-progress run, and dispatch via `workflow_dispatch` only if none exists. If GitHub fired on time, Apps Script skips. If GitHub missed, the fallback picks it up. After running `createAllTriggers()` from the Apps Script editor, the system has two independent schedulers covering each workflow.
+GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped, and **silently disabled after 60 days of repo inactivity**. To make scheduled runs more reliable, Apps Script time-based triggers (running on Google's cron infrastructure) act as a fallback. Five `triggerAgent*IfNeeded` functions in `apps-script/Code.js` cover pipeline-health, daily-check, fatigue-monitor, creative-intelligence, and portfolio-scaling. Each fires ~3 hours after the GitHub cron is supposed to run, checks the GitHub API for a recent successful or in-progress run, and dispatches via `workflow_dispatch` only if none exists. If GitHub fired on time, Apps Script skips. If GitHub missed, the fallback picks it up. After running `createAllTriggers()` from the Apps Script editor, the system has two independent schedulers covering each workflow.
 
 ---
 
