@@ -4541,7 +4541,9 @@ function handleDashboardApi_(e) {
     'daily-check-write': true,
     'budget-queue-read': true,
     'fatigue-write': true,
-    'creative-intelligence-write': true
+    'creative-intelligence-write': true,
+    'scaling-queue-read': true,
+    'scaling-log-read': true
   };
 
   if (!action || !dashboardActions[action]) return null;
