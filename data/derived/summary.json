@@ -1,28 +1,28 @@
 {
-  "computed_at": "2026-05-14T13:59:15.604154+00:00",
+  "computed_at": "2026-05-15T13:56:10.504291+00:00",
   "window_days": 7,
   "snapshot_dates": [
-    "2026-05-07",
     "2026-05-08",
     "2026-05-09",
     "2026-05-10",
     "2026-05-11",
     "2026-05-12",
-    "2026-05-13"
+    "2026-05-13",
+    "2026-05-14"
   ],
-  "ad_count": 118,
-  "adset_count": 79,
+  "ad_count": 115,
+  "adset_count": 76,
   "campaign_count": 11,
   "fatigue_severity_counts": {
     "critical": 0,
     "warning": 2,
-    "below_floor": 14,
-    "ok": 102
+    "below_floor": 15,
+    "ok": 98
   },
   "actionable_critical": [],
   "actionable_warning": [
-    "120242871665660631",
-    "120244094020710631"
+    "120247429697240631",
+    "120245893431650631"
   ],
   "winners": [
     "120241324161090631",
@@ -45,5 +45,5 @@
   "bleeders": [
     "120247429697240631"
   ],
-  "learning_phase_adsets_skipped": 42
+  "learning_phase_adsets_skipped": 1
 }
