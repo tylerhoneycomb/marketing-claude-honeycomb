@@ -1,0 +1,5820 @@
+[
+  {
+    "adset_id": "120247429696850631",
+    "adset_name": "BBQ - Q2 2026 - Standard",
+    "campaign_id": "120242949904880631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1778472488,
+      "status": "SUCCESS"
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120246516495110631",
+    "adset_name": "Fitness Wellness - 1% LAL - HubSpot refresh - 2026-04-18 - Copy",
+    "campaign_id": "120244094020690631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1776687250
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120246516495090631",
+    "adset_name": "Fitness Wellness - 1-2% LAL - HubSpot refresh - 2026-04-18 - Copy",
+    "campaign_id": "120244094020690631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1776687252
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120246483523260631",
+    "adset_name": "Pizza Shops - 1% LAL - HubSpot refresh - 2026-04-18",
+    "campaign_id": "120241959190970631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1776803851
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120246483523250631",
+    "adset_name": "Pizza Shops - 1-2% LAL - HubSpot refresh - 2026-04-18",
+    "campaign_id": "120241959190970631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1776643480
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120246482969620631",
+    "adset_name": "Creameries - 1% LAL - HubSpot refresh - 2026-04-18",
+    "campaign_id": "120241605050900631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1776622735
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120246482969610631",
+    "adset_name": "Creameries - 1-2% LAL - HubSpot refresh - 2026-04-18",
+    "campaign_id": "120241605050900631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1776622733
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456580631",
+    "adset_name": "BR-Ice Cream Shops-Cohort5-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456570631",
+    "adset_name": "BR-Ice Cream Shops-Cohort3-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456560631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort11-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456550631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort9-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456540631",
+    "adset_name": "BR-Ice Cream Shops-Cohort10-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456530631",
+    "adset_name": "BR-Ice Cream Shops-Cohort8-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456520631",
+    "adset_name": "BR-Ice Cream Shops-Cohort6-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456510631",
+    "adset_name": "BR-Ice Cream Shops-Cohort7-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456500631",
+    "adset_name": "BR-Ice Cream Shops-Cohort2-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456490631",
+    "adset_name": "BR-Ice Cream Shops-Cohort11-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456480631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort5-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456470631",
+    "adset_name": "BR-Ice Cream Shops-Cohort1-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456460631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort8-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456450631",
+    "adset_name": "BR-Ice Cream Shops-Cohort4-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456440631",
+    "adset_name": "BR-Ice Cream Shops-Cohort9-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456430631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort6-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456420631",
+    "adset_name": "BR-Cheese Shops-Cohort11-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456410631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort6-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456400631",
+    "adset_name": "BR-Cheese Shops-Cohort9-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456390631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort5-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456380631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort2-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456370631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort8-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456360631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort1-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456350631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort10-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456340631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort7-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456330631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort3-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456320631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort9-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456310631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort6-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456300631",
+    "adset_name": "BR-BBQ Restaurants-Cohort5-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456290631",
+    "adset_name": "BR-BBQ Restaurants-Cohort6-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456280631",
+    "adset_name": "BR-BBQ Restaurants-Cohort8-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456270631",
+    "adset_name": "BR-BBQ Restaurants-Cohort1-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456260631",
+    "adset_name": "BR-BBQ Restaurants-Cohort3-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456250631",
+    "adset_name": "BR-BBQ Restaurants-Cohort11-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456240631",
+    "adset_name": "BR-BBQ Restaurants-Cohort10-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456230631",
+    "adset_name": "BR-BBQ Restaurants-Cohort7-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456220631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort8-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456210631",
+    "adset_name": "BR-BBQ Restaurants-Cohort9-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456200631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort3-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456190631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort4-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456180631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort4-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456170631",
+    "adset_name": "BR-Cheese Shops-Cohort2-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456160631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort1-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456150631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort10-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456140631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort2-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456130631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort7-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456120631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort3-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456110631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort11-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456100631",
+    "adset_name": "BR-Ethnic Cultural Restaurants-Cohort9-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456090631",
+    "adset_name": "BR-Cheese Shops-Cohort5-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456080631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort10-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456070631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort5-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456060631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort4-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456050631",
+    "adset_name": "BR-Cheese Shops-Cohort8-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456040631",
+    "adset_name": "BR-Cheese Shops-Cohort10-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456030631",
+    "adset_name": "BR-Cheese Shops-Cohort4-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456020631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort11-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456010631",
+    "adset_name": "BR-Cheese Shops-Cohort6-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893456000631",
+    "adset_name": "BR-Cheese Shops-Cohort7-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893455990631",
+    "adset_name": "BR-Cheese Shops-Cohort3-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893455980631",
+    "adset_name": "BR-BBQ Restaurants-Cohort4-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893455960631",
+    "adset_name": "BR-Cheese Shops-Cohort1-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893455950631",
+    "adset_name": "BR-Butcher Shops Delis-Cohort7-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893455940631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort2-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893455930631",
+    "adset_name": "BR-Artisan Bakeries Patisseries-Cohort1-LAL1-20260414-Restaurants_and_Eateries",
+    "campaign_id": "120245893173790631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453730631",
+    "adset_name": "BR-Pizza Restaurants-Cohort4-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453720631",
+    "adset_name": "BR-Pizza Restaurants-Cohort2-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453710631",
+    "adset_name": "BR-Pizza Restaurants-Cohort9-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453700631",
+    "adset_name": "BR-Pizza Restaurants-Cohort1-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453690631",
+    "adset_name": "BR-Pizza Restaurants-Cohort11-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453680631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort8-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453670631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort5-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453660631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort6-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453650631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort7-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453640631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort10-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453630631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort3-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453620631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort11-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453610631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort4-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453600631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort9-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453590631",
+    "adset_name": "BR-Independent Catering Companies-Cohort6-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453580631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort1-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453570631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort6-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453560631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort5-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453550631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort10-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453540631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort4-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453530631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort3-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453520631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort8-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453510631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort7-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453500631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort11-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453490631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort1-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453480631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort2-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453470631",
+    "adset_name": "BR-Independent Catering Companies-Cohort5-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453460631",
+    "adset_name": "BR-Independent Catering Companies-Cohort8-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453450631",
+    "adset_name": "BR-Independent Grocery Stores-Cohort9-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453440631",
+    "adset_name": "BR-Juice Smoothie Bars-Cohort2-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453430631",
+    "adset_name": "BR-Independent Catering Companies-Cohort11-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453410631",
+    "adset_name": "BR-Independent Catering Companies-Cohort9-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453400631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort6-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453390631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort5-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453380631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort11-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453370631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort2-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453360631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort9-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453350631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort8-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453340631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort10-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453330631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort4-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453320631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort3-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453310631",
+    "adset_name": "BR-Tea Houses Bubble Tea Shops-Cohort1-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453300631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort6-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453290631",
+    "adset_name": "BR-Pizza Restaurants-Cohort3-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453280631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort8-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453270631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort10-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453260631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort7-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453250631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort3-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453240631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort4-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453230631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort2-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453220631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort1-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453210631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort9-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453200631",
+    "adset_name": "BR-Pizza Restaurants-Cohort8-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453190631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort11-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453180631",
+    "adset_name": "BR-Pizza Restaurants-Cohort5-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453170631",
+    "adset_name": "BR-Pizza Restaurants-Cohort10-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453160631",
+    "adset_name": "BR-Pizza Restaurants-Cohort6-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453150631",
+    "adset_name": "BR-Pizza Restaurants-Cohort7-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453140631",
+    "adset_name": "BR-Sushi Japanese Restaurants-Cohort5-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453130631",
+    "adset_name": "BR-Independent Catering Companies-Cohort4-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453120631",
+    "adset_name": "BR-Independent Catering Companies-Cohort7-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453110631",
+    "adset_name": "BR-Independent Catering Companies-Cohort10-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453100631",
+    "adset_name": "BR-Independent Catering Companies-Cohort2-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453090631",
+    "adset_name": "BR-Independent Catering Companies-Cohort3-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893453080631",
+    "adset_name": "BR-Independent Catering Companies-Cohort1-LAL1-20260414-Specialty_Food_and_Catering",
+    "campaign_id": "120245893173780631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ]
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441660631",
+    "adset_name": "BR-Independent Bookstores-Cohort4-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441650631",
+    "adset_name": "BR-Flower Shops-Cohort1-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441640631",
+    "adset_name": "BR-Flower Shops-Cohort11-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441630631",
+    "adset_name": "BR-Day Spas-Cohort2-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441620631",
+    "adset_name": "BR-Flower Shops-Cohort9-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748348
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441610631",
+    "adset_name": "BR-Day Spas-Cohort5-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441600631",
+    "adset_name": "BR-Day Spas-Cohort9-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441590631",
+    "adset_name": "BR-Day Spas-Cohort7-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441580631",
+    "adset_name": "BR-Hair Salons-Cohort8-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441570631",
+    "adset_name": "BR-Hair Salons-Cohort10-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748359
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441560631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort11-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441550631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort5-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441540631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort8-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441530631",
+    "adset_name": "BR-Dance Studios-Cohort7-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441520631",
+    "adset_name": "BR-Dance Studios-Cohort1-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441510631",
+    "adset_name": "BR-Hair Salons-Cohort11-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441490631",
+    "adset_name": "BR-Flower Shops-Cohort5-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441480631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort7-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441470631",
+    "adset_name": "BR-Flower Shops-Cohort8-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441460631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort4-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441450631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort3-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748348
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441440631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort1-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748348
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441430631",
+    "adset_name": "BR-Dance Studios-Cohort3-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441420631",
+    "adset_name": "BR-Day Spas-Cohort6-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441410631",
+    "adset_name": "BR-Flower Shops-Cohort2-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441400631",
+    "adset_name": "BR-Day Spas-Cohort10-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891835
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441390631",
+    "adset_name": "BR-Day Spas-Cohort4-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891719
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441380631",
+    "adset_name": "BR-Day Spas-Cohort3-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891800
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441370631",
+    "adset_name": "BR-Day Spas-Cohort1-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891789
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441360631",
+    "adset_name": "BR-Dance Studios-Cohort4-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441350631",
+    "adset_name": "BR-Independent Bookstores-Cohort8-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441340631",
+    "adset_name": "BR-Independent Bookstores-Cohort3-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441330631",
+    "adset_name": "BR-Hair Salons-Cohort7-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441320631",
+    "adset_name": "BR-Hair Salons-Cohort4-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441310631",
+    "adset_name": "BR-Hair Salons-Cohort3-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441300631",
+    "adset_name": "BR-Flower Shops-Cohort7-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441290631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort6-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775892097
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441280631",
+    "adset_name": "BR-Day Spas-Cohort11-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891788
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441270631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort10-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891805
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441260631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort2-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775892858
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441250631",
+    "adset_name": "BR-Dance Studios-Cohort6-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775877184
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441240631",
+    "adset_name": "BR-Dance Studios-Cohort5-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891820
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441230631",
+    "adset_name": "BR-Day Care Early Childhood Centers-Cohort9-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775892093
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441220631",
+    "adset_name": "BR-Independent Bookstores-Cohort5-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775892324
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441210631",
+    "adset_name": "BR-Dance Studios-Cohort9-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775892109
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441200631",
+    "adset_name": "BR-Flower Shops-Cohort4-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891850
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441190631",
+    "adset_name": "BR-Dance Studios-Cohort2-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891761
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441180631",
+    "adset_name": "BR-Independent Bookstores-Cohort2-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891829
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441170631",
+    "adset_name": "BR-Independent Bookstores-Cohort10-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891828
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441160631",
+    "adset_name": "BR-Independent Bookstores-Cohort1-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775892409
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441150631",
+    "adset_name": "BR-Hair Salons-Cohort5-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891849
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441140631",
+    "adset_name": "BR-Dance Studios-Cohort11-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891839
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441130631",
+    "adset_name": "BR-Independent Bookstores-Cohort9-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775892846
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441120631",
+    "adset_name": "BR-Independent Bookstores-Cohort11-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891799
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441110631",
+    "adset_name": "BR-Hair Salons-Cohort9-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891777
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441100631",
+    "adset_name": "BR-Hair Salons-Cohort1-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775877854
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441090631",
+    "adset_name": "BR-Hair Salons-Cohort6-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891769
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441080631",
+    "adset_name": "BR-Flower Shops-Cohort3-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775893677
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441070631",
+    "adset_name": "BR-Flower Shops-Cohort6-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775892073
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441060631",
+    "adset_name": "BR-Flower Shops-Cohort10-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775892787
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441050631",
+    "adset_name": "BR-Day Spas-Cohort8-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775893666
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441040631",
+    "adset_name": "BR-Independent Bookstores-Cohort6-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891785
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441030631",
+    "adset_name": "BR-Dance Studios-Cohort8-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891787
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893441020631",
+    "adset_name": "BR-Dance Studios-Cohort10-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1775891772
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431540631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort11-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431530631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort9-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431520631",
+    "adset_name": "BR-Distilleries-Cohort5-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431510631",
+    "adset_name": "BR-Distilleries-Cohort8-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748354
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431500631",
+    "adset_name": "BR-Distilleries-Cohort6-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748352
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431490631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort9-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431480631",
+    "adset_name": "BR-Coffee Roasters-Cohort8-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431470631",
+    "adset_name": "BR-Coffee Roasters-Cohort6-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748352
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431460631",
+    "adset_name": "BR-Coffee Roasters-Cohort7-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431450631",
+    "adset_name": "BR-Coffee Roasters-Cohort10-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431440631",
+    "adset_name": "BR-Coffee Roasters-Cohort4-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748356
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431430631",
+    "adset_name": "BR-Coffee Roasters-Cohort3-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431410631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort2-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431400631",
+    "adset_name": "BR-Coffee Roasters-Cohort11-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431390631",
+    "adset_name": "BR-Coffee Roasters-Cohort9-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748352
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431380631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort5-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431370631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort6-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431360631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort8-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431350631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort10-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431340631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort7-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431330631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort3-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777117791
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431320631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort4-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431310631",
+    "adset_name": "BR-Coffee Roasters-Cohort1-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777117791
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431300631",
+    "adset_name": "BR-Distilleries-Cohort10-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431290631",
+    "adset_name": "BR-Distilleries-Cohort7-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431280631",
+    "adset_name": "BR-Distilleries-Cohort4-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777117791
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431270631",
+    "adset_name": "BR-Distilleries-Cohort3-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431260631",
+    "adset_name": "BR-Distilleries-Cohort2-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431250631",
+    "adset_name": "BR-Distilleries-Cohort1-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748348
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431240631",
+    "adset_name": "BR-Distilleries-Cohort9-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431230631",
+    "adset_name": "BR-Distilleries-Cohort11-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431220631",
+    "adset_name": "BR-Coffee Roasters-Cohort5-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431210631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort8-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431200631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort6-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431190631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort10-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431180631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort7-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748354
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431170631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort2-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431160631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort1-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431150631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort4-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431140631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort3-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431130631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort11-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431120631",
+    "adset_name": "BR-Craft Breweries Brewpubs-Cohort5-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893431110631",
+    "adset_name": "BR-Cocktail Wine Bars-Cohort1-LAL1-20260414-Craft_Producers_and_Bars",
+    "campaign_id": "120245893173800631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748352
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421380631",
+    "adset_name": "BR-Sports Bars-Cohort11-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777746713
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421360631",
+    "adset_name": "BR-Wineries Vineyards-Cohort11-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421350631",
+    "adset_name": "BR-Wineries Vineyards-Cohort4-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777747072
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421340631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort4-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421330631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort6-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777814496
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421320631",
+    "adset_name": "BR-Sports Bars-Cohort5-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421310631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort8-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748354
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421300631",
+    "adset_name": "BR-Sports Bars-Cohort2-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748348
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421290631",
+    "adset_name": "BR-Wineries Vineyards-Cohort3-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421280631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort9-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421270631",
+    "adset_name": "BR-Sports Bars-Cohort6-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748348
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421260631",
+    "adset_name": "BR-Wineries Vineyards-Cohort9-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421250631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort7-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421240631",
+    "adset_name": "BR-Wineries Vineyards-Cohort2-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421230631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort11-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421220631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort1-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421210631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort2-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748352
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421200631",
+    "adset_name": "BR-Sports Bars-Cohort3-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421190631",
+    "adset_name": "BR-Sports Bars-Cohort4-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421180631",
+    "adset_name": "BR-Sports Bars-Cohort10-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421170631",
+    "adset_name": "BR-Sports Bars-Cohort8-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421160631",
+    "adset_name": "BR-Sports Bars-Cohort7-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421150631",
+    "adset_name": "BR-Wineries Vineyards-Cohort10-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421140631",
+    "adset_name": "BR-Wineries Vineyards-Cohort7-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748348
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421130631",
+    "adset_name": "BR-Wineries Vineyards-Cohort5-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421120631",
+    "adset_name": "BR-Wineries Vineyards-Cohort8-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748354
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421110631",
+    "adset_name": "BR-Wineries Vineyards-Cohort6-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421100631",
+    "adset_name": "BR-Wineries Vineyards-Cohort1-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748307
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421090631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort10-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748354
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421080631",
+    "adset_name": "BR-Sports Bars-Cohort9-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421070631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort5-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893421060631",
+    "adset_name": "BR-Independent Coffee Shops-Cohort3-LAL1-20260414-Coffee_Beer_and_Wine",
+    "campaign_id": "120245893173820631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400320631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort2-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400310631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort7-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400300631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort5-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400290631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort8-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400280631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort10-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748350
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400270631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort6-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400260631",
+    "adset_name": "BR-Nail Salons-Cohort9-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400250631",
+    "adset_name": "BR-Nail Salons-Cohort1-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748352
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400240631",
+    "adset_name": "BR-Nail Salons-Cohort11-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400230631",
+    "adset_name": "BR-Nail Salons-Cohort5-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400220631",
+    "adset_name": "BR-Nail Salons-Cohort4-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400210631",
+    "adset_name": "BR-Nail Salons-Cohort3-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400200631",
+    "adset_name": "BR-Nail Salons-Cohort2-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400190631",
+    "adset_name": "BR-Nail Salons-Cohort7-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400180631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort3-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400170631",
+    "adset_name": "BR-Nail Salons-Cohort8-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400160631",
+    "adset_name": "BR-Nail Salons-Cohort6-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400150631",
+    "adset_name": "BR-Yoga Studios-Cohort4-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400140631",
+    "adset_name": "BR-Yoga Studios-Cohort6-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400130631",
+    "adset_name": "BR-Yoga Studios-Cohort8-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400120631",
+    "adset_name": "BR-Yoga Studios-Cohort5-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400110631",
+    "adset_name": "BR-Yoga Studios-Cohort9-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748351
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400100631",
+    "adset_name": "BR-Yoga Studios-Cohort2-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748346
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400090631",
+    "adset_name": "BR-Yoga Studios-Cohort11-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400080631",
+    "adset_name": "BR-Yoga Studios-Cohort1-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748357
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400070631",
+    "adset_name": "BR-Yoga Studios-Cohort3-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748353
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400060631",
+    "adset_name": "BR-Yoga Studios-Cohort7-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748354
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400050631",
+    "adset_name": "BR-Yoga Studios-Cohort10-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748349
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400040631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort11-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748348
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400030631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort9-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400020631",
+    "adset_name": "BR-Nail Salons-Cohort10-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400010631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort4-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748347
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120245893400000631",
+    "adset_name": "BR-Bed and Breakfasts-Cohort1-LAL1-20260414-Beauty_Wellness_and_Lifestyle",
+    "campaign_id": "120245893173830631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1777748358
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120244510368850631",
+    "adset_name": "Bakeries v2 ads - Audience 1 - Lookalike (Hubspot + RAR)  Q1 2025",
+    "campaign_id": "120238791690590631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1778088630
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120244510347050631",
+    "adset_name": "Bakeries v1 ads - Audience 1 - Lookalike (Hubspot + RAR)  Q1 2025",
+    "campaign_id": "120238791690590631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1778088630
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120244509567530631",
+    "adset_name": "Bakeries - Interest targeting + RAR  Q4 2025 - Benefits of Crowdfunding - Copy",
+    "campaign_id": "120238791690590631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "conversions": 2,
+      "last_sig_edit_ts": 1778088630,
+      "status": "FAIL"
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120244232850230631",
+    "adset_name": "Wineries / vineyards - Lookalike (audience 3) -  Lead generation - Q1 2026",
+    "campaign_id": "120241360795650631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1773437706
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120244138133050631",
+    "adset_name": "Juice / smoothie - Audience 2 - Lookalike- Lead generation - Q1 2026",
+    "campaign_id": "120244137988980631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1773273969
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120244137988970631",
+    "adset_name": "Juice / smoothie - Audience 2 - Hubspot+RAR - Lead generation - Q1 2026",
+    "campaign_id": "120244137988980631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1773273973
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120244135874610631",
+    "adset_name": "Fitness / spas - Audience 1 - Lookalike - Lead generation - Q1 2026",
+    "campaign_id": "120244094020690631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1774562064
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120244094020700631",
+    "adset_name": "Fitness / spas - Audience 2 - Hubspot - Lead generation - Q1 2026",
+    "campaign_id": "120244094020690631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1773265503
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120243111129230631",
+    "adset_name": "Delis / butchers - Audience 2 - Hubspot/RAR extract - Lead generation - Q1 2026",
+    "campaign_id": "120243109874830631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1771366044
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120243109874850631",
+    "adset_name": "Delis / butchers - Audience 1 - Pure lookalike 1% - Lead generation - Q1 2026",
+    "campaign_id": "120243109874830631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1771366049
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120243070857060631",
+    "adset_name": "BBQ - Audience 1 - Pure lookalike 2% - Lead generation - Q1 2026",
+    "campaign_id": "120242949904880631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1778088552
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120242950140650631",
+    "adset_name": "BBQ - Audience 1 - Pure lookalike 1% - Lead generation - Q1 2026 - Copy",
+    "campaign_id": "120242949904880631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1778088552
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120242950044520631",
+    "adset_name": "Creameries - Audience 2 - Pure lookalike - Lead generation - Q1 2026",
+    "campaign_id": "120241605050900631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770935040
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120242871665670631",
+    "adset_name": "Farms - Audience 2 - Pure lookalike - Q1 2026",
+    "campaign_id": "120242871665680631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1771299292
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120242867161870631",
+    "adset_name": "Pizza Shops - Audience 1.1 - Lookalike - Lead generation - Q1 2026",
+    "campaign_id": "120241959190970631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770757429
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120242750129800631",
+    "adset_name": "Successful offerings / prequal - Lookalike - Lead generation - Q1 2026 - Copy",
+    "campaign_id": "120242749985550631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770756901
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120242749985560631",
+    "adset_name": "Aggregate business list - Lead generation - Q1 2026",
+    "campaign_id": "120242749985550631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770757440
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120242253829100631",
+    "adset_name": "Successful offerings - Lookalike + page admins - Lead generation - Q1 2026 - Copy",
+    "campaign_id": "120242253294330631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1769119643
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120242253627600631",
+    "adset_name": "Successful offerings - Lookalike - Lead generation - Q1 2026",
+    "campaign_id": "120242253294330631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1769119630
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241995271950631",
+    "adset_name": "LPF - Coffee Shops - Audience 1 - Ads rev2 - Lead generation - Q1 2026",
+    "campaign_id": "120241680199330631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1768507705
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241959883670631",
+    "adset_name": "Pizza Shops - Audience 2 - Lookalike - Lead generation - Q4 2025",
+    "campaign_id": "120241959190970631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770757393
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241722626420631",
+    "adset_name": "LPF - Breweries - Interests+RAR (No titles) - Lead generation - Q1 2026",
+    "campaign_id": "120241680199330631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1768500626
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241722349340631",
+    "adset_name": "LPF - Wineries / vineyards - List + Interests (audience 2) -  Lead generation - Q1 2026",
+    "campaign_id": "120241680199330631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1768500735
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241722324510631",
+    "adset_name": "Bakeries - Interest targeting + RAR - Benefits of Crowdfunding - Q1 2026",
+    "campaign_id": "120241680199330631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1768500833
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241722199160631",
+    "adset_name": "LPF - Distillers - Audience 1 - List+page admins  - Lead generation - Q1 2026",
+    "campaign_id": "120241680199330631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1768500767
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241685589600631",
+    "adset_name": "LPF - Sustainable Main Street - Audience 3 - Pure lookalike - Lead generation - Q1 2026",
+    "campaign_id": "120241680199330631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1768500867
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241685521320631",
+    "adset_name": "LPF - Creameries - Audience 2 - Pure lookalike - Lead generation - Q1 2026",
+    "campaign_id": "120241680199330631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770757531
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241680956280631",
+    "adset_name": "DEPRECIATED - LPF - Coffee Shops - Lead generation - Interests+RAR - Q1 2026",
+    "campaign_id": "120241680199330631",
+    "daily_budget_cents": null,
+    "effective_status": "PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1768500220
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241608386670631",
+    "adset_name": "Sustainable Main Street - Audience 3 - Pure lookalike - Lead generation - Q4 2025 - Copy",
+    "campaign_id": "120241607362530631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1767902433
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241608377990631",
+    "adset_name": "Sustainable Main Street - Audience 2 - List + interests - Lead generation - Q1 2026",
+    "campaign_id": "120241607362530631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770756831
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241605050910631",
+    "adset_name": "Creameries - Audience 1 - List + page admins - Lead generation - Q4 2025",
+    "campaign_id": "120241605050900631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1767643791
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241421715210631",
+    "adset_name": "Distillers - Audience 1 - List+page admins  - Lead generation - Q4 2025",
+    "campaign_id": "120241420440650631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1767125216
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241421568920631",
+    "adset_name": "Distillers - Audience 2 - Pure lookalike (1%)  - Lead generation - Q4 2025",
+    "campaign_id": "120241420440650631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770757452
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241361310150631",
+    "adset_name": "Wineries / vineyards - List + page admins (audience 1) -  Lead generation - Q4 2025",
+    "campaign_id": "120241360795650631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1773437598
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241360795630631",
+    "adset_name": "Wineries / vineyards - List + Interests (audience 2) -  Lead generation - Q4 2025",
+    "campaign_id": "120241360795650631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770757314
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241324161100631",
+    "adset_name": "Breweries - Interests+RAR+titles  - Lead generation - Q4 2025",
+    "campaign_id": "120240869767800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1773010794
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120241323300840631",
+    "adset_name": "Bakeries - Interest targeting + RAR  Q4 2025 - Benefits of Crowdfunding",
+    "campaign_id": "120238791690590631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1778088630,
+      "status": "SUCCESS"
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120240869767790631",
+    "adset_name": "Breweries - Interests+RAR (No titles) - Lead generation - Q4 2025",
+    "campaign_id": "120240869767800631",
+    "daily_budget_cents": null,
+    "effective_status": "ACTIVE",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1770757430
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120240518624630631",
+    "adset_name": "Coffee Shops - Lead generation - Interests+RAR - Q4 2025",
+    "campaign_id": "120238791928400631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1769197573
+    },
+    "lifetime_budget_cents": null,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120239247655850631",
+    "adset_name": "Q4 '25 Benefits of Crowdfunding. Bakery Ad set",
+    "campaign_id": "120239247655830631",
+    "daily_budget_cents": 0,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": {
+      "attribution_windows": [
+        "7d_click",
+        "1d_view"
+      ],
+      "last_sig_edit_ts": 1763501932
+    },
+    "lifetime_budget_cents": 17500,
+    "optimization_goal": "OFFSITE_CONVERSIONS"
+  },
+  {
+    "adset_id": "120236975610190631",
+    "adset_name": "We\u2019re Not Bankers -",
+    "campaign_id": "120236975610200631",
+    "daily_budget_cents": null,
+    "effective_status": "CAMPAIGN_PAUSED",
+    "issues_info": null,
+    "learning_stage_info": null,
+    "lifetime_budget_cents": null,
+    "optimization_goal": "LINK_CLICKS"
+  }
+]
