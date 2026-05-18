@@ -36,6 +36,7 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from lib.meta import load_config  # noqa: E402
+from lib.exec_api import get_spend_goal  # noqa: E402
 
 
 def parse_date(s: str) -> date:
@@ -391,11 +392,24 @@ def main(argv: list[str] | None = None) -> int:
     adsets_rollup = rollup_by(data["adsets"], "adset_id")
     ads_rollup = rollup_by(data["ads"], "ad_id")
 
+    # Weekly spend GOAL is fetched live from /exec?action=get_spend_goal
+    # so a dashboard update is reflected without a code change. The
+    # benchmarks.json value is a fallback only (used when /exec is
+    # unreachable). pacing_tolerance_pct stays static config — it's a
+    # pacing-status sensitivity band, not the optimizer's dollar
+    # tolerance.
+    goal = get_spend_goal(
+        exec_endpoint,
+        fallback_target=pacing_cfg["weekly_spend_target_dollars"],
+        fallback_tolerance=pacing_cfg.get("weekly_spend_tolerance_dollars", 500),
+    )
+
     pacing = compute_pacing(
         data["campaigns"], until,
-        pacing_cfg["weekly_spend_target_dollars"],
+        goal["target_weekly_spend"],
         pacing_cfg["pacing_tolerance_pct"],
     )
+    pacing["weekly_target_source"] = goal["source"]
     portfolio = compute_portfolio(campaigns_rollup)
     winners = compute_winners(
         ads_rollup,
