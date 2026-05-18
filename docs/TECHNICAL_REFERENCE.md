@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-11 (Slack-message audit cleanup: composite-rank hysteresis via `BUDGET_RANK_TIERS` PROPS; `resolveApprover_()` helper + optional approver form input on the budget confirmation page; knockdown threshold interpolation from `effectiveTarget + effectiveTolerance`; commentary `max_tokens` 500 → 800; expiry messages labeled with proposal date; inlined LLM error in weekly-narrative fallback; data-source footers on Daily Ads + Daily Check; `scripts/lib/io.py:atomic_write_json` shared by `compute_signals.py`, `build_creative_dataset.py`, `compute_scaling_profiles.py`, `compute_reallocation.py`; `MetaClient` pagination cap + 300s backoff cap)_
+_Last updated: 2026-05-17 (weekly spend goal is now sourced live for all consumers: new `scripts/lib/exec_api.py` (`fetch_json`, `get_spend_goal`); `daily-check/analyze_daily.py` fetches the goal from `/exec?action=get_spend_goal` instead of static `benchmarks.json`; `compute_scaling_profiles.py` refactored onto the shared helper)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -675,6 +675,22 @@ Dashboard can propose a new weekly spend target via `handleDashboardApi_` action
 
 `computeRecommendations_()` reads these overrides via `getTargetWeeklySpend_()` / `getWeeklySpendTolerance_()` so the dashboard can adjust budget goals without code changes.
 
+#### Source of truth for the weekly spend goal + tolerance
+
+**The runtime source of truth is the Apps Script Script Properties `DASHBOARD_TARGET_WEEKLY_SPEND` / `DASHBOARD_WEEKLY_SPEND_TOLERANCE`, read by every consumer through `/exec?action=get_spend_goal`** (Code.js:4607-4634). That handler returns `target_weekly_spend`, `weekly_spend_tolerance`, and a `source` field (`script_property_override` when an override is set, `hardcoded_default` otherwise).
+
+Consumers and how they read it:
+
+| Consumer | Access path |
+|---|---|
+| Apps Script optimizer | `getTargetWeeklySpend_()` / `getWeeklySpendTolerance_()` (same PROPS, in-process) |
+| `portfolio-scaling/compute_scaling_profiles.py` | `lib.exec_api.get_spend_goal()` → `/exec?action=get_spend_goal` |
+| `portfolio-scaling/compute_reallocation.py` | reads `scaling_profiles.json` (populated by the above) |
+| `daily-check/analyze_daily.py` | `lib.exec_api.get_spend_goal()` → `/exec?action=get_spend_goal` |
+| Webapp dashboard | `fetchAction(apiUrl, 'get_spend_goal')` |
+
+The Apps Script constants `TARGET_WEEKLY_SPEND` (10000) / `WEEKLY_SPEND_TOLERANCE` (500) and `data/config/benchmarks.json:pacing.weekly_spend_target_dollars` are **fallback-only defaults** — the constants back the `get_spend_goal` handler when no override exists; the `benchmarks.json` value is used by `daily-check` only when `/exec` is unreachable (`get_spend_goal` returns `source: "fallback_unreachable"` in that case). `daily-check`'s `pacing_tolerance_pct` is a separate pacing-status sensitivity band, not the optimizer's dollar tolerance, and stays static config.
+
 ### 8.7 Portfolio scaling integration _(added 2026-05-08)_
 
 The portfolio-scaling skill (`skills/portfolio-scaling/`) adds a structural overlay on top of the optimizer. Three behaviors are wired into `computeRecommendations_()`; all three degrade gracefully when `data/derived/scaling_profiles.json` is missing or stale.
@@ -1236,6 +1252,8 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 | `compute_features(text)` | `scripts/lib/text_features.py` | Deterministic structural features per variant text (char/word/sentence count, opening word, syntactic markers). Pure Python, no LLM call. |
 | `variant_id(text)` | `scripts/lib/text_features.py` | Whitespace-collapsed + lowercased SHA-256 prefix (16 hex chars). Stable join key between dataset builder and categorizer. |
 | `atomic_write_json(path, data, ...)` | `scripts/lib/io.py` | Atomic write via tmp + rename. Used by `compute_signals.py`, `build_creative_dataset.save_creatives_cache`, `compute_scaling_profiles.py`, and `compute_reallocation.py`. The `.json.tmp` extension is `.gitignore`d so an interrupted run never commits a partial file. Mirrors the inline pattern in `fetch_ad_data.write_json` (PR #72) and `categorize_creative.save_cache_atomic`. |
+| `fetch_json(url, params, ...)` | `scripts/lib/exec_api.py` | Generic GET + 3× retry JSON fetch. Raises `RuntimeError` on exhausted retries. Canonical `/exec` GET wrapper — used by `compute_scaling_profiles.py`. |
+| `get_spend_goal(exec_url, *, fallback_target, fallback_tolerance)` | `scripts/lib/exec_api.py` | Canonical Python accessor for the live weekly spend goal + tolerance. Calls `/exec?action=get_spend_goal`; on any failure logs a warning and returns the supplied fallbacks tagged `source="fallback_unreachable"` (never raises). Used by `daily-check/analyze_daily.py` and `portfolio-scaling/compute_scaling_profiles.py`. |
 | `MetaClient.resolve_image_hashes(hashes)` | `scripts/lib/meta.py` | Resolves `image_hash` values to full-size URLs via `/act_X/adimages?hashes=[...]`. Auto-chunks at 50 hashes per request. Returns `{hash: {url, width, height, ...}}`. |
 | `download_image(creative_id_or_hash, url, dest_dir)` | `scripts/lib/meta.py` | Idempotent atomic download to `<dest_dir>/<key>.jpg`. Skips existing non-empty files; one retry on transient errors; logs and returns None on hard failure rather than aborting the caller. |
 | `extract_vertical(campaign_name)` | `skills/creative-intelligence/scripts/build_creative_dataset.py` | Pulls vertical slug from `AD-/ICD-/Rev-<vertical>-Q<N>-<YYYY>` patterns (with optional `PAUSED -` prefix and legacy `Wineries / vineyards` fallback). Lowercased human-readable. |
