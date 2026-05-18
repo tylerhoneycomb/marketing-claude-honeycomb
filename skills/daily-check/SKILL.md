@@ -44,7 +44,8 @@ Requires:
 {
   "date": "YYYY-MM-DD",                  // = until / yesterday
   "pacing": {status, yesterday_spend, remaining_daily_target,
-             weekly_target, spent_this_week, days_remaining, week_start},
+             weekly_target, weekly_target_source,
+             spent_this_week, days_remaining, week_start},
   "portfolio": [{campaign, spend, ic_conversions, cpicp, ctr, frequency}, …],
   "winners":   [{ad_name, campaign, cpc, conversions, ctr}, …],   // up to 3
   "bleeders":  [{ad_name, campaign, ctr, adset_avg_ctr, spend_share_pct}, …],
@@ -59,7 +60,7 @@ Requires:
 
 ## Interpreting output
 
-- **Pacing:** `underspending` / `overspending` / `on_pace`. Informational, not an emergency. Always include in the summary so Tyler can see whether to adjust budget today.
+- **Pacing:** `underspending` / `overspending` / `on_pace`. Informational, not an emergency. Always include in the summary so Tyler can see whether to adjust budget today. The `weekly_target` is fetched live from `/exec?action=get_spend_goal` (the dashboard-managed spend goal), so it reflects the latest deployment — use the number from the JSON, never a hardcoded "$10,000". If `weekly_target_source == "fallback_unreachable"` the `/exec` call failed and `weekly_target` is a static fallback — append `(target from static fallback — /exec unreachable)` to the PACING line so the staleness is visible.
 - **Portfolio:** list every campaign with IC conversions, sorted by best CPICP. Call out campaigns with non-trivial spend and zero IC conversions — those are the ones to investigate.
 - **Winners / Bleeders:** top 3 of each. These are the specific ads Tyler should look at. If `winners` is empty, that means no ad in the last 7 days hit the floor of ≥5 conversions + ≥1,000 impressions — say so explicitly.
 - **Fatigue flags:** these *preview* the fatigue-monitor skill. Mention them in the briefing but note the full fatigue analysis lives in the separate skill.
@@ -80,7 +81,7 @@ When the webhook IS set: compose a plain-text summary, keep it scannable — one
 ```
 📊 Daily Check — 2026-05-03
 
-PACING: underspending — $1,500 yesterday, $8,050/day needed for $10,000 target
+PACING: underspending — $1,500 yesterday, $8,050/day needed for the $<weekly_target> target
 
 PORTFOLIO (7d, best CPICP first):
   Breweries: $150.00 CPICP, 13 ICPs, $1,950, freq 1.6

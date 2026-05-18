@@ -42,12 +42,11 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-import requests
-
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from lib.meta import MetaClient, load_config  # noqa: E402
 from lib.io import atomic_write_json  # noqa: E402
+from lib.exec_api import fetch_json, get_spend_goal  # noqa: E402
 
 SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
 DERIVED_DIR = REPO_ROOT / "data" / "derived"
@@ -158,21 +157,6 @@ def previous_tuesday(today: date) -> date:
     if days_since == 0:
         days_since = 7  # if today is Tuesday, the relevant window starts a week ago
     return today - timedelta(days=days_since)
-
-
-def fetch_json(url: str, params: dict[str, Any] | None = None,
-               retries: int = 3, timeout: int = 30) -> Any:
-    last: Exception | None = None
-    for attempt in range(retries):
-        try:
-            r = requests.get(url, params=params, timeout=timeout)
-            r.raise_for_status()
-            return r.json()
-        except (requests.RequestException, ValueError) as exc:
-            last = exc
-            logging.warning("fetch_json attempt %d/%d failed: %s",
-                            attempt + 1, retries, exc)
-    raise RuntimeError(f"fetch_json exhausted retries: {last}")
 
 
 def load_snapshot_adset_rows(since: date, until: date) -> list[dict[str, Any]]:
@@ -489,11 +473,10 @@ def main() -> int:
     logging.info("Fetching campaign_mapping")
     mappings = fetch_json(exec_url, {"action": "mappings"}) or []
     logging.info("Fetching dynamic spend goal")
-    spend_goal_body = fetch_json(exec_url, {"action": "get_spend_goal"}) or {}
-    target_weekly = float(
-        spend_goal_body.get("target_weekly_spend") or 10000)
-    tolerance_weekly = float(
-        spend_goal_body.get("weekly_spend_tolerance") or 500)
+    spend_goal = get_spend_goal(exec_url, fallback_target=10000,
+                                fallback_tolerance=500)
+    target_weekly = spend_goal["target_weekly_spend"]
+    tolerance_weekly = spend_goal["weekly_spend_tolerance"]
 
     logging.info("Fetching executed budget_queue rows since %s", prev_tue)
     executed_rows = fetch_executed_queue_rows(exec_url, prev_tue)
