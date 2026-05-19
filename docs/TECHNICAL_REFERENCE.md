@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-17 (weekly spend goal is now sourced live for all consumers: new `scripts/lib/exec_api.py` (`fetch_json`, `get_spend_goal`); `daily-check/analyze_daily.py` fetches the goal from `/exec?action=get_spend_goal` instead of static `benchmarks.json`; `compute_scaling_profiles.py` refactored onto the shared helper)_
+_Last updated: 2026-05-19 (PR #79: `categorize_creative.py` retry hardened — 5 attempts, exponential backoff, Retry-After parsing, non-retryable error discrimination; PR #80: `compute_signals.py` gains `below_floor` severity bucket, `fetch_ad_data.py` refuses to overwrite existing snapshots without `--force`, `daily-data.yml` backfill DETAIL now sums across all manifests in range; PR #82: `scaling-queue-read` + `scaling-log-read` added to `handleDashboardApi_` whitelist — class-of-bug documented)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -768,6 +768,8 @@ All return `ContentService.createTextOutput(JSON.stringify(payload))` with MIME 
 | `scaling-queue-write` | POST | JSON body `{rows: [{campaign_id, campaign_name, current_daily_cents, proposed_daily_cents, change_cents, change_pct, signal_reasons}, ...], lockout_until: "ISO", affected_campaign_ids: [...]}` | Writes pending strategic rows to `budget_queue` with `source='strategic'` and a fresh token. Stashes lockout metadata under `SCALING_PENDING_*` properties. Returns `{ok, token, written, approve_url, reject_url, lockout_until}`. Called by the Tuesday agent workflow. |
 | `scaling-log-read` | GET | `since` (YYYY-MM-DD) optional, `vertical` (slug) optional, `limit` (default 200, max 1000) optional | Returns `{rows: [...], count: N}` from `scaling_log`, newest-first. Used by Hive Mind chat for scaling-keyword queries. |
 
+**Class-of-bug note (PR #82, 2026-05-13):** New `?action=` GET handlers must be registered in **two** places inside `handleDashboardApi_()`: (1) the `dashboardActions` whitelist array at the top of the function (acts as a pre-switch guard — unknown actions return `null` before the `switch` runs), AND (2) the `switch` case body. Adding a case without adding the whitelist entry makes the handler completely unreachable from external requests. The `scaling-queue-read` and `scaling-log-read` actions shipped without whitelist entries (PR #81, 2026-05-07); the portfolio-scaling weekly cron failed on its first scheduled Tuesday run (2026-05-12) with a JSON-parse error on the HTML "Invalid link" response page. PR #82 added the two missing entries (two-line fix).
+
 ### 9.3 `buildDashboardContext_()` (Code.js:3836)
 
 Builds a compact text snapshot for the chat LLM. Sections:
@@ -870,6 +872,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
   - **Run 2 (2026-05-05 afternoon)** — categorize succeeded (with rate-limit issues — see below) but the cache `git push` failed all 4 retries with `Invalid username or token. Password authentication is not supported.` The persisted http extraheader credentials from `actions/checkout@v4` survive through Python script steps but get stripped or invalidated AFTER `claude-code-action@v1` runs. Daily-data.yml has no claude-code-action and commits successfully; this workflow had `Commit cache updates` AFTER the action and was getting auth-rejected. Fix: move `Commit cache updates` to BEFORE `claude-code-action`. Bonus: if Claude's brief composition fails for any reason, the $5 of categorization is preserved on main.
 - Pipeline (final order): `pip install requests==2.32.3 anthropic==0.98.1` → `build_creative_dataset.py` (refresh cache + emit dataset) → `categorize_creative.py` (LLM tagging, `continue-on-error: true` so a failure here doesn't kill the brief) → `build_creative_dataset.py` (re-emit with tags) → **`Commit cache updates`** (pushes `data/creatives/` to main with `fetch+rebase+push` retry while credentials still valid) → `claude-code-action@v1` (brief composition only, reads `/tmp/creative_dataset.json`) → `Dump Claude execution log` → `Post status to tracking issue` (combines `/tmp/agent_status.txt` from Claude with `/tmp/cache_commit_status.txt` from the commit step).
 - **Prompt caching:** the categorizer wraps its system message (≈5000 tokens of voice guide + compliance rules + definitions + enums) in `cache_control: {"type": "ephemeral"}`. Anthropic caches it after the first call and bills subsequent reads at ~10% of the normal rate. Production run 3 (2026-05-05 evening) confirmed: ~99% categorize success rate (vs 82% before caching), ~$1-2 cost (vs ~$5), well under the 30k tokens/min rate limit.
+- **Retry hardening _(PR #79, 2026-05-11)_:** `_call_with_retry()` in `categorize_creative.py` replaces the prior 2-attempt × fixed 2 s sleep loop. New behavior: 5 attempts; exponential backoff (2^attempt seconds, capped at 60 s); server-provided `Retry-After` header parsed on 429s (delta-seconds or HTTP-date); non-retryable errors (400/401/403/422) surface immediately without consuming retries; unknown exceptions fail loud. Response-shape validation (`tool_use` block, tag vocabulary) was moved outside the retry loop so a malformed-response error fails once rather than burning N attempts on the same bad response.
 - The categorizer constructs its Anthropic client with explicit `base_url="https://api.anthropic.com"` to defeat any stray env-var override (belt-and-suspenders alongside the workflow restructure).
 - Triggers: `workflow_dispatch` AND active cron `0 14 * * 1` (Mon 10 AM ET / 9 AM EST). Weekly cadence matches the corpus-aggregation attribution model.
 - timeout-minutes: 45 (longest of any skill: Anthropic categorization on first-ever run + 30-day snapshot aggregation + creative cache refresh + image downloads via /adimages resolution).
@@ -1017,12 +1020,12 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 | Categorizer's prompt caching is fragile to system-message drift | `skills/creative-intelligence/scripts/categorize_creative.py` | The 30k tokens/min Anthropic rate limit is only survivable because the 5000-token system message is identical across all 526 calls in a run, hitting Anthropic's prompt cache at ~10% effective cost. If a future change makes the system message vary per-call (e.g. injecting variant context), caching breaks and the skill regresses to ~$5/run + 18% rate-limit failures. Test by running the categorize step locally with the new prompt shape against `--max-new 50` BEFORE shipping such a change. |
 | Daily Ads digest and Daily Check skill use different "yesterday spend" sources | `Code.js: postDailyDigest` reads `rolling_data` sheet (~7 AM snapshot) vs `skills/daily-check/scripts/fetch_daily_data.py` (fresh Meta call at ~11 AM) | Numbers can disagree by $100+ as Meta's attribution shifts between the two reads. Footers on each report now annotate the source (added 2026-05-11) so the discrepancy is transparent, but reconciling on a single source-of-truth would be the proper fix. Either delete-and-refetch yesterday's rolling_data row in `postDailyDigest`, or have Daily Check read the sheet via `/exec` to share the snapshot. |
 | Composite-rank weighting is 70/30 CPICP/trend, not data-driven | `Code.js: computeRecommendations_` ~3204 | Weights chosen by intuition. Could be calibrated by backtesting against historical CPICP outcomes once enough budget-cycle history accumulates. Hysteresis (2026-05-11) addresses timing volatility but not the weighting question. |
-| Anthropic categorizer retry is brittle | `skills/creative-intelligence/scripts/categorize_creative.py` ~194 + ~258 | 2 attempts × fixed 2-second sleep, no exponential backoff, no Retry-After header parsing, all `Exception` types treated alike. Prompt caching (PR #68) masks the underlying brittleness; as the variant pool grows past ~600 the 1% failure rate will likely regress. Fix is to distinguish 429 (parse Retry-After + exponential backoff) from validation errors (don't retry). |
+| ~~Anthropic categorizer retry is brittle~~ | ~~`skills/creative-intelligence/scripts/categorize_creative.py` ~194 + ~258~~ | **Resolved 2026-05-11 (PR #79).** `_call_with_retry()` helper: 5 attempts, exponential backoff (2^attempt s, capped 60 s), Retry-After header parsing on 429s, immediate surface for non-retryable errors (400/401/403/422), unknown exceptions fail loud. Response-shape validation moved outside the retry loop. |
 | `MetaClient._paginate` and throttle backoff bounds are heuristic | `scripts/lib/meta.py: MAX_PAGES`, `MAX_BACKOFF_SECONDS` | Defensive caps (200 pages, 300 s) added 2026-05-11. The right fix for sustained Meta rate-limits is to parse `X-Business-Use-Case-Usage` headers and sleep the recommended duration — could be a major run-time saver during a true rate-limit event. |
-| `compute_signals.evaluate_fatigue` severity bucket conflates "no signal" with "below floor" | `scripts/compute_signals.py` ~186 | An ad with `frequency_critical` flag but only 2 days of data lands in `severity_counts["ok"]` (since `actionable=false` short-circuits severity to ok). Misleading for downstream consumers reading the count. Separate `below_floor_with_flags` bucket would be clearer. |
-| `daily-data.yml` backfill DETAIL line reads the wrong manifest | `.github/workflows/daily-data.yml` ~128 | In backfill mode, `DATE_LABEL` defaults to "yesterday UTC" so the manifest path resolved is yesterday's manifest, not the backfill range. HEADER is correct; DETAIL counts mismatch. Stitch a multi-date summary or skip DETAIL on backfill. |
-| `fetch_ad_data.py` single-day path silently overwrites existing snapshots | `scripts/fetch_ad_data.py: run()` (single-day default) vs `run_range()` | `run_range` checks `has_snapshot()` and skips existing dates; the single-day default path doesn't. Manual workflow_dispatch re-runs for the same date silently overwrite. Concurrency-grouped daily cron is safe; this only matters for operator re-runs. |
-| All agent cron times shift 1 hour in EST | `.github/workflows/agent-*.yml` + `daily-data.yml` | UTC cron expressions are tuned for EDT (summer). In EST (~Nov-Mar) every workflow runs an hour earlier than the documented ET times. Most files note this inline; CLAUDE.md and STATE_REPORT don't surface it in one place. Move to a DST-aware scheduler (or just document the drift centrally). |
+| ~~`compute_signals.evaluate_fatigue` severity bucket conflates "no signal" with "below floor"~~ | ~~`scripts/compute_signals.py` ~186~~ | **Resolved 2026-05-11 (PR #80).** New `below_floor` severity bucket: ads with fatigue flags but below the actionability floor now report `severity="below_floor"` instead of `"ok"`. Sort order: critical → warning → below_floor → ok. `summary.json` counts and `empty_run()` path both updated. |
+| ~~`daily-data.yml` backfill DETAIL line reads the wrong manifest~~ | ~~`.github/workflows/daily-data.yml` ~128~~ | **Resolved 2026-05-11 (PR #80).** Backfill DETAIL step now sums counts across every per-date manifest that falls inside the backfill range instead of reading the "yesterday UTC" manifest. |
+| ~~`fetch_ad_data.py` single-day path silently overwrites existing snapshots~~ | ~~`scripts/fetch_ad_data.py: run()` (single-day default) vs `run_range()`~~ | **Resolved 2026-05-11 (PR #80).** `run()` now refuses to overwrite an existing single-day snapshot unless `--force` flag or `FORCE=1` env var is set. The concurrency-grouped daily cron is unaffected; this prevents silent data loss on manual `workflow_dispatch` re-runs. |
+| ~~All agent cron times shift 1 hour in EST~~ | ~~`.github/workflows/agent-*.yml` + `daily-data.yml`~~ | **Resolved (documentation) 2026-05-11 (PR #80).** CLAUDE.md now has a central DST-drift caveat (accepted: CRON_TZ not supported by GitHub Actions). Individual YAML files retain their inline notes; CLAUDE.md is the stakeholder-facing summary. |
 
 ### 10.5 Testing & verification
 
@@ -1144,18 +1147,19 @@ Computed by `scripts/compute_signals.py` from the most recent N snapshots (defau
       "flags": ["ctr_declining" | "frequency_warning" | "frequency_critical"
                 | "below_min_days_active" | "below_min_impressions"
                 | "adset_in_learning"],
-      "severity": "critical" | "warning" | "ok",
+      "severity": "critical" | "warning" | "below_floor" | "ok",
       "actionable": true | false
     }
   ]
 }
 ```
 
-Severity rules:
+Severity rules _(updated PR #80, 2026-05-11)_:
 - `critical` — `frequency_critical` OR (`ctr_declining` AND `frequency_warning`)
 - `warning` — single fatigue flag
-- `ok` — no flags or filtered by gates
-- `actionable: false` is always set if days_active < 3 or impressions < 1,000 or ad set in learning phase
+- `below_floor` — has one or more fatigue flags but below the actionability floor (< 3 days active or < 1,000 impressions); distinguishes from `ok`, which has no flags at all — useful for "watch later" tracking
+- `ok` — no fatigue flags
+- `actionable: false` is set whenever days_active < 3 or impressions < 1,000 or ad set in learning phase; both `below_floor` and `ok` rows are `actionable: false`, but `below_floor` signals worth watching as the ad matures
 
 **`winner_bleeder.json`** — per-ad ranking inside its ad set:
 
@@ -1180,7 +1184,7 @@ Label rules (gated on impressions ≥ `min_impressions_for_signal`):
 {
   "computed_at", "window_days", "snapshot_dates",
   "ad_count", "adset_count", "campaign_count",
-  "fatigue_severity_counts": {"critical", "warning", "ok"},
+  "fatigue_severity_counts": {"critical", "warning", "below_floor", "ok"},
   "actionable_critical": [ad_id, …],
   "actionable_warning": [ad_id, …],
   "winners": [ad_id, …], "bleeders": [ad_id, …],
