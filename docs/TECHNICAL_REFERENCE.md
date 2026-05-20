@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-17 (weekly spend goal is now sourced live for all consumers: new `scripts/lib/exec_api.py` (`fetch_json`, `get_spend_goal`); `daily-check/analyze_daily.py` fetches the goal from `/exec?action=get_spend_goal` instead of static `benchmarks.json`; `compute_scaling_profiles.py` refactored onto the shared helper)_
+_Last updated: 2026-05-20 (docs-sync: corrected Code.js line count to ~6,400 throughout; updated architecture diagram daily-data.yml label to reflect active cron; expanded §2 repo structure with all 8 agent workflows, full skills list, scripts/lib contents, complete data/derived/ and data/creatives/ listing; added BUDGET_RANK_TIERS to §4.2 Script Properties table)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -27,7 +27,7 @@ Google Sheets is the system of record for the campaign-level pipeline. The repo 
 └───────────────────────────────────────────────────────────────┘
                              ↑↓
 ┌───────────────────────────────────────────────────────────────┐
-│    Apps Script (apps-script/Code.js, ~4,200 lines)             │
+│    Apps Script (apps-script/Code.js, ~6,400 lines)             │
 │  - Daily/weekly scheduled triggers (fetch, rollup, narrative)  │
 │  - Budget automation (signal → propose → approve → execute)    │
 │  - Web App: /exec?action=... for dashboard API                 │
@@ -47,7 +47,8 @@ Google Sheets is the system of record for the campaign-level pipeline. The repo 
 — — — Ad-level pipeline (parallel, agent-facing) — — —
 
 ┌───────────────────────────────────────────────────────────────┐
-│  GitHub Actions: daily-data.yml (workflow_dispatch — manual)   │
+│  GitHub Actions: daily-data.yml (daily cron 8 AM ET +          │
+│                                  workflow_dispatch for backfills)│
 │   1. scripts/fetch_ad_data.py   →  data/snapshots/<date>/      │
 │   2. scripts/compute_signals.py →  data/derived/               │
 │   3. git commit + push                                          │
@@ -79,7 +80,7 @@ Google Sheets is the system of record for the campaign-level pipeline. The repo 
 ```
 marketing-claude-honeycomb/
 ├── apps-script/
-│   ├── Code.js              # The full intelligence layer (~4,200 lines)
+│   ├── Code.js              # The full intelligence layer (~6,400 lines)
 │   ├── appsscript.json      # Apps Script manifest (scopes, runtime, web app access)
 │   └── .clasp.json          # clasp deployment config (script ID, file mappings)
 ├── webapp/
@@ -91,34 +92,52 @@ marketing-claude-honeycomb/
 ├── scripts/                 # NEW (2026-05-02) Ad-level Python pipeline
 │   ├── fetch_ad_data.py     # Daily Meta ad-set + ad insights pull
 │   ├── compute_signals.py   # Derived fatigue / winner-bleeder signals
-│   └── run_daily.sh         # Orchestrator (fetch → compute)
+│   ├── preview_dataset.py   # $0 deterministic dataset preview (no LLM)
+│   ├── run_daily.sh         # Orchestrator (fetch → compute)
+│   └── lib/
+│       ├── meta.py          # Single Meta Graph API client (retries, paging, IC extraction)
+│       ├── exec_api.py      # /exec endpoint accessor (fetch_json, get_spend_goal)
+│       ├── io.py            # Atomic JSON I/O helpers
+│       └── text_features.py # Copy analysis helpers (char count, opening word, etc.)
 ├── skills/                  # NEW (2026-05-02) Agent skill definitions
-│   ├── daily-check/SKILL.md
-│   ├── fatigue-monitor/SKILL.md
-│   ├── creative-intelligence/   # NEW (2026-05-05)
-│   │   ├── SKILL.md
-│   │   ├── references/      # copy_angle + visual_style markdown
-│   │   └── scripts/         # build_creative_dataset.py, categorize_creative.py
-│   └── pipeline-health/SKILL.md
+│   ├── pipeline-health/     # 4-check health validator (SKILL.md + scripts/)
+│   ├── daily-check/         # Morning pacing + portfolio briefing (SKILL.md + scripts/)
+│   ├── fatigue-monitor/     # Per-ad fatigue classification (SKILL.md + scripts/ + references/)
+│   ├── creative-intelligence/   # Weekly creative brief (SKILL.md + scripts/ + references/)
+│   ├── ad-copy-generator/   # Draft new copy variants (SKILL.md + scripts/ + references/)
+│   └── portfolio-scaling/   # Weekly vertical classification + reallocation (SKILL.md + scripts/ + references/)
 ├── data/                    # NEW (2026-05-02) Agent data repository
-│   ├── config/benchmarks.json     # All thresholds (single source)
-│   ├── snapshots/<YYYY-MM-DD>/    # Daily JSON snapshots from Meta
+│   ├── config/benchmarks.json         # All thresholds (single source of truth)
+│   ├── snapshots/<YYYY-MM-DD>/        # Daily JSON snapshots from Meta
 │   │   ├── campaigns.json
 │   │   ├── adsets.json
 │   │   ├── ads.json
 │   │   ├── adset_insights.json
 │   │   ├── ad_insights.json
 │   │   └── _manifest.json
-│   ├── creatives/creatives.json   # Accumulating creative metadata
-│   └── derived/                   # Computed signals (regenerable)
-│       ├── fatigue_signals.json
-│       ├── winner_bleeder.json
-│       └── summary.json
+│   ├── creatives/
+│   │   ├── creatives.json             # Accumulating creative metadata
+│   │   ├── categorizations.json       # LLM-tagged categories (hash-deduped, atomic writes)
+│   │   └── images/                    # Downloaded full-size creative images
+│   ├── derived/                       # Computed signals (regenerable)
+│   │   ├── fatigue_signals.json
+│   │   ├── winner_bleeder.json
+│   │   ├── summary.json
+│   │   ├── scaling_profiles.json      # 12-week vertical classifications (portfolio-scaling)
+│   │   └── reallocation.json          # Pool-based budget reallocation proposal
+│   └── drafts/<YYYY-MM-DD>-<vertical>.md  # Ad-copy drafts (never auto-published)
 ├── .github/workflows/
-│   ├── deploy-apps-script.yml  # Push Code.js via clasp on merge to main
-│   ├── deploy-webapp.yml       # Publish dashboard to GitHub Pages on merge to main
-│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (daily cron)
-│   └── claude.yml              # @claude mentions in issues/PRs
+│   ├── deploy-apps-script.yml         # Push Code.js via clasp on merge to main
+│   ├── deploy-webapp.yml              # Publish dashboard to GitHub Pages on merge to main
+│   ├── daily-data.yml                 # Daily cron 8 AM ET — ad-level snapshot pull
+│   ├── claude.yml                     # @claude mentions in issues/PRs
+│   ├── agent-pipeline-health.yml      # Daily cron 9 AM ET
+│   ├── agent-daily-check.yml          # Daily cron 8:30 AM ET
+│   ├── agent-fatigue-monitor.yml      # Twice-weekly cron Mon + Thu 9:30 AM ET
+│   ├── agent-creative-intelligence.yml # Weekly cron Monday 10 AM ET
+│   ├── agent-creative-preview.yml     # workflow_dispatch only ($0 preview)
+│   ├── agent-ad-copy-generator.yml    # workflow_dispatch only (human-triggered)
+│   └── agent-portfolio-scaling.yml    # Weekly cron Tuesday 9:30 AM ET
 ├── ad-copy/          # (empty placeholder) Meta ad copy by vertical
 ├── workflows/        # (empty placeholder) Automation scripts
 ├── audiences/        # (empty placeholder) Audience segmentation — never commit PII
@@ -382,6 +401,7 @@ Stored via `PropertiesService.getScriptProperties()` (`PROPS` in code). Set manu
 | `BUDGET_APPROVED_TOKEN` | Set when someone approves the optimizer proposal in Slack |
 | `BUDGET_REJECTED_TOKEN` | Set when someone rejects in Slack |
 | `BUDGET_LAST_RUN_AT`, `BUDGET_LAST_APPROVED_BY`, `BUDGET_LAST_APPROVED_AT` | Audit trail |
+| `BUDGET_RANK_TIERS` | JSON map of `{campaign_id: "top" \| "middle" \| "bottom"}` from the prior optimizer cycle. Powers hysteresis: a campaign must land in the same actionable tier (top/bottom) for two consecutive cycles before the optimizer applies a direction change. Added 2026-05-11. JSON-parse-safe (try/except → empty dict on corruption). |
 | `SCALING_PENDING_TOKEN` | Active strategic-reallocation proposal token (one at a time, separate from optimizer's token) |
 | `SCALING_APPROVED_TOKEN`, `SCALING_REJECTED_TOKEN` | Strategic approve/reject state |
 | `SCALING_PENDING_LOCKOUT_UNTIL`, `SCALING_PENDING_AFFECTED_IDS` | Lockout metadata stashed at queue-write time; promoted to live keys on successful execution |
