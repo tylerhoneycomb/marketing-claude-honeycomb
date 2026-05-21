@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-17 (daily-check now fetches the weekly spend goal live from the dashboard-managed `/exec?action=get_spend_goal` instead of static config, so pacing reacts to a goal change without a code deploy; shared `scripts/lib/exec_api.py` accessor)_
+_Last updated: 2026-05-21 (docs sync: corrected "Three skills are scoped" to reflect all six shipped skills; corrected workflow count from five to seven; updated `agent-portfolio-scaling` pattern classification)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -14,7 +14,7 @@ A **marketing operations platform** for Honeycomb Credit's small-business invest
 
 Four things live inside the repo:
 
-1. **The "brain"** — a Google Apps Script program (~4,200 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
+1. **The "brain"** — a Google Apps Script program (~6,400 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
 2. **The "dashboard"** — a web page (hosted on GitHub Pages) where the team can see charts, check campaign health, and ask questions via an AI chat called "Hive Mind."
 3. **The "plumbing"** — GitHub Actions that automatically push code changes to the Google Apps Script servers whenever something is merged, so nobody has to copy/paste into the Apps Script web editor.
 4. **The "agent layer"** _(new, 2026-05-02)_ — an ad-level data pipeline (`scripts/`) and skill files (`skills/`) that let Claude Code monitor individual ads, detect creative fatigue, and propose budget shifts. Snapshots are stored as JSON files under `data/` (the repo itself acts as the database). The agent layer feeds recommendations into the existing Slack approval pipeline — it never writes to Meta directly.
@@ -81,7 +81,7 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 
 ### Agent skills (new, 2026-05-03)
 
-Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` operating manual and Python scripts that handle Meta API calls and computation. Claude Code reads them at session start and runs the scripts via bash. Three skills are scoped:
+Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` operating manual and Python scripts that handle Meta API calls and computation. Claude Code reads them at session start and runs the scripts via bash. Six skills are shipped:
 
 - **pipeline-health** _(shipped 2026-05-03)_ — runs four checks (data freshness, Meta token validity, IC conversion event existence, dashboard endpoint health) and writes results to a new `pipeline_health` Sheet tab via `Code.js?action=health-write`. Posts to Slack only on WARN/FAIL.
 - **daily-check** _(shipped 2026-05-03)_ — pulls 7 days of campaign/adset/ad insights, computes pacing vs weekly target, portfolio CPICP rankings, top 3 winners + bleeders, early fatigue flags, learning-phase ad sets, and stale creatives. Writes a summary row to a new `daily_check_log` Sheet tab via `Code.js?action=daily-check-write`. Runs alongside the existing campaign-level Apps Script daily digest — does not replace it. The weekly spend goal used for pacing is fetched live from `/exec?action=get_spend_goal` (the dashboard-managed value), so changing the goal in the dashboard is reflected in the next briefing without a code change; `benchmarks.json` holds a fallback used only if `/exec` is unreachable.
@@ -107,9 +107,9 @@ Each skill that needs scheduled runs gets a workflow file under `.github/workflo
 - **`agent-ad-copy-generator.yml`** _(shipped 2026-05-05, validated 2026-05-06)_ — `workflow_dispatch` only. Inputs: `vertical` (single-vertical mode) or blank for `--all-verticals`, plus `num_drafts`, `min_vertical_ads`, `model`. Re-emits the dataset from the locally-cached creatives.json (no Meta calls — uses the cache committed by the most recent `agent-creative-intelligence` run) and runs the drafting script. Commits the resulting markdown files in `data/drafts/` back to main. Status comment to issue #48 reports `drafts_written` and `files_with_compliance_flags`. First validated run on 2026-05-06 produced 5 brewery drafts at `data/drafts/2026-05-06-breweries.md` for ~$0.10.
 - **`agent-portfolio-scaling.yml`** _(shipped 2026-05-08)_ — weekly cron Tuesdays at 9:30 AM ET (UTC 13:30). Two Python steps run as ordinary workflow steps, then commit `data/derived/scaling_profiles.json` + `reallocation.json` BEFORE invoking `claude-code-action`. Claude reads the committed JSON, registers the proposal via the new `/exec?action=scaling-queue-write` endpoint to receive an approval token, composes the four-section Slack brief, and posts it. The execution side runs as `executeStrategicChanges` in Code.js — daily 3 AM trigger that no-ops cheaply when no pending strategic token exists (rather than weekly Wed-only) so a manual `workflow_dispatch` on a non-Tuesday still executes on the next 3 AM after approval. Status comment to issue #48 reports the verticals classification breakdown + freed/allocated dollars + knockdown_risk flag.
 
-The five workflows fall into two patterns:
+The seven agent workflows fall into two patterns:
 - **`pipeline-health` / `daily-check` / `fatigue-monitor`** — predate the architectural findings above. They run scripts inside `claude-code-action`'s Bash prompt (works fine — they don't make Anthropic SDK subprocess calls or commit cache back to main). Same template as v1 of the autonomous-agent pattern: `id-token: write` permission for OIDC auth, `--permission-mode bypassPermissions` so Claude can run Bash in CI, `show_full_output: true` + `display_report: true` so Claude's output surfaces in the workflow log, and an `if: always()` step that dumps `claude-execution-output.json` for diagnostics.
-- **`agent-creative-intelligence` / `agent-creative-preview` / `agent-ad-copy-generator`** — established the new pattern: scripts run as workflow steps; cache commits happen BEFORE `claude-code-action` (or instead of it for the preview/drafter, neither of which uses claude-code-action at all). New skills with Anthropic-subprocess or commit-back needs should follow this pattern.
+- **`agent-creative-intelligence` / `agent-creative-preview` / `agent-ad-copy-generator` / `agent-portfolio-scaling`** — established the new pattern: scripts run as workflow steps; cache commits happen BEFORE `claude-code-action` (or instead of it for the preview/drafter, neither of which uses claude-code-action at all). New skills with Anthropic-subprocess or commit-back needs should follow this pattern.
 
 ### Cron fallback via Apps Script (added 2026-05-03)
 
