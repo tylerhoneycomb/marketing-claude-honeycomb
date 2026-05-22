@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-17 (weekly spend goal is now sourced live for all consumers: new `scripts/lib/exec_api.py` (`fetch_json`, `get_spend_goal`); `daily-check/analyze_daily.py` fetches the goal from `/exec?action=get_spend_goal` instead of static `benchmarks.json`; `compute_scaling_profiles.py` refactored onto the shared helper)_
+_Last updated: 2026-05-22 (resolved 4 tech-debt items from PRs #79/#80: categorizer retry hardened, `evaluate_fatigue` gains `below_floor` severity bucket, `daily-data.yml` backfill DETAIL fixed, `fetch_ad_data.py` single-day overwrite guard added; added `agent-portfolio-scaling.yml` CI/CD entry + portfolio-scaling fallback trigger; added `scaling_profiles.json` + `reallocation.json` to §11.3; corrected stale `snapshot_retention.rolling_window_days` reference; updated §11.6 skills table; added handleDashboardApi_ whitelist-sync class-of-bug note to §10.4)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -93,13 +93,15 @@ marketing-claude-honeycomb/
 │   ├── compute_signals.py   # Derived fatigue / winner-bleeder signals
 │   └── run_daily.sh         # Orchestrator (fetch → compute)
 ├── skills/                  # NEW (2026-05-02) Agent skill definitions
-│   ├── daily-check/SKILL.md
-│   ├── fatigue-monitor/SKILL.md
+│   ├── pipeline-health/     # SKILL.md + scripts/check_health.py
+│   ├── daily-check/         # SKILL.md + scripts/fetch_daily_data.py, analyze_daily.py
+│   ├── fatigue-monitor/     # SKILL.md + scripts/fetch_fatigue_data.py, compute_baselines.py, classify_fatigue.py
 │   ├── creative-intelligence/   # NEW (2026-05-05)
 │   │   ├── SKILL.md
 │   │   ├── references/      # copy_angle + visual_style markdown
 │   │   └── scripts/         # build_creative_dataset.py, categorize_creative.py
-│   └── pipeline-health/SKILL.md
+│   ├── ad-copy-generator/   # NEW (2026-05-05): SKILL.md + scripts/generate_drafts.py
+│   └── portfolio-scaling/   # NEW (2026-05-08): SKILL.md + scripts/compute_scaling_profiles.py, compute_reallocation.py
 ├── data/                    # NEW (2026-05-02) Agent data repository
 │   ├── config/benchmarks.json     # All thresholds (single source)
 │   ├── snapshots/<YYYY-MM-DD>/    # Daily JSON snapshots from Meta
@@ -109,16 +111,27 @@ marketing-claude-honeycomb/
 │   │   ├── adset_insights.json
 │   │   ├── ad_insights.json
 │   │   └── _manifest.json
-│   ├── creatives/creatives.json   # Accumulating creative metadata
+│   ├── creatives/creatives.json   # Accumulating creative metadata (+ images/, categorizations.json)
+│   ├── drafts/                    # Ad copy drafts from ad-copy-generator (<date>-<vertical>.md)
+│   ├── previews/                  # Deterministic dataset previews from agent-creative-preview (<date>.md)
 │   └── derived/                   # Computed signals (regenerable)
 │       ├── fatigue_signals.json
 │       ├── winner_bleeder.json
-│       └── summary.json
+│       ├── summary.json
+│       ├── scaling_profiles.json  # Per-vertical scaling classifications (portfolio-scaling, Tuesdays)
+│       └── reallocation.json      # Pool-based budget reallocation proposal (portfolio-scaling, Tuesdays)
 ├── .github/workflows/
-│   ├── deploy-apps-script.yml  # Push Code.js via clasp on merge to main
-│   ├── deploy-webapp.yml       # Publish dashboard to GitHub Pages on merge to main
-│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (daily cron)
-│   └── claude.yml              # @claude mentions in issues/PRs
+│   ├── deploy-apps-script.yml        # Push Code.js via clasp on merge to main
+│   ├── deploy-webapp.yml             # Publish dashboard to GitHub Pages on merge to main
+│   ├── daily-data.yml                # Ad-level data pull (daily cron at 8 AM ET)
+│   ├── claude.yml                    # @claude mentions in issues/PRs
+│   ├── agent-pipeline-health.yml     # pipeline-health skill (daily cron, 9 AM ET)
+│   ├── agent-daily-check.yml         # daily-check skill (daily cron, 8:30 AM ET)
+│   ├── agent-fatigue-monitor.yml     # fatigue-monitor skill (Mon+Thu cron, 9:30 AM ET)
+│   ├── agent-creative-intelligence.yml  # creative-intelligence skill (Monday cron, 10 AM ET)
+│   ├── agent-creative-preview.yml    # $0 dataset preview (workflow_dispatch only)
+│   ├── agent-ad-copy-generator.yml   # ad-copy-generator skill (workflow_dispatch only)
+│   └── agent-portfolio-scaling.yml   # portfolio-scaling skill (Tuesday cron, 9:30 AM ET)
 ├── ad-copy/          # (empty placeholder) Meta ad copy by vertical
 ├── workflows/        # (empty placeholder) Automation scripts
 ├── audiences/        # (empty placeholder) Audience segmentation — never commit PII
@@ -892,6 +905,16 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Permissions: `contents: write` (commit drafts) + `issues: write` (status comment). No `id-token: write` because this workflow doesn't use `claude-code-action` — the script calls Anthropic directly.
 - Concurrency group `agent-ad-copy-generator`.
 
+**`agent-portfolio-scaling.yml`** _(added 2026-05-08)_
+
+- Triggers: `workflow_dispatch` AND active cron `30 13 * * 2` (Tuesdays 9:30 AM ET / UTC 13:30).
+- Pipeline (follows the Creative Intelligence pattern): `pip install requests==2.32.3` → `compute_scaling_profiles.py` (Meta API + `/exec?action=get_spend_goal`) → `compute_reallocation.py` (reads profiles JSON) → **`Commit derived JSON`** (pushes `data/derived/scaling_profiles.json` + `data/derived/reallocation.json` to main BEFORE the action, using fetch+rebase+push retry) → `claude-code-action@v1` (reads the committed JSON, calls `/exec?action=scaling-queue-write` to register the proposal and receive `approve_url` / `reject_url`, composes 4-section Slack brief, posts it) → `Dump Claude execution log` → `Post status to tracking issue` (#48).
+- Permissions: `contents: write` (commit derived JSON) + `id-token: write` (OIDC auth for claude-code-action) + `issues: write` (status comment).
+- Secrets required: `ANTHROPIC_API_KEY`, `META_ACCESS_TOKEN`. Optional: `SLACK_WEBHOOK_URL`.
+- timeout-minutes: 30 (Meta 12-week pull + scaling math + reallocation + Slack brief composition).
+- Concurrency group `agent-portfolio-scaling`.
+- Apps Script fallback: `triggerAgentPortfolioScalingIfNeeded()` fires Tuesdays at ~1 PM ET (~3 hours after the cron) and dispatches only if no successful run exists in the last 12 hours.
+
 ### 10.1.0.5 Architectural pattern: scripts before claude-code-action _(established 2026-05-05)_
 
 Two production-run findings established a recommended pattern for any new agent skill that involves either (a) heavy outbound HTTPS to non-Anthropic services or (b) committing artifacts back to main:
@@ -913,6 +936,7 @@ GitHub Actions cron is best-effort. To make scheduled runs more reliable, Apps S
 | `triggerAgentDailyCheckIfNeeded` | Daily 12-1 PM ET. 18-hour lookback. |
 | `triggerAgentFatigueMonitorIfNeeded` | Daily 1-2 PM ET, but early-outs unless ISO day-of-week is 1 (Mon) or 4 (Thu). 12-hour lookback. |
 | `triggerAgentCreativeIntelligenceIfNeeded` | Daily 1-2 PM ET, but early-outs unless ISO day-of-week is 1 (Mon). 12-hour lookback. Weekly cadence matches the corpus-aggregation attribution model. |
+| `triggerAgentPortfolioScalingIfNeeded` | Daily 1-2 PM ET, but early-outs unless ISO day-of-week is 2 (Tue). 12-hour lookback. _(added 2026-05-08)_ |
 | `testAgentDispatch` | Diagnostic: lists workflows via the API to verify the PAT has the right scope. Run before `createAllTriggers()` on first install. |
 
 Setup is one-time:
@@ -1017,12 +1041,13 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 | Categorizer's prompt caching is fragile to system-message drift | `skills/creative-intelligence/scripts/categorize_creative.py` | The 30k tokens/min Anthropic rate limit is only survivable because the 5000-token system message is identical across all 526 calls in a run, hitting Anthropic's prompt cache at ~10% effective cost. If a future change makes the system message vary per-call (e.g. injecting variant context), caching breaks and the skill regresses to ~$5/run + 18% rate-limit failures. Test by running the categorize step locally with the new prompt shape against `--max-new 50` BEFORE shipping such a change. |
 | Daily Ads digest and Daily Check skill use different "yesterday spend" sources | `Code.js: postDailyDigest` reads `rolling_data` sheet (~7 AM snapshot) vs `skills/daily-check/scripts/fetch_daily_data.py` (fresh Meta call at ~11 AM) | Numbers can disagree by $100+ as Meta's attribution shifts between the two reads. Footers on each report now annotate the source (added 2026-05-11) so the discrepancy is transparent, but reconciling on a single source-of-truth would be the proper fix. Either delete-and-refetch yesterday's rolling_data row in `postDailyDigest`, or have Daily Check read the sheet via `/exec` to share the snapshot. |
 | Composite-rank weighting is 70/30 CPICP/trend, not data-driven | `Code.js: computeRecommendations_` ~3204 | Weights chosen by intuition. Could be calibrated by backtesting against historical CPICP outcomes once enough budget-cycle history accumulates. Hysteresis (2026-05-11) addresses timing volatility but not the weighting question. |
-| Anthropic categorizer retry is brittle | `skills/creative-intelligence/scripts/categorize_creative.py` ~194 + ~258 | 2 attempts × fixed 2-second sleep, no exponential backoff, no Retry-After header parsing, all `Exception` types treated alike. Prompt caching (PR #68) masks the underlying brittleness; as the variant pool grows past ~600 the 1% failure rate will likely regress. Fix is to distinguish 429 (parse Retry-After + exponential backoff) from validation errors (don't retry). |
+| ~~Anthropic categorizer retry is brittle~~ | ~~`skills/creative-intelligence/scripts/categorize_creative.py`~~ | **Resolved 2026-05-11 (PR #79).** New `_call_with_retry` helper: 5 attempts, exponential backoff (2^attempt s, capped 60s), Retry-After header parsing on 429s, retryable vs non-retryable distinction (400/401/403/422 fail immediately), unknown exceptions fail loud. Response validation moved outside the retry loop. |
 | `MetaClient._paginate` and throttle backoff bounds are heuristic | `scripts/lib/meta.py: MAX_PAGES`, `MAX_BACKOFF_SECONDS` | Defensive caps (200 pages, 300 s) added 2026-05-11. The right fix for sustained Meta rate-limits is to parse `X-Business-Use-Case-Usage` headers and sleep the recommended duration — could be a major run-time saver during a true rate-limit event. |
-| `compute_signals.evaluate_fatigue` severity bucket conflates "no signal" with "below floor" | `scripts/compute_signals.py` ~186 | An ad with `frequency_critical` flag but only 2 days of data lands in `severity_counts["ok"]` (since `actionable=false` short-circuits severity to ok). Misleading for downstream consumers reading the count. Separate `below_floor_with_flags` bucket would be clearer. |
-| `daily-data.yml` backfill DETAIL line reads the wrong manifest | `.github/workflows/daily-data.yml` ~128 | In backfill mode, `DATE_LABEL` defaults to "yesterday UTC" so the manifest path resolved is yesterday's manifest, not the backfill range. HEADER is correct; DETAIL counts mismatch. Stitch a multi-date summary or skip DETAIL on backfill. |
-| `fetch_ad_data.py` single-day path silently overwrites existing snapshots | `scripts/fetch_ad_data.py: run()` (single-day default) vs `run_range()` | `run_range` checks `has_snapshot()` and skips existing dates; the single-day default path doesn't. Manual workflow_dispatch re-runs for the same date silently overwrite. Concurrency-grouped daily cron is safe; this only matters for operator re-runs. |
-| All agent cron times shift 1 hour in EST | `.github/workflows/agent-*.yml` + `daily-data.yml` | UTC cron expressions are tuned for EDT (summer). In EST (~Nov-Mar) every workflow runs an hour earlier than the documented ET times. Most files note this inline; CLAUDE.md and STATE_REPORT don't surface it in one place. Move to a DST-aware scheduler (or just document the drift centrally). |
+| ~~`compute_signals.evaluate_fatigue` severity bucket conflates "no signal" with "below floor"~~ | ~~`scripts/compute_signals.py`~~ | **Resolved 2026-05-11 (PR #80).** Ads with a fatigue flag but below the actionability floor now report `severity="below_floor"` instead of `"ok"`. Sort order: critical → warning → below_floor → ok. Summary counts updated in both `run()` and `empty_run()` paths. |
+| ~~`daily-data.yml` backfill DETAIL line reads the wrong manifest~~ | ~~`.github/workflows/daily-data.yml`~~ | **Resolved 2026-05-11 (PR #80).** Now sums counts across every per-date manifest inside the backfill range instead of reading the "yesterday UTC" path. |
+| ~~`fetch_ad_data.py` single-day path silently overwrites existing snapshots~~ | ~~`scripts/fetch_ad_data.py: run()`~~ | **Resolved 2026-05-11 (PR #80).** `run()` now refuses to overwrite an existing snapshot without `--force` / `FORCE=1`. `run_range()` already skipped existing dates; the two paths are now consistent. |
+| All agent cron times shift 1 hour in EST | `.github/workflows/agent-*.yml` + `daily-data.yml` | UTC cron expressions are tuned for EDT (summer). In EST (~Nov-Mar) every workflow runs an hour earlier than the documented ET times. Centrally documented in CLAUDE.md (added PR #80); individual YAMLs note it inline. Move to a DST-aware scheduler (CRON_TZ unsupported by GitHub Actions) to fix permanently. |
+| `handleDashboardApi_` action whitelist must be kept in sync with switch cases | `apps-script/Code.js: handleDashboardApi_()` | The function has a whitelist of known action strings at its top that returns `null` for unknown actions before the switch runs. Any new `?action=` GET handler must update **both** the switch case AND the whitelist, or the case is unreachable from external callers. Class-of-bug identified PR #82 (2026-05-13): `scaling-queue-read` and `scaling-log-read` were added to the switch but not the whitelist, causing the first Tuesday portfolio-scaling cron run to fail. Refactor: derive the whitelist from switch cases instead. |
 
 ### 10.5 Testing & verification
 
@@ -1127,7 +1152,7 @@ Same file holds both text and image categorizations, namespaced via the `kind` f
 
 ### 11.3 Derived signals (`data/derived/`)
 
-Computed by `scripts/compute_signals.py` from the most recent N snapshots (default: 7 days, configured via `snapshot_retention.rolling_window_days` in `benchmarks.json`).
+Computed by `scripts/compute_signals.py` from the most recent N snapshots (default: 7 days, overridable via the `--window-days` CLI argument; no benchmarks.json key — the 7-day default is a script-level constant).
 
 **`fatigue_signals.json`** — per-ad fatigue evaluation:
 
@@ -1144,7 +1169,7 @@ Computed by `scripts/compute_signals.py` from the most recent N snapshots (defau
       "flags": ["ctr_declining" | "frequency_warning" | "frequency_critical"
                 | "below_min_days_active" | "below_min_impressions"
                 | "adset_in_learning"],
-      "severity": "critical" | "warning" | "ok",
+      "severity": "critical" | "warning" | "below_floor" | "ok",
       "actionable": true | false
     }
   ]
@@ -1153,8 +1178,9 @@ Computed by `scripts/compute_signals.py` from the most recent N snapshots (defau
 
 Severity rules:
 - `critical` — `frequency_critical` OR (`ctr_declining` AND `frequency_warning`)
-- `warning` — single fatigue flag
-- `ok` — no flags or filtered by gates
+- `warning` — single fatigue flag AND above actionability floor
+- `below_floor` — has at least one fatigue flag but below actionability floor (days_active < 3, impressions < 1,000, or ad set in learning phase). Added PR #80 to distinguish from clean `ok` rows.
+- `ok` — no flags
 - `actionable: false` is always set if days_active < 3 or impressions < 1,000 or ad set in learning phase
 
 **`winner_bleeder.json`** — per-ad ranking inside its ad set:
@@ -1174,13 +1200,17 @@ Label rules (gated on impressions ≥ `min_impressions_for_signal`):
 - `winner` — `spend_share ≥ winner_spend_share_min` AND `ctr_vs_adset_avg ≥ 1.0`
 - `bleeder` — `ctr_vs_adset_avg ≤ bleeder_ctr_vs_adset_avg`
 
+**`scaling_profiles.json`** — per-vertical scaling classifications, written by `skills/portfolio-scaling/scripts/compute_scaling_profiles.py` on Tuesday runs. Top-level keys: `generated_at`, `spend_goal` (target + tolerance + source), `verticals` (object keyed by vertical slug), `summary` (counts per classification). Each vertical entry includes `classification`, `confidence`, `elasticity_r`, `ic_rate`, `cpicp`, `spend_share_pct`, `avg_frequency`, `frequency_trend`, `cpm_trend`, `new_audience_needed`, `weeks_with_conversions`. Read by the Apps Script `loadScalingProfiles_()` for optimizer tagging overlay (1hr cache, 14-day stale guard). Committed to main before `claude-code-action` runs.
+
+**`reallocation.json`** — pool-based budget proposal, written by `skills/portfolio-scaling/scripts/compute_reallocation.py` immediately after `scaling_profiles.py`. Top-level keys: `generated_at`, `pool` (`total_freed_cents`, `total_allocated_cents`, `knockdown_risk` bool), `decreases` (array of `{campaign_id, campaign_name, current_daily_cents, proposed_daily_cents, change_cents, change_pct, reason}`), `increases` (same shape), `lockout_until` (ISO timestamp, next Tuesday 00:00 UTC), `affected_campaign_ids`. Read by `claude-code-action` to compose the 4-section Slack brief and POST to `/exec?action=scaling-queue-write`.
+
 **`summary.json`** — top-line counts for the daily-check skill:
 
 ```
 {
   "computed_at", "window_days", "snapshot_dates",
   "ad_count", "adset_count", "campaign_count",
-  "fatigue_severity_counts": {"critical", "warning", "ok"},
+  "fatigue_severity_counts": {"critical", "warning", "below_floor", "ok"},
   "actionable_critical": [ad_id, …],
   "actionable_warning": [ad_id, …],
   "winners": [ad_id, …], "bleeders": [ad_id, …],
@@ -1192,16 +1222,19 @@ Label rules (gated on impressions ≥ `min_impressions_for_signal`):
 
 All thresholds live in `data/config/benchmarks.json`. Scripts and skills MUST read from this file rather than hardcoding constants.
 
-Top-level keys (current schema, 2026-05-03):
+Top-level keys (current schema, 2026-05-22):
 - `account.{id, name, meta_api_version, timezone}` — Meta account + Graph API version + display timezone
 - `exec_endpoint` — Apps Script `/exec` URL skills hit for Sheet read/write
 - `slack_webhook_secret_name` — name of the env var skills look up for Slack posting
 - `ic_tracking.{custom_conversion_id, event_name, pattern}` — IC tracking constants. The action type is reconstructed in code as `offsite_conversion.custom.<custom_conversion_id>`.
-- `pacing.{weekly_spend_target_dollars, pacing_tolerance_pct}` — used by daily-check skill
+- `pacing.{weekly_spend_target_dollars, pacing_tolerance_pct}` — `pacing_tolerance_pct` is a static sensitivity band for the daily-check skill's pacing-status display. `weekly_spend_target_dollars` is a fallback default only — the live target is read from `/exec?action=get_spend_goal`.
 - `fatigue.*` — CTR decline thresholds (early/fatigued), frequency warnings, CPC inflation, baseline window, min impressions/days active, creative age warning
 - `daily_check.*` — winner/bleeder definitions, early-fatigue thresholds for the daily briefing
 - `pipeline_health.{token_warning_days, endpoint_timeout_seconds, data_freshness_max_gap_weekdays}` — used by pipeline-health skill
+- `scaling.*` — elasticity thresholds, frequency/CPM trend windows, confidence level minimums, pool bounding. `max_weekly_total_change_pct` must stay in sync with `SCALING_MAX_WEEKLY_PCT` in Code.js (intentional dual-source; Python reads JSON, Apps Script reads the constant).
 - `campaign_defaults.type` — `prospecting` vs `retargeting` (affects fatigue frequency thresholds)
+
+Note: `compute_signals.py`'s rolling window is **not** configured via `benchmarks.json`. It defaults to 7 days and is overridable via the `--window-days` CLI argument only.
 
 ### 11.5 IC conversion extraction
 
@@ -1216,10 +1249,13 @@ Skills are self-contained packages: a `SKILL.md` (with YAML frontmatter — `nam
 | Skill | Status | Purpose |
 |---|---|---|
 | `pipeline-health` | shipped 2026-05-03 | Four checks: data freshness, Meta token, IC conversion event, dashboard endpoint. Slack-silent on PASS. |
-| `daily-check` | shipped 2026-05-03 | Morning briefing: pacing vs weekly target, portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
+| `daily-check` | shipped 2026-05-03 | Morning briefing: pacing vs weekly target (live from `/exec?action=get_spend_goal`), portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
 | `fatigue-monitor` | shipped 2026-05-03 | Three-script pipeline: 14-day fetch, baseline computation (Path A in-range / B historical-batched / C estimated), classification across 5 severity classes with budget-queue conflict cross-reference. Writes to `fatigue_log`. |
+| `creative-intelligence` | shipped 2026-05-05, validated end-to-end | Weekly Monday brief: corpus-level text aggregation of what copy and visual patterns are winning. Two-script pipeline: `categorize_creative.py` (Anthropic API, hash-deduped, prompt-cached system message at ~10% cost, error-aware retry with Retry-After + exponential backoff) → `build_creative_dataset.py` (variant corpus + side-by-side pairs). Scripts run as workflow steps; cache committed to main BEFORE `claude-code-action`. Writes to `creative_intelligence_log`. |
+| `ad-copy-generator` | shipped 2026-05-05, validated 2026-05-06 | `workflow_dispatch` only. Drafts new (body, title, description) triples for a target vertical from the Creative Intelligence dataset. Median-split cohorts, compliance regex backstop, output to `data/drafts/<date>-<vertical>.md`. Never auto-published. |
+| `portfolio-scaling` | shipped 2026-05-08 | Weekly Tuesday brief: 12-week elasticity + CPL degradation + frequency/CPM trend analysis per vertical. Produces pool-based reallocation JSON committed to `data/derived/` before `claude-code-action`. Two-step Slack approval; Wed 3 AM execution via `executeStrategicChanges`. Shares the 12% weekly cap with the daily optimizer. |
 
-The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earlier versions of the three above) were built against a less-refined spec and are being replaced session-by-session. `compute_signals.py`'s `data/derived/` outputs are now an audit trail rather than the canonical signal source — the skills compute their own canonical versions.
+`compute_signals.py`'s `data/derived/` outputs (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`) are an audit trail and historical backbone rather than the canonical signal source for real-time operational decisions — the skills compute their own canonical signals at run time. `scaling_profiles.json` and `reallocation.json` in `data/derived/` are different: they are the primary pipeline artifact for the portfolio-scaling workflow (committed before `claude-code-action`, consumed by it to compose the brief).
 
 ### 11.7 Workflow (`.github/workflows/daily-data.yml`)
 
