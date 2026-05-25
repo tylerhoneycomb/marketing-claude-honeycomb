@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-17 (daily-check now fetches the weekly spend goal live from the dashboard-managed `/exec?action=get_spend_goal` instead of static config, so pacing reacts to a goal change without a code deploy; shared `scripts/lib/exec_api.py` accessor)_
+_Last updated: 2026-05-25 (documentation sync: operational gap "No recurring health check" updated to reflect pipeline-health skill; summary paragraph updated to reflect full 6-skill agent layer; text reflects current repo state as of today)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -149,7 +149,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 - **No alerting on attribution-quality drops.** The 33% collapse that week could have gone unnoticed for days. A threshold-based alert ("IC attribution below 50% — investigate") would catch this earlier.
 - **Manual steps for new campaigns.** When the team launches a new Meta campaign, the mapping sheet auto-discovers the UTM tag and campaign_id, but conversion event mapping often needs manual verification. If a campaign's custom_conversion_id doesn't get filled in, its ICPs won't be properly tracked. Campaign renames in Meta are now handled automatically — the sync detects when a campaign_id's name has changed, updates it in place, and preserves all manually-set UTM and conversion settings.
 - **Audit snapshot is manual.** Someone has to run `exportAuditSnapshot()` from the Apps Script editor to refresh data for Claude Code. Adding a weekly time trigger would make this automatic.
-- **No recurring health check.** The Q1 audit uncovered 6 issues only because someone did a deep-dive. Without a scheduled audit — weekly or monthly — similar drift could accumulate again.
+- **Recurring health check is now running.** _(Partially resolved 2026-05-03.)_ The `pipeline-health` skill runs daily at 9 AM ET and checks data freshness, Meta token validity, IC conversion event existence, and dashboard endpoint health — posting to Slack on WARN/FAIL. Deep attribution-quality drift (like the 4/13 collapse) still requires a human to diagnose; the skill catches pipeline breakage, not attribution model regression.
 
 ### Content / copy gaps
 
@@ -186,7 +186,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 ### High impact, low effort
 - Add a weekly time trigger for `exportAuditSnapshot()` so audit data refreshes automatically.
 - Add a threshold alert for attribution quality dropping below 50% (Slack message).
-- Add a pipeline-health check: if the daily digest hasn't posted by 8 AM, something's broken — alert.
+- ~~Add a pipeline-health check.~~ **Done 2026-05-03** — `pipeline-health` skill runs daily at 9 AM ET and posts to Slack on WARN/FAIL.
 - Fix the "Q4 2205" typo in campaign_mapping.
 
 ### High impact, medium effort
@@ -207,4 +207,4 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 ## Summary in one paragraph
 
-This is a mature, working automation platform. The core data pipeline runs daily without intervention, the budget optimizer has two-step human-in-the-loop safeguards (Slack confirmation page defeats link-unfurling bots), and campaign renames in Meta are handled automatically without manual mapping cleanup. The Q1 audit's 6 data-quality issues are all resolved, IC conversion tracking has been restored (now using the cleaner "Investment Crowdfunding Prequal Decision" event), and the AI layer runs on Claude Opus 4.7 via a single configurable constant. As of 2026-05-02, an additive ad-level agent layer (`scripts/`, `skills/`, `data/`) sits alongside the campaign-level pipeline — it gives Claude Code per-ad fatigue signals and creative metadata to power the Berman-style monitor → detect → propose loop, while still routing all real budget changes through the existing human approval flow. The biggest remaining ROI improvements are around observability: proactive alerts on pipeline failures, attribution-quality drops, and token expiration. The system does not currently tell you when it's broken — you have to notice.
+This is a mature, working automation platform. The core data pipeline runs daily without intervention, the budget optimizer has two-step human-in-the-loop safeguards (Slack confirmation page defeats link-unfurling bots), and campaign renames in Meta are handled automatically without manual mapping cleanup. The Q1 audit's 6 data-quality issues are all resolved, IC conversion tracking has been restored (now using the cleaner "Investment Crowdfunding Prequal Decision" event), and the AI layer runs on Claude Opus 4.7 via a single configurable constant. An additive ad-level agent layer (`scripts/`, `skills/`, `data/`) runs six fully autonomous skills alongside the campaign-level pipeline: daily pipeline health checks, morning performance briefings, twice-weekly creative fatigue monitoring, weekly creative intelligence analysis, on-demand ad copy drafting, and weekly structural portfolio scaling. All real budget changes route through the existing human approval flow — the agent layer surfaces signals and proposes, never executes. The remaining ROI improvements are around observability: proactive alerts on attribution-quality drops and token expiration. The pipeline-health skill catches technical breakages daily; deeper attribution model drift still requires human review.
