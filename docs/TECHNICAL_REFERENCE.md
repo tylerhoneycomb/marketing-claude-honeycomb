@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-17 (weekly spend goal is now sourced live for all consumers: new `scripts/lib/exec_api.py` (`fetch_json`, `get_spend_goal`); `daily-check/analyze_daily.py` fetches the goal from `/exec?action=get_spend_goal` instead of static `benchmarks.json`; `compute_scaling_profiles.py` refactored onto the shared helper)_
+_Last updated: 2026-05-26 (dashboard `PasswordGate` component added: SHA-256 client-side password prompt wraps `<App />`, state in sessionStorage; /exec API unchanged)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -92,15 +92,23 @@ marketing-claude-honeycomb/
 │   ├── fetch_ad_data.py     # Daily Meta ad-set + ad insights pull
 │   ├── compute_signals.py   # Derived fatigue / winner-bleeder signals
 │   └── run_daily.sh         # Orchestrator (fetch → compute)
-├── skills/                  # NEW (2026-05-02) Agent skill definitions
+├── skills/                  # Agent skill definitions
+│   ├── pipeline-health/SKILL.md
 │   ├── daily-check/SKILL.md
 │   ├── fatigue-monitor/SKILL.md
-│   ├── creative-intelligence/   # NEW (2026-05-05)
+│   ├── creative-intelligence/
 │   │   ├── SKILL.md
 │   │   ├── references/      # copy_angle + visual_style markdown
 │   │   └── scripts/         # build_creative_dataset.py, categorize_creative.py
-│   └── pipeline-health/SKILL.md
-├── data/                    # NEW (2026-05-02) Agent data repository
+│   ├── ad-copy-generator/   # (added 2026-05-05)
+│   │   ├── SKILL.md
+│   │   ├── references/      # compliance_rules.md, voice_guide.md
+│   │   └── scripts/         # generate_drafts.py
+│   └── portfolio-scaling/   # (added 2026-05-08)
+│       ├── SKILL.md
+│       ├── references/      # meta_learning_phase_constraints.md
+│       └── scripts/         # compute_scaling_profiles.py, compute_reallocation.py
+├── data/                    # Agent data repository
 │   ├── config/benchmarks.json     # All thresholds (single source)
 │   ├── snapshots/<YYYY-MM-DD>/    # Daily JSON snapshots from Meta
 │   │   ├── campaigns.json
@@ -109,16 +117,30 @@ marketing-claude-honeycomb/
 │   │   ├── adset_insights.json
 │   │   ├── ad_insights.json
 │   │   └── _manifest.json
-│   ├── creatives/creatives.json   # Accumulating creative metadata
-│   └── derived/                   # Computed signals (regenerable)
-│       ├── fatigue_signals.json
-│       ├── winner_bleeder.json
-│       └── summary.json
+│   ├── creatives/                 # Accumulating creative metadata
+│   │   ├── creatives.json         # Creative object-graph cache
+│   │   ├── categorizations.json   # LLM tags (copy_angle, visual_style)
+│   │   └── images/<hash>.jpg      # Full-size creative images (idempotent download)
+│   ├── derived/                   # Computed signals (regenerable)
+│   │   ├── fatigue_signals.json
+│   │   ├── winner_bleeder.json
+│   │   ├── summary.json
+│   │   ├── scaling_profiles.json  # Per-vertical elasticity + classification (added 2026-05-08)
+│   │   └── reallocation.json      # Pool-based budget reallocation proposal (added 2026-05-08)
+│   ├── drafts/<date>-<vertical>.md  # Ad copy drafts (written by ad-copy-generator)
+│   └── previews/<date>.md           # Deterministic dataset preview (written by creative-preview)
 ├── .github/workflows/
 │   ├── deploy-apps-script.yml  # Push Code.js via clasp on merge to main
 │   ├── deploy-webapp.yml       # Publish dashboard to GitHub Pages on merge to main
-│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (daily cron)
-│   └── claude.yml              # @claude mentions in issues/PRs
+│   ├── daily-data.yml          # Ad-level data pull (daily cron 8 AM ET)
+│   ├── claude.yml              # @claude mentions in issues/PRs
+│   ├── agent-pipeline-health.yml    # Daily 9 AM ET
+│   ├── agent-daily-check.yml        # Daily 8:30 AM ET
+│   ├── agent-fatigue-monitor.yml    # Mon + Thu 9:30 AM ET
+│   ├── agent-creative-intelligence.yml  # Mon 10 AM ET
+│   ├── agent-creative-preview.yml   # workflow_dispatch only
+│   ├── agent-ad-copy-generator.yml  # workflow_dispatch only
+│   └── agent-portfolio-scaling.yml  # Tue 9:30 AM ET
 ├── ad-copy/          # (empty placeholder) Meta ad copy by vertical
 ├── workflows/        # (empty placeholder) Automation scripts
 ├── audiences/        # (empty placeholder) Audience segmentation — never commit PII
@@ -415,7 +437,7 @@ Stored via `PropertiesService.getScriptProperties()` (`PROPS` in code). Set manu
 ```
 
 - `executeAs: USER_DEPLOYING` — script runs as the deployer's Google account; Meta/HubSpot tokens are theirs.
-- `access: ANYONE_ANONYMOUS` — `/exec` URL is unauthenticated. Relies on URL obscurity.
+- `access: ANYONE_ANONYMOUS` — `/exec` URL is unauthenticated. Relies on URL obscurity. Note: the GitHub Pages dashboard UI has a client-side password gate (added 2026-05-26, see §9.5), but this does not protect the `/exec` API URL itself.
 - `timeZone: America/New_York` — all date formatting and trigger times use ET.
 
 ### 4.4 clasp configuration (`.clasp.json`)
@@ -805,6 +827,16 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - **Mappings table** — campaign_id → utm → conversion event reference.
 - **"Hive Mind" chat** — unlocked by clicking the 🐝 logo 5 times. Natural-language interface to campaign data via Claude.
 
+**Password gate (added 2026-05-26):**
+
+The entire `<App />` component is wrapped by `<PasswordGate>`, which is rendered as the root component. On first load (and on each new browser session), `PasswordGate` checks `sessionStorage.getItem('hc_auth') === '1'`. If the key is absent or any other value, it renders a centered password form instead of the dashboard. On submit, the browser computes `SHA-256(enteredPassword)` via `crypto.subtle.digest` (Web Crypto API) and compares the hex output to a hardcoded digest constant (`PASS_HASH`) embedded in the HTML. On match, `sessionStorage.setItem('hc_auth', '1')` is set and `<App />` is rendered. On mismatch, an error message is shown.
+
+Key properties:
+- **Session-scoped.** `sessionStorage` clears when the tab or window closes. Each new session requires re-entry.
+- **Client-side only.** The expected hash is visible in the HTML source; anyone with DevTools can extract or bypass it. This is a lightweight friction barrier for consultants who receive the GitHub Pages URL, not a secure auth system.
+- **`/exec` API is unaffected.** The Apps Script web app endpoint has no password requirement and no server-side auth.
+- **To rotate the password:** compute `SHA-256(newPassword)` (e.g. `echo -n "newpassword" | sha256sum`), update `PASS_HASH` in `webapp/index.html`, and push to main. CI deploys to GitHub Pages automatically.
+
 **Chart rendering notes:**
 
 - **Daily granularity x-axis:** `allBuckets` enumerates every date between `rangeStart` and `rangeEnd` inclusive (via `enumerateDateRange()` helper, ~line 144). This ensures days with no data still appear on the axis. Week/month granularity derives buckets from `rollup` since those are comprehensive.
@@ -1000,6 +1032,7 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 | Slack digest duplicates WoW/4wk metric math | Code.js:~1676 | Shares logic with `generateNarrativeForWeek_` |
 | `budget_queue` grows unbounded | No archival | Table never cleaned; add 90-day retention |
 | No retry on GitHub API errors | `pushSnapshotToGitHub_` | Transient failures abort whole export |
+| Dashboard password is client-side only | `webapp/index.html` (`PASS_HASH` constant) | SHA-256 digest is visible in HTML source; bypassing requires DevTools only. The `/exec` API is completely open. Acceptable for consultant-URL friction but not for sensitive data. True fix: add server-side auth to the Apps Script Web App (e.g. Google OAuth) or move to an authenticated hosting service. |
 | No rate limiting on chat endpoint | `handleChatRequest_` | Runaway client could burn Anthropic budget |
 | History cap at 30 turns (hard) | `handleChatRequest_` | May truncate mid-conversation; consider token-based |
 | `campaign_mapping.custom_conversion_id` not format-validated | `syncCampaignMappings_` | Malformed values cause silent IC tracking failure |

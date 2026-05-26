@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-17 (daily-check now fetches the weekly spend goal live from the dashboard-managed `/exec?action=get_spend_goal` instead of static config, so pacing reacts to a goal change without a code deploy; shared `scripts/lib/exec_api.py` accessor)_
+_Last updated: 2026-05-26 (dashboard now requires a password on first load — lightweight SHA-256 client-side gate using sessionStorage; /exec API is unchanged and still anonymous)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -68,6 +68,7 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 - **Goal tracking** — weekly ICP pace vs. target, weekly spend vs. $10K target.
 - **Budget controls** — run-analysis-now button, adjust the weekly spend goal via a Slack approval flow.
 - **Hive Mind chat** — hidden behind a 5-click easter egg on the 🐝 logo; lets the team ask natural-language questions ("what was our CPICP last Tuesday?") and get answers from Claude with live data.
+- **Password gate** _(added 2026-05-26)_ — on first load (and each new browser session) the dashboard shows a password prompt before rendering. State is stored in `sessionStorage` and clears when the tab closes. This is a lightweight access barrier intended for consultants viewing the GitHub Pages URL — it is not a cryptographic security measure (the expected hash is in the HTML source, and the Apps Script `/exec` API is still unauthenticated).
 
 ### On-demand via Apps Script
 
@@ -168,7 +169,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 - **Credentials rotation is manual.** Meta tokens, HubSpot keys, Anthropic keys, GitHub PATs all live in Apps Script Properties as plain text. No automatic expiration reminder, no rotation schedule.
 - **Logs live in Apps Script only.** If you need to audit what happened 6 months ago, you have to dig through the Apps Script execution log, which has limited retention and no search.
-- **Web App is publicly accessible (ANYONE_ANONYMOUS).** The `/exec` URL has no auth. Anyone who knows the URL can hit the dashboard API. Dashboard data isn't super-sensitive (campaign metrics) but it's worth knowing.
+- **Dashboard UI has a client-side password gate; the `/exec` API does not.** The GitHub Pages dashboard (2026-05-26) requires a password on each new browser session. However, the Apps Script `/exec` URL has no server-side authentication — anyone who knows the URL can call any action directly. The password is SHA-256-hashed in the browser and compared to a hardcoded digest in the HTML source, so it provides a lightweight access barrier for consultants stumbling on the URL, not true security. Rotating the password requires editing `webapp/index.html` and redeploying to GitHub Pages.
 
 ---
 
@@ -207,4 +208,4 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 ## Summary in one paragraph
 
-This is a mature, working automation platform. The core data pipeline runs daily without intervention, the budget optimizer has two-step human-in-the-loop safeguards (Slack confirmation page defeats link-unfurling bots), and campaign renames in Meta are handled automatically without manual mapping cleanup. The Q1 audit's 6 data-quality issues are all resolved, IC conversion tracking has been restored (now using the cleaner "Investment Crowdfunding Prequal Decision" event), and the AI layer runs on Claude Opus 4.7 via a single configurable constant. As of 2026-05-02, an additive ad-level agent layer (`scripts/`, `skills/`, `data/`) sits alongside the campaign-level pipeline — it gives Claude Code per-ad fatigue signals and creative metadata to power the Berman-style monitor → detect → propose loop, while still routing all real budget changes through the existing human approval flow. The biggest remaining ROI improvements are around observability: proactive alerts on pipeline failures, attribution-quality drops, and token expiration. The system does not currently tell you when it's broken — you have to notice.
+This is a mature, working automation platform. The core data pipeline runs daily without intervention, the budget optimizer has two-step human-in-the-loop safeguards (Slack confirmation page defeats link-unfurling bots), and campaign renames in Meta are handled automatically without manual mapping cleanup. The Q1 audit's 6 data-quality issues are all resolved, IC conversion tracking has been restored (now using the cleaner "Investment Crowdfunding Prequal Decision" event), and the AI layer runs on Claude Opus 4.7 via a single configurable constant. As of 2026-05-02, an additive ad-level agent layer (`scripts/`, `skills/`, `data/`) sits alongside the campaign-level pipeline — it gives Claude Code per-ad fatigue signals and creative metadata to power the monitor → detect → propose loop, while still routing all real budget changes through the existing human approval flow. The GitHub Pages dashboard now requires a password on each browser session (client-side SHA-256 gate, added 2026-05-26), providing a lightweight access barrier for external viewers. The biggest remaining ROI improvements are around observability: proactive alerts on pipeline failures, attribution-quality drops, and token expiration. The system does not currently tell you when it's broken — you have to notice.
