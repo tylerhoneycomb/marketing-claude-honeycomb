@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-17 (daily-check now fetches the weekly spend goal live from the dashboard-managed `/exec?action=get_spend_goal` instead of static config, so pacing reacts to a goal change without a code deploy; shared `scripts/lib/exec_api.py` accessor)_
+_Last updated: 2026-05-27 (budget optimizer now ramps spend UP when below target: 1% symmetric pump-up applied to all eligible campaigns when weekly pool sits below `target − tolerance`, mirroring the existing knockdown for over-target. Previously increases were funded only by cuts, so an underspend gap could persist for weeks)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 

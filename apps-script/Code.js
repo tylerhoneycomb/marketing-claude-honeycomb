@@ -3309,6 +3309,7 @@ function computeRecommendations_(currentBudgets, signals) {
   var portfolioExcess = trueCurrentTotal - targetDaily;
 
   var knockdownApplied = false;
+  var pumpApplied = false;
   if (portfolioExcess > toleranceDaily) {
     Logger.log('Portfolio over by $' + (portfolioExcess * 7 / 100).toFixed(0) +
       '/week. Applying 1% knockdown to all eligible campaigns before performance adjustments.');
@@ -3317,12 +3318,28 @@ function computeRecommendations_(currentBudgets, signals) {
       c.knockdownBudgetCents = Math.max(c.currentDailyBudgetCents - cut, CAMPAIGN_DAILY_MIN_CENTS);
     });
     knockdownApplied = true;
+  } else if (portfolioExcess < -toleranceDaily) {
+    // Symmetric counterpart to knockdown: when the eligible pool sits
+    // BELOW target by more than the tolerance band, raise everyone's
+    // baseline 1% so the redistribution step has headroom to ramp UP.
+    // Without this branch, increases were funded only by cuts to
+    // bottom-rank campaigns — so cycles with few/small cuts produced
+    // proposals that never closed an underspend gap. The 12% weekly
+    // cap downstream is the upper guardrail; no per-campaign max
+    // clamp is needed here (there is no CAMPAIGN_DAILY_MAX_CENTS).
+    Logger.log('Portfolio under by $' + (-portfolioExcess * 7 / 100).toFixed(0) +
+      '/week. Applying 1% pump-up to all eligible campaigns before performance adjustments.');
+    eligible.forEach(function (c) {
+      var bump = Math.round(c.currentDailyBudgetCents * 0.01);
+      c.knockdownBudgetCents = c.currentDailyBudgetCents + bump;
+    });
+    pumpApplied = true;
   } else {
     eligible.forEach(function (c) {
       c.knockdownBudgetCents = c.currentDailyBudgetCents;
     });
     Logger.log('Pool check: $' + (trueCurrentTotal * 7 / 100).toFixed(0) +
-      '/week — within tolerance, no knockdown.');
+      '/week — within tolerance, no adjustment.');
   }
 
   var toReduce = eligible.filter(function (c) { return c.direction === -1; });
@@ -3337,6 +3354,17 @@ function computeRecommendations_(currentBudgets, signals) {
     c.proposedDailyBudgetCents = proposed;
     c.changeCents = proposed - c.currentDailyBudgetCents;
     totalFreedCents += Math.abs(c.knockdownBudgetCents - proposed);
+  });
+
+  // Initialize toIncrease at the (possibly pumped/knocked) baseline so a
+  // cycle with no freed budget still carries the baseline adjustment
+  // through. Without this, the conditional redistribution block below
+  // would skip these campaigns entirely and the final reduce would
+  // default them to currentDailyBudgetCents — silently losing the pump
+  // on underspend cycles with no toReduce campaigns to fund increases.
+  toIncrease.forEach(function (c) {
+    c.proposedDailyBudgetCents = c.knockdownBudgetCents;
+    c.changeCents = c.proposedDailyBudgetCents - c.currentDailyBudgetCents;
   });
 
   if (toIncrease.length > 0 && totalFreedCents > 0) {
@@ -3375,6 +3403,16 @@ function computeRecommendations_(currentBudgets, signals) {
     eligible.forEach(function (c) {
       if (c.knockdownBudgetCents < c.currentDailyBudgetCents) {
         c.reasons.push('1% portfolio knockdown: spend above ' + knockdownThresholdStr);
+      }
+    });
+  }
+
+  if (pumpApplied) {
+    var pumpThresholdWeekly = effectiveTarget - effectiveTolerance;
+    var pumpThresholdStr = '$' + pumpThresholdWeekly.toLocaleString('en-US') + '/week';
+    eligible.forEach(function (c) {
+      if (c.knockdownBudgetCents > c.currentDailyBudgetCents) {
+        c.reasons.push('1% portfolio pump-up: spend below ' + pumpThresholdStr);
       }
     });
   }
