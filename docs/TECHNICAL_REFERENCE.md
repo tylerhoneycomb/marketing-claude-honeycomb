@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-17 (weekly spend goal is now sourced live for all consumers: new `scripts/lib/exec_api.py` (`fetch_json`, `get_spend_goal`); `daily-check/analyze_daily.py` fetches the goal from `/exec?action=get_spend_goal` instead of static `benchmarks.json`; `compute_scaling_profiles.py` refactored onto the shared helper)_
+_Last updated: 2026-05-27 (symmetric 1% pump-up added to `computeRecommendations_()`: when eligible-pool spend is below `targetDaily − toleranceDaily`, mirror the existing 1% knockdown by raising every eligible campaign's baseline 1% before rank-based redistribution — fixes a long-standing bug where the optimizer couldn't close an underspend gap because increases were funded only by cuts. §8.3 updated)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -641,13 +641,21 @@ Returns `{campaignId: {cpicp, avgFreq, estimatedIcps, icpTrend, lifetimeConversi
      - Middle → tier `"middle"`. Always holds.
    - Each cycle persists the current tier map to `PROPS.BUDGET_RANK_TIERS` (JSON) for next cycle's comparison. Hysteresis added 2026-05-11 to smooth day-to-day rank thrash; first run post-deploy holds everything because the prior-tiers map doesn't exist yet.
 
-**Portfolio correction:** if `currentTotal > targetDaily + toleranceDaily`, apply a 1% knockdown to all eligible budgets as a correction pool. Knockdown is independent of the hysteresis-held direction — a held-by-hysteresis campaign still receives the 1% knockdown if the portfolio is over-budget. The reason string is interpolated from `effectiveTarget + effectiveTolerance` (line 3372 area) — was previously hardcoded `"$10,500/week"`, fixed 2026-05-09.
+**Portfolio correction (symmetric):** the eligible-pool baseline is adjusted toward target before the rank-based redistribution runs, so under- and over-target are handled by the same mechanism:
 
-**Change application:**
+- If `currentTotal > targetDaily + toleranceDaily` → **1% knockdown** to all eligible budgets. Reason string interpolated from `effectiveTarget + effectiveTolerance`.
+- If `currentTotal < targetDaily - toleranceDaily` → **1% pump-up** to all eligible budgets _(added 2026-05-27)_. Reason string interpolated from `effectiveTarget - effectiveTolerance`. Without this branch, increases were funded only by cuts to bottom-rank campaigns, so cycles with few/small cuts produced proposals that never closed an underspend gap — the portfolio could sit hundreds of dollars under target for weeks. The 12% weekly cap downstream is the upper guardrail; there is no per-campaign max-clamp here because no `CAMPAIGN_DAILY_MAX_CENTS` constant exists.
+- Otherwise → no baseline adjustment.
 
-- Reductions: apply `MAX_CHANGE_PCT` (2%) cut, floor at `CAMPAIGN_DAILY_MIN_CENTS` ($25/day). Hard cap `MAX_REDUCTION_PCT` (4%).
+Baseline adjustment is independent of hysteresis-held direction — a held-by-hysteresis campaign still receives knockdown or pump-up.
+
+**Change application** (on top of the adjusted baseline `knockdownBudgetCents`):
+
+- Reductions: apply `MAX_CHANGE_PCT` (2%) cut from the adjusted baseline, floor at `CAMPAIGN_DAILY_MIN_CENTS` ($25/day). Hard cap `MAX_REDUCTION_PCT` (4%).
 - Increases: distribute freed budget proportionally, capped at `MAX_CHANGE_PCT` per campaign.
-- Holds: no change.
+- Holds: no change beyond the baseline adjustment.
+
+Note that on a pump-up cycle, `toReduce` campaigns net to roughly `+1% pump − 2% cut = −1%` (softer cuts than the −2% on cycles without pump-up), `toIncrease` lands at `+1% + share of freed budget`, and `toHold` lands at `+1%`. This is the intentional symmetric counterpart to the knockdown cycle where everyone trends down by ~1% on top of rank-based moves.
 
 Returns an array of changed campaigns with `changeCents`, `proposedDailyBudgetCents`, `reasons[]`, plus meta fields `_currentTotal`, `_proposedTotal`, `_poolWarning`.
 
