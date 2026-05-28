@@ -36,6 +36,7 @@ const WEEKLY_SPEND_TOLERANCE = 500;     // dollars ±
 const CAMPAIGN_DAILY_MIN_CENTS = 2500;    // $25.00/day floor
 const MAX_CHANGE_PCT = 0.02;    // ±2% per cycle
 const MAX_REDUCTION_PCT = 0.04;    // hard cap: dramatic underperformers only, max 4% reduction per cycle
+const PUMP_CPICP_CEILING = 175;    // pump-up baseline skips campaigns with CPICP > $175 or null — don't ramp bad performers toward an underspend target
 const LIFETIME_MIN_CONVERSIONS = 10;      // eligibility gate
 const WEEKLY_ICP_TARGET = 75;      // weekly ICP benchmark (informational — no kill switch)
 const ROLLING_DAYS = 14;      // signal window
@@ -3320,19 +3321,39 @@ function computeRecommendations_(currentBudgets, signals) {
     knockdownApplied = true;
   } else if (portfolioExcess < -toleranceDaily) {
     // Symmetric counterpart to knockdown: when the eligible pool sits
-    // BELOW target by more than the tolerance band, raise everyone's
-    // baseline 1% so the redistribution step has headroom to ramp UP.
-    // Without this branch, increases were funded only by cuts to
-    // bottom-rank campaigns — so cycles with few/small cuts produced
-    // proposals that never closed an underspend gap. The 12% weekly
-    // cap downstream is the upper guardrail; no per-campaign max
-    // clamp is needed here (there is no CAMPAIGN_DAILY_MAX_CENTS).
+    // BELOW target by more than the tolerance band, raise eligible
+    // campaigns' baseline 1% so the redistribution step has headroom
+    // to ramp UP. Without this branch, increases were funded only by
+    // cuts to bottom-rank campaigns — so cycles with few/small cuts
+    // produced proposals that never closed an underspend gap.
+    //
+    // Guardrail: pump-up SKIPS campaigns with CPICP > PUMP_CPICP_CEILING
+    // (or null CPICP, which means 0 ICPs in the 7-day window — worse
+    // than any finite CPICP). We don't ramp bad performers toward the
+    // target even if it delays closing the gap. They can still receive
+    // reductions on the same cycle; the pump only affects the baseline.
+    //
+    // The 12% weekly cap downstream is the upper guardrail; no
+    // per-campaign max clamp is needed here (no CAMPAIGN_DAILY_MAX_CENTS).
     Logger.log('Portfolio under by $' + (-portfolioExcess * 7 / 100).toFixed(0) +
-      '/week. Applying 1% pump-up to all eligible campaigns before performance adjustments.');
+      '/week. Applying 1% pump-up to eligible campaigns with CPICP ≤ $' +
+      PUMP_CPICP_CEILING + '.');
+    var pumpedCount = 0;
+    var skippedHighCpicp = [];
     eligible.forEach(function (c) {
+      if (c.cpicp === null || c.cpicp > PUMP_CPICP_CEILING) {
+        c.knockdownBudgetCents = c.currentDailyBudgetCents;
+        skippedHighCpicp.push(c.name + ' (CPICP ' +
+          (c.cpicp === null ? 'null' : '$' + c.cpicp.toFixed(0)) + ')');
+        return;
+      }
       var bump = Math.round(c.currentDailyBudgetCents * 0.01);
       c.knockdownBudgetCents = c.currentDailyBudgetCents + bump;
+      pumpedCount++;
     });
+    Logger.log('Pump-up: ' + pumpedCount + ' campaigns pumped, ' +
+      skippedHighCpicp.length + ' skipped over ceiling: ' +
+      (skippedHighCpicp.join('; ') || 'none'));
     pumpApplied = true;
   } else {
     eligible.forEach(function (c) {

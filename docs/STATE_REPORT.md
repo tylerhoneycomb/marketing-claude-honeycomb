@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-27 (budget optimizer now ramps spend UP when below target: 1% symmetric pump-up applied to all eligible campaigns when weekly pool sits below `target − tolerance`, mirroring the existing knockdown for over-target. Previously increases were funded only by cuts, so an underspend gap could persist for weeks)_
+_Last updated: 2026-05-28 (pump-up CPICP guardrail: the symmetric 1% pump-up now skips campaigns with CPICP > $175 or null. The optimizer won't ramp bad performers toward an underspend target — closing the gap is allowed to take longer rather than push money into expensive campaigns)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
