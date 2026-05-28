@@ -36,19 +36,23 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 ## Repo Structure
 
 - `/apps-script/` — Full Apps Script intelligence layer, deployed via clasp + GitHub Actions
-  - `Code.js` — The complete intelligence script (~3,600 lines). Edit here, never in the Apps Script web editor
+  - `Code.js` — The complete intelligence script (~6,450 lines). Edit here, never in the Apps Script web editor
   - `.clasp.json` — Points clasp at the Apps Script project (do not edit)
   - `appsscript.json` — Apps Script manifest (scopes, runtime, Web App settings)
-- `/docs/` — Living documentation (`STATE_REPORT.md`, `TECHNICAL_REFERENCE.md`) — keep in sync with code changes
+- `/docs/` — Living documentation (`STATE_REPORT.md`, `TECHNICAL_REFERENCE.md`, `CREATIVE_INTELLIGENCE_DESIGN.md`) — keep in sync with code changes
 - `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
-- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`.
-- `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair.
+- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`, `portfolio-scaling`.
+- `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `preview_dataset.py` generates a deterministic Markdown brief without Anthropic calls; `run_daily.sh` orchestrates the fetch+compute pair. Shared library modules live in `scripts/lib/`: `meta.py` (Meta API client), `exec_api.py` (/exec endpoint client), `text_features.py` (deterministic copy-feature extraction), `io.py` (atomic JSON writes).
 - `/data/` — Agent data repository.
   - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest)
-  - `data/creatives/creatives.json` — creative metadata, accreted over time
-  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`)
+  - `data/creatives/creatives.json` — creative metadata (asset_feed_spec variants), accreted over time
+  - `data/creatives/categorizations.json` — LLM-tagged copy angles + visual styles, keyed by variant_id/image_hash
+  - `data/creatives/images/` — full-size creative images stored as `<image_hash>.jpg`
+  - `data/derived/` — computed signals (regenerable): `fatigue_signals.json`, `winner_bleeder.json`, `summary.json`, `scaling_profiles.json`, `reallocation.json`
+  - `data/drafts/<date>-<vertical>.md` — ad copy drafts from `ad-copy-generator` skill; never auto-published
+  - `data/previews/<date>.md` — deterministic creative dataset briefs from `agent-creative-preview` (no Anthropic calls)
   - `data/config/benchmarks.json` — all thresholds; never hardcode them in scripts
 - `/ad-copy/` — Meta (Facebook/Instagram) ad copy organized by vertical
 - `/workflows/` — Automation scripts and marketing workflows
@@ -57,7 +61,15 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 - `.github/workflows/` — GitHub Actions CI/CD
   - `deploy-webapp.yml` — Auto-deploys dashboard to GitHub Pages on changes to webapp/
   - `deploy-apps-script.yml` — Auto-deploys Apps Script via clasp on changes to apps-script/
-  - `daily-data.yml` — Manual-only (workflow_dispatch) ad-level data pull; will be flipped to a daily cron once the snapshot output is verified
+  - `daily-data.yml` — Daily cron (8 AM ET) ad-level data pull; `workflow_dispatch` preserved for backfills
+  - `claude.yml` — Handles `@claude` mentions in issues/PRs
+  - `agent-pipeline-health.yml` — Daily cron at 9 AM ET
+  - `agent-daily-check.yml` — Daily cron at 8:30 AM ET
+  - `agent-fatigue-monitor.yml` — Twice-weekly cron (Mon + Thu 9:30 AM ET)
+  - `agent-creative-intelligence.yml` — Weekly cron (Mon 10 AM ET); also `workflow_dispatch`
+  - `agent-creative-preview.yml` — `workflow_dispatch` only; $0 validation path (no Anthropic calls)
+  - `agent-ad-copy-generator.yml` — `workflow_dispatch` only; drafts never auto-published
+  - `agent-portfolio-scaling.yml` — Weekly cron (Tue 9:30 AM ET); also `workflow_dispatch`
 
 ## Apps Script Deployment (clasp)
 
@@ -379,14 +391,14 @@ agent-creative-preview, agent-ad-copy-generator, agent-portfolio-scaling).
   added to the schema). Tagging: optimizer Slack proposals now show
   the campaign's vertical classification inline.
 
-### Shared client
+### Shared library (`scripts/lib/`)
 
-`scripts/lib/meta.py` is the single Meta Graph API client used by the
-snapshot pipeline AND the skills. It owns: HTTP retries, paging, throttle
-error codes (1, 2, 4, 17, 32, 341, 613, 80000, 80004), per-call rate
-limiting, IC conversion extraction, and row normalization. New skills that
-need Meta data should import from this module rather than duplicate the
-client.
+Four modules are shared across the snapshot pipeline and all skills:
+
+- **`meta.py`** — Single Meta Graph API client. Owns HTTP retries, paging, throttle error codes (1, 2, 4, 17, 32, 341, 613, 80000, 80004), per-call rate limiting, IC conversion extraction, and row normalization. New skills that need Meta data should import from here rather than duplicate the client.
+- **`exec_api.py`** — Client for the Apps Script `/exec` endpoint. Used by skills that need to read from or write to the Google Sheet (e.g. `get_spend_goal`, `daily-check-write`, `fatigue-write`).
+- **`text_features.py`** — Deterministic structural feature extraction from ad copy (word count, opening word, syntactic markers, `variant_id` hashing). Used by `creative-intelligence` and `ad-copy-generator`.
+- **`io.py`** — Atomic JSON writes via temp-file-then-rename. Used wherever a script updates a JSON cache file so partial writes don't corrupt the cache.
 
 ### Snapshot pipeline (parallel to skills)
 
