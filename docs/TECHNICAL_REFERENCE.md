@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-27 (symmetric 1% pump-up added to `computeRecommendations_()`: when eligible-pool spend is below `targetDaily − toleranceDaily`, mirror the existing 1% knockdown by raising every eligible campaign's baseline 1% before rank-based redistribution — fixes a long-standing bug where the optimizer couldn't close an underspend gap because increases were funded only by cuts. §8.3 updated)_
+_Last updated: 2026-05-28 (pump-up CPICP guardrail: new `PUMP_CPICP_CEILING = $175` constant. The 1% pump-up baseline now skips campaigns with `cpicp > $175` or `cpicp === null` so bad performers aren't ramped up toward the target. Knockdown is unaffected. §8.3 and constants table updated)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -348,6 +348,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | `CAMPAIGN_DAILY_MIN_CENTS` | `2500` | Minimum $25/day floor |
 | `MAX_CHANGE_PCT` | `0.02` | ±2% per optimization cycle |
 | `MAX_REDUCTION_PCT` | `0.04` | Hard cap: max 4% cut |
+| `PUMP_CPICP_CEILING` | `175` (USD) | Pump-up baseline skips campaigns with `cpicp > $175` or `cpicp === null`. Prevents the underspend pump from ramping bad performers. Knockdown is not affected. |
 | `LIFETIME_MIN_CONVERSIONS` | `10` | Eligibility gate for budget changes |
 | `WEEKLY_ICP_TARGET` | `75` | Benchmark, informational only |
 | `ROLLING_DAYS` | `14` | Signal window for budget decisions |
@@ -644,7 +645,7 @@ Returns `{campaignId: {cpicp, avgFreq, estimatedIcps, icpTrend, lifetimeConversi
 **Portfolio correction (symmetric):** the eligible-pool baseline is adjusted toward target before the rank-based redistribution runs, so under- and over-target are handled by the same mechanism:
 
 - If `currentTotal > targetDaily + toleranceDaily` → **1% knockdown** to all eligible budgets. Reason string interpolated from `effectiveTarget + effectiveTolerance`.
-- If `currentTotal < targetDaily - toleranceDaily` → **1% pump-up** to all eligible budgets _(added 2026-05-27)_. Reason string interpolated from `effectiveTarget - effectiveTolerance`. Without this branch, increases were funded only by cuts to bottom-rank campaigns, so cycles with few/small cuts produced proposals that never closed an underspend gap — the portfolio could sit hundreds of dollars under target for weeks. The 12% weekly cap downstream is the upper guardrail; there is no per-campaign max-clamp here because no `CAMPAIGN_DAILY_MAX_CENTS` constant exists.
+- If `currentTotal < targetDaily - toleranceDaily` → **1% pump-up** to eligible budgets with `cpicp <= PUMP_CPICP_CEILING` (default $175); campaigns above the ceiling, or with `cpicp === null` (0 ICPs in the 7-day window — effectively worse than any finite CPICP), keep their baseline at `currentDailyBudgetCents` and don't participate in the pump _(pump-up added 2026-05-27; CPICP ceiling added 2026-05-28)_. Reason string interpolated from `effectiveTarget - effectiveTolerance`. Without the pump-up branch, increases were funded only by cuts to bottom-rank campaigns, so cycles with few/small cuts produced proposals that never closed an underspend gap — the portfolio could sit hundreds of dollars under target for weeks. The CPICP ceiling prevents the pump from ramping bad performers toward the target even if it delays closing the gap; skipped campaigns can still receive reductions on the same cycle (the ceiling only blocks the upward baseline move, not the rank-based redistribution). The 12% weekly cap downstream is the upper guardrail; there is no per-campaign max-clamp here because no `CAMPAIGN_DAILY_MAX_CENTS` constant exists.
 - Otherwise → no baseline adjustment.
 
 Baseline adjustment is independent of hysteresis-held direction — a held-by-hysteresis campaign still receives knockdown or pump-up.
