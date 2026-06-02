@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-02 (budget proposal LLM narrative now uses the dynamic spend goal: the system prompt at `postBudgetProposalToSlack_` no longer hardcodes "$500/week of $10,000 target" — it interpolates the live `effectiveTarget` / `effectiveTolerance` so the SITUATION/CHANGES/WATCH commentary references the actual dashboard-managed target instead of the stale $10k constant)_
+_Last updated: 2026-06-02 (documentation sync: corrected Code.js line count to ~6,500; reframed the "autonomous pipeline" operational-gap bullet to clarify the direct-to-main commit behavior; no functional changes)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -14,7 +14,7 @@ A **marketing operations platform** for Honeycomb Credit's small-business invest
 
 Four things live inside the repo:
 
-1. **The "brain"** — a Google Apps Script program (~4,200 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
+1. **The "brain"** — a Google Apps Script program (~6,500 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
 2. **The "dashboard"** — a web page (hosted on GitHub Pages) where the team can see charts, check campaign health, and ask questions via an AI chat called "Hive Mind."
 3. **The "plumbing"** — GitHub Actions that automatically push code changes to the Google Apps Script servers whenever something is merged, so nobody has to copy/paste into the Apps Script web editor.
 4. **The "agent layer"** _(new, 2026-05-02)_ — an ad-level data pipeline (`scripts/`) and skill files (`skills/`) that let Claude Code monitor individual ads, detect creative fatigue, and propose budget shifts. Snapshots are stored as JSON files under `data/` (the repo itself acts as the database). The agent layer feeds recommendations into the existing Slack approval pipeline — it never writes to Meta directly.
@@ -143,7 +143,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 ### Operational gaps
 
-- **Ad-level pipeline is autonomous.** `.github/workflows/daily-data.yml` runs daily at 8 AM ET on cron and commits each snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
+- **Automated data commits land on `main` without PR review.** `daily-data.yml` (cron, daily) and several agent workflows (`agent-creative-intelligence`, `agent-ad-copy-generator`, `agent-portfolio-scaling`) push JSON data files directly to `main` — by design, since these are data files not code. The `main` branch history includes frequent bot commits. Manual backfills via `workflow_dispatch` also target `main` directly (idempotent: dates with an existing `_manifest.json` are skipped).
 - **Two Meta tokens to keep current.** The legacy campaign-level pipeline reads `META_ACCESS_TOKEN` from Apps Script Script Properties; the new ad-level pipeline reads it from a GitHub Secret with the same name. Token rotation now has to happen in two places.
 - **No alerting on pipeline failures.** If the daily 7 AM pull breaks (e.g., expired Meta token), you only find out when someone notices the Slack digest didn't arrive or the dashboard shows stale data. No proactive "hey, this job failed" alert.
 - **No alerting on attribution-quality drops.** The 33% collapse that week could have gone unnoticed for days. A threshold-based alert ("IC attribution below 50% — investigate") would catch this earlier.
