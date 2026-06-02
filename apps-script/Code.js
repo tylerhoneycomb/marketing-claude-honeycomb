@@ -3522,6 +3522,7 @@ function computeRecommendations_(currentBudgets, signals) {
   changed._currentTotal = currentTotal;
   changed._proposedTotal = trueProposedTotal;
   changed._targetTotal = targetDaily;
+  changed._effectiveTarget = effectiveTarget;
   changed._effectiveTolerance = effectiveTolerance;
 
   Logger.log('Recommendations: ' + changed.length + ' campaigns to change.');
@@ -3658,7 +3659,11 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
       '',
       'ICP = contact decisioned as investment_crowdfunding in HubSpot. CPICP = cost per ICP. Lower is better.',
       'ICP estimates use hybrid attribution (v3): IC conversions (deduplicated) + proportional share of unattributed pool.',
-      'Budget changes are capped at ±2% per cycle. Portfolio total must stay within $500/week of $10,000 target.',
+      'Budget changes are capped at ±2% per cycle. Portfolio total must stay within $' +
+        (recs._effectiveTolerance || WEEKLY_SPEND_TOLERANCE).toLocaleString('en-US') +
+        '/week of $' +
+        (recs._effectiveTarget || TARGET_WEEKLY_SPEND).toLocaleString('en-US') +
+        ' target.',
       'Optimization runs every cycle. ICP pace is shown as context only.',
       '',
       'Write a SHORT plain-text commentary for a Slack message. 3 sections, total 120-160 words maximum.',

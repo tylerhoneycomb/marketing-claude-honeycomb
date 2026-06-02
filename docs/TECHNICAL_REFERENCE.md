@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-05-28 (pump-up CPICP guardrail: new `PUMP_CPICP_CEILING = $175` constant. The 1% pump-up baseline now skips campaigns with `cpicp > $175` or `cpicp === null` so bad performers aren't ramped up toward the target. Knockdown is unaffected. §8.3 and constants table updated)_
+_Last updated: 2026-06-02 (budget proposal LLM narrative now anchors off the dynamic spend goal: `postBudgetProposalToSlack_`'s system prompt no longer hardcodes "$500/week of $10,000 target" — it interpolates `recs._effectiveTarget` / `recs._effectiveTolerance` so the LLM sees the live dashboard-managed values; `computeRecommendations_` now stashes `_effectiveTarget` on the returned object alongside the existing `_effectiveTolerance`. The optimizer math was already correct — this only fixes the narrative)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
