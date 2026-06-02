@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-05-28 (pump-up CPICP guardrail: the symmetric 1% pump-up now skips campaigns with CPICP > $175 or null. The optimizer won't ramp bad performers toward an underspend target — closing the gap is allowed to take longer rather than push money into expensive campaigns)_
+_Last updated: 2026-06-02 (budget proposal LLM narrative now uses the dynamic spend goal: the system prompt at `postBudgetProposalToSlack_` no longer hardcodes "$500/week of $10,000 target" — it interpolates the live `effectiveTarget` / `effectiveTolerance` so the SITUATION/CHANGES/WATCH commentary references the actual dashboard-managed target instead of the stale $10k constant)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
