@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-06-02 (budget proposal LLM narrative now anchors off the dynamic spend goal: `postBudgetProposalToSlack_`'s system prompt no longer hardcodes "$500/week of $10,000 target" — it interpolates `recs._effectiveTarget` / `recs._effectiveTolerance` so the LLM sees the live dashboard-managed values; `computeRecommendations_` now stashes `_effectiveTarget` on the returned object alongside the existing `_effectiveTolerance`. The optimizer math was already correct — this only fixes the narrative)_
+_Last updated: 2026-06-03 (documentation sync: §2 repo structure expanded to include scripts/lib/, preview_dataset.py, all 6 skills, data/drafts+previews+categorizations+scaling derived files, all agent workflow files; §10.1 adds agent-portfolio-scaling.yml detailed entry; §11.6 skills table updated to all 6 shipped skills; §11.9 adds scaling_log tab; prior entry: budget proposal LLM narrative dynamic spend goal)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -86,39 +86,75 @@ marketing-claude-honeycomb/
 │   ├── index.html           # Single-file React dashboard
 │   └── apps-script-api.gs   # Reference copy of the web API layer (docs only)
 ├── docs/
-│   ├── STATE_REPORT.md      # Non-technical project state
-│   └── TECHNICAL_REFERENCE.md  # This document
-├── scripts/                 # NEW (2026-05-02) Ad-level Python pipeline
+│   ├── STATE_REPORT.md                  # Non-technical project state
+│   ├── TECHNICAL_REFERENCE.md           # This document
+│   └── CREATIVE_INTELLIGENCE_DESIGN.md  # Attribution model decision log (read-only history)
+├── scripts/                 # Ad-level Python pipeline (added 2026-05-02)
 │   ├── fetch_ad_data.py     # Daily Meta ad-set + ad insights pull
 │   ├── compute_signals.py   # Derived fatigue / winner-bleeder signals
-│   └── run_daily.sh         # Orchestrator (fetch → compute)
-├── skills/                  # NEW (2026-05-02) Agent skill definitions
-│   ├── daily-check/SKILL.md
-│   ├── fatigue-monitor/SKILL.md
-│   ├── creative-intelligence/   # NEW (2026-05-05)
+│   ├── preview_dataset.py   # Deterministic dataset preview (pure Python, no LLM)
+│   ├── run_daily.sh         # Orchestrator (fetch → compute)
+│   └── lib/
+│       ├── meta.py          # Shared Meta Graph API client (retries, paging, throttle, IC extraction)
+│       ├── exec_api.py      # Apps Script /exec GET accessor + get_spend_goal()
+│       ├── io.py            # atomic_write_json() utility
+│       └── text_features.py # compute_features() + variant_id() (SHA-256 prefix, pure Python)
+├── skills/                  # Agent skill definitions (added 2026-05-02)
+│   ├── pipeline-health/
 │   │   ├── SKILL.md
-│   │   ├── references/      # copy_angle + visual_style markdown
-│   │   └── scripts/         # build_creative_dataset.py, categorize_creative.py
-│   └── pipeline-health/SKILL.md
-├── data/                    # NEW (2026-05-02) Agent data repository
-│   ├── config/benchmarks.json     # All thresholds (single source)
-│   ├── snapshots/<YYYY-MM-DD>/    # Daily JSON snapshots from Meta
+│   │   └── scripts/check_health.py
+│   ├── daily-check/
+│   │   ├── SKILL.md
+│   │   └── scripts/{fetch_daily_data,analyze_daily}.py
+│   ├── fatigue-monitor/
+│   │   ├── SKILL.md
+│   │   ├── references/fatigue_thresholds.md
+│   │   └── scripts/{fetch_fatigue_data,compute_baselines,classify_fatigue}.py
+│   ├── creative-intelligence/   # added 2026-05-05
+│   │   ├── SKILL.md
+│   │   ├── references/{copy_angle_definitions,visual_style_definitions}.md
+│   │   └── scripts/{categorize_creative,build_creative_dataset}.py
+│   ├── ad-copy-generator/       # added 2026-05-05
+│   │   ├── SKILL.md
+│   │   ├── references/{compliance_rules,voice_guide}.md
+│   │   └── scripts/generate_drafts.py
+│   └── portfolio-scaling/       # added 2026-05-08
+│       ├── SKILL.md
+│       ├── references/meta_learning_phase_constraints.md
+│       └── scripts/{compute_scaling_profiles,compute_reallocation}.py
+├── data/                    # Agent data repository (added 2026-05-02)
+│   ├── config/benchmarks.json          # All thresholds (single source of truth)
+│   ├── snapshots/<YYYY-MM-DD>/         # Daily JSON snapshots from Meta
 │   │   ├── campaigns.json
 │   │   ├── adsets.json
 │   │   ├── ads.json
 │   │   ├── adset_insights.json
 │   │   ├── ad_insights.json
 │   │   └── _manifest.json
-│   ├── creatives/creatives.json   # Accumulating creative metadata
-│   └── derived/                   # Computed signals (regenerable)
-│       ├── fatigue_signals.json
-│       ├── winner_bleeder.json
-│       └── summary.json
+│   ├── creatives/
+│   │   ├── creatives.json              # Accumulating creative metadata cache
+│   │   ├── categorizations.json        # LLM copy_angle + visual_style tags (hash-deduped)
+│   │   └── images/<image_hash>.jpg     # Full-size creative images (lazy, idempotent download)
+│   ├── derived/                        # Computed signals (regenerable from snapshots)
+│   │   ├── fatigue_signals.json
+│   │   ├── winner_bleeder.json
+│   │   ├── summary.json
+│   │   ├── scaling_profiles.json       # Per-vertical 12-week classification (added 2026-05-08)
+│   │   └── reallocation.json           # Pool-based reallocation proposal (added 2026-05-08)
+│   ├── drafts/<date>-<vertical>.md     # Ad-copy drafts (human review required; never auto-published)
+│   └── previews/<date>.md              # Dataset previews from creative-preview workflow ($0)
 ├── .github/workflows/
-│   ├── deploy-apps-script.yml  # Push Code.js via clasp on merge to main
-│   ├── deploy-webapp.yml       # Publish dashboard to GitHub Pages on merge to main
-│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (daily cron)
-│   └── claude.yml              # @claude mentions in issues/PRs
+│   ├── deploy-apps-script.yml           # Push Code.js via clasp on merge to main
+│   ├── deploy-webapp.yml                # Publish dashboard to GitHub Pages on merge to main
+│   ├── daily-data.yml                   # Daily ad-level data pull (8 AM ET cron + backfill dispatch)
+│   ├── agent-pipeline-health.yml        # Daily 9 AM ET — pipeline-health skill
+│   ├── agent-daily-check.yml            # Daily 8:30 AM ET — daily-check skill
+│   ├── agent-fatigue-monitor.yml        # Mon + Thu 9:30 AM ET — fatigue-monitor skill
+│   ├── agent-creative-intelligence.yml  # Mon 10 AM ET — creative-intelligence skill
+│   ├── agent-creative-preview.yml       # workflow_dispatch only ($0 alternative path)
+│   ├── agent-ad-copy-generator.yml      # workflow_dispatch only — ad-copy-generator skill
+│   ├── agent-portfolio-scaling.yml      # Tue 9:30 AM ET — portfolio-scaling skill
+│   └── claude.yml                       # @claude mentions in issues/PRs
 ├── ad-copy/          # (empty placeholder) Meta ad copy by vertical
 ├── workflows/        # (empty placeholder) Automation scripts
 ├── audiences/        # (empty placeholder) Audience segmentation — never commit PII
@@ -901,6 +937,17 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Permissions: `contents: write` (commit drafts) + `issues: write` (status comment). No `id-token: write` because this workflow doesn't use `claude-code-action` — the script calls Anthropic directly.
 - Concurrency group `agent-ad-copy-generator`.
 
+**`agent-portfolio-scaling.yml`** _(added 2026-05-08)_
+
+- **Follows the Creative Intelligence pattern** — Python scripts run as ordinary workflow steps BEFORE `claude-code-action`, and derived JSON is committed to main BEFORE the action runs.
+- Triggers: `workflow_dispatch` + active cron `30 13 * * 2` (Tue 9:30 AM ET / UTC 13:30).
+- Pipeline: `pip install requests==2.32.3 anthropic==0.98.1 scipy==1.13.1` → `compute_scaling_profiles.py` (reads 12-week snapshots + live spend goal via `/exec?action=get_spend_goal`) → `compute_reallocation.py --write-log` (writes `data/derived/reallocation.json`) → "Commit derived JSON" (pushes `scaling_profiles.json` + `reallocation.json` to main while checkout credentials are still valid) → `claude-code-action@v1` (reads the committed JSON, POSTs proposal to `/exec?action=scaling-queue-write` to receive approve/reject URLs, composes the four-section Slack brief and posts it) → "Dump Claude execution log" → status comment to issue #48.
+- Status comment reports: verticals classification breakdown (scalable/stable/saturating/over-invested counts), pool dollars freed and allocated, `knockdown_risk` flag, and `scaling_commit=ok/skip`.
+- timeout-minutes: 30.
+- Secrets required: `ANTHROPIC_API_KEY`, `META_ACCESS_TOKEN`. Optional: `SLACK_WEBHOOK_URL`.
+- Permissions: `contents: write` (commit derived JSON) + `id-token: write` (claude-code-action OIDC auth) + `issues: write` (status comment to issue #48).
+- Concurrency group `agent-portfolio-scaling`.
+
 ### 10.1.0.5 Architectural pattern: scripts before claude-code-action _(established 2026-05-05)_
 
 Two production-run findings established a recommended pattern for any new agent skill that involves either (a) heavy outbound HTTPS to non-Anthropic services or (b) committing artifacts back to main:
@@ -1227,8 +1274,11 @@ Skills are self-contained packages: a `SKILL.md` (with YAML frontmatter — `nam
 | `pipeline-health` | shipped 2026-05-03 | Four checks: data freshness, Meta token, IC conversion event, dashboard endpoint. Slack-silent on PASS. |
 | `daily-check` | shipped 2026-05-03 | Morning briefing: pacing vs weekly target, portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
 | `fatigue-monitor` | shipped 2026-05-03 | Three-script pipeline: 14-day fetch, baseline computation (Path A in-range / B historical-batched / C estimated), classification across 5 severity classes with budget-queue conflict cross-reference. Writes to `fatigue_log`. |
+| `creative-intelligence` | shipped 2026-05-05 | Weekly Monday brief on winning creative patterns. Corpus-level text aggregation attribution (same body across N ads = one per-variant CPICP). Two-script pipeline: `categorize_creative.py` (LLM copy_angle + visual_style tagging, hash-deduped, prompt-cached) + `build_creative_dataset.py` (joins snapshots + cache + tags, finds side-by-side pairs). Writes to `creative_intelligence_log`. |
+| `ad-copy-generator` | shipped 2026-05-05 | Drafts new (body, title, description) triples from the Creative Intelligence dataset for a target vertical. Median-split CPICP winner/loser cohorts. Compliance regex backstop. 6-item human reviewer checklist appended to output. `workflow_dispatch` only — **never auto-published**. |
+| `portfolio-scaling` | shipped 2026-05-08 | Weekly Tuesday structural diagnosis: classifies each vertical as scalable / stable / saturating / over-invested over a 12-week window (elasticity, CPL degradation, frequency + CPM trends). Pool-based budget reallocation. Two-script pipeline committing deterministic JSON to `data/derived/` before Claude composes the four-section Slack brief. Writes to `scaling_log`. |
 
-The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earlier versions of the three above) were built against a less-refined spec and are being replaced session-by-session. `compute_signals.py`'s `data/derived/` outputs are now an audit trail rather than the canonical signal source — the skills compute their own canonical versions.
+`compute_signals.py`'s `data/derived/` outputs are an audit trail for historical trend lookback rather than the canonical signal source — the skills compute their own canonical versions.
 
 ### 11.7 Workflow (`.github/workflows/daily-data.yml`)
 
@@ -1284,6 +1334,7 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 | `daily_check_log` | `daily-check` skill via `?action=daily-check-write` (auto-created in `handleDailyCheckWrite_`) | `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at` |
 | `fatigue_log` | `fatigue-monitor` skill via `?action=fatigue-write` (auto-created in `handleFatigueWrite_`) | `date, ad_id, ad_name, campaign, classification, ctr_baseline, ctr_current, ctr_decline_pct, frequency, cpc_baseline, cpc_current, days_active, baseline_type, budget_conflict, recorded_at` |
 | `creative_intelligence_log` | `creative-intelligence` skill via `?action=creative-intelligence-write` (auto-created in `handleCreativeIntelligenceWrite_`) | `date, vertical, ad_count, median_cpicp, spend_total, ic_total, top_body_variant_id, top_body_text, top_body_cpicp, top_visual_hash, top_visual_style, bottom_decile_count, recorded_at` |
+| `scaling_log` | `portfolio-scaling` skill via `?action=scaling-write` (auto-created in `handleScalingWrite_`) | `date, vertical, classification, confidence, elasticity_r, ic_rate, cpicp, spend_share_pct, avg_frequency, frequency_trend, cpm_trend, new_audience_needed, weeks_with_conversions, contributed_to_pool, received_from_pool, recorded_at` |
 
 ### 11.10 Shared client (`scripts/lib/meta.py`, added 2026-05-03)
 
