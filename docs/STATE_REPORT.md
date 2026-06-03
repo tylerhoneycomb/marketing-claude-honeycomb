@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-02 (budget proposal LLM narrative now uses the dynamic spend goal: the system prompt at `postBudgetProposalToSlack_` no longer hardcodes "$500/week of $10,000 target" — it interpolates the live `effectiveTarget` / `effectiveTolerance` so the SITUATION/CHANGES/WATCH commentary references the actual dashboard-managed target instead of the stale $10k constant)_
+_Last updated: 2026-06-03 (documentation sync: removed stale "Ad-level pipeline is autonomous" operational gap — cron was activated 2026-05-04 and is no longer a gap; added DST drift operational note; prior entry: budget proposal LLM narrative now uses the dynamic spend goal)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -143,13 +143,13 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 ### Operational gaps
 
-- **Ad-level pipeline is autonomous.** `.github/workflows/daily-data.yml` runs daily at 8 AM ET on cron and commits each snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
 - **Two Meta tokens to keep current.** The legacy campaign-level pipeline reads `META_ACCESS_TOKEN` from Apps Script Script Properties; the new ad-level pipeline reads it from a GitHub Secret with the same name. Token rotation now has to happen in two places.
 - **No alerting on pipeline failures.** If the daily 7 AM pull breaks (e.g., expired Meta token), you only find out when someone notices the Slack digest didn't arrive or the dashboard shows stale data. No proactive "hey, this job failed" alert.
 - **No alerting on attribution-quality drops.** The 33% collapse that week could have gone unnoticed for days. A threshold-based alert ("IC attribution below 50% — investigate") would catch this earlier.
 - **Manual steps for new campaigns.** When the team launches a new Meta campaign, the mapping sheet auto-discovers the UTM tag and campaign_id, but conversion event mapping often needs manual verification. If a campaign's custom_conversion_id doesn't get filled in, its ICPs won't be properly tracked. Campaign renames in Meta are now handled automatically — the sync detects when a campaign_id's name has changed, updates it in place, and preserves all manually-set UTM and conversion settings.
 - **Audit snapshot is manual.** Someone has to run `exportAuditSnapshot()` from the Apps Script editor to refresh data for Claude Code. Adding a weekly time trigger would make this automatic.
-- **No recurring health check.** The Q1 audit uncovered 6 issues only because someone did a deep-dive. Without a scheduled audit — weekly or monthly — similar drift could accumulate again.
+- **Scheduled cron times shift 1 hour in EST (winter).** All agent and data workflow cron expressions are tuned for Eastern Daylight Time (UTC-4, roughly March–November). In Eastern Standard Time (UTC-5, roughly November–March), every workflow runs one hour earlier than the documented ET time. For example, "9 AM ET" becomes "8 AM" during EST. This is a known drift accepted as-is because GitHub Actions does not support DST-aware scheduling; just be aware of it when checking logs in winter.
+- **No recurring health check.** The Q1 audit uncovered 6 issues only because someone did a deep-dive. Without a scheduled audit — weekly or monthly — similar drift could accumulate again. (The `pipeline-health` skill checks pipeline liveness daily, but does not audit data quality inside the Google Sheet.)
 
 ### Content / copy gaps
 
