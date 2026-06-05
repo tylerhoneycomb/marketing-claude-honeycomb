@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-02 (budget proposal LLM narrative now uses the dynamic spend goal: the system prompt at `postBudgetProposalToSlack_` no longer hardcodes "$500/week of $10,000 target" — it interpolates the live `effectiveTarget` / `effectiveTolerance` so the SITUATION/CHANGES/WATCH commentary references the actual dashboard-managed target instead of the stale $10k constant)_
+_Last updated: 2026-06-05 (documentation sync: corrected Code.js line count from ~4,200 to ~6,458 lines; added client-side password gate to dashboard section; updated working-well list; minor structure clarity pass)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -14,7 +14,7 @@ A **marketing operations platform** for Honeycomb Credit's small-business invest
 
 Four things live inside the repo:
 
-1. **The "brain"** — a Google Apps Script program (~4,200 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
+1. **The "brain"** — a Google Apps Script program (~6,458 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
 2. **The "dashboard"** — a web page (hosted on GitHub Pages) where the team can see charts, check campaign health, and ask questions via an AI chat called "Hive Mind."
 3. **The "plumbing"** — GitHub Actions that automatically push code changes to the Google Apps Script servers whenever something is merged, so nobody has to copy/paste into the Apps Script web editor.
 4. **The "agent layer"** _(new, 2026-05-02)_ — an ad-level data pipeline (`scripts/`) and skill files (`skills/`) that let Claude Code monitor individual ads, detect creative fatigue, and propose budget shifts. Snapshots are stored as JSON files under `data/` (the repo itself acts as the database). The agent layer feeds recommendations into the existing Slack approval pipeline — it never writes to Meta directly.
@@ -62,6 +62,7 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 
 ### On-demand via dashboard
 
+- **Password gate** _(added 2026-05-27, PR #93)_ — the dashboard is protected by a client-side SHA-256 password check. The hash is hardcoded in `webapp/index.html`; session state is stored in `sessionStorage` (cleared on browser close). This is defense-in-depth on top of URL obscurity — the underlying `/exec` endpoint remains `ANYONE_ANONYMOUS` at the Apps Script layer.
 - **Leaderboards** — top 3 / bottom 3 campaigns sortable by different metrics.
 - **Trend charts** — CPICP, ICPs, spend, CPL, CTR over time (daily or weekly granularity; per-campaign or portfolio-wide).
 - **Campaign performance table** — spend, clicks, CPICP, frequency per campaign, with paused-campaign badges.
@@ -129,6 +130,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 - **Campaign rename resilience.** Renaming a campaign in Meta is handled automatically: the sync detects the name change via `campaign_id`, updates the mapping row in place (preserving UTM and conversion settings), normalizes all historical `rolling_data` rows to the new name, and posts a Slack notification. Works for ALL campaigns, including those without URL tags.
 - **Two-step budget approval.** Budget proposal links in Slack now show an HTML confirmation page with a button — Slack's link-unfurling bot gets the page but can't click buttons, so only a human can approve or reject.
 - **AI upgraded to Claude Opus 4.7.** All 5 Anthropic API call sites (narrative, chat, budget commentary, daily digest, weekly Slack) use a single `ANTHROPIC_MODEL` constant — future upgrades are one line.
+- **Dashboard password gate.** The GitHub Pages dashboard now requires a password on load (SHA-256 checked client-side, sessionStorage-persisted). Prevents casual access to campaign financials without adding server-side infrastructure.
 - **Dashboard line chart accuracy.** Daily granularity shows the full selected date range (no collapsed x-axis), and per-campaign lines break on paused days instead of drawing misleading straight lines across gaps.
 
 ---
@@ -207,4 +209,4 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 ## Summary in one paragraph
 
-This is a mature, working automation platform. The core data pipeline runs daily without intervention, the budget optimizer has two-step human-in-the-loop safeguards (Slack confirmation page defeats link-unfurling bots), and campaign renames in Meta are handled automatically without manual mapping cleanup. The Q1 audit's 6 data-quality issues are all resolved, IC conversion tracking has been restored (now using the cleaner "Investment Crowdfunding Prequal Decision" event), and the AI layer runs on Claude Opus 4.7 via a single configurable constant. As of 2026-05-02, an additive ad-level agent layer (`scripts/`, `skills/`, `data/`) sits alongside the campaign-level pipeline — it gives Claude Code per-ad fatigue signals and creative metadata to power the Berman-style monitor → detect → propose loop, while still routing all real budget changes through the existing human approval flow. The biggest remaining ROI improvements are around observability: proactive alerts on pipeline failures, attribution-quality drops, and token expiration. The system does not currently tell you when it's broken — you have to notice.
+This is a mature, working automation platform. The core data pipeline runs daily without intervention, the budget optimizer has two-step human-in-the-loop safeguards (Slack confirmation page defeats link-unfurling bots), and campaign renames in Meta are handled automatically without manual mapping cleanup. The Q1 audit's 6 data-quality issues are all resolved, IC conversion tracking has been restored (now using the cleaner "Investment Crowdfunding Prequal Decision" event), and the AI layer runs on Claude Opus 4.7 via a single configurable constant. As of 2026-05-02, an additive ad-level agent layer (`scripts/`, `skills/`, `data/`) sits alongside the campaign-level pipeline — it gives Claude Code per-ad fatigue signals and creative metadata to power the monitor → detect → propose loop, while still routing all real budget changes through the existing human approval flow. Six autonomous skills now run on schedules: pipeline-health, daily-check, fatigue-monitor, creative-intelligence, ad-copy-generator (dispatch-only), and portfolio-scaling. The Apps Script "brain" has grown to ~6,458 lines. The biggest remaining ROI improvements are around observability: proactive alerts on pipeline failures, attribution-quality drops, and token expiration. The system does not currently tell you when it's broken — you have to notice.
