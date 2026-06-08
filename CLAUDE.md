@@ -36,19 +36,23 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 ## Repo Structure
 
 - `/apps-script/` — Full Apps Script intelligence layer, deployed via clasp + GitHub Actions
-  - `Code.js` — The complete intelligence script (~3,600 lines). Edit here, never in the Apps Script web editor
+  - `Code.js` — The complete intelligence script (~4,200 lines). Edit here, never in the Apps Script web editor
   - `.clasp.json` — Points clasp at the Apps Script project (do not edit)
   - `appsscript.json` — Apps Script manifest (scopes, runtime, Web App settings)
 - `/docs/` — Living documentation (`STATE_REPORT.md`, `TECHNICAL_REFERENCE.md`) — keep in sync with code changes
 - `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
-- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`.
+- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`, `portfolio-scaling`.
 - `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair.
 - `/data/` — Agent data repository.
   - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest)
   - `data/creatives/creatives.json` — creative metadata, accreted over time
-  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`)
+  - `data/creatives/categorizations.json` — LLM-tagged copy angles and visual styles, keyed by variant hash
+  - `data/creatives/images/` — full-size creative images downloaded via Meta `/adimages`, keyed by image hash
+  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`, `scaling_profiles.json`, `reallocation.json`)
+  - `data/drafts/` — ad copy drafts from the `ad-copy-generator` skill (never auto-published; human review required)
+  - `data/previews/` — deterministic dataset previews from the `agent-creative-preview` workflow ($0 alternative to the full LLM brief)
   - `data/config/benchmarks.json` — all thresholds; never hardcode them in scripts
 - `/ad-copy/` — Meta (Facebook/Instagram) ad copy organized by vertical
 - `/workflows/` — Automation scripts and marketing workflows
@@ -57,7 +61,14 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 - `.github/workflows/` — GitHub Actions CI/CD
   - `deploy-webapp.yml` — Auto-deploys dashboard to GitHub Pages on changes to webapp/
   - `deploy-apps-script.yml` — Auto-deploys Apps Script via clasp on changes to apps-script/
-  - `daily-data.yml` — Manual-only (workflow_dispatch) ad-level data pull; will be flipped to a daily cron once the snapshot output is verified
+  - `daily-data.yml` — Daily cron (8 AM ET) ad-level data pull + manual `workflow_dispatch` for backfills via `start_date`/`end_date` inputs
+  - `agent-pipeline-health.yml` — Daily cron (9 AM ET) pipeline health checks
+  - `agent-daily-check.yml` — Daily cron (8:30 AM ET) morning briefing
+  - `agent-fatigue-monitor.yml` — Mon + Thu cron (9:30 AM ET) creative fatigue classification
+  - `agent-creative-intelligence.yml` — Monday cron (10 AM ET) weekly creative brief
+  - `agent-creative-preview.yml` — Manual `workflow_dispatch` only; $0 dataset preview without LLM calls
+  - `agent-ad-copy-generator.yml` — Manual `workflow_dispatch` only; drafts ad copy from Creative Intelligence cache
+  - `agent-portfolio-scaling.yml` — Tuesday cron (9:30 AM ET) vertical scaling classification and budget reallocation brief
 
 ## Apps Script Deployment (clasp)
 
