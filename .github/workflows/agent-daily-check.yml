@@ -1,13 +1,16 @@
 name: Agent — Daily Check
 
-# Manual-only until first autonomous runs are verified.
-# Once the skill output is confirmed clean, uncomment the schedule
-# block to run daily at 8:30 AM ET (after the 7 AM Apps Script
-# data pull, before Tyler's morning standup).
+# PAUSED 2026-06-08 — Slack briefings disabled at the user's request.
+# To re-enable:
+#   1. Restore the `schedule:` block below (the cron entry is preserved
+#      as a comment so the original timing is obvious).
+#   2. Remove the early-return guard in
+#      `triggerAgentDailyCheckIfNeeded()` in apps-script/Code.js.
+# Manual `workflow_dispatch` is still available while paused.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '30 12 * * *'  # 8:30 AM ET (UTC-4) / 7:30 AM ET during DST
+  # schedule:
+  #   - cron: '30 12 * * *'  # 8:30 AM ET (UTC-4) / 7:30 AM ET during DST
 
 permissions:
   contents: read

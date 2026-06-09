@@ -2492,6 +2492,15 @@ function triggerAgentPipelineHealthIfNeeded() {
 // fallback fires noon-1 PM ET. 18-hour window.
 function triggerAgentDailyCheckIfNeeded() {
   Logger.log('=== triggerAgentDailyCheckIfNeeded ===');
+  // PAUSED 2026-06-08 — Slack briefings disabled at the user's request.
+  // Paired with the commented-out `schedule:` block in
+  // .github/workflows/agent-daily-check.yml. Without this early return,
+  // the fallback would observe no recent run and dispatch the workflow
+  // anyway, defeating the cron pause. To re-enable: remove this guard
+  // (the original logic below stays intact for the unpause).
+  Logger.log('triggerAgentDailyCheckIfNeeded: PAUSED — skipping dispatch.');
+  return;
+
   if (workflowRanWithinHours_('agent-daily-check.yml', 18)) {
     Logger.log('Recent successful or in-progress run exists — skipping.');
     return;
@@ -2531,6 +2540,14 @@ function triggerAgentFatigueMonitorIfNeeded() {
 // run exists.
 function triggerAgentCreativeIntelligenceIfNeeded() {
   Logger.log('=== triggerAgentCreativeIntelligenceIfNeeded ===');
+  // PAUSED 2026-06-08 — Slack briefings disabled at the user's request.
+  // Paired with the commented-out `schedule:` block in
+  // .github/workflows/agent-creative-intelligence.yml. To re-enable:
+  // remove this guard (the original logic below stays intact for the
+  // unpause).
+  Logger.log('triggerAgentCreativeIntelligenceIfNeeded: PAUSED — skipping dispatch.');
+  return;
+
   var dow = parseInt(Utilities.formatDate(
     new Date(), Session.getScriptTimeZone(), 'u'), 10);
   if (dow !== 1) {

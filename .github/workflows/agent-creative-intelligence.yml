@@ -1,10 +1,18 @@
 name: Agent — Creative Intelligence
 
+# PAUSED 2026-06-08 — Slack briefings disabled at the user's request.
+# To re-enable:
+#   1. Restore the `schedule:` block below (the cron entry is preserved
+#      as a comment so the original timing is obvious).
+#   2. Remove the early-return guard in
+#      `triggerAgentCreativeIntelligenceIfNeeded()` in apps-script/Code.js.
+# Manual `workflow_dispatch` is still available while paused (useful for
+# refreshing the cache without paying the autonomous Anthropic cost).
 on:
   workflow_dispatch:
-  schedule:
-    # Mon 14:00 UTC = 10 AM EDT (UTC-4, summer) / 9 AM EST (UTC-5, winter).
-    - cron: '0 14 * * 1'
+  # schedule:
+  #   # Mon 14:00 UTC = 10 AM EDT (UTC-4, summer) / 9 AM EST (UTC-5, winter).
+  #   - cron: '0 14 * * 1'
 
 permissions:
   # `contents: write` lets the "Commit cache updates" step push the
