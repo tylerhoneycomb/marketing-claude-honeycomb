@@ -1,21 +1,45 @@
 {
-  "computed_at": "2026-06-02T17:52:31.464666+00:00",
-  "today": "2026-06-02",
-  "lockout_until": "2026-06-09T00:00:00+00:00",
-  "affected_campaign_ids": [],
+  "computed_at": "2026-06-09T16:18:03.919469+00:00",
+  "today": "2026-06-09",
+  "lockout_until": "2026-06-16T00:00:00+00:00",
+  "affected_campaign_ids": [
+    "120241420440650631"
+  ],
   "pool": {
-    "freed_daily_cents": 0,
+    "freed_daily_cents": 607,
     "allocated_daily_cents": 0,
-    "net_change_daily_cents": 0,
-    "net_change_type": "zero_sum",
-    "portfolio_current_daily_cents": 323265,
-    "portfolio_post_change_daily_cents": 323265,
-    "portfolio_post_change_weekly_dollars": 22628.55,
+    "net_change_daily_cents": -607,
+    "net_change_type": "net_negative",
+    "portfolio_current_daily_cents": 322221,
+    "portfolio_post_change_daily_cents": 321614,
+    "portfolio_post_change_weekly_dollars": 22512.98,
     "target_weekly_dollars": 9000.0,
     "tolerance_weekly_dollars": 50.0,
     "knockdown_risk": true
   },
-  "decreases": [],
+  "decreases": [
+    {
+      "vertical": "distillers",
+      "campaign_id": "120241420440650631",
+      "campaign_name": "AD-Distillers-Q4-2025",
+      "current_daily_cents": 6339,
+      "change_cents": -607,
+      "change_pct": -0.0958,
+      "post_change_cents": 5732,
+      "classification": "over-invested",
+      "elasticity_r": 0.7659,
+      "remaining_headroom_pct": 0.12,
+      "reason": "over-invested (r=0.7659); severity 0.80 * remaining headroom 12.00% \u2192 -9.58%"
+    }
+  ],
   "increases": [],
-  "audience_actions": []
+  "audience_actions": [
+    {
+      "vertical": "breweries",
+      "diagnosis": "frequency=1.304 (rising); CPM trend=rising; r=0.0897; CPL degradation high vs low spend weeks: 5%",
+      "action": "Duplicate breweries ad set with broader targeting. Keep original at current budget.",
+      "creative_prescription": null,
+      "creative_source": null
+    }
+  ]
 }
