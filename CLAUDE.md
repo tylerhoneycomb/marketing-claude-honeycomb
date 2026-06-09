@@ -170,15 +170,24 @@ Each skill that needs a scheduled run gets its own workflow file under
 
 - `agent-pipeline-health.yml` — runs `pipeline-health` skill. Daily cron
   active at 9 AM ET (UTC 13:00).
-- `agent-daily-check.yml` — runs `daily-check` skill. Daily cron active
-  at 8:30 AM ET (UTC 12:30).
+- `agent-daily-check.yml` — runs `daily-check` skill. **PAUSED 2026-06-08**
+  (Tyler asked to stop the daily Slack briefing). Cron schedule and the
+  Apps Script fallback (`triggerAgentDailyCheckIfNeeded`) are both
+  commented out / early-returned. Manual `workflow_dispatch` still works.
+  Daily cron was 8:30 AM ET (UTC 12:30) — preserved as a comment in the
+  YAML so it's obvious how to unpause.
 - `agent-fatigue-monitor.yml` — runs `fatigue-monitor` skill. Twice-
   weekly cron active for Mon + Thu 9:30 AM ET (UTC 13:30) — fatigue
   moves slowly, daily would over-query Meta.
 - `agent-creative-intelligence.yml` — runs `creative-intelligence` skill.
-  Weekly cron active for Mondays at 10 AM ET (UTC 14:00). Weekly cadence
-  matches the corpus-aggregation attribution model — variant-level
-  performance signals shift over weeks, not days.
+  **PAUSED 2026-06-08** (Tyler asked to stop the weekly Slack brief and
+  the recurring Anthropic categorization spend). Cron schedule and the
+  Apps Script fallback (`triggerAgentCreativeIntelligenceIfNeeded`) are
+  both commented out / early-returned. Manual `workflow_dispatch` still
+  works (useful for refreshing the cache on demand). Weekly cron was
+  Mondays at 10 AM ET (UTC 14:00); the cadence matched the
+  corpus-aggregation attribution model — variant-level performance
+  signals shift over weeks, not days.
 - `agent-creative-preview.yml` — `workflow_dispatch` only. $0 alternative
   path: same checkout + Meta + cache-commit mechanics as
   `agent-creative-intelligence.yml` but skips Anthropic calls. Runs the

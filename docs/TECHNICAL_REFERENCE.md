@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-06-02 (budget proposal LLM narrative now anchors off the dynamic spend goal: `postBudgetProposalToSlack_`'s system prompt no longer hardcodes "$500/week of $10,000 target" — it interpolates `recs._effectiveTarget` / `recs._effectiveTolerance` so the LLM sees the live dashboard-managed values; `computeRecommendations_` now stashes `_effectiveTarget` on the returned object alongside the existing `_effectiveTolerance`. The optimizer math was already correct — this only fixes the narrative)_
+_Last updated: 2026-06-08 (PAUSED `agent-daily-check.yml` and `agent-creative-intelligence.yml`. Both YAML `schedule:` blocks commented out (only `workflow_dispatch` remains in `on:`); matching Apps Script fallbacks `triggerAgentDailyCheckIfNeeded` / `triggerAgentCreativeIntelligenceIfNeeded` early-return with a PAUSED log line so they don't dispatch via the GitHub API either. Both pause mechanisms have to be reverted to fully re-enable. Other agent workflows are unaffected)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 

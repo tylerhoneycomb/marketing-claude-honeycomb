@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-02 (budget proposal LLM narrative now uses the dynamic spend goal: the system prompt at `postBudgetProposalToSlack_` no longer hardcodes "$500/week of $10,000 target" — it interpolates the live `effectiveTarget` / `effectiveTolerance` so the SITUATION/CHANGES/WATCH commentary references the actual dashboard-managed target instead of the stale $10k constant)_
+_Last updated: 2026-06-08 (PAUSED two Slack briefings at Tyler's request: `agent-daily-check.yml` and `agent-creative-intelligence.yml`. GitHub cron schedules and the matching Apps Script fallbacks are both disabled — neither auto-runs anymore. Manual `workflow_dispatch` is still available. Pipeline-health, fatigue-monitor, and portfolio-scaling all continue running unchanged)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
