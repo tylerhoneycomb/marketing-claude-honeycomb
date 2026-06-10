@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-08 (PAUSED two Slack briefings at Tyler's request: `agent-daily-check.yml` and `agent-creative-intelligence.yml`. GitHub cron schedules and the matching Apps Script fallbacks are both disabled — neither auto-runs anymore. Manual `workflow_dispatch` is still available. Pipeline-health, fatigue-monitor, and portfolio-scaling all continue running unchanged)_
+_Last updated: 2026-06-10 (PAUSED two Slack briefings at Tyler's request: `agent-daily-check.yml` and `agent-creative-intelligence.yml`. GitHub cron schedules and the matching Apps Script fallbacks are both disabled — neither auto-runs anymore. Manual `workflow_dispatch` is still available. Pipeline-health, fatigue-monitor, and portfolio-scaling all continue running unchanged. Documentation audit 2026-06-10: corrected "Three skills are scoped" → six; marked daily-check and creative-intelligence as PAUSED in the autonomous-execution section body)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -81,7 +81,7 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 
 ### Agent skills (new, 2026-05-03)
 
-Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` operating manual and Python scripts that handle Meta API calls and computation. Claude Code reads them at session start and runs the scripts via bash. Three skills are scoped:
+Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` operating manual and Python scripts that handle Meta API calls and computation. Claude Code reads them at session start and runs the scripts via bash. Six skills are shipped:
 
 - **pipeline-health** _(shipped 2026-05-03)_ — runs four checks (data freshness, Meta token validity, IC conversion event existence, dashboard endpoint health) and writes results to a new `pipeline_health` Sheet tab via `Code.js?action=health-write`. Posts to Slack only on WARN/FAIL.
 - **daily-check** _(shipped 2026-05-03)_ — pulls 7 days of campaign/adset/ad insights, computes pacing vs weekly target, portfolio CPICP rankings, top 3 winners + bleeders, early fatigue flags, learning-phase ad sets, and stale creatives. Writes a summary row to a new `daily_check_log` Sheet tab via `Code.js?action=daily-check-write`. Runs alongside the existing campaign-level Apps Script daily digest — does not replace it. The weekly spend goal used for pacing is fetched live from `/exec?action=get_spend_goal` (the dashboard-managed value), so changing the goal in the dashboard is reflected in the next briefing without a code change; `benchmarks.json` holds a fallback used only if `/exec` is unreachable.
@@ -97,9 +97,9 @@ Skills query Meta live for operational decisions; the snapshot pipeline above pr
 Each skill that needs scheduled runs gets a workflow file under `.github/workflows/agent-<skill>.yml` that wraps `anthropics/claude-code-action@v1`. The action receives a fixed prompt that tells it to run the skill per its `SKILL.md`, pulls `META_ACCESS_TOKEN` (and optional `SLACK_WEBHOOK_URL`) from repo secrets, and surfaces results in the workflow log. Slack posting on WARN/FAIL is opt-in via the secret.
 
 - **`agent-pipeline-health.yml`** _(shipped 2026-05-03)_ — daily cron active at 9 AM ET (UTC 13:00). v1 of the autonomous-agent pattern.
-- **`agent-daily-check.yml`** _(shipped 2026-05-03)_ — daily cron active at 8:30 AM ET (UTC 12:30).
+- **`agent-daily-check.yml`** _(shipped 2026-05-03, **PAUSED 2026-06-08**)_ — cron schedule commented out; `workflow_dispatch` only. When active: daily 8:30 AM ET (UTC 12:30). Apps Script fallback also disabled.
 - **`agent-fatigue-monitor.yml`** _(shipped 2026-05-03)_ — twice-weekly cron active for Mon + Thu 9:30 AM ET (UTC 13:30) — fatigue moves slowly, daily would over-query Meta.
-- **`agent-creative-intelligence.yml`** _(shipped 2026-05-05, validated end-to-end 2026-05-05)_ — weekly cron active for Monday 10 AM ET (UTC 14:00). Weekly cadence matches the corpus-aggregation attribution model. Three production runs on 2026-05-05 surfaced two distinct architectural findings that forced this skill's workflow to depart from the other agents' template:
+- **`agent-creative-intelligence.yml`** _(shipped 2026-05-05, validated 2026-05-05, **PAUSED 2026-06-08**)_ — cron schedule commented out; `workflow_dispatch` only. Apps Script fallback also disabled. When active: weekly Monday 10 AM ET (UTC 14:00). Three production runs on 2026-05-05 surfaced two distinct architectural findings that forced this skill's workflow to depart from the other agents' template:
   1. **Run 1**: Categorizer hit `APIConnectionError` on 526/526 Anthropic calls when running inside `claude-code-action`'s Bash subprocess (Meta calls from the same context worked fine; only Anthropic SDK calls failed). Fix: scripts run as ordinary workflow steps BEFORE the action, not inside its prompt.
   2. **Run 2**: Categorize succeeded but the cache `git push` failed with `Password authentication is not supported`. Credentials persisted by `actions/checkout` survive Python script steps but get stripped after `claude-code-action` runs. Fix: commit step runs BEFORE the action too.
   3. **Run 3 (validated)**: cache_commit=ok, 4 confident portfolio findings, 525 LLM tags committed to main, ~$1-2 cost (down from ~$5 pre-fix thanks to prompt caching on the system message). The skill is fully operational.
