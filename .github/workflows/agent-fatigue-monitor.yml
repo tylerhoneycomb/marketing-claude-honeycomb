@@ -1,13 +1,16 @@
 name: Agent — Fatigue Monitor
 
-# Manual-only until first autonomous runs are verified.
-# Once the skill output is confirmed clean, uncomment the schedule
-# block to run twice a week (Mon + Thu, 9:30 AM ET). Daily would
-# over-query Meta — fatigue moves slowly.
+# PAUSED 2026-06-10 — Slack briefings disabled at the user's request.
+# To re-enable:
+#   1. Restore the `schedule:` block below (the cron entry is preserved
+#      as a comment so the original timing is obvious).
+#   2. Remove the early-return guard in
+#      `triggerAgentFatigueMonitorIfNeeded()` in apps-script/Code.js.
+# Manual `workflow_dispatch` is still available while paused.
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '30 13 * * 1,4'  # Mon + Thu 9:30 AM ET (UTC-4) / 8:30 AM ET during DST
+  # schedule:
+  #   - cron: '30 13 * * 1,4'  # Mon + Thu 9:30 AM ET (UTC-4) / 8:30 AM ET during DST
 
 permissions:
   contents: read

@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-08 (PAUSED two Slack briefings at Tyler's request: `agent-daily-check.yml` and `agent-creative-intelligence.yml`. GitHub cron schedules and the matching Apps Script fallbacks are both disabled — neither auto-runs anymore. Manual `workflow_dispatch` is still available. Pipeline-health, fatigue-monitor, and portfolio-scaling all continue running unchanged)_
+_Last updated: 2026-06-10 (PAUSED `agent-fatigue-monitor.yml` at Tyler's request — same pause pattern as the daily-check + creative-intelligence pause from 2026-06-08. GitHub cron (Mon + Thu 9:30 AM ET) commented out; Apps Script fallback `triggerAgentFatigueMonitorIfNeeded` early-returned. Manual `workflow_dispatch` still works. Pipeline-health, portfolio-scaling, and daily-data continue running unchanged)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 

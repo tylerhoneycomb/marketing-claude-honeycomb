@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-06-08 (PAUSED `agent-daily-check.yml` and `agent-creative-intelligence.yml`. Both YAML `schedule:` blocks commented out (only `workflow_dispatch` remains in `on:`); matching Apps Script fallbacks `triggerAgentDailyCheckIfNeeded` / `triggerAgentCreativeIntelligenceIfNeeded` early-return with a PAUSED log line so they don't dispatch via the GitHub API either. Both pause mechanisms have to be reverted to fully re-enable. Other agent workflows are unaffected)_
+_Last updated: 2026-06-10 (PAUSED `agent-fatigue-monitor.yml` at Tyler's request. YAML `schedule:` block commented out (only `workflow_dispatch` in `on:`); Apps Script fallback `triggerAgentFatigueMonitorIfNeeded` early-returns with a PAUSED log line so it doesn't dispatch via the GitHub API either. Both mechanisms have to be reverted to fully re-enable. Now three agent workflows are paused — daily-check, creative-intelligence, and fatigue-monitor — using the same dual-path pattern)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
