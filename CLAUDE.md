@@ -176,9 +176,14 @@ Each skill that needs a scheduled run gets its own workflow file under
   commented out / early-returned. Manual `workflow_dispatch` still works.
   Daily cron was 8:30 AM ET (UTC 12:30) — preserved as a comment in the
   YAML so it's obvious how to unpause.
-- `agent-fatigue-monitor.yml` — runs `fatigue-monitor` skill. Twice-
-  weekly cron active for Mon + Thu 9:30 AM ET (UTC 13:30) — fatigue
-  moves slowly, daily would over-query Meta.
+- `agent-fatigue-monitor.yml` — runs `fatigue-monitor` skill.
+  **PAUSED 2026-06-10** (Tyler asked to stop the Mon/Thu Slack brief).
+  Cron schedule and the Apps Script fallback
+  (`triggerAgentFatigueMonitorIfNeeded`) are both commented out /
+  early-returned. Manual `workflow_dispatch` still works. Twice-weekly
+  cron was Mon + Thu 9:30 AM ET (UTC 13:30) — fatigue moves slowly,
+  daily would over-query Meta; preserved as a comment in the YAML so
+  it's obvious how to unpause.
 - `agent-creative-intelligence.yml` — runs `creative-intelligence` skill.
   **PAUSED 2026-06-08** (Tyler asked to stop the weekly Slack brief and
   the recurring Anthropic categorization spend). Cron schedule and the

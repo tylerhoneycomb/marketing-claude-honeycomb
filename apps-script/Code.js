@@ -2516,6 +2516,13 @@ function triggerAgentDailyCheckIfNeeded() {
 // 12-hour window = "did it run today?"
 function triggerAgentFatigueMonitorIfNeeded() {
   Logger.log('=== triggerAgentFatigueMonitorIfNeeded ===');
+  // PAUSED 2026-06-10 — Slack briefings disabled at the user's request.
+  // Paired with the commented-out `schedule:` block in
+  // .github/workflows/agent-fatigue-monitor.yml. To re-enable: remove
+  // this guard (the original logic below stays intact for the unpause).
+  Logger.log('triggerAgentFatigueMonitorIfNeeded: PAUSED — skipping dispatch.');
+  return;
+
   // getDay(): 0=Sun, 1=Mon, ..., 4=Thu. Use script timezone for the
   // day boundary so the check reflects ET, not the runner's UTC.
   var dow = parseInt(Utilities.formatDate(
