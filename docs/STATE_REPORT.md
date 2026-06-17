@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-10 (PAUSED `agent-fatigue-monitor.yml` at Tyler's request — same pause pattern as the daily-check + creative-intelligence pause from 2026-06-08. GitHub cron (Mon + Thu 9:30 AM ET) commented out; Apps Script fallback `triggerAgentFatigueMonitorIfNeeded` early-returned. Manual `workflow_dispatch` still works. Pipeline-health, portfolio-scaling, and daily-data continue running unchanged)_
+_Last updated: 2026-06-17 (Documentation audit: corrected Code.js line count to ~6,500; updated three paused workflow descriptions inline to reflect current status; noted daily-data.yml is on an active daily cron; added portfolio-scaling to skill inventory; no functional changes)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -14,7 +14,7 @@ A **marketing operations platform** for Honeycomb Credit's small-business invest
 
 Four things live inside the repo:
 
-1. **The "brain"** — a Google Apps Script program (~4,200 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
+1. **The "brain"** — a Google Apps Script program (~6,500 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
 2. **The "dashboard"** — a web page (hosted on GitHub Pages) where the team can see charts, check campaign health, and ask questions via an AI chat called "Hive Mind."
 3. **The "plumbing"** — GitHub Actions that automatically push code changes to the Google Apps Script servers whenever something is merged, so nobody has to copy/paste into the Apps Script web editor.
 4. **The "agent layer"** _(new, 2026-05-02)_ — an ad-level data pipeline (`scripts/`) and skill files (`skills/`) that let Claude Code monitor individual ads, detect creative fatigue, and propose budget shifts. Snapshots are stored as JSON files under `data/` (the repo itself acts as the database). The agent layer feeds recommendations into the existing Slack approval pipeline — it never writes to Meta directly.
@@ -97,9 +97,9 @@ Skills query Meta live for operational decisions; the snapshot pipeline above pr
 Each skill that needs scheduled runs gets a workflow file under `.github/workflows/agent-<skill>.yml` that wraps `anthropics/claude-code-action@v1`. The action receives a fixed prompt that tells it to run the skill per its `SKILL.md`, pulls `META_ACCESS_TOKEN` (and optional `SLACK_WEBHOOK_URL`) from repo secrets, and surfaces results in the workflow log. Slack posting on WARN/FAIL is opt-in via the secret.
 
 - **`agent-pipeline-health.yml`** _(shipped 2026-05-03)_ — daily cron active at 9 AM ET (UTC 13:00). v1 of the autonomous-agent pattern.
-- **`agent-daily-check.yml`** _(shipped 2026-05-03)_ — daily cron active at 8:30 AM ET (UTC 12:30).
-- **`agent-fatigue-monitor.yml`** _(shipped 2026-05-03)_ — twice-weekly cron active for Mon + Thu 9:30 AM ET (UTC 13:30) — fatigue moves slowly, daily would over-query Meta.
-- **`agent-creative-intelligence.yml`** _(shipped 2026-05-05, validated end-to-end 2026-05-05)_ — weekly cron active for Monday 10 AM ET (UTC 14:00). Weekly cadence matches the corpus-aggregation attribution model. Three production runs on 2026-05-05 surfaced two distinct architectural findings that forced this skill's workflow to depart from the other agents' template:
+- **`agent-daily-check.yml`** _(shipped 2026-05-03)_ — **⏸ PAUSED 2026-06-08.** Cron schedule (8:30 AM ET / UTC 12:30) commented out; Apps Script fallback `triggerAgentDailyCheckIfNeeded` early-returns. Manual `workflow_dispatch` still works.
+- **`agent-fatigue-monitor.yml`** _(shipped 2026-05-03)_ — **⏸ PAUSED 2026-06-10.** Cron schedule (Mon + Thu 9:30 AM ET / UTC 13:30) commented out; Apps Script fallback `triggerAgentFatigueMonitorIfNeeded` early-returns. Manual `workflow_dispatch` still works.
+- **`agent-creative-intelligence.yml`** _(shipped 2026-05-05, validated end-to-end 2026-05-05)_ — **⏸ PAUSED 2026-06-08.** Cron schedule (Mon 10 AM ET / UTC 14:00) commented out; Apps Script fallback `triggerAgentCreativeIntelligenceIfNeeded` early-returns. Manual `workflow_dispatch` still works. Weekly cadence matches the corpus-aggregation attribution model. Three production runs on 2026-05-05 surfaced two distinct architectural findings that forced this skill's workflow to depart from the other agents' template:
   1. **Run 1**: Categorizer hit `APIConnectionError` on 526/526 Anthropic calls when running inside `claude-code-action`'s Bash subprocess (Meta calls from the same context worked fine; only Anthropic SDK calls failed). Fix: scripts run as ordinary workflow steps BEFORE the action, not inside its prompt.
   2. **Run 2**: Categorize succeeded but the cache `git push` failed with `Password authentication is not supported`. Credentials persisted by `actions/checkout` survive Python script steps but get stripped after `claude-code-action` runs. Fix: commit step runs BEFORE the action too.
   3. **Run 3 (validated)**: cache_commit=ok, 4 confident portfolio findings, 525 LLM tags committed to main, ~$1-2 cost (down from ~$5 pre-fix thanks to prompt caching on the system message). The skill is fully operational.
