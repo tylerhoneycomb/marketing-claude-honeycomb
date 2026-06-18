@@ -1,14 +1,14 @@
 {
-  "computed_at": "2026-06-17T15:15:20.721234+00:00",
+  "computed_at": "2026-06-18T14:57:12.635422+00:00",
   "window_days": 7,
   "rows": [
     {
       "adset_id": "120242950140650631",
       "ad_id": "120242950140670631",
       "ad_name": "Industry Specific - BBQ - Q1 2026",
-      "spend": 274.83,
+      "spend": 280.95,
       "spend_share": 1.0,
-      "ctr": 0.0371,
+      "ctr": 0.0387,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -16,9 +16,9 @@
       "adset_id": "120243070857060631",
       "ad_id": "120243070857050631",
       "ad_name": "Industry Specific - BBQ - Q1 2026",
-      "spend": 8.41,
+      "spend": 7.83,
       "spend_share": 1.0,
-      "ctr": 0.0429,
+      "ctr": 0.047,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -26,9 +26,9 @@
       "adset_id": "120243111129230631",
       "ad_id": "120243111129220631",
       "ad_name": "Delis / butchers - Q1 2026",
-      "spend": 567.24,
+      "spend": 560.42,
       "spend_share": 1.0,
-      "ctr": 0.0374,
+      "ctr": 0.0392,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -36,9 +36,9 @@
       "adset_id": "120244094020700631",
       "ad_id": "120244094020710631",
       "ad_name": "Industry Specific - Fitness / wellness - Q1 2026",
-      "spend": 12.21,
+      "spend": 9.88,
       "spend_share": 1.0,
-      "ctr": 0.0239,
+      "ctr": 0.015,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -46,9 +46,9 @@
       "adset_id": "120244137988970631",
       "ad_id": "120244137988990631",
       "ad_name": "Juice / smoothie - Q1 2026",
-      "spend": 1134.89,
+      "spend": 1067.59,
       "spend_share": 1.0,
-      "ctr": 0.0321,
+      "ctr": 0.0315,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -56,9 +56,9 @@
       "adset_id": "120245893431210631",
       "ad_id": "120245893431650631",
       "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
-      "spend": 514.99,
+      "spend": 310.74,
       "spend_share": 1.0,
-      "ctr": 0.0228,
+      "ctr": 0.021,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -66,9 +66,9 @@
       "adset_id": "120245893431260631",
       "ad_id": "120245893431690631",
       "ad_name": "BR-Distilleries-Cohort2",
-      "spend": 390.6,
+      "spend": 380.51,
       "spend_share": 1.0,
-      "ctr": 0.0328,
+      "ctr": 0.0329,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -76,250 +76,50 @@
       "adset_id": "120245893431340631",
       "ad_id": "120245893431780631",
       "ad_name": "BR-CocktailWineBars-Cohort7",
-      "spend": 1.77,
+      "spend": 0.01,
       "spend_share": 1.0,
-      "ctr": 0.05,
-      "ctr_vs_adset_avg": 1.0,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
       "label": null
+    },
+    {
+      "adset_id": "120245893431410631",
+      "ad_id": "120245893431860631",
+      "ad_name": "BR-CocktailWineBars-Cohort2",
+      "spend": 1162.39,
+      "spend_share": 1.0,
+      "ctr": 0.0245,
+      "ctr_vs_adset_avg": 1.0,
+      "label": "winner"
     },
     {
       "adset_id": "120245893441490631",
       "ad_id": "120245893441770631",
       "ad_name": "BR-FlowerShops-Cohort5",
-      "spend": 1894.64,
+      "spend": 1923.04,
       "spend_share": 1.0,
-      "ctr": 0.0425,
+      "ctr": 0.0424,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
-    },
-    {
-      "adset_id": "120245893441570631",
-      "ad_id": "120245893441830631",
-      "ad_name": "BR-HairSalons-Cohort10",
-      "spend": 0.76,
-      "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
     },
     {
       "adset_id": "120245893441310631",
       "ad_id": "120245893441990631",
       "ad_name": "BR-HairSalons-Cohort3",
-      "spend": 66.49,
+      "spend": 52.6,
       "spend_share": 1.0,
-      "ctr": 0.0259,
+      "ctr": 0.0219,
       "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
+      "label": null
     },
     {
       "adset_id": "120246516495110631",
       "ad_id": "120246516495100631",
       "ad_name": "Fitness Wellness - DC - 2026-04-18 - Community",
-      "spend": 676.61,
+      "spend": 683.64,
       "spend_share": 1.0,
-      "ctr": 0.0572,
+      "ctr": 0.0594,
       "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429696870631",
-      "ad_name": "q2-2026_bb_pain_img5",
-      "spend": 0.61,
-      "spend_share": 0.001,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429696880631",
-      "ad_name": "q2-2026_bb_outcome_img9",
-      "spend": 6.33,
-      "spend_share": 0.0107,
-      "ctr": 0.0172,
-      "ctr_vs_adset_avg": 1.163,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429696900631",
-      "ad_name": "q2-2026_bb_outcome_img8",
-      "spend": 1.46,
-      "spend_share": 0.0025,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429696920631",
-      "ad_name": "q2-2026_bb_proof_img1",
-      "spend": 0.96,
-      "spend_share": 0.0016,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429696930631",
-      "ad_name": "q2-2026_bb_outcome_img10",
-      "spend": 0.61,
-      "spend_share": 0.001,
-      "ctr": 0.0323,
-      "ctr_vs_adset_avg": 2.176,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429696980631",
-      "ad_name": "q2-2026_bb_outcome_img4",
-      "spend": 0.95,
-      "spend_share": 0.0016,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697000631",
-      "ad_name": "q2-2026_bb_proof_img7",
-      "spend": 2.22,
-      "spend_share": 0.0038,
-      "ctr": 0.0444,
-      "ctr_vs_adset_avg": 2.998,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697020631",
-      "ad_name": "q2-2026_bb_proof_img8",
-      "spend": 0.41,
-      "spend_share": 0.0007,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697050631",
-      "ad_name": "q2-2026_bb_proof_img10",
-      "spend": 1.61,
-      "spend_share": 0.0027,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697060631",
-      "ad_name": "q2-2026_bb_pain_img1",
-      "spend": 0.94,
-      "spend_share": 0.0016,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697080631",
-      "ad_name": "q2-2026_bb_pain_img7",
-      "spend": 1.42,
-      "spend_share": 0.0024,
-      "ctr": 0.04,
-      "ctr_vs_adset_avg": 2.698,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697110631",
-      "ad_name": "q2-2026_bb_pain_img10",
-      "spend": 0.03,
-      "spend_share": 0.0001,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697120631",
-      "ad_name": "q2-2026_bb_community_img1",
-      "spend": 0.37,
-      "spend_share": 0.0006,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697140631",
-      "ad_name": "q2-2026_bb_community_img2",
-      "spend": 2.16,
-      "spend_share": 0.0037,
-      "ctr": 0.0357,
-      "ctr_vs_adset_avg": 2.409,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697150631",
-      "ad_name": "q2-2026_bb_pain_img9",
-      "spend": 0.33,
-      "spend_share": 0.0006,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697170631",
-      "ad_name": "q2-2026_bb_pain_img6",
-      "spend": 8.05,
-      "spend_share": 0.0136,
-      "ctr": 0.0789,
-      "ctr_vs_adset_avg": 5.326,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697180631",
-      "ad_name": "q2-2026_bb_community_img4",
-      "spend": 0.94,
-      "spend_share": 0.0016,
-      "ctr": 0.1429,
-      "ctr_vs_adset_avg": 9.637,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697190631",
-      "ad_name": "q2-2026_bb_community_img7",
-      "spend": 0.74,
-      "spend_share": 0.0013,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697200631",
-      "ad_name": "q2-2026_bb_outcome_img2",
-      "spend": 1.35,
-      "spend_share": 0.0023,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
-    {
-      "adset_id": "120247429696850631",
-      "ad_id": "120247429697240631",
-      "ad_name": "q2-2026_bb_outcome_img6",
-      "spend": 540.28,
-      "spend_share": 0.9145,
-      "ctr": 0.0239,
-      "ctr_vs_adset_avg": 1.614,
       "label": "winner"
     },
     {
@@ -334,10 +134,20 @@
     },
     {
       "adset_id": "120247429696850631",
+      "ad_id": "120247429696930631",
+      "ad_name": "q2-2026_bb_outcome_img10",
+      "spend": 0.59,
+      "spend_share": 0.001,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
       "ad_id": "120247429696940631",
       "ad_name": "q2-2026_bb_proof_img4",
-      "spend": 0.84,
-      "spend_share": 0.0014,
+      "spend": 0.91,
+      "spend_share": 0.0015,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -346,8 +156,8 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696950631",
       "ad_name": "q2-2026_bb_proof_img3",
-      "spend": 0.94,
-      "spend_share": 0.0016,
+      "spend": 1.41,
+      "spend_share": 0.0024,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -359,15 +169,25 @@
       "spend": 1.48,
       "spend_share": 0.0025,
       "ctr": 0.0571,
-      "ctr_vs_adset_avg": 3.855,
+      "ctr_vs_adset_avg": 3.062,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429696980631",
+      "ad_name": "q2-2026_bb_outcome_img4",
+      "spend": 0.88,
+      "spend_share": 0.0015,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
       "label": null
     },
     {
       "adset_id": "120247429696850631",
       "ad_id": "120247429696990631",
       "ad_name": "q2-2026_bb_proof_img2",
-      "spend": 0.73,
-      "spend_share": 0.0012,
+      "spend": 0.76,
+      "spend_share": 0.0013,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -386,8 +206,18 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697030631",
       "ad_name": "q2-2026_bb_proof_img9",
-      "spend": 0.09,
+      "spend": 0.13,
       "spend_share": 0.0002,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697060631",
+      "ad_name": "q2-2026_bb_pain_img1",
+      "spend": 1.24,
+      "spend_share": 0.0021,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -396,7 +226,7 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429697070631",
       "ad_name": "q2-2026_bb_community_img9",
-      "spend": 0.84,
+      "spend": 0.85,
       "spend_share": 0.0014,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
@@ -409,7 +239,7 @@
       "spend": 2.27,
       "spend_share": 0.0038,
       "ctr": 0.0278,
-      "ctr_vs_adset_avg": 1.874,
+      "ctr_vs_adset_avg": 1.489,
       "label": null
     },
     {
@@ -419,7 +249,37 @@
       "spend": 1.25,
       "spend_share": 0.0021,
       "ctr": 0.0333,
-      "ctr_vs_adset_avg": 2.249,
+      "ctr_vs_adset_avg": 1.786,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697170631",
+      "ad_name": "q2-2026_bb_pain_img6",
+      "spend": 7.94,
+      "spend_share": 0.0134,
+      "ctr": 0.0811,
+      "ctr_vs_adset_avg": 4.345,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697190631",
+      "ad_name": "q2-2026_bb_community_img7",
+      "spend": 1.03,
+      "spend_share": 0.0017,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697200631",
+      "ad_name": "q2-2026_bb_outcome_img2",
+      "spend": 1.22,
+      "spend_share": 0.0021,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
       "label": null
     },
     {
@@ -444,6 +304,16 @@
     },
     {
       "adset_id": "120247429696850631",
+      "ad_id": "120247429697240631",
+      "ad_name": "q2-2026_bb_outcome_img6",
+      "spend": 540.42,
+      "spend_share": 0.9137,
+      "ctr": 0.0262,
+      "ctr_vs_adset_avg": 1.402,
+      "label": "winner"
+    },
+    {
+      "adset_id": "120247429696850631",
       "ad_id": "120247429697250631",
       "ad_name": "q2-2026_bb_community_img6",
       "spend": 0.09,
@@ -454,10 +324,40 @@
     },
     {
       "adset_id": "120247429696850631",
+      "ad_id": "120247429696880631",
+      "ad_name": "q2-2026_bb_outcome_img9",
+      "spend": 6.56,
+      "spend_share": 0.0111,
+      "ctr": 0.0164,
+      "ctr_vs_adset_avg": 0.878,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
       "ad_id": "120247429696890631",
       "ad_name": "q2-2026_bb_outcome_img7",
-      "spend": 0.98,
-      "spend_share": 0.0017,
+      "spend": 1.7,
+      "spend_share": 0.0029,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429696900631",
+      "ad_name": "q2-2026_bb_outcome_img8",
+      "spend": 1.61,
+      "spend_share": 0.0027,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429696920631",
+      "ad_name": "q2-2026_bb_proof_img1",
+      "spend": 0.91,
+      "spend_share": 0.0015,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -466,18 +366,108 @@
       "adset_id": "120247429696850631",
       "ad_id": "120247429696960631",
       "ad_name": "q2-2026_bb_proof_img6",
-      "spend": 1.93,
-      "spend_share": 0.0033,
+      "spend": 2.0,
+      "spend_share": 0.0034,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
     },
     {
       "adset_id": "120247429696850631",
+      "ad_id": "120247429697000631",
+      "ad_name": "q2-2026_bb_proof_img7",
+      "spend": 1.82,
+      "spend_share": 0.0031,
+      "ctr": 0.0312,
+      "ctr_vs_adset_avg": 1.675,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697020631",
+      "ad_name": "q2-2026_bb_proof_img8",
+      "spend": 0.61,
+      "spend_share": 0.001,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697050631",
+      "ad_name": "q2-2026_bb_proof_img10",
+      "spend": 1.47,
+      "spend_share": 0.0025,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697080631",
+      "ad_name": "q2-2026_bb_pain_img7",
+      "spend": 1.61,
+      "spend_share": 0.0027,
+      "ctr": 0.08,
+      "ctr_vs_adset_avg": 4.287,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
       "ad_id": "120247429697090631",
       "ad_name": "q2-2026_bb_pain_img8",
-      "spend": 0.52,
-      "spend_share": 0.0009,
+      "spend": 0.74,
+      "spend_share": 0.0013,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697140631",
+      "ad_name": "q2-2026_bb_community_img2",
+      "spend": 1.75,
+      "spend_share": 0.003,
+      "ctr": 0.05,
+      "ctr_vs_adset_avg": 2.679,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697180631",
+      "ad_name": "q2-2026_bb_community_img4",
+      "spend": 0.73,
+      "spend_share": 0.0012,
+      "ctr": 0.25,
+      "ctr_vs_adset_avg": 13.397,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429696870631",
+      "ad_name": "q2-2026_bb_pain_img5",
+      "spend": 0.15,
+      "spend_share": 0.0003,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697120631",
+      "ad_name": "q2-2026_bb_community_img1",
+      "spend": 0.24,
+      "spend_share": 0.0004,
+      "ctr": 0.0,
+      "ctr_vs_adset_avg": 0.0,
+      "label": null
+    },
+    {
+      "adset_id": "120247429696850631",
+      "ad_id": "120247429697150631",
+      "ad_name": "q2-2026_bb_pain_img9",
+      "spend": 0.03,
+      "spend_share": 0.0001,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
@@ -486,7 +476,7 @@
       "adset_id": "120249222014710631",
       "ad_id": "120249222014730631",
       "ad_name": "Industry Specific - Breweries - Q4 2025",
-      "spend": 960.43,
+      "spend": 989.04,
       "spend_share": 1.0,
       "ctr": 0.0142,
       "ctr_vs_adset_avg": 1.0,
@@ -496,19 +486,9 @@
       "adset_id": "120249802543730631",
       "ad_id": "120249802543750631",
       "ad_name": "meta_broad_dynamicad",
-      "spend": 1449.68,
+      "spend": 1446.39,
       "spend_share": 1.0,
-      "ctr": 0.0218,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
-      "adset_id": "120245893431410631",
-      "ad_id": "120245893431860631",
-      "ad_name": "BR-CocktailWineBars-Cohort2",
-      "spend": 914.12,
-      "spend_share": 1.0,
-      "ctr": 0.0255,
+      "ctr": 0.022,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
