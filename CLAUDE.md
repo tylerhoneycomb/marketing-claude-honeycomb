@@ -36,19 +36,21 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 ## Repo Structure
 
 - `/apps-script/` — Full Apps Script intelligence layer, deployed via clasp + GitHub Actions
-  - `Code.js` — The complete intelligence script (~3,600 lines). Edit here, never in the Apps Script web editor
+  - `Code.js` — The complete intelligence script (~6,500 lines). Edit here, never in the Apps Script web editor
   - `.clasp.json` — Points clasp at the Apps Script project (do not edit)
   - `appsscript.json` — Apps Script manifest (scopes, runtime, Web App settings)
-- `/docs/` — Living documentation (`STATE_REPORT.md`, `TECHNICAL_REFERENCE.md`) — keep in sync with code changes
+- `/docs/` — Living documentation (`STATE_REPORT.md`, `TECHNICAL_REFERENCE.md`, `CREATIVE_INTELLIGENCE_DESIGN.md`) — keep in sync with code changes
 - `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
-- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`.
-- `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair.
+- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`, `portfolio-scaling`.
+- `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair; `preview_dataset.py` generates a $0 deterministic Markdown brief. `lib/` subdirectory holds shared modules: `meta.py` (shared Meta Graph API client), `text_features.py`, `io.py` (atomic writes), `exec_api.py` (Apps Script `/exec` accessor).
 - `/data/` — Agent data repository.
   - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest)
   - `data/creatives/creatives.json` — creative metadata, accreted over time
-  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`)
+  - `data/creatives/categorizations.json` — LLM-assigned copy-angle + visual-style tags produced by the `creative-intelligence` skill; hash-deduped, incrementally written
+  - `data/creatives/images/<image_hash>.jpg` — full-size creative images downloaded via Meta `/adimages` API; cache key is image_hash; idempotent (existing files skipped)
+  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json` from `compute_signals.py`; `scaling_profiles.json`, `reallocation.json` from `portfolio-scaling` skill)
   - `data/config/benchmarks.json` — all thresholds; never hardcode them in scripts
 - `/ad-copy/` — Meta (Facebook/Instagram) ad copy organized by vertical
 - `/workflows/` — Automation scripts and marketing workflows
@@ -57,7 +59,15 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 - `.github/workflows/` — GitHub Actions CI/CD
   - `deploy-webapp.yml` — Auto-deploys dashboard to GitHub Pages on changes to webapp/
   - `deploy-apps-script.yml` — Auto-deploys Apps Script via clasp on changes to apps-script/
-  - `daily-data.yml` — Manual-only (workflow_dispatch) ad-level data pull; will be flipped to a daily cron once the snapshot output is verified
+  - `daily-data.yml` — Daily 8 AM ET cron + `workflow_dispatch` for backfills. Commits ad-level snapshots directly to main.
+  - `agent-pipeline-health.yml` — Daily cron at 9 AM ET. Runs `pipeline-health` skill.
+  - `agent-daily-check.yml` — **⏸ PAUSED 2026-06-08.** Cron commented out; manual `workflow_dispatch` still works.
+  - `agent-fatigue-monitor.yml` — **⏸ PAUSED 2026-06-10.** Cron commented out; manual `workflow_dispatch` still works.
+  - `agent-creative-intelligence.yml` — **⏸ PAUSED 2026-06-08.** Cron commented out; manual `workflow_dispatch` still works.
+  - `agent-creative-preview.yml` — `workflow_dispatch` only. $0 alternative (no Anthropic calls).
+  - `agent-ad-copy-generator.yml` — `workflow_dispatch` only. Drafts ad copy from Creative Intelligence cache.
+  - `agent-portfolio-scaling.yml` — Weekly cron Tuesdays at 9:30 AM ET. Runs `portfolio-scaling` skill.
+  - `claude.yml` — Handles `@claude` mentions in issues and PRs.
 
 ## Apps Script Deployment (clasp)
 
