@@ -1,26 +1,28 @@
 {
-  "computed_at": "2026-06-21T13:58:50.271638+00:00",
+  "computed_at": "2026-06-22T16:46:33.289157+00:00",
   "window_days": 7,
   "snapshot_dates": [
-    "2026-06-14",
     "2026-06-15",
     "2026-06-16",
     "2026-06-17",
     "2026-06-18",
     "2026-06-19",
-    "2026-06-20"
+    "2026-06-20",
+    "2026-06-21"
   ],
   "ad_count": 48,
   "adset_count": 14,
   "campaign_count": 8,
   "fatigue_severity_counts": {
     "critical": 0,
-    "warning": 0,
-    "below_floor": 3,
-    "ok": 45
+    "warning": 1,
+    "below_floor": 4,
+    "ok": 43
   },
   "actionable_critical": [],
-  "actionable_warning": [],
+  "actionable_warning": [
+    "120245893431650631"
+  ],
   "winners": [
     "120242950140670631",
     "120243111129220631",
