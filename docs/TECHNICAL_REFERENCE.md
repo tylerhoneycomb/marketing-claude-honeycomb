@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-06-10 (PAUSED `agent-fatigue-monitor.yml` at Tyler's request. YAML `schedule:` block commented out (only `workflow_dispatch` in `on:`); Apps Script fallback `triggerAgentFatigueMonitorIfNeeded` early-returns with a PAUSED log line so it doesn't dispatch via the GitHub API either. Both mechanisms have to be reverted to fully re-enable. Now three agent workflows are paused — daily-check, creative-intelligence, and fatigue-monitor — using the same dual-path pattern)_
+_Last updated: 2026-06-23 (Retired the standalone `agent-pipeline-health.yml` workflow and folded the pipeline-health check into `daily-data.yml` as two deterministic steps — `check_health.py` (unchanged) then the new `report_health.py` (terminal summary + Slack alert + issue-#48 one-liner). The check was always deterministic; running it via `claude-code-action` daily was a per-day Anthropic spend for pure JSON reformatting. The merge removes one scheduled workflow and one daily LLM invocation with zero loss of outcomes. Apps Script fallback `triggerAgentPipelineHealthIfNeeded` repointed to dispatch `daily-data.yml` (function name kept so the installed trigger binding stays valid). Also moved the two active scheduled crons off the top of the hour — `daily-data.yml` `0 12` → `37 12`, `agent-portfolio-scaling.yml` `30 13` → `43 13` — because GitHub's top-of-hour scheduled-run contention was delaying runs 1.8-5.1 h in this repo; uncommon minutes pull starts back toward schedule. Prior: 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; three agent workflows remain paused — daily-check, creative-intelligence, and fatigue-monitor)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -72,7 +72,7 @@ Google Sheets is the system of record for the campaign-level pipeline. The repo 
 - **Two systems of record.** The Google Sheet stores campaign-level data; the Git repo's `data/` directory stores ad-level data. The ad-level pipeline does not write to the Sheet, and the campaign-level pipeline does not write to `data/`.
 - **Deployments are git-native.** Merging to `main` triggers GitHub Actions that push Apps Script via `clasp` and publish the dashboard to GitHub Pages. Nobody edits the Apps Script web editor directly.
 - **Two execution contexts for the Apps Script layer:** (1) time-based triggers run on Google's schedule, (2) HTTP GET/POST to the published Web App `/exec` URL drives the dashboard and Slack approval links.
-- **Ad-level pipeline is autonomous.** `.github/workflows/daily-data.yml` runs daily at 8 AM ET (UTC 12:00) on cron and commits each snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
+- **Ad-level pipeline is autonomous.** `.github/workflows/daily-data.yml` runs daily at ~8:37 AM ET (UTC 12:37) on cron and commits each snapshot directly to main. (Cron minute moved off `:00` on 2026-06-23 — see §11.7 — because GitHub's top-of-hour queue contention was delaying the run 2-5 hours.) Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
 
 ## 2. Repository Structure
 
@@ -847,18 +847,15 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Invokes Claude Code agent for automated assistance.
 - Permissions: `contents:write`, `pull-requests:write`, `issues:write`, `id-token:write`.
 
-**`agent-pipeline-health.yml`** _(added 2026-05-03)_
+**`agent-pipeline-health.yml`** _(added 2026-05-03, **retired 2026-06-23 — merged into `daily-data.yml`**)_
 
-- Triggers: `workflow_dispatch` + active cron `0 13 * * *` (9 AM ET / UTC 13:00).
-- Steps: checkout → setup Python 3.12 → `pip install requests==2.32.3` → `anthropics/claude-code-action@v1` with a fixed `prompt` instructing it to run the `pipeline-health` skill per `SKILL.md` → "Dump Claude execution log" step that cats `/tmp/claude-execution-output.json` (`if: always()`).
-- Secrets required: `ANTHROPIC_API_KEY`, `META_ACCESS_TOKEN`. Optional: `SLACK_WEBHOOK_URL` — if absent, Claude skips the Slack post and only surfaces results in the workflow log.
-- Permissions: `contents: read` (skill is read-only) + `id-token: write` (required by `claude-code-action@v1` for OIDC auth at startup).
-- Action inputs: `show_full_output: "true"`, `display_report: "true"`, `claude_args: "--permission-mode bypassPermissions"`. The bypass is necessary because the action runs Claude in `permissionMode: "default"` by default and auto-denies every Bash command in CI (no human to click "approve").
-- Concurrency group `agent-pipeline-health`.
+- This was the v1 autonomous-agent workflow and established the template the other agents copied (`id-token: write`, `--permission-mode bypassPermissions`, `show_full_output`, `display_report`, the `if: always()` dump-log step). It ran daily on cron `0 13 * * *` and invoked `claude-code-action@v1` with a fixed prompt to run the `pipeline-health` skill.
+- **Why retired:** `check_health.py` is fully deterministic — it runs the four checks, writes the `pipeline_health` Sheet rows, and prints JSON. The LLM's only job was to reformat that JSON into a Slack string and `curl` it on WARN/FAIL — work that needs no model. Running `claude-code-action` daily for it was a per-day Anthropic spend, an extra scheduled workflow, and a duplicate checkout + Python setup one hour after `daily-data`.
+- **Replacement:** two steps appended to the `daily-data.yml` job (see §11.7): `check_health.py` (unchanged) → `report_health.py` (new — terminal summary + Slack alert on WARN/FAIL + the issue-#48 one-liner to `/tmp/health_status.txt`). The check runs right after the morning data pull instead of via a separate 9 AM workflow. No LLM, no `id-token`/OIDC, no separate cron. The Apps Script fallback `triggerAgentPipelineHealthIfNeeded` was repointed to dispatch `daily-data.yml`.
 
 **`agent-daily-check.yml`** _(added 2026-05-03)_
 
-- Same template as `agent-pipeline-health.yml` (id-token, bypassPermissions, show_full_output, display_report, dump-log step).
+- Same template established by the (now-retired) `agent-pipeline-health.yml`: `id-token`, bypassPermissions, show_full_output, display_report, dump-log step.
 - Triggers: `workflow_dispatch` + active cron `30 12 * * *` (8:30 AM ET / UTC 12:30).
 - timeout-minutes: 25 (fetch + analyze + 5 Meta API calls).
 - Prompt: run `fetch_daily_data.py > /tmp/daily_data.json` → `analyze_daily.py --input /tmp/daily_data.json` → compose sectioned summary (PACING, PORTFOLIO, WINNERS, BLEEDERS, FATIGUE WATCH, LEARNING, STALE).
@@ -908,7 +905,7 @@ Two production-run findings established a recommended pattern for any new agent 
 1. **Run Python scripts as ordinary workflow steps**, not inside `claude-code-action`'s Bash prompt. The action's subprocess shell appears to inherit env vars (suspected `ANTHROPIC_BASE_URL` or HTTP-proxy) that break the Anthropic SDK's direct connections from subprocesses. Verified: 526/526 APIConnectionError when scripts run inside the action's prompt; 0/526 when they run as separate workflow steps.
 2. **Commit any cache/artifact changes BEFORE invoking claude-code-action**. The action strips or invalidates the http extraheader credentials that `actions/checkout@v4` persists. A `git push` AFTER the action fails with `Password authentication is not supported`; the same push BEFORE the action succeeds. Daily-data.yml works because it has no claude-code-action.
 
-The pipeline-health, daily-check, and fatigue-monitor skills predate this finding. They run scripts inside the action's prompt and don't commit cache. They work fine because they don't trigger either failure mode (no Anthropic SDK subprocess calls; no commit-back). New skills with either dependency should follow the Creative Intelligence pattern.
+The daily-check and fatigue-monitor skills predate this finding. They run scripts inside the action's prompt and don't commit cache. They work fine because they don't trigger either failure mode (no Anthropic SDK subprocess calls; no commit-back). New skills with either dependency should follow the Creative Intelligence pattern. (pipeline-health was a third such skill until 2026-06-23, when it was made fully deterministic and merged into `daily-data.yml`, dropping `claude-code-action` entirely.)
 
 ### 10.1.1 Apps Script fallback dispatch (added 2026-05-03)
 
@@ -918,7 +915,7 @@ GitHub Actions cron is best-effort. To make scheduled runs more reliable, Apps S
 |---|---|
 | `triggerAgentWorkflow_(filename)` | POSTs to `/repos/.../actions/workflows/<filename>/dispatches` with `{ref: "main"}`. Reads `GITHUB_PAT` from Script Properties. |
 | `workflowRanWithinHours_(filename, hours)` | GETs `/repos/.../actions/workflows/<filename>/runs?per_page=10`, returns true if any run within window has status `in_progress`/`queued`/`pending` or conclusion `success`. Failed runs do NOT count (so the fallback retries them). |
-| `triggerAgentPipelineHealthIfNeeded` | Daily 12-1 PM ET. 18-hour lookback. |
+| `triggerAgentPipelineHealthIfNeeded` | Daily 12-1 PM ET. 18-hour lookback. As of 2026-06-23 targets `daily-data.yml` (pipeline-health was merged into that workflow); function name kept so the installed trigger binding stays valid. Doubles as the daily-data fallback, which previously had none. |
 | `triggerAgentDailyCheckIfNeeded` | Daily 12-1 PM ET. 18-hour lookback. |
 | `triggerAgentFatigueMonitorIfNeeded` | Daily 1-2 PM ET, but early-outs unless ISO day-of-week is 1 (Mon) or 4 (Thu). 12-hour lookback. |
 | `triggerAgentCreativeIntelligenceIfNeeded` | Daily 1-2 PM ET, but early-outs unless ISO day-of-week is 1 (Mon). 12-hour lookback. Weekly cadence matches the corpus-aggregation attribution model. |
@@ -1020,6 +1017,7 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 | IC custom conversion ID hardcoded in `benchmarks.json` | `data/config/benchmarks.json` | Ad-level pipeline cannot read `campaign_mapping` (lives in Sheets) so it pins to a single `custom_conversion_id`. Will miss new IC conversions added later. |
 | Ad-level fatigue logic duplicates 14-day-window concept from Apps Script budget | `scripts/compute_signals.py` vs `Code.js:computeBudgetSignals_` | Two implementations of "rolling-window-based health signal" can drift |
 | ~~`daily-data.yml` cron disabled~~ | ~~`.github/workflows/daily-data.yml`~~ | **Resolved 2026-05-04.** Cron `0 12 * * *` (daily 8 AM ET) active and validated; the bot's snapshot commits land on main every morning. |
+| ~~pipeline-health ran an LLM daily to reformat deterministic JSON~~ | ~~`.github/workflows/agent-pipeline-health.yml`~~ | **Resolved 2026-06-23.** `check_health.py` already produced structured PASS/WARN/FAIL JSON and wrote the Sheet itself; `claude-code-action` only reformatted it for Slack. Replaced with deterministic `report_health.py` and folded into `daily-data.yml` (§11.7). Removed a daily Anthropic call and a scheduled workflow with no loss of outcomes. |
 | `claude-code-action@v1` strips git credentials AND breaks Anthropic SDK in subprocesses | `.github/workflows/agent-creative-intelligence.yml` | The action's own internals are opaque; workaround is the architectural pattern documented in §10.1.0.5 (run scripts as workflow steps, commit before the action). If/when we ship Skill 6+ with Anthropic-subprocess or commit-back needs, this constrains the workflow shape. Worth revisiting when claude-code-action releases a new major version. |
 | `build_creative_dataset.py` is invoked twice in `agent-creative-intelligence.yml` | `.github/workflows/agent-creative-intelligence.yml` | First invocation refreshes the cache + emits a baseline dataset (null tags); categorize then runs; second invocation re-emits with tags attached. The second run repeats all the snapshot aggregation + corpus building work to attach tags that could be merged in-place. ~5-10 second waste per Monday run. Could be optimized by adding a `--attach-tags-only` flag that skips snapshot reads. |
 | Compliance regex backstop has known false positives | `skills/ad-copy-generator/scripts/generate_drafts.py` | E.g. "no personal guarantee" trips the `\bguarantee\b` pattern even though it's the OPPOSITE of a return-guarantee promise. The reviewer checklist catches these, but the ⚠️ flag is noisy. Could refine the regex to require return-context keywords nearby (`return`, `APY`, etc) instead of bare `\bguarantee\b`. |
@@ -1232,10 +1230,11 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 
 ### 11.7 Workflow (`.github/workflows/daily-data.yml`)
 
-- **Trigger:** `workflow_dispatch` + active cron `0 12 * * *` UTC (8 AM ET).
-- **Steps:** checkout → setup Python 3.12 → `pip install requests==2.32.3` → `python scripts/fetch_ad_data.py` → `python scripts/compute_signals.py` → commit `data/` and push to the current branch.
-- **Secrets:** `META_ACCESS_TOKEN` (GitHub Secret on the repo, separate from the Apps Script Script Property of the same name). `META_AD_ACCOUNT_ID` is also read from env if set, falling back to `account.id` in `benchmarks.json`.
-- **Permissions:** `contents: write` (needed to push the daily commit).
+- **Trigger:** `workflow_dispatch` + active cron `37 12 * * *` UTC (~8:37 AM ET in EDT / ~7:37 AM ET in EST). The minute is deliberately off `:00`: GitHub queues and deprioritizes scheduled runs (worst at the top of the hour), and the old `0 12` cron was observed drifting +1.8 to +5.1 h in this repo (the "8 AM" pull routinely started ~9:50 AM-1 PM ET). An uncommon minute pulls the start time back toward schedule. Still after the reliable 7 AM ET campaign-level pull, so the folded-in pipeline-health freshness check still expects "yesterday".
+- **Steps:** checkout → setup Python 3.12 → `pip install requests==2.32.3` → `python scripts/fetch_ad_data.py` → `python scripts/compute_signals.py` → commit `data/` and push to the current branch → **`Run pipeline-health checks`** → post the `daily-data` status to issue #48 → post the `pipeline-health` status to issue #48.
+- **Pipeline-health steps (folded in 2026-06-23 from the retired `agent-pipeline-health.yml`):** `Run pipeline-health checks` (`if: always()`, env `META_ACCESS_TOKEN` + `META_AD_ACCOUNT_ID` + optional `SLACK_WEBHOOK_URL`) runs `check_health.py > /tmp/health.json` then `report_health.py --input /tmp/health.json --status-file /tmp/health_status.txt`. It always exits 0 so a health hiccup never fails the data pull. `report_health.py` posts the Slack alert on WARN/FAIL (silent on full PASS / no webhook) and writes the one-liner. A dedicated `Post pipeline-health status to tracking issue` step (also `if: always()`, `continue-on-error`) comments `**pipeline-health**` to issue #48 — so this workflow posts two comments per run. The check targets the campaign-level `rolling_data` + Meta + dashboard endpoint, independent of the ad-level snapshot, so it's valid even when the fetch failed. No `claude-code-action`, no `id-token`/OIDC.
+- **Secrets:** `META_ACCESS_TOKEN` (GitHub Secret on the repo, separate from the Apps Script Script Property of the same name). `META_AD_ACCOUNT_ID` is also read from env if set, falling back to `account.id` in `benchmarks.json`. Optional `SLACK_WEBHOOK_URL` for the pipeline-health alert.
+- **Permissions:** `contents: write` (needed to push the daily commit) + `issues: write` (the two issue-#48 status comments).
 - **Concurrency:** group `daily-data`, no cancel — back-to-back runs queue rather than racing on the same files.
 - **Inputs:**
   - `snapshot_date` — single-day mode (default: yesterday UTC).
@@ -1258,6 +1257,7 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 | `expected_data_date` | `skills/pipeline-health/scripts/check_health.py` | Computes the date `rolling_data` should have, accounting for the 7 AM ET pull cutoff |
 | `weekday_gap` | `skills/pipeline-health/scripts/check_health.py` | Counts business days missed between latest data and expected date |
 | `check_data_freshness` / `check_meta_token` / `check_ic_conversion_event` / `check_dashboard_endpoint` | `skills/pipeline-health/scripts/check_health.py` | Four health checks; each returns `{name, status, detail}` |
+| `print_terminal_summary` / `slack_lines` / `post_to_slack` / `status_one_liner` | `skills/pipeline-health/scripts/report_health.py` | Deterministic formatter for `check_health.py` JSON (added 2026-06-23). Prints the terminal summary, composes + POSTs the WARN/FAIL Slack alert (FAIL before WARN, `detail` verbatim, silent on full PASS / no webhook), and writes the issue-#48 one-liner. Replaced the daily `claude-code-action` invocation when pipeline-health was merged into `daily-data.yml`. |
 | `compute_features(text)` | `scripts/lib/text_features.py` | Deterministic structural features per variant text (char/word/sentence count, opening word, syntactic markers). Pure Python, no LLM call. |
 | `variant_id(text)` | `scripts/lib/text_features.py` | Whitespace-collapsed + lowercased SHA-256 prefix (16 hex chars). Stable join key between dataset builder and categorizer. |
 | `atomic_write_json(path, data, ...)` | `scripts/lib/io.py` | Atomic write via tmp + rename. Used by `compute_signals.py`, `build_creative_dataset.save_creatives_cache`, `compute_scaling_profiles.py`, and `compute_reallocation.py`. The `.json.tmp` extension is `.gitignore`d so an interrupted run never commits a partial file. Mirrors the inline pattern in `fetch_ad_data.write_json` (PR #72) and `categorize_creative.save_cache_atomic`. |

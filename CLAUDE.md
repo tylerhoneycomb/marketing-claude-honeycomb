@@ -123,7 +123,7 @@ The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent lo
 - **The agent never writes to Meta directly.** All budget recommendations flow through the existing Slack approval pipeline in `apps-script/Code.js`. The agent's role is to surface signals and propose actions, not to execute changes against the Meta API.
 - **Learning-phase protection.** Never propose budget changes to ad sets where `learning_stage_info.status == "LEARNING"`. The `compute_signals.py` step already filters these and marks them `actionable: false`; defensively re-check in any skill that proposes ad-set actions.
 - **Signal floors.** Fatigue signals require ≥ 3 days of data and ≥ 1,000 impressions before they're considered actionable. Don't promote a row whose `actionable` field is `false`, even if it has a flag set.
-- **Daily-data workflow runs autonomously.** `.github/workflows/daily-data.yml` is on a daily 8 AM ET cron and commits the snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
+- **Daily-data workflow runs autonomously.** `.github/workflows/daily-data.yml` is on a daily ~8:37 AM ET cron (`37 12 * * *` UTC — minute deliberately off `:00` to dodge GitHub's top-of-hour scheduled-run queue delay, which was pushing the old `0 12` run 2-5 hours late) and commits the snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
 
 ## Agent Skills
 
@@ -168,8 +168,18 @@ Each skill that needs a scheduled run gets its own workflow file under
 > (CRON_TZ isn't supported by GitHub Actions); accepted as a known
 > drift.
 
-- `agent-pipeline-health.yml` — runs `pipeline-health` skill. Daily cron
-  active at 9 AM ET (UTC 13:00).
+- `pipeline-health` — **MERGED INTO `daily-data.yml` 2026-06-23.** The
+  standalone `agent-pipeline-health.yml` workflow was retired. The skill's
+  script (`check_health.py`) is fully deterministic — it runs the four
+  checks, writes the `pipeline_health` Sheet rows, and prints JSON — so it
+  no longer needs an LLM. It now runs as two ordinary steps at the end of
+  the daily-data job: `check_health.py` then `report_health.py` (terminal
+  summary + Slack alert on WARN/FAIL + the issue-#48 one-liner). This
+  removed a daily `claude-code-action` invocation (and its Anthropic spend)
+  and a whole separate scheduled workflow. The check now runs right after
+  the 8 AM ET data pull instead of at 9 AM. The Apps Script fallback
+  `triggerAgentPipelineHealthIfNeeded` was repointed to dispatch
+  `daily-data.yml` (function name kept so the installed trigger still binds).
 - `agent-daily-check.yml` — runs `daily-check` skill. **PAUSED 2026-06-08**
   (Tyler asked to stop the daily Slack briefing). Cron schedule and the
   Apps Script fallback (`triggerAgentDailyCheckIfNeeded`) are both
@@ -201,7 +211,9 @@ Each skill that needs a scheduled run gets its own workflow file under
 - `agent-ad-copy-generator.yml` — `workflow_dispatch` only. Drafts ad
   copy from the Creative Intelligence cache; never auto-published.
 - `agent-portfolio-scaling.yml` — runs `portfolio-scaling` skill.
-  Weekly cron Tuesdays at 9:30 AM ET (UTC 13:30). Two Python steps
+  Weekly cron Tuesdays at ~9:43 AM ET (UTC 13:43 — minute moved off
+  `:30` on 2026-06-23 to dodge GitHub's scheduled-run queue contention).
+  Two Python steps
   (compute_scaling_profiles → compute_reallocation), commits derived
   JSON to main, then claude-code-action composes the four-section
   Slack brief and registers the proposal via /exec for Tyler's
@@ -234,11 +246,14 @@ subprocess OR committing artifacts back to main:
    parallel calls. Confirmed for `categorize_creative.py`: cost dropped
    from ~$5 to ~$1-2/run, rate-limit failures from 18% to ~1%.
 
-The pipeline-health, daily-check, and fatigue-monitor skills predate
-these findings. They run scripts inside the action's prompt and don't
-commit cache. They work fine because they don't trigger either failure
-mode (no Anthropic SDK subprocess calls; no commit-back). New skills
-with either dependency should follow the Creative Intelligence pattern.
+The daily-check and fatigue-monitor skills predate these findings. They
+run scripts inside the action's prompt and don't commit cache. They work
+fine because they don't trigger either failure mode (no Anthropic SDK
+subprocess calls; no commit-back). New skills with either dependency
+should follow the Creative Intelligence pattern. (pipeline-health was a
+third such skill until 2026-06-23, when it was made fully deterministic
+and merged into `daily-data.yml` — it no longer uses claude-code-action
+at all.)
 
 Every agent workflow uses the same template (lessons learned from the
 agent-pipeline-health iteration cycle):
@@ -284,7 +299,7 @@ run rather than racing.
 
 ### Agent loop status tracking — issue #48
 
-Every autonomous workflow run (`daily-data`, `agent-pipeline-health`,
+Every autonomous workflow run (`daily-data`,
 `agent-daily-check`, `agent-fatigue-monitor`, `agent-creative-intelligence`,
 `agent-creative-preview`, `agent-ad-copy-generator`,
 `agent-portfolio-scaling`) posts a status comment to
@@ -308,15 +323,21 @@ run). Each comment includes:
 Agent workflow prompts instruct Claude to write the one-liner summary
 to `/tmp/agent_status.txt` before exiting; the status step picks it up.
 For `daily-data.yml`, the status step reads counts directly from the
-just-committed `_manifest.json`.
+just-committed `_manifest.json`, and a SECOND status step posts the
+`pipeline-health` one-liner (written deterministically by
+`report_health.py` to `/tmp/health_status.txt`) — so `daily-data` posts
+two comments per run: `**daily-data**` and `**pipeline-health**`. The
+`PASS 4/0/0` pipeline-health one-liner shape is unchanged from when it
+was its own workflow.
 
 Reading the issue comments is the fastest way to verify the agent loop
 is firing correctly — sort by oldest-first for a chronological log.
 Close + reopen a fresh issue when the comment volume gets noisy
 (close the old one, create a new one, update the issue number in all
-eight workflow YAML files: daily-data, agent-pipeline-health,
-agent-daily-check, agent-fatigue-monitor, agent-creative-intelligence,
-agent-creative-preview, agent-ad-copy-generator, agent-portfolio-scaling).
+seven workflow YAML files: daily-data (two comments — daily-data +
+pipeline-health), agent-daily-check, agent-fatigue-monitor,
+agent-creative-intelligence, agent-creative-preview,
+agent-ad-copy-generator, agent-portfolio-scaling).
 
 ### Meta API conventions
 
@@ -335,7 +356,9 @@ agent-creative-preview, agent-ad-copy-generator, agent-portfolio-scaling).
 - **pipeline-health** — verifies data freshness, Meta token validity, IC
   conversion event existence, and dashboard endpoint health. Run before any
   other skill so a downstream "all clear" reading isn't masking a broken
-  pipeline.
+  pipeline. Autonomously it runs as two deterministic steps inside
+  `daily-data.yml` (`check_health.py` → `report_health.py`); there is no
+  separate scheduled workflow and no LLM in the autonomous path.
 - **daily-check** — morning briefing: pacing vs weekly target, campaign
   portfolio sorted by CPICP, top 3 winners + bleeders, early fatigue flags,
   learning-phase ad sets, and stale creatives (>21 days active).

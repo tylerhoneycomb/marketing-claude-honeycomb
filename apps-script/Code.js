@@ -2475,16 +2475,27 @@ function workflowRanWithinHours_(filename, hours) {
 }
 
 
-// Daily fallback for agent-pipeline-health.yml. GitHub cron is set for
-// 9 AM ET; this trigger fires noon-1 PM ET. 18-hour lookback window
-// catches today's morning run if it succeeded.
+// Daily fallback for the pipeline-health check. As of 2026-06-23 the
+// standalone agent-pipeline-health.yml workflow was retired and the
+// health check folded into daily-data.yml as a deterministic step (no
+// LLM). This fallback therefore ensures the daily-data run itself
+// happened — that run pulls the snapshot AND runs pipeline-health, so a
+// single dispatch covers both. (daily-data previously had no Apps Script
+// fallback; the merge gives the data pull one for free.)
+//
+// GitHub cron for daily-data is 8 AM ET; this trigger fires noon-1 PM ET.
+// 18-hour lookback catches today's morning run if it succeeded.
+//
+// The function name is intentionally unchanged so the installed trigger
+// binding from createAllTriggers() stays valid — no Apps Script editor
+// re-run needed to repoint it.
 function triggerAgentPipelineHealthIfNeeded() {
   Logger.log('=== triggerAgentPipelineHealthIfNeeded ===');
-  if (workflowRanWithinHours_('agent-pipeline-health.yml', 18)) {
-    Logger.log('Recent successful or in-progress run exists — skipping.');
+  if (workflowRanWithinHours_('daily-data.yml', 18)) {
+    Logger.log('Recent successful or in-progress daily-data run exists — skipping.');
     return;
   }
-  triggerAgentWorkflow_('agent-pipeline-health.yml');
+  triggerAgentWorkflow_('daily-data.yml');
 }
 
 
