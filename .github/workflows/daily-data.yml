@@ -24,7 +24,15 @@ on:
         required: false
         default: '1.0'
   schedule:
-    - cron: '0 12 * * *'  # 8 AM ET (UTC-4) / 7 AM ET during DST
+    # Deliberately off the top of the hour. GitHub queues + deprioritizes
+    # scheduled runs, worst at :00 (also heavy at :30/:15/:45). The old
+    # '0 12' cron drifted +1.8 to +5.1 h in practice (the "8 AM" pull
+    # routinely started ~9:50 AM-1 PM ET). An uncommon minute cuts that
+    # queue delay. 12:37 UTC = 8:37 AM ET in EDT (summer, UTC-4) /
+    # 7:37 AM ET in EST (winter, UTC-5) — still after the 7 AM ET
+    # campaign-level pull, so the folded-in pipeline-health freshness
+    # check still expects "yesterday".
+    - cron: '37 12 * * *'  # ~8:37 AM ET (EDT) / ~7:37 AM ET (EST)
 
 permissions:
   contents: write

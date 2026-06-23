@@ -3,10 +3,12 @@ name: Agent — Portfolio Scaling
 on:
   workflow_dispatch:
   schedule:
-    # Tuesdays at 9:30 AM ET (UTC-4 EDT in summer / UTC-5 EST in winter
-    # → fixed 13:30 UTC). Pairs with executeStrategicChanges in Code.js
-    # which fires Wed 3 AM after Tyler approves the brief Tuesday.
-    - cron: '30 13 * * 2'
+    # Tuesdays, off the top/half of the hour to dodge GitHub's
+    # scheduled-run queue contention (worst at :00, also heavy at :30).
+    # 13:43 UTC = 9:43 AM ET in EDT (summer, UTC-4) / 8:43 AM ET in EST
+    # (winter, UTC-5). Pairs with executeStrategicChanges in Code.js which
+    # fires Wed 3 AM after Tyler approves the brief Tuesday.
+    - cron: '43 13 * * 2'
 
 permissions:
   # `contents: write` lets the "Commit derived data" step push the
