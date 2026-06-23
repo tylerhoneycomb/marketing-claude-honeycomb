@@ -46,7 +46,7 @@ jobs:
         id: claude
         uses: anthropics/claude-code-action@v1
         env:
-          # Same secret the daily-data + agent-pipeline-health workflows use.
+          # Same secret the daily-data + other agent workflows use.
           # The skill scripts read it directly via os.environ.
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
           # Optional. If unset, Claude skips Slack posting and only

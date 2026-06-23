@@ -111,6 +111,42 @@ jobs:
           echo "git push failed after 4 attempts"
           exit 1
 
+      # ── Pipeline health check ────────────────────────────────────
+      # Folded in 2026-06-23 from the retired agent-pipeline-health.yml
+      # workflow, which fired claude-code-action (an Anthropic-billed
+      # LLM agent) daily just to reformat deterministic JSON. check_health.py
+      # is fully self-contained: it runs the four checks (data freshness,
+      # Meta token, IC conversion event, dashboard endpoint), writes the
+      # pipeline_health Sheet rows itself, and prints JSON. report_health.py
+      # then composes the terminal summary, POSTs the Slack alert on
+      # WARN/FAIL (silent on full PASS, skipped if no webhook), and writes
+      # the one-line status for the issue-#48 comment. No LLM, no OIDC.
+      #
+      # `if: always()` so health is reported even when the fetch above
+      # failed — a stale/broken pull is exactly when you want the check.
+      # The health check targets the campaign-level rolling_data + Meta +
+      # dashboard endpoint, independent of this job's ad-level snapshot,
+      # so it's valid regardless of the fetch outcome.
+      - name: Run pipeline-health checks
+        if: always()
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          # Optional. If unset, report_health.py prints to the log only.
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          set +e
+          python3 skills/pipeline-health/scripts/check_health.py > /tmp/health.json
+          RC=$?
+          if [ "$RC" -ne 0 ]; then
+            echo "check_health.py exited $RC"
+            cat /tmp/health.json || true
+            echo "FAIL — check_health.py exited $RC (see workflow log)" > /tmp/health_status.txt
+            exit 0   # never fail the data-pull job over the health reporter
+          fi
+          python3 skills/pipeline-health/scripts/report_health.py \
+            --input /tmp/health.json --status-file /tmp/health_status.txt
+
       # Post status to the agent-loop tracking issue (#48). continue-on-error
       # so a closed/missing issue doesn't fail the run. if: always() so we
       # report failures too.
@@ -156,6 +192,24 @@ jobs:
           RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           {
             echo "$HEADER"
+            echo "$DETAIL"
+            echo "[run]($RUN_URL)"
+          } | gh issue comment 48 --repo "${{ github.repository }}" --body-file - || true
+
+      # Post the pipeline-health result as its own issue-#48 comment so the
+      # chronological agent-loop log keeps a distinct "pipeline-health" entry,
+      # exactly as it had when pipeline-health was a standalone workflow.
+      - name: Post pipeline-health status to tracking issue
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS: ${{ job.status }}
+        run: |
+          DETAIL="$(cat /tmp/health_status.txt 2>/dev/null || echo '(no status file)')"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          {
+            echo "**pipeline-health** — ${STATUS}"
             echo "$DETAIL"
             echo "[run]($RUN_URL)"
           } | gh issue comment 48 --repo "${{ github.repository }}" --body-file - || true
