@@ -1,5 +1,6 @@
 # Project State Report
 
+_Last updated: 2026-06-23 (Dashboard trend chart QOL: defaults to portfolio-wide, persists view settings across refreshes, and no longer resets the selected campaigns when the date range or granularity changes. See "Dashboard chart remembers your view" below.)_
 _Last updated: 2026-06-10 (PAUSED `agent-fatigue-monitor.yml` at Tyler's request — same pause pattern as the daily-check + creative-intelligence pause from 2026-06-08. GitHub cron (Mon + Thu 9:30 AM ET) commented out; Apps Script fallback `triggerAgentFatigueMonitorIfNeeded` early-returned. Manual `workflow_dispatch` still works. Pipeline-health, portfolio-scaling, and daily-data continue running unchanged)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
@@ -63,7 +64,7 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 ### On-demand via dashboard
 
 - **Leaderboards** — top 3 / bottom 3 campaigns sortable by different metrics.
-- **Trend charts** — CPICP, ICPs, spend, CPL, CTR over time (daily or weekly granularity; per-campaign or portfolio-wide).
+- **Trend charts** — CPICP, ICPs, spend, CPL, CTR over time (day/week/month granularity; per-campaign or portfolio-wide). Opens on the **portfolio-wide** line by default; your chart settings (granularity, mode, metrics, trendlines) are remembered across refreshes, and changing the date range no longer clears the campaigns you've picked.
 - **Campaign performance table** — spend, clicks, CPICP, frequency per campaign, with paused-campaign badges.
 - **Goal tracking** — weekly ICP pace vs. target, weekly spend vs. $10K target.
 - **Budget controls** — run-analysis-now button, adjust the weekly spend goal via a Slack approval flow.
@@ -130,6 +131,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 - **Two-step budget approval.** Budget proposal links in Slack now show an HTML confirmation page with a button — Slack's link-unfurling bot gets the page but can't click buttons, so only a human can approve or reject.
 - **AI upgraded to Claude Opus 4.7.** All 5 Anthropic API call sites (narrative, chat, budget commentary, daily digest, weekly Slack) use a single `ANTHROPIC_MODEL` constant — future upgrades are one line.
 - **Dashboard line chart accuracy.** Daily granularity shows the full selected date range (no collapsed x-axis), and per-campaign lines break on paused days instead of drawing misleading straight lines across gaps.
+- **Dashboard chart remembers your view.** The trend chart opens portfolio-wide by default, persists your view settings across refreshes, and keeps your selected campaigns when you switch the date range or granularity (previously every switch reset the selection back to the top 5).
 
 ---
 

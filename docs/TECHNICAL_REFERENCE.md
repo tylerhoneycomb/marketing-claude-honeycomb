@@ -1,5 +1,6 @@
 # Technical Reference
 
+_Last updated: 2026-06-23 (Dashboard `MetricTrendChart` QOL: default mode is now portfolio-wide; view prefs (granularity/mode/metrics/trendlines) persist via `localStorage` key `honeycomb_chart_prefs`; per-campaign visibility moved to a `visibleOverride` "follow-vs-explicit" model that survives date-range/granularity changes instead of resetting to top-5. See §9.5.)_
 _Last updated: 2026-06-10 (PAUSED `agent-fatigue-monitor.yml` at Tyler's request. YAML `schedule:` block commented out (only `workflow_dispatch` in `on:`); Apps Script fallback `triggerAgentFatigueMonitorIfNeeded` early-returns with a PAUSED log line so it doesn't dispatch via the GitHub API either. Both mechanisms have to be reverted to fully re-enable. Now three agent workflows are paused — daily-check, creative-intelligence, and fatigue-monitor — using the same dual-path pattern)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
@@ -806,7 +807,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - **CPICP alert card** — week-over-week trend indicator.
 - **ICP summary cards** — total spend, estimated ICPs, overall CPICP, blended/attributed CPICP, attribution rate.
 - **Leaderboards** — top 3 / bottom 3 campaigns, sortable by CPICP / ICPs / attribution / CPL / CTR / spend. "Mature only" toggle hides campaigns under 10 lifetime conversions.
-- **Metric trend chart** — multi-select metric visualization, per-campaign or portfolio, daily/weekly granularity. Recharts line chart with weighted regression trendlines.
+- **Metric trend chart** — multi-select metric visualization, per-campaign or portfolio, day/week/month granularity. Recharts line chart with weighted regression trendlines. **Defaults to portfolio-wide.** View controls (granularity, mode, primary/comparison metric, trendline toggle) persist across refreshes via `localStorage` (`honeycomb_chart_prefs`); validated against their allowed sets on load.
 - **Goal tracker** — 7-day and 30-day ICP pace vs target; weekly spend vs $10K target with ±$500 tolerance.
 - **Budget controls** — run-analysis button, spend goal editor (two-step Slack approval).
 - **Campaign performance table** — sortable per-campaign weekly metrics, "IC-Optimized" and "Paused" badges, click-through to daily breakdown.
@@ -818,6 +819,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
 
 - **Daily granularity x-axis:** `allBuckets` enumerates every date between `rangeStart` and `rangeEnd` inclusive (via `enumerateDateRange()` helper, ~line 144). This ensures days with no data still appear on the axis. Week/month granularity derives buckets from `rollup` since those are comprehensive.
 - **Per-campaign line breaks:** Per-campaign `<Line>` components use `connectNulls={false}` so paused campaigns render as line breaks, not straight-line bridges across the gap. Portfolio-mode lines keep `connectNulls={true}` since aggregate totals are continuous. Trendlines also keep `connectNulls={true}` since they're fully populated by design.
+- **Campaign-visibility model:** per-campaign visibility is held in `visibleOverride` (state). `null` = "follow" mode: the chart tracks the top 5 campaigns by spend and re-derives them as the date range / granularity changes. The first chip toggle (or the **All** / **None** buttons) promotes the selection to a concrete `Set` that *survives* range and granularity changes — it no longer resets to top-5 on every data refresh. The override is reconciled against the campaigns present in the current range via the `visible` memo, so out-of-range names drop off instead of lingering. **Top 5** returns to follow mode. The Top 5 / All / None buttons highlight the active selection mode (`selectionPreset`). Visibility is intentionally *not* persisted to `localStorage` (campaign names churn); only the scalar view prefs are.
 
 **Reference copy:** `webapp/apps-script-api.gs` is a documentation-only subset of `Code.js` showing the web API layer. **Not auto-generated** — maintained by hand. Diverges from `Code.js` in practice; only `Code.js` is the source of truth for deployed behavior.
 

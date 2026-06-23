@@ -1679,6 +1679,39 @@
       );
     }
 
+    // ── Chart view preferences (persisted) ───────────────
+    // The trend chart's view controls — granularity, mode,
+    // primary/comparison metric, and the trendline toggle —
+    // persist across page refreshes via localStorage so the
+    // chart reopens the way the user left it. Campaign
+    // visibility is deliberately NOT persisted here: campaign
+    // names churn over time, so it lives in component state and
+    // reconciles against whatever campaigns exist in the current
+    // range (see the `visible` memo inside MetricTrendChart).
+    const CHART_PREFS_KEY      = 'honeycomb_chart_prefs';
+    const CHART_MODES          = ['per_campaign', 'portfolio'];
+    const CHART_GRANULARITIES  = ['day', 'week', 'month'];
+
+    function loadChartPrefs() {
+      try {
+        const raw = localStorage.getItem(CHART_PREFS_KEY);
+        if (!raw) return {};
+        const parsed = JSON.parse(raw);
+        return (parsed && typeof parsed === 'object') ? parsed : {};
+      } catch (e) {
+        return {};
+      }
+    }
+
+    function persistChartPrefs(prefs) {
+      try {
+        localStorage.setItem(CHART_PREFS_KEY, JSON.stringify(prefs));
+      } catch (e) {
+        // Quota exceeded or storage disabled — preferences just
+        // won't persist; the chart still works for this session.
+      }
+    }
+
     // ── PRIMARY CHART: multi-metric trend chart ──
     // Renders a trend chart with:
     //   - A metric dropdown (anything in METRIC_CATALOG)
@@ -1698,11 +1731,38 @@
     //     rollup dataset. Month buckets are formed by grouping
     //     weekly rollup rows by their first-of-month key.
     function MetricTrendChart({ daily, rollup, rangeStart, rangeEnd }) {
-      const [granularity, setGranularity]     = useState('week');
-      const [chartMode, setChartMode]         = useState('per_campaign');
-      const [primaryKey, setPrimaryKey]       = useState('cpicp_blended');
-      const [comparisonKey, setComparisonKey] = useState(''); // '' = none
-      const [showTrendlines, setShowTrendlines] = useState(true);
+      // Restore persisted view preferences once on mount. Each
+      // value is validated against its allowed set so a stale or
+      // hand-edited localStorage entry can't wedge the chart.
+      const savedPrefs = useMemo(() => loadChartPrefs(), []);
+      const [granularity, setGranularity] = useState(
+        CHART_GRANULARITIES.includes(savedPrefs.granularity) ? savedPrefs.granularity : 'week'
+      );
+      // Portfolio-wide is the default view — the chart opens on
+      // the single aggregate line rather than a tangle of
+      // per-campaign lines. Returning users keep whichever mode
+      // they last selected.
+      const [chartMode, setChartMode] = useState(
+        CHART_MODES.includes(savedPrefs.chartMode) ? savedPrefs.chartMode : 'portfolio'
+      );
+      const [primaryKey, setPrimaryKey] = useState(
+        METRIC_CATALOG.some(m => m.key === savedPrefs.primaryKey) ? savedPrefs.primaryKey : 'cpicp_blended'
+      );
+      const [comparisonKey, setComparisonKey] = useState(
+        (savedPrefs.comparisonKey === '' || METRIC_CATALOG.some(m => m.key === savedPrefs.comparisonKey))
+          ? (savedPrefs.comparisonKey || '')
+          : '' // '' = none
+      );
+      const [showTrendlines, setShowTrendlines] = useState(
+        typeof savedPrefs.showTrendlines === 'boolean' ? savedPrefs.showTrendlines : true
+      );
+
+      // Persist view preferences whenever they change so the
+      // chart reopens exactly as the user left it. Campaign
+      // visibility is excluded by design (see the `visible` memo).
+      useEffect(() => {
+        persistChartPrefs({ granularity, chartMode, primaryKey, comparisonKey, showTrendlines });
+      }, [granularity, chartMode, primaryKey, comparisonKey, showTrendlines]);
 
       // Metrics available at the current granularity.
       const availableMetrics = useMemo(
@@ -1786,13 +1846,31 @@
         return Object.values(byCampaign).sort((a, b) => b.totalSpend - a.totalSpend);
       }, [sourceRows]);
 
-      // Default visible = top 5 by spend.
-      const defaultVisible = useMemo(
-        () => new Set(campaignSummary.slice(0, 5).map(c => c.name)),
+      // Campaign visibility (per_campaign mode).
+      //
+      // `visibleOverride === null` means "follow the default" —
+      // track the top 5 campaigns by spend as the date range or
+      // granularity changes. Once the user makes an explicit
+      // choice (toggling a chip, or the All / None buttons) the
+      // override holds a concrete Set that SURVIVES range and
+      // granularity changes instead of being wiped back to the
+      // top 5 on every data refresh (the old behavior). The
+      // override is reconciled against the campaigns present in
+      // the current range, so names that fall out of range drop
+      // off rather than lingering as dead entries.
+      const topFiveNames = useMemo(
+        () => campaignSummary.slice(0, 5).map(c => c.name),
         [campaignSummary]
       );
-      const [visible, setVisible] = useState(defaultVisible);
-      useEffect(() => { setVisible(defaultVisible); }, [defaultVisible]);
+      const [visibleOverride, setVisibleOverride] = useState(null);
+
+      const visible = useMemo(() => {
+        if (visibleOverride === null) return new Set(topFiveNames);
+        const inRange = new Set(campaignSummary.map(c => c.name));
+        const reconciled = new Set();
+        visibleOverride.forEach(n => { if (inRange.has(n)) reconciled.add(n); });
+        return reconciled;
+      }, [visibleOverride, topFiveNames, campaignSummary]);
 
       // Stable color per campaign (by spend rank).
       const colorMap = useMemo(() => {
@@ -1876,16 +1954,31 @@
         });
       }, [chartData, showTrendlines, isPortfolio, primaryMetric, comparisonMetric, campaignSummary, visible]);
 
+      // All visibility actions write to `visibleOverride`.
+      // Toggling while in follow mode seeds the override from
+      // what's currently on screen (the top 5) so the first click
+      // edits the set the user actually sees. "Top 5" returns to
+      // follow mode so the chart tracks the leaders as the range
+      // changes.
       const toggleCampaign = (name) => {
-        setVisible(prev => {
-          const next = new Set(prev);
+        setVisibleOverride(prev => {
+          const next = new Set(prev === null ? topFiveNames : prev);
           if (next.has(name)) next.delete(name); else next.add(name);
           return next;
         });
       };
-      const showAll   = () => setVisible(new Set(campaignSummary.map(c => c.name)));
-      const showTop5  = () => setVisible(new Set(campaignSummary.slice(0, 5).map(c => c.name)));
-      const showNone  = () => setVisible(new Set());
+      const showAll   = () => setVisibleOverride(new Set(campaignSummary.map(c => c.name)));
+      const showTop5  = () => setVisibleOverride(null);
+      const showNone  = () => setVisibleOverride(new Set());
+
+      // Which preset the current selection matches — drives the
+      // active styling on the Top 5 / All / None buttons so the
+      // selection mode is visible at a glance.
+      const selectionPreset =
+        visibleOverride === null ? 'top5'
+        : visible.size === 0 ? 'none'
+        : (campaignSummary.length > 0 && visible.size === campaignSummary.length) ? 'all'
+        : 'custom';
 
       const hasData = chartData.length > 0 && (
         isPortfolio
@@ -1946,6 +2039,7 @@
                   <button
                     key={g}
                     onClick={() => setGranularity(g)}
+                    aria-pressed={granularity === g}
                     className={`px-2.5 py-1 capitalize ${
                       granularity === g
                         ? 'bg-stone-800 text-white'
@@ -1961,6 +2055,7 @@
               <div className="inline-flex rounded border border-stone-300 overflow-hidden">
                 <button
                   onClick={() => setChartMode('per_campaign')}
+                  aria-pressed={!isPortfolio}
                   className={`px-2.5 py-1 ${
                     !isPortfolio
                       ? 'bg-amber-500 text-white'
@@ -1971,6 +2066,7 @@
                 </button>
                 <button
                   onClick={() => setChartMode('portfolio')}
+                  aria-pressed={isPortfolio}
                   className={`px-2.5 py-1 border-l border-stone-300 ${
                     isPortfolio
                       ? 'bg-amber-500 text-white'
@@ -2030,9 +2126,24 @@
 
             {!isPortfolio && (
               <div className="flex items-center gap-1 ml-auto">
-                <button onClick={showTop5} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">Top 5</button>
-                <button onClick={showAll} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">All</button>
-                <button onClick={showNone} className="px-2 py-1 bg-stone-100 hover:bg-stone-200 rounded">None</button>
+                {[
+                  { id: 'top5', label: 'Top 5', onClick: showTop5 },
+                  { id: 'all',  label: 'All',   onClick: showAll },
+                  { id: 'none', label: 'None',  onClick: showNone },
+                ].map(b => (
+                  <button
+                    key={b.id}
+                    onClick={b.onClick}
+                    aria-pressed={selectionPreset === b.id}
+                    className={`px-2 py-1 rounded transition ${
+                      selectionPreset === b.id
+                        ? 'bg-stone-800 text-white'
+                        : 'bg-stone-100 text-stone-700 hover:bg-stone-200'
+                    }`}
+                  >
+                    {b.label}
+                  </button>
+                ))}
               </div>
             )}
           </div>
