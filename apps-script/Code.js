@@ -2114,17 +2114,24 @@ function postWeeklyNarrativeToSlack_(week, spend, icps, cpicp, cpl,
 // DAILY SLACK DIGEST
 // ============================================================
 
-function postDailyDigest() {
-  Logger.log('=== postDailyDigest ===');
-  validateTokens_();
+// Shared daily-snapshot computation. SINGLE SOURCE OF TRUTH for
+// both the Slack digest (postDailyDigest) and the dashboard's
+// `?action=daily-snapshot` endpoint, so the dashboard's "Daily
+// Snapshot" card shows the exact same Yesterday / WTD / 30-day
+// numbers the digest does. Returns raw numeric values (null where
+// a denominator is zero) — each presenter formats them. Returns
+// null if the required sheets or rollup weeks are missing.
+//
+// Cheap (sheet reads only; no Meta/HubSpot/LLM calls), so it is
+// safe to call on every dashboard load.
+function computeDailySnapshot_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-
   var metaSheet = ss.getSheetByName(META_SHEET);
   var hsSheet = ss.getSheetByName(HS_SHEET);
   var rollupSheet = ss.getSheetByName(ROLLUP_SHEET);
   if (!metaSheet || !rollupSheet) {
-    Logger.log('ERROR: rolling_data or weekly_rollup sheet not found.');
-    return;
+    Logger.log('computeDailySnapshot_: rolling_data or weekly_rollup sheet not found.');
+    return null;
   }
 
   var tz = Session.getScriptTimeZone();
@@ -2155,30 +2162,23 @@ function postDailyDigest() {
     }
   }
 
-  var ydCPL = ydConvs > 0 ? '$' + (ydSpend / ydConvs).toFixed(2) : 'N/A';
-  var ydCPICP = ydICPs > 0 ? '$' + (ydSpend / ydICPs).toFixed(0) : 'N/A';
-  var ydFreq = ydFreqCount > 0 ? Math.round((ydFreqSum / ydFreqCount) * 100) / 100 : 'N/A';
-
   var rollupData = rollupSheet.getDataRange().getValues();
   var weekSet = {}, allWeeks = [];
   rollupData.slice(1).forEach(function (r) {
-    var w = dateToYMD_(r[0]);
-    if (w && !weekSet[w]) { weekSet[w] = true; allWeeks.push(w); }
+    var wk = dateToYMD_(r[0]);
+    if (wk && !weekSet[wk]) { weekSet[wk] = true; allWeeks.push(wk); }
   });
   allWeeks.sort();
-  if (!allWeeks.length) { Logger.log('No rollup data.'); return; }
+  if (!allWeeks.length) { Logger.log('computeDailySnapshot_: no rollup data.'); return null; }
 
   var currentWeek = allWeeks[allWeeks.length - 1];
   var wtdRows = rollupData.slice(1).filter(function (r) { return dateToYMD_(r[0]) === currentWeek; });
-
   var wtdSpend = 0, wtdICPs = 0, wtdConvs = 0;
   wtdRows.forEach(function (r) {
     wtdSpend += r[3] || 0;
     wtdICPs += r[12] || 0;
     wtdConvs += r[9] || 0;
   });
-  var wtdCPICP = wtdICPs > 0 ? '$' + (wtdSpend / wtdICPs).toFixed(0) : 'N/A';
-  var wtdCPL = wtdConvs > 0 ? '$' + (wtdSpend / wtdConvs).toFixed(2) : 'N/A';
 
   var wsParts = currentWeek.split('-');
   var wsDate = new Date(parseInt(wsParts[0]), parseInt(wsParts[1]) - 1, parseInt(wsParts[2]));
@@ -2186,10 +2186,9 @@ function postDailyDigest() {
   var daysElapsed = Math.max(1, Math.round((ydDate - wsDate) / 86400000) + 1);
   var pacedSpend = Math.round(wtdSpend / daysElapsed * 7);
   var pacedICPs = Math.round(wtdICPs / daysElapsed * 7 * 10) / 10;
-  var wtdPaceLine = 'Pacing → $' + pacedSpend.toLocaleString() + ' spend  |  ' + pacedICPs + ' ICPs  (' + daysElapsed + ' of 7 days)';
 
-  var completed = allWeeks.filter(function (w) { return w < currentWeek; });
-  var wtdWoWStr = '';
+  var completed = allWeeks.filter(function (wk) { return wk < currentWeek; });
+  var wowPct = null;
   if (completed.length > 0) {
     var priorWeek = completed[completed.length - 1];
     var priorRows = rollupData.slice(1).filter(function (r) { return dateToYMD_(r[0]) === priorWeek; });
@@ -2198,8 +2197,7 @@ function postDailyDigest() {
     if (priorICPs > 0 && wtdICPs > 0) {
       var priorCPICP = priorSpend / priorICPs;
       var wtdCPICPNum = wtdSpend / wtdICPs;
-      var wowPct = Math.round(((wtdCPICPNum - priorCPICP) / priorCPICP) * 1000) / 10;
-      wtdWoWStr = '  |  WoW: ' + (wowPct > 0 ? '+' : '') + wowPct + '%';
+      wowPct = Math.round(((wtdCPICPNum - priorCPICP) / priorCPICP) * 1000) / 10;
     }
   }
 
@@ -2207,22 +2205,95 @@ function postDailyDigest() {
   var d30Rows = rollupData.slice(1).filter(function (r) { return last4.indexOf(dateToYMD_(r[0])) > -1; });
   var d30Spend = 0, d30ICPs = 0, d30Convs = 0;
   d30Rows.forEach(function (r) { d30Spend += r[3] || 0; d30ICPs += r[12] || 0; d30Convs += r[9] || 0; });
-  var d30CPICP = d30ICPs > 0 ? '$' + (d30Spend / d30ICPs).toFixed(0) : 'N/A';
-  var d30CPL = d30Convs > 0 ? '$' + (d30Spend / d30Convs).toFixed(2) : 'N/A';
-
   var d30WeeklySpend = last4.length > 0 ? Math.round(d30Spend / last4.length) : 0;
   var d30WeeklyICPs = last4.length > 0 ? Math.round(d30ICPs / last4.length * 10) / 10 : 0;
-  var d30PaceLine = 'Run rate → $' + d30WeeklySpend.toLocaleString() + '/week  |  ' + d30WeeklyICPs + ' ICPs/week';
 
-  var watchLine = '';
+  var watch = null;
   var highFreq = ydByCampaign.filter(function (c) { return c.freq > 3.5; })
     .sort(function (a, b) { return b.freq - a.freq; });
   var zeroConv = ydByCampaign.filter(function (c) { return c.convs === 0 && c.spend > 50; })
     .sort(function (a, b) { return b.spend - a.spend; });
   if (highFreq.length > 0) {
-    watchLine = '⚠️ ' + highFreq[0].name + ': freq ' + Math.round(highFreq[0].freq * 100) / 100;
+    watch = { type: 'high_frequency', campaign: highFreq[0].name, frequency: Math.round(highFreq[0].freq * 100) / 100 };
   } else if (zeroConv.length > 0) {
-    watchLine = '⚠️ ' + zeroConv[0].name + ': $' + zeroConv[0].spend.toFixed(0) + ' spend, 0 conversions';
+    watch = { type: 'zero_conversions', campaign: zeroConv[0].name, spend: zeroConv[0].spend };
+  }
+
+  return {
+    yesterday: {
+      date: ydStr, label: ydLabel,
+      spend: ydSpend, conversions: ydConvs, clicks: ydClicks, icps: ydICPs,
+      cpicp: ydICPs > 0 ? ydSpend / ydICPs : null,
+      cpl: ydConvs > 0 ? ydSpend / ydConvs : null,
+      frequency: ydFreqCount > 0 ? Math.round((ydFreqSum / ydFreqCount) * 100) / 100 : null
+    },
+    wtd: {
+      week_start: currentWeek,
+      spend: wtdSpend, icps: wtdICPs,
+      cpicp: wtdICPs > 0 ? wtdSpend / wtdICPs : null,
+      cpl: wtdConvs > 0 ? wtdSpend / wtdConvs : null,
+      wow_pct: wowPct,
+      pacing: { paced_spend: pacedSpend, paced_icps: pacedICPs, days_elapsed: daysElapsed, days_total: 7 }
+    },
+    d30: {
+      spend: d30Spend, icps: d30ICPs,
+      cpicp: d30ICPs > 0 ? d30Spend / d30ICPs : null,
+      cpl: d30Convs > 0 ? d30Spend / d30Convs : null,
+      weeks_count: last4.length,
+      run_rate: { weekly_spend: d30WeeklySpend, weekly_icps: d30WeeklyICPs }
+    },
+    watch: watch,
+    generated_at: new Date().toISOString()
+  };
+}
+
+
+function postDailyDigest() {
+  Logger.log('=== postDailyDigest ===');
+  validateTokens_();
+
+  // Numbers come from the shared snapshot; this function owns only
+  // the LLM commentary and the Slack text formatting below.
+  var s = computeDailySnapshot_();
+  if (!s) {
+    Logger.log('postDailyDigest: no snapshot data — skipping post.');
+    return;
+  }
+
+  var tz = Session.getScriptTimeZone();
+  var y = s.yesterday, w = s.wtd, d = s.d30;
+
+  var ydLabel = y.label;
+  var ydStr   = y.date;
+  var ydSpend = y.spend;
+  var ydConvs = y.conversions;
+  var ydICPs  = y.icps;
+  var ydCPICP = y.cpicp != null ? '$' + y.cpicp.toFixed(0) : 'N/A';
+  var ydCPL   = y.cpl   != null ? '$' + y.cpl.toFixed(2) : 'N/A';
+  var ydFreq  = y.frequency != null ? y.frequency : 'N/A';
+
+  var currentWeek = w.week_start;
+  var wtdSpend = w.spend;
+  var wtdICPs  = w.icps;
+  var wtdCPICP = w.cpicp != null ? '$' + w.cpicp.toFixed(0) : 'N/A';
+  var wtdCPL   = w.cpl   != null ? '$' + w.cpl.toFixed(2) : 'N/A';
+  var wtdWoWStr = w.wow_pct != null
+    ? '  |  WoW: ' + (w.wow_pct > 0 ? '+' : '') + w.wow_pct + '%' : '';
+  var wtdPaceLine = 'Pacing → $' + w.pacing.paced_spend.toLocaleString() +
+    ' spend  |  ' + w.pacing.paced_icps + ' ICPs  (' + w.pacing.days_elapsed + ' of 7 days)';
+
+  var d30Spend = d.spend;
+  var d30ICPs  = d.icps;
+  var d30CPICP = d.cpicp != null ? '$' + d.cpicp.toFixed(0) : 'N/A';
+  var d30CPL   = d.cpl   != null ? '$' + d.cpl.toFixed(2) : 'N/A';
+  var d30PaceLine = 'Run rate → $' + d.run_rate.weekly_spend.toLocaleString() +
+    '/week  |  ' + d.run_rate.weekly_icps + ' ICPs/week';
+
+  var watchLine = '';
+  if (s.watch && s.watch.type === 'high_frequency') {
+    watchLine = '⚠️ ' + s.watch.campaign + ': freq ' + s.watch.frequency;
+  } else if (s.watch && s.watch.type === 'zero_conversions') {
+    watchLine = '⚠️ ' + s.watch.campaign + ': $' + s.watch.spend.toFixed(0) + ' spend, 0 conversions';
   }
 
   var commentary = '';
@@ -4844,6 +4915,12 @@ function handleDashboardApi_(e) {
         break;
       case 'narrative':
         result = getLatestNarrative_();
+        break;
+      case 'daily-snapshot':
+        // Yesterday / WTD / 30-day snapshot — same computation that
+        // feeds the Slack daily digest, so the dashboard's Daily
+        // Snapshot card matches the digest exactly. Range-independent.
+        result = computeDailySnapshot_();
         break;
       case 'summary':
         result = getSummary_(e.parameter.start, e.parameter.end);

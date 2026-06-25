@@ -364,7 +364,31 @@
           '- Flag Gym/Fitness for review if frequency crosses 3.5'
       };
 
-      return { daily, rollup, mappings, narrative };
+      // Mock daily snapshot for preview mode — mirrors the shape of
+      // the Apps Script `?action=daily-snapshot` endpoint so the
+      // Daily Snapshot card renders without a live backend.
+      const ydDate = new Date(); ydDate.setDate(ydDate.getDate() - 1);
+      const dailySnapshot = {
+        yesterday: {
+          date: ydDate.toISOString().substring(0, 10),
+          label: ydDate.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' }),
+          spend: 1491.37, conversions: 99, clicks: 642, icps: 12,
+          cpicp: 124.28, cpl: 15.06, frequency: 1.26,
+        },
+        wtd: {
+          week_start: weekStart.toISOString().substring(0, 10),
+          spend: 2512, icps: 22.7, cpicp: 110.66, cpl: 13.15, wow_pct: -11.3,
+          pacing: { paced_spend: 8793, paced_icps: 79.5, days_elapsed: 2, days_total: 7 },
+        },
+        d30: {
+          spend: 34423, icps: 257.8, cpicp: 133.53, cpl: 12.16, weeks_count: 4,
+          run_rate: { weekly_spend: 8606, weekly_icps: 64.4 },
+        },
+        watch: { type: 'high_frequency', campaign: 'gym_fitness_metro_test', frequency: 3.6 },
+        generated_at: new Date().toISOString(),
+      };
+
+      return { daily, rollup, mappings, narrative, dailySnapshot };
     }
 
     const MOCK = generateMockData();
@@ -497,6 +521,7 @@
         if (action === 'rollup')    return MOCK.rollup;
         if (action === 'mappings')  return MOCK.mappings;
         if (action === 'narrative') return MOCK.narrative;
+        if (action === 'daily-snapshot') return MOCK.dailySnapshot;
         return [];
       }
 
@@ -3477,6 +3502,120 @@
     }
 
 
+    // ─── DAILY SNAPSHOT ────────────────────────────────────
+    // At-a-glance Yesterday / week-to-date / 30-day card that
+    // mirrors the "Honeycomb Ads" Slack digest. Data comes from the
+    // Apps Script `?action=daily-snapshot` endpoint
+    // (computeDailySnapshot_), the SAME computation the Slack digest
+    // uses — so the dashboard numbers (CPICP yesterday, ICP count,
+    // pacing, run rate) match the Slack post exactly. Independent of
+    // the global date range: it always shows yesterday + WTD +
+    // trailing 30 days.
+    function DailySnapshot({ data, apiUrl }) {
+      if (!data || !data.yesterday) {
+        // Endpoint not deployed yet (older Apps Script) or returned
+        // nothing. Stay silent in mock/preview mode; in live mode show
+        // a small, non-alarming hint about the missing endpoint.
+        if (!apiUrl) return null;
+        return (
+          <div className="bg-white p-3 rounded-lg shadow-sm border border-stone-200 text-xs text-stone-500">
+            Daily snapshot unavailable — redeploy the Apps Script Web App to pick up the <code>daily-snapshot</code> endpoint.
+          </div>
+        );
+      }
+
+      const y = data.yesterday, w = data.wtd || {}, d = data.d30 || {};
+
+      // Plain helper (not a component) so it never remounts.
+      const metric = (label, value, tone) => (
+        <div className="flex flex-col" key={label}>
+          <span className="text-[10px] uppercase tracking-wide text-stone-400">{label}</span>
+          <span className={`text-sm font-semibold ${tone || 'text-stone-800'}`}>{value}</span>
+        </div>
+      );
+      const money  = v => (v == null ? '—' : fmtCurrency(v));
+      const cents  = v => (v == null ? '—' : fmtCurrencyCents(v));
+      const freq   = v => (v == null ? '—' : fmtNumber(v, 2));
+
+      // CPICP WoW: lower is better, so a negative delta is the good direction.
+      const wow = w.wow_pct;
+      const wowTone = wow == null ? '' : (wow < 0 ? 'text-emerald-700' : wow > 0 ? 'text-red-700' : 'text-stone-600');
+      const wowStr  = wow == null ? '—' : (wow > 0 ? '+' : '') + fmtNumber(wow, 1) + '%';
+
+      return (
+        <div className="bg-white rounded-lg shadow-sm border border-stone-200">
+          <div className="px-4 pt-3 pb-2 flex items-center justify-between gap-3 border-b border-stone-100 flex-wrap">
+            <h3 className="text-base font-semibold text-stone-800 flex items-center">
+              <span>Daily Snapshot</span>
+              <InfoTip text="The same Yesterday / week-to-date / 30-day figures as the 'Honeycomb Ads' Slack digest, pulled from the shared daily-snapshot endpoint so the numbers match the Slack post exactly. Independent of the date range above — it always shows yesterday, the current week, and the trailing 30 days." />
+            </h3>
+            <span className="text-[10px] text-stone-400">matches Slack digest · independent of the date range</span>
+          </div>
+
+          <div className="divide-y divide-stone-100">
+            {/* Yesterday */}
+            <div className="px-4 py-3">
+              <div className="text-xs font-semibold text-stone-600 mb-2">Yesterday · {y.label || y.date}</div>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                {metric('Spend', money(y.spend))}
+                {metric('ICPs', fmtNumber(y.icps, 0))}
+                {metric('CPICP', money(y.cpicp))}
+                {metric('CPL', cents(y.cpl))}
+                {metric('Freq', freq(y.frequency))}
+              </div>
+            </div>
+
+            {/* Week to date */}
+            <div className="px-4 py-3">
+              <div className="text-xs font-semibold text-stone-600 mb-2">
+                Week to date{w.week_start ? ' · week of ' + w.week_start : ''}
+              </div>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                {metric('Spend', money(w.spend))}
+                {metric('ICPs', fmtNumber(w.icps, 1))}
+                {metric('CPICP', money(w.cpicp))}
+                {metric('CPL', cents(w.cpl))}
+                {metric('WoW · CPICP', wowStr, wowTone)}
+              </div>
+              {w.pacing && (
+                <div className="text-[11px] text-stone-500 mt-2">
+                  Pacing → {money(w.pacing.paced_spend)} spend · {fmtNumber(w.pacing.paced_icps, 1)} ICPs
+                  {' '}({w.pacing.days_elapsed} of {w.pacing.days_total || 7} days)
+                </div>
+              )}
+            </div>
+
+            {/* Last 30 days */}
+            <div className="px-4 py-3">
+              <div className="text-xs font-semibold text-stone-600 mb-2">Last 30 days</div>
+              <div className="grid grid-cols-3 sm:grid-cols-5 gap-3">
+                {metric('Spend', money(d.spend))}
+                {metric('ICPs', fmtNumber(d.icps, 1))}
+                {metric('CPICP', money(d.cpicp))}
+                {metric('CPL', cents(d.cpl))}
+              </div>
+              {d.run_rate && (
+                <div className="text-[11px] text-stone-500 mt-2">
+                  Run rate → {money(d.run_rate.weekly_spend)}/week · {fmtNumber(d.run_rate.weekly_icps, 1)} ICPs/week
+                </div>
+              )}
+            </div>
+
+            {data.watch && (
+              <div className="px-4 py-2.5 bg-amber-50">
+                <span className="text-xs text-amber-900">
+                  ⚠️ {data.watch.campaign}: {data.watch.type === 'high_frequency'
+                    ? 'frequency ' + fmtNumber(data.watch.frequency, 2)
+                    : money(data.watch.spend) + ' spend, 0 conversions'}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+
     // ─── APP ROOT ─────────────────────────────────────────
 
     const DATE_PRESETS = [
@@ -3890,6 +4029,7 @@
       const [mappings, setMappings] = useState([]);
       const [narrative, setNarrative] = useState(null);
       const [campaignList, setCampaignList] = useState([]);
+      const [dailySnapshot, setDailySnapshot] = useState(null);
       const [loading, setLoading] = useState(false);
       const [error, setError] = useState(null);
 
@@ -3928,12 +4068,16 @@
         setLoading(true);
         setError(null);
         try {
-          const [d, r, m, n, cl] = await Promise.all([
+          const [d, r, m, n, cl, snap] = await Promise.all([
             fetchAction(apiUrl, 'daily', { start, end }),
             fetchAction(apiUrl, 'rollup'),
             fetchAction(apiUrl, 'mappings'),
             fetchAction(apiUrl, 'narrative'),
             fetchAction(apiUrl, 'campaigns'),
+            // Range-independent daily snapshot. Tolerate failure (e.g.
+            // an Apps Script deployment without the endpoint yet) so it
+            // never blocks the rest of the dashboard from loading.
+            fetchAction(apiUrl, 'daily-snapshot').catch(() => null),
           ]);
           setDaily(Array.isArray(d) ? d : []);
           setRollup(Array.isArray(r) ? r : []);
@@ -3941,6 +4085,7 @@
           // narrative may come back as a single object or null
           setNarrative(Array.isArray(n) ? (n[n.length - 1] || null) : n);
           setCampaignList(Array.isArray(cl) ? cl : []);
+          setDailySnapshot(snap && snap.yesterday ? snap : null);
         } catch (err) {
           // Raw error still goes to the console for devtools
           // debugging; the on-screen banner gets a friendly,
@@ -3952,6 +4097,7 @@
           setMappings([]);
           setNarrative(null);
           setCampaignList([]);
+          setDailySnapshot(null);
         }
         setLoading(false);
       }, [apiUrl, start, end]);
@@ -4014,6 +4160,9 @@
               rangeStart={start}
               rangeEnd={end}
             />
+
+            {/* ─── DAILY SNAPSHOT (matches Slack digest) ─── */}
+            <DailySnapshot data={dailySnapshot} apiUrl={apiUrl} />
 
             {/* ─── HEADLINE: ICP / CPICP metrics ─────────── */}
             <ICPSummaryCards

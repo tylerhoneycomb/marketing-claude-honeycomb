@@ -1,5 +1,6 @@
 # Technical Reference
 
+_Last updated: 2026-06-25 (Dashboard Daily Snapshot card + `?action=daily-snapshot` endpoint. Extracted `computeDailySnapshot_()` from `postDailyDigest()` as the shared source of truth for the Slack digest and the dashboard card; Slack output is byte-identical (same formatting code, identically-valued vars). See §9.5 + the GET actions table.)_
 _Last updated: 2026-06-23 (Dashboard `MetricTrendChart` QOL: default mode is now portfolio-wide; view prefs (granularity/mode/metrics/trendlines) persist via `localStorage` key `honeycomb_chart_prefs`; per-campaign visibility moved to a `visibleOverride` "follow-vs-explicit" model that survives date-range/granularity changes instead of resetting to top-5. See §9.5.)_
 _Last updated: 2026-06-10 (PAUSED `agent-fatigue-monitor.yml` at Tyler's request. YAML `schedule:` block commented out (only `workflow_dispatch` in `on:`); Apps Script fallback `triggerAgentFatigueMonitorIfNeeded` early-returns with a PAUSED log line so it doesn't dispatch via the GitHub API either. Both mechanisms have to be reverted to fully re-enable. Now three agent workflows are paused — daily-check, creative-intelligence, and fatigue-monitor — using the same dual-path pattern)_
 
@@ -546,7 +547,7 @@ Sequential with 2-3 second sleeps between stages:
 1. `fetchMetaAdsData()` — pulls yesterday's campaign insights into `rolling_data`. Skips zero-spend rows. Dedupes by `date||campaign_id`.
 2. `fetchHubspotICPs()` — pulls all HubSpot contacts decisioned as `investment_crowdfunding` into `hubspot_icps`. Dedupes by `hs_contact_id`.
 3. `buildWeeklyRollup()` — rebuilds `weekly_rollup` from scratch using hybrid v3 attribution.
-4. `postDailyDigest()` — Slack message with yesterday + WTD + last 30 days + budget summary.
+4. `postDailyDigest()` — Slack message with yesterday + WTD + last 30 days + budget summary. The numeric computation lives in the shared `computeDailySnapshot_()` (also served read-only at `?action=daily-snapshot` for the dashboard's Daily Snapshot card); `postDailyDigest()` owns only the LLM commentary + Slack text formatting on top of it.
 
 **Side effects inside the pipeline:**
 
@@ -758,6 +759,7 @@ All return `ContentService.createTextOutput(JSON.stringify(payload))` with MIME 
 | `daily` | GET | `start`, `end` (YYYY-MM-DD) | Filtered `rolling_data` via `getDailyData_()` |
 | `mappings` | GET | — | `campaign_mapping` as array of objects |
 | `narrative` | GET | — | Most recent `intelligence_log` row via `getLatestNarrative_()` |
+| `daily-snapshot` | GET | — | Yesterday / WTD / 30-day snapshot via `computeDailySnapshot_()` (range-independent). Same computation as the Slack daily digest, so the dashboard's Daily Snapshot card matches the digest exactly. |
 | `summary` | GET | `start`, `end` | Aggregated totals via `getSummary_()` |
 | `campaigns` | GET | — | Distinct campaigns + last_active date via `getCampaignList_()` |
 | `chat` | POST | `message`, `history` (JSON) | `{reply: string}` or `{error: string}` |
@@ -805,6 +807,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - **API URL config modal** — user pastes Apps Script `/exec` URL; saved to `localStorage`. Falls back to mock data if unset.
 - **Date range bar** — presets (7/14/30 days, this month/quarter/year) + custom picker. Default: last 30 days.
 - **CPICP alert card** — week-over-week trend indicator.
+- **Daily Snapshot card** — at-a-glance Yesterday / week-to-date / 30-day figures (spend, ICPs, CPICP, CPL, freq, pacing, run rate). Range-independent. Fed by `?action=daily-snapshot` → `computeDailySnapshot_()`, the **same computation as the Slack daily digest**, so the numbers match the Slack post exactly. `DailySnapshot` component (`webapp/index.html`).
 - **ICP summary cards** — total spend, estimated ICPs, overall CPICP, blended/attributed CPICP, attribution rate.
 - **Leaderboards** — top 3 / bottom 3 campaigns, sortable by CPICP / ICPs / attribution / CPL / CTR / spend. "Mature only" toggle hides campaigns under 10 lifetime conversions.
 - **Metric trend chart** — multi-select metric visualization, per-campaign or portfolio, day/week/month granularity. Recharts line chart with weighted regression trendlines. **Defaults to portfolio-wide.** View controls (granularity, mode, primary/comparison metric, trendline toggle) persist across refreshes via `localStorage` (`honeycomb_chart_prefs`); validated against their allowed sets on load.
@@ -964,7 +967,8 @@ Key functions you'll reach for most often:
 | `generateWeeklyNarrative` | Code.js:1303 | Scheduled narrative entry point |
 | `generateNarrativeForWeek_` | Code.js:1373 | Core narrative generator (takes explicit week) |
 | `backfillHistoricalNarratives` | Code.js:1649 | One-time data migration utility |
-| `postDailyDigest` | Code.js:1784 | Daily Slack summary |
+| `computeDailySnapshot_` | Code.js:~2123 | Shared Yesterday/WTD/30-day numeric computation. Source of truth for both `postDailyDigest` and `?action=daily-snapshot`. Returns raw numbers (null where a denominator is 0). |
+| `postDailyDigest` | Code.js:~2257 | Daily Slack summary. Consumes `computeDailySnapshot_()`; owns LLM commentary + Slack formatting. |
 | `postWeeklyNarrativeToSlack_` | Code.js:~1673 | Weekly Slack summary |
 | `runBudgetAnalysis` | Code.js:~2729 | Scheduled budget-proposal entry point |
 | `computeBudgetSignals_` | Code.js:~2772 | 14-day rolling signals |

@@ -1,5 +1,6 @@
 # Project State Report
 
+_Last updated: 2026-06-25 (Dashboard "Daily Snapshot" card added — surfaces the same yesterday CPICP / ICP count + WTD + 30-day figures as the Slack digest, from a shared computation so they always match. See "Daily snapshot" under On-demand via dashboard.)_
 _Last updated: 2026-06-23 (Dashboard trend chart QOL: defaults to portfolio-wide, persists view settings across refreshes, and no longer resets the selected campaigns when the date range or granularity changes. See "Dashboard chart remembers your view" below.)_
 _Last updated: 2026-06-10 (PAUSED `agent-fatigue-monitor.yml` at Tyler's request — same pause pattern as the daily-check + creative-intelligence pause from 2026-06-08. GitHub cron (Mon + Thu 9:30 AM ET) commented out; Apps Script fallback `triggerAgentFatigueMonitorIfNeeded` early-returned. Manual `workflow_dispatch` still works. Pipeline-health, portfolio-scaling, and daily-data continue running unchanged)_
 
@@ -63,6 +64,7 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 
 ### On-demand via dashboard
 
+- **Daily snapshot** — an at-a-glance card showing yesterday's spend, ICPs, CPICP, CPL, and frequency, plus week-to-date and last-30-day figures with pacing and run rate. These are the **same numbers as the "Honeycomb Ads" Slack digest** (they come from the same calculation), so the dashboard and Slack always agree. It's independent of the date range selector above.
 - **Leaderboards** — top 3 / bottom 3 campaigns sortable by different metrics.
 - **Trend charts** — CPICP, ICPs, spend, CPL, CTR over time (day/week/month granularity; per-campaign or portfolio-wide). Opens on the **portfolio-wide** line by default; your chart settings (granularity, mode, metrics, trendlines) are remembered across refreshes, and changing the date range no longer clears the campaigns you've picked.
 - **Campaign performance table** — spend, clicks, CPICP, frequency per campaign, with paused-campaign badges.

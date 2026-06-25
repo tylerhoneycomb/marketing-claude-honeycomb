@@ -159,6 +159,12 @@ function handleDashboardApi_(e) {
       case 'narrative':
         result = getLatestNarrative_();
         break;
+      case 'daily-snapshot':
+        // Yesterday / WTD / 30-day snapshot. Shares computeDailySnapshot_()
+        // with the Slack daily digest (see Code.js) so the dashboard's
+        // Daily Snapshot card matches the digest exactly. Range-independent.
+        result = computeDailySnapshot_();
+        break;
       case 'summary':
         result = getSummary_(e.parameter.start, e.parameter.end);
         break;
