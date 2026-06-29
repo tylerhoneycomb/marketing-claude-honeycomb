@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-23 (Consolidated the daily pipeline-health check into the daily-data workflow. The standalone `agent-pipeline-health.yml` was retired: its check script was already deterministic, so the daily LLM run that only reformatted the results for Slack was pure waste. It now runs as plain steps at the end of `daily-data.yml`. Net effect: one fewer scheduled GitHub Action and one fewer daily AI cost, with identical checks, Slack alerts, and history logging. Also nudged the two active scheduled jobs off the top of the hour (daily-data ~8:37 AM ET, portfolio-scaling Tue ~9:43 AM ET) so they stop sitting in GitHub's top-of-hour run queue — the old timings were drifting 2-5 hours late. Prior: 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; daily-check, creative-intelligence, and fatigue-monitor remain paused)_
+_Last updated: 2026-06-29 (Documentation sync: updated Code.js line count to ~6,500 lines reflecting growth since portfolio-scaling and related features were added. No functional changes since 2026-06-23. Prior: 2026-06-23 Consolidated the daily pipeline-health check into the daily-data workflow. The standalone `agent-pipeline-health.yml` was retired: its check script was already deterministic, so the daily LLM run that only reformatted the results for Slack was pure waste. Also nudged the two active scheduled jobs off the top of the hour — daily-data ~8:37 AM ET, portfolio-scaling Tue ~9:43 AM ET. Prior: 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; daily-check, creative-intelligence, and fatigue-monitor remain paused)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -14,7 +14,7 @@ A **marketing operations platform** for Honeycomb Credit's small-business invest
 
 Four things live inside the repo:
 
-1. **The "brain"** — a Google Apps Script program (~4,200 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
+1. **The "brain"** — a Google Apps Script program (~6,500 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
 2. **The "dashboard"** — a web page (hosted on GitHub Pages) where the team can see charts, check campaign health, and ask questions via an AI chat called "Hive Mind."
 3. **The "plumbing"** — GitHub Actions that automatically push code changes to the Google Apps Script servers whenever something is merged, so nobody has to copy/paste into the Apps Script web editor.
 4. **The "agent layer"** _(new, 2026-05-02)_ — an ad-level data pipeline (`scripts/`) and skill files (`skills/`) that let Claude Code monitor individual ads, detect creative fatigue, and propose budget shifts. Snapshots are stored as JSON files under `data/` (the repo itself acts as the database). The agent layer feeds recommendations into the existing Slack approval pipeline — it never writes to Meta directly.
