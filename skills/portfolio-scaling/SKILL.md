@@ -1,6 +1,6 @@
 ---
 name: portfolio-scaling
-description: Weekly structural diagnosis per vertical (scalable / stable / saturating / over-invested / new-audience-needed). Proposes pool-based budget reallocation with a 12% weekly cap shared with the daily optimizer.
+description: Weekly structural diagnosis per vertical (scalable / stable / saturating / over-invested / insufficient, plus a new-audience-needed modifier). Proposes pool-based budget reallocation with a 12% weekly cap shared with the daily optimizer.
 ---
 
 # Portfolio Scaling
