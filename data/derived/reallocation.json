@@ -1,35 +1,63 @@
 {
-  "computed_at": "2026-06-23T16:08:29.263713+00:00",
-  "today": "2026-06-23",
-  "lockout_until": "2026-06-30T00:00:00+00:00",
+  "computed_at": "2026-06-30T16:10:58.926516+00:00",
+  "today": "2026-06-30",
+  "lockout_until": "2026-07-07T00:00:00+00:00",
   "affected_campaign_ids": [
+    "120238791690590631",
+    "120241605050900631",
     "120244094020690631"
   ],
   "pool": {
-    "freed_daily_cents": 681,
+    "freed_daily_cents": 450,
     "allocated_daily_cents": 0,
-    "net_change_daily_cents": -681,
+    "net_change_daily_cents": -450,
     "net_change_type": "net_negative",
-    "portfolio_current_daily_cents": 342025,
-    "portfolio_post_change_daily_cents": 341344,
-    "portfolio_post_change_weekly_dollars": 23894.08,
+    "portfolio_current_daily_cents": 338454,
+    "portfolio_post_change_daily_cents": 338004,
+    "portfolio_post_change_weekly_dollars": 23660.28,
     "target_weekly_dollars": 9000.0,
     "tolerance_weekly_dollars": 50.0,
     "knockdown_risk": true
   },
   "decreases": [
     {
+      "vertical": "bakeries",
+      "campaign_id": "120238791690590631",
+      "campaign_name": "AD-Bakeries-Q4-2025",
+      "current_daily_cents": 7426,
+      "change_cents": -1,
+      "change_pct": -0.0001,
+      "post_change_cents": 7425,
+      "classification": "over-invested",
+      "elasticity_r": 0.5003,
+      "remaining_headroom_pct": 0.12,
+      "reason": "over-invested (r=0.5003); severity 0.00 * remaining headroom 12.00% \u2192 -0.01%"
+    },
+    {
+      "vertical": "creameries",
+      "campaign_id": "120241605050900631",
+      "campaign_name": "AD-Creameries-Q1-2026",
+      "current_daily_cents": 7426,
+      "change_cents": -21,
+      "change_pct": -0.0028,
+      "post_change_cents": 7405,
+      "classification": "over-invested",
+      "elasticity_r": 0.5078,
+      "remaining_headroom_pct": 0.12,
+      "reason": "over-invested (r=0.5078); severity 0.02 * remaining headroom 12.00% \u2192 -0.28%"
+    },
+    {
       "vertical": "fitness & wellness",
       "campaign_id": "120244094020690631",
       "campaign_name": "AD-Fitness & Wellness-Q1-2026",
-      "current_daily_cents": 9704,
-      "change_cents": -681,
-      "change_pct": -0.0702,
-      "post_change_cents": 9023,
-      "classification": "over-invested",
-      "elasticity_r": 0.695,
+      "current_daily_cents": 9801,
+      "change_cents": -428,
+      "change_pct": -0.0437,
+      "post_change_cents": 9373,
+      "classification": "saturating",
+      "elasticity_r": 0.682,
       "remaining_headroom_pct": 0.12,
-      "reason": "over-invested (r=0.695); severity 0.58 * remaining headroom 12.00% \u2192 -7.02%"
+      "reason": "saturating (r=0.682); severity 0.36 * remaining headroom 12.00% \u2192 -4.37%"
     }
   ],
   "increases": [],
