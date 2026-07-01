@@ -36,7 +36,7 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 ## Repo Structure
 
 - `/apps-script/` — Full Apps Script intelligence layer, deployed via clasp + GitHub Actions
-  - `Code.js` — The complete intelligence script (~3,600 lines). Edit here, never in the Apps Script web editor
+  - `Code.js` — The complete intelligence script (~6,500 lines). Edit here, never in the Apps Script web editor
   - `.clasp.json` — Points clasp at the Apps Script project (do not edit)
   - `appsscript.json` — Apps Script manifest (scopes, runtime, Web App settings)
 - `/docs/` — Living documentation (`STATE_REPORT.md`, `TECHNICAL_REFERENCE.md`) — keep in sync with code changes
@@ -44,7 +44,7 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
 - `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`.
-- `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair.
+- `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair; `preview_dataset.py` is a $0, no-LLM deterministic Markdown preview of the Creative Intelligence dataset (used by `agent-creative-preview.yml` to validate the pipeline without spending on Anthropic calls).
 - `/data/` — Agent data repository.
   - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest)
   - `data/creatives/creatives.json` — creative metadata, accreted over time
@@ -122,7 +122,7 @@ The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent lo
 - **Thresholds live in one place.** All fatigue, budget, and performance thresholds live in `data/config/benchmarks.json`. Never hardcode threshold numbers inside scripts or skills — always read from the config.
 - **The agent never writes to Meta directly.** All budget recommendations flow through the existing Slack approval pipeline in `apps-script/Code.js`. The agent's role is to surface signals and propose actions, not to execute changes against the Meta API.
 - **Learning-phase protection.** Never propose budget changes to ad sets where `learning_stage_info.status == "LEARNING"`. The `compute_signals.py` step already filters these and marks them `actionable: false`; defensively re-check in any skill that proposes ad-set actions.
-- **Signal floors.** Fatigue signals require ≥ 3 days of data and ≥ 1,000 impressions before they're considered actionable. Don't promote a row whose `actionable` field is `false`, even if it has a flag set.
+- **Signal floors.** Fatigue signals require ≥ 7 days of data (`fatigue.min_days_active` in `benchmarks.json`) and ≥ 1,000 impressions before they're considered actionable. Don't promote a row whose `actionable` field is `false`, even if it has a flag set.
 - **Daily-data workflow runs autonomously.** `.github/workflows/daily-data.yml` is on a daily ~8:37 AM ET cron (`37 12 * * *` UTC — minute deliberately off `:00` to dodge GitHub's top-of-hour scheduled-run queue delay, which was pushing the old `0 12` run 2-5 hours late) and commits the snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
 
 ## Agent Skills
