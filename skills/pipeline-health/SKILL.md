@@ -9,6 +9,8 @@ description: Check whether the Honeycomb ads pipeline is working — data freshn
 
 Answer one question: is the system working right now? Run this before any other skill so a downstream "no fatigue signals" or "all caught up" reading isn't actually masking a broken pipeline.
 
+**Autonomous execution note (2026-06-23):** the scheduled/autonomous path no longer invokes Claude at all. `check_health.py` → `report_health.py` run as two plain steps at the end of `.github/workflows/daily-data.yml` — `report_health.py` deterministically reproduces the "Interpreting output" / "Output — Slack" behavior below without an LLM call. The rest of this file (interactive terminal output, the interpretation rules) still applies verbatim when a person runs this skill via Claude Code directly; it just isn't reached by the autonomous cron anymore.
+
 ## Scripts
 
 `scripts/check_health.py` runs four health checks against the Google Sheet, the Meta API, and the dashboard endpoint. It POSTs one row per check to the `pipeline_health` Sheet tab and prints structured JSON to stdout for Slack composition.
