@@ -51,7 +51,7 @@ data/snapshots/<date>/                    (already populated daily)
   ├── ads.json                            (creative_id per ad_id)
   └── ad_insights.json                    (per-ad CPICP)
 
-scripts/build_creative_dataset.py:
+skills/creative-intelligence/scripts/build_creative_dataset.py:
   1. Walk ads.json across the lookback window.
   2. Fetch each creative; extract bodies[]/titles[]/descriptions[]/images[]
      from asset_feed_spec.
