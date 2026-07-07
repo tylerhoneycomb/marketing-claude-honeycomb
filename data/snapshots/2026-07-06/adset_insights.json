@@ -1,0 +1,40 @@
+[
+  {
+    "ad_id": null,
+    "ad_name": null,
+    "adset_id": "120249222014710631",
+    "adset_name": "Breweries - Interests+RAR+titles  - Lead generation - Q4 2025",
+    "campaign_id": "120249222014720631",
+    "campaign_name": "ICD-Breweries-Q2-2026",
+    "clicks": 0,
+    "conversions": 3,
+    "cpc": 0.0,
+    "cpm": 0.0,
+    "ctr": 0.0,
+    "date": "2026-07-06",
+    "frequency": 0.0,
+    "ic_conversions": 1,
+    "impressions": 0,
+    "reach": 0,
+    "spend": 0.0
+  },
+  {
+    "ad_id": null,
+    "ad_name": null,
+    "adset_id": "120249802543730631",
+    "adset_name": "broad_2026_06_09",
+    "campaign_id": "120249802543740631",
+    "campaign_name": "ICD-Broad-Q2-2026",
+    "clicks": 0,
+    "conversions": 2,
+    "cpc": 0.0,
+    "cpm": 0.0,
+    "ctr": 0.0,
+    "date": "2026-07-06",
+    "frequency": 0.0,
+    "ic_conversions": 0,
+    "impressions": 0,
+    "reach": 0,
+    "spend": 0.0
+  }
+]
