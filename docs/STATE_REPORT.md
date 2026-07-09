@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-23 (Consolidated the daily pipeline-health check into the daily-data workflow. The standalone `agent-pipeline-health.yml` was retired: its check script was already deterministic, so the daily LLM run that only reformatted the results for Slack was pure waste. It now runs as plain steps at the end of `daily-data.yml`. Net effect: one fewer scheduled GitHub Action and one fewer daily AI cost, with identical checks, Slack alerts, and history logging. Also nudged the two active scheduled jobs off the top of the hour (daily-data ~8:37 AM ET, portfolio-scaling Tue ~9:43 AM ET) so they stop sitting in GitHub's top-of-hour run queue — the old timings were drifting 2-5 hours late. Prior: 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; daily-check, creative-intelligence, and fatigue-monitor remain paused)_
+_Last updated: 2026-07-09 (Routine documentation audit — no functionality changed this pass, only doc corrections. The Apps Script "brain" size was stale everywhere it was quoted (this doc and CLAUDE.md both said ~4,200/~3,600 lines; it's actually ~6,500) — corrected. Fixed a factual error: this doc claimed "5 Anthropic API call sites"; there are actually 4 (narrative, daily digest, budget commentary, chat) plus one diagnostic connectivity ping that isn't a feature call site — see TECHNICAL_REFERENCE.md §6.1 for the corrected breakdown, which also had this wrong plus two call sites attributed to functions that don't exist in the code. Reworded the "empty placeholder directories" line — `/ad-copy/`, `/workflows/`, `/audiences/`, `/reports/` don't exist at all (git doesn't track empty dirs), they were never placeholder folders. TECHNICAL_REFERENCE.md got a much larger companion pass today: every function's line-number citation in its function index was wrong (some by 2,000+ lines) due to the same stale size assumption, its skills table was missing half of the 6 shipped skills, and the two `portfolio-scaling` derived-data files (`scaling_profiles.json`, `reallocation.json`) had never been documented since shipping in May — all fixed there. Prior: 2026-06-23 Consolidated the daily pipeline-health check into the daily-data workflow; retired the standalone `agent-pipeline-health.yml`; nudged the two active scheduled jobs off the top of the hour)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -14,7 +14,7 @@ A **marketing operations platform** for Honeycomb Credit's small-business invest
 
 Four things live inside the repo:
 
-1. **The "brain"** — a Google Apps Script program (~4,200 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
+1. **The "brain"** — a Google Apps Script program (~6,500 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
 2. **The "dashboard"** — a web page (hosted on GitHub Pages) where the team can see charts, check campaign health, and ask questions via an AI chat called "Hive Mind."
 3. **The "plumbing"** — GitHub Actions that automatically push code changes to the Google Apps Script servers whenever something is merged, so nobody has to copy/paste into the Apps Script web editor.
 4. **The "agent layer"** _(new, 2026-05-02)_ — an ad-level data pipeline (`scripts/`) and skill files (`skills/`) that let Claude Code monitor individual ads, detect creative fatigue, and propose budget shifts. Snapshots are stored as JSON files under `data/` (the repo itself acts as the database). The agent layer feeds recommendations into the existing Slack approval pipeline — it never writes to Meta directly.
@@ -128,7 +128,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 - **Audit snapshot pipeline.** Claude Code can pull the last 90 days of data anytime and do health checks.
 - **Campaign rename resilience.** Renaming a campaign in Meta is handled automatically: the sync detects the name change via `campaign_id`, updates the mapping row in place (preserving UTM and conversion settings), normalizes all historical `rolling_data` rows to the new name, and posts a Slack notification. Works for ALL campaigns, including those without URL tags.
 - **Two-step budget approval.** Budget proposal links in Slack now show an HTML confirmation page with a button — Slack's link-unfurling bot gets the page but can't click buttons, so only a human can approve or reject.
-- **AI upgraded to Claude Opus 4.7.** All 5 Anthropic API call sites (narrative, chat, budget commentary, daily digest, weekly Slack) use a single `ANTHROPIC_MODEL` constant — future upgrades are one line.
+- **AI upgraded to Claude Opus 4.7.** All 4 Anthropic API call sites (narrative, daily digest, budget commentary, chat) use a single `ANTHROPIC_MODEL` constant — future upgrades are one line.
 - **Dashboard line chart accuracy.** Daily granularity shows the full selected date range (no collapsed x-axis), and per-campaign lines break on paused days instead of drawing misleading straight lines across gaps.
 
 ---
@@ -153,14 +153,14 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 ### Content / copy gaps
 
-- **The `/ad-copy/`, `/workflows/`, `/audiences/`, and `/reports/` directories are empty placeholders.** CLAUDE.md describes them as if populated, but no content exists. If the team wants to use this repo as their content library too (not just automation), those directories need work.
+- **The `/ad-copy/`, `/workflows/`, `/audiences/`, and `/reports/` directories don't exist yet.** CLAUDE.md describes them as part of the repo layout, but git doesn't track empty directories, so they haven't been created — there's no content, and no placeholder folder either. If the team wants to use this repo as their content library too (not just automation), someone needs to create these and add content.
 
 ### Technical debt
 
 - **Hybrid attribution math is duplicated.** The weekly rollup and the budget analyzer each compute hybrid ICPs independently. If one is updated and the other isn't, budget decisions could drift from reported numbers. Worth extracting into a single shared function.
 - **Multiple Meta campaigns map to one UTM value.** "for ag" covers 3 Meta campaigns, "for ICrev2test" covers 2. Not a bug — just means segment-level rollups combine spend across these.
 - **Campaign-mapping typo.** One row reads "Q4 2205" instead of "Q4 2025." Cosmetic but worth cleaning up.
-- ~~**Hardcoded Claude model in 3 places.**~~ _Resolved 2026-04-22._ Extracted to `ANTHROPIC_MODEL` constant (Code.js:45). Upgraded to Opus 4.7. All 5 call sites reference the constant.
+- ~~**Hardcoded Claude model in 3 places.**~~ _Resolved 2026-04-22._ Extracted to `ANTHROPIC_MODEL` constant (Code.js:65). Upgraded to Opus 4.7. All 4 call sites reference the constant.
 - **No rate limiting on the chat endpoint.** Someone could hammer the Hive Mind chat and run up Anthropic API costs. Low likelihood given it's a hidden feature, but worth knowing. Cost impact is higher now with Opus 4.7 (more capable but more expensive per token).
 - **Audit snapshot uses GitHub's low-level Git API directly.** Works, but code is verbose and has no retry logic on GitHub API errors.
 
