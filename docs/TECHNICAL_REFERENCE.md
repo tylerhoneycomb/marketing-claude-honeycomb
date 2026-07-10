@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-06-23 (Retired the standalone `agent-pipeline-health.yml` workflow and folded the pipeline-health check into `daily-data.yml` as two deterministic steps — `check_health.py` (unchanged) then the new `report_health.py` (terminal summary + Slack alert + issue-#48 one-liner). The check was always deterministic; running it via `claude-code-action` daily was a per-day Anthropic spend for pure JSON reformatting. The merge removes one scheduled workflow and one daily LLM invocation with zero loss of outcomes. Apps Script fallback `triggerAgentPipelineHealthIfNeeded` repointed to dispatch `daily-data.yml` (function name kept so the installed trigger binding stays valid). Also moved the two active scheduled crons off the top of the hour — `daily-data.yml` `0 12` → `37 12`, `agent-portfolio-scaling.yml` `30 13` → `43 13` — because GitHub's top-of-hour scheduled-run contention was delaying runs 1.8-5.1 h in this repo; uncommon minutes pull starts back toward schedule. Prior: 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; three agent workflows remain paused — daily-check, creative-intelligence, and fatigue-monitor)_
+_Last updated: 2026-07-10 (Documentation accuracy pass — no functional code changed since 2026-06-23. Corrected drift that had accumulated in this file: (1) `Code.js` line-count figure was `~4,200`, actual is `~6,493` — every line-number citation below was stale as a result, some by 2,000+ lines; all citations in §4.1, §5-9, §10.2-10.5 have been re-verified against the current file. (2) §6.1's "five call sites" table named a function, `aiSummarizeRow_()`, that does not exist in `Code.js` and never has — the real 5th `ANTHROPIC_MODEL` call site is the diagnostic `testAnthropicConnection()`. (3) A second fictional name, `buildAICommentary_()`, was also removed — the budget-commentary Anthropic call is inline code inside `postBudgetProposalToSlack_()`, not a separate function. (4) §10.1's descriptions of `agent-daily-check.yml`, `agent-fatigue-monitor.yml`, and `agent-creative-intelligence.yml` said "active cron" — all three were paused between 2026-06-08 and 2026-06-10 (correctly reflected in CLAUDE.md, never updated here). Prior: 2026-06-23 consolidated pipeline-health into daily-data.yml + de-peaked the two active crons)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -27,7 +27,7 @@ Google Sheets is the system of record for the campaign-level pipeline. The repo 
 └───────────────────────────────────────────────────────────────┘
                              ↑↓
 ┌───────────────────────────────────────────────────────────────┐
-│    Apps Script (apps-script/Code.js, ~4,200 lines)             │
+│    Apps Script (apps-script/Code.js, ~6,500 lines)             │
 │  - Daily/weekly scheduled triggers (fetch, rollup, narrative)  │
 │  - Budget automation (signal → propose → approve → execute)    │
 │  - Web App: /exec?action=... for dashboard API                 │
@@ -79,7 +79,7 @@ Google Sheets is the system of record for the campaign-level pipeline. The repo 
 ```
 marketing-claude-honeycomb/
 ├── apps-script/
-│   ├── Code.js              # The full intelligence layer (~4,200 lines)
+│   ├── Code.js              # The full intelligence layer (~6,500 lines)
 │   ├── appsscript.json      # Apps Script manifest (scopes, runtime, web app access)
 │   └── .clasp.json          # clasp deployment config (script ID, file mappings)
 ├── webapp/
@@ -91,15 +91,19 @@ marketing-claude-honeycomb/
 ├── scripts/                 # NEW (2026-05-02) Ad-level Python pipeline
 │   ├── fetch_ad_data.py     # Daily Meta ad-set + ad insights pull
 │   ├── compute_signals.py   # Derived fatigue / winner-bleeder signals
-│   └── run_daily.sh         # Orchestrator (fetch → compute)
-├── skills/                  # NEW (2026-05-02) Agent skill definitions
+│   ├── preview_dataset.py   # Deterministic (no-LLM) creative preview brief
+│   ├── run_daily.sh         # Orchestrator (fetch → compute)
+│   └── lib/                 # Shared client: meta.py, exec_api.py, io.py, text_features.py
+├── skills/                  # NEW (2026-05-02) Agent skill definitions — 6 skills
+│   ├── pipeline-health/SKILL.md
 │   ├── daily-check/SKILL.md
 │   ├── fatigue-monitor/SKILL.md
 │   ├── creative-intelligence/   # NEW (2026-05-05)
 │   │   ├── SKILL.md
 │   │   ├── references/      # copy_angle + visual_style markdown
 │   │   └── scripts/         # build_creative_dataset.py, categorize_creative.py
-│   └── pipeline-health/SKILL.md
+│   ├── ad-copy-generator/SKILL.md   # NEW (2026-05-05)
+│   └── portfolio-scaling/SKILL.md   # NEW (2026-05-08)
 ├── data/                    # NEW (2026-05-02) Agent data repository
 │   ├── config/benchmarks.json     # All thresholds (single source)
 │   ├── snapshots/<YYYY-MM-DD>/    # Daily JSON snapshots from Meta
@@ -117,8 +121,15 @@ marketing-claude-honeycomb/
 ├── .github/workflows/
 │   ├── deploy-apps-script.yml  # Push Code.js via clasp on merge to main
 │   ├── deploy-webapp.yml       # Publish dashboard to GitHub Pages on merge to main
-│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (daily cron)
-│   └── claude.yml              # @claude mentions in issues/PRs
+│   ├── claude.yml              # @claude mentions in issues/PRs
+│   ├── daily-data.yml               # Ad-level data pull, daily cron (active) + pipeline-health steps
+│   ├── agent-daily-check.yml        # daily-check skill (PAUSED 2026-06-08, workflow_dispatch only)
+│   ├── agent-fatigue-monitor.yml    # fatigue-monitor skill (PAUSED 2026-06-10, workflow_dispatch only)
+│   ├── agent-creative-intelligence.yml  # creative-intelligence skill (PAUSED 2026-06-08, workflow_dispatch only)
+│   ├── agent-creative-preview.yml   # $0 no-LLM preview path (workflow_dispatch only)
+│   ├── agent-ad-copy-generator.yml  # ad-copy-generator skill (workflow_dispatch only)
+│   └── agent-portfolio-scaling.yml  # portfolio-scaling skill, weekly Tuesday cron (active)
+│   # (agent-pipeline-health.yml existed 2026-05-03–2026-06-23; retired, merged into daily-data.yml)
 ├── ad-copy/          # (empty placeholder) Meta ad copy by vertical
 ├── workflows/        # (empty placeholder) Automation scripts
 ├── audiences/        # (empty placeholder) Audience segmentation — never commit PII
@@ -143,7 +154,7 @@ marketing-claude-honeycomb/
 
 ## 3. Data Model (Google Sheets)
 
-Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference them by name.
+Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-31` reference them by name.
 
 ### 3.1 `rolling_data` — Daily Meta campaign insights
 
@@ -165,7 +176,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | 11 | CPL | Float or `null` | spend / conversions; `null` when conversions = 0 |
 | 12 | IC Conversions | Integer | Custom "investment_crowdfunding" conversion count |
 
-- **Writer:** `collectMetaRows_()` (Code.js:841) via `fetchDataForDateRange_()` (Code.js:760).
+- **Writer:** `collectMetaRows_()` (Code.js:1155) via `fetchDataForDateRange_()` (Code.js:1074).
 - **Dedup key:** `date || campaign_id` held in a `Set` in memory per run. Zero-spend rows are skipped.
 - **Retention:** Append-only. No cleanup.
 - **Name normalization:** Historical `Campaign Name` values are rewritten to the current Meta name when a rename is detected in `syncCampaignMappings_`. The primary key for all joins is `Campaign ID` (column E) — names are purely display labels. The one-time `backfillCampaignIds_` migration also normalizes historical names on first run.
@@ -193,7 +204,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | 14 | week_number | Integer | ISO week of `prequal_submitted` |
 | 15 | week_start | Date (YYYY-MM-DD) | Monday of `prequal_submitted` week |
 
-- **Writer:** `fetchHubspotICPs()` (Code.js:902).
+- **Writer:** `fetchHubspotICPs()` (Code.js:1216).
 - **Dedup key:** `hs_contact_id` in a `Set` per run.
 - **Not exported to audit-snapshots branch** (PII-adjacent).
 
@@ -209,11 +220,11 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | 3 | custom_conversion_id | String (`@` format) | Meta custom conversion ID; forced text for precision |
 | 4 | campaign_id | String (`@` format) | **Primary key.** Stable Meta campaign ID. Populated by `syncCampaignMappings_`. Enables rename resilience — when a campaign is renamed in Meta, the sync updates the `campaign_name` column in place and preserves all manually-set values (utm_campaign, conversion_event, custom_conversion_id). |
 
-- **Writer:** `syncCampaignMappings_()` (Code.js:232). Auto-discovery from Meta ads API + manual edits allowed.
+- **Writer:** `syncCampaignMappings_()` (Code.js:275). Auto-discovery from Meta ads API + manual edits allowed.
 - **Primary key:** `campaign_id` (column E). When populated, existence checks and UTM/IC lookups prefer this over `campaign_name`. Legacy rows without an ID fall back to name-based matching. The one-time `backfillCampaignIds_()` migration fills column E for all existing rows and deduplicates rename-caused duplicates.
 - **Discovery flow:** Reads `/ads?fields=creative{url_tags}` to extract utm_campaign; reads `/adsets?fields=promoted_object` to find custom conversion IDs; resolves custom conversion IDs to event names via `/{id}?fields=name`.
 - **Rename handling:** If a campaign_id already has a mapping row and the name in Meta has changed, the sync updates the name in place, rewrites all historical `rolling_data` rows for that campaign_id to the new name (so downstream consumers see one canonical name), and posts a Slack notification. It does NOT overwrite manually-set columns B-D.
-- **Read by:** `buildCampaignUTMMap_()` (Code.js:~633) builds `{campaignId: utm}` lookup (prefers column E, falls back to name). `getICConversionMap_()` (Code.js:~706) identifies IC campaigns (prefers column E, falls back to name→rolling_data join).
+- **Read by:** `buildCampaignUTMMap_()` (Code.js:768) builds `{campaignId: utm}` lookup (prefers column E, falls back to name). `getICConversionMap_()` (Code.js:963) identifies IC campaigns (prefers column E, falls back to name→rolling_data join).
 
 ### 3.4 `weekly_rollup` — Aggregated weekly performance + hybrid attribution
 
@@ -244,7 +255,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | 20 | cpicp_blended_vs_4wk_pct | Float (1 dec) or null | |
 | 21 | icp_wow_delta | Float (1 dec) or null | |
 
-- **Writer:** `buildWeeklyRollup()` (Code.js:1061).
+- **Writer:** `buildWeeklyRollup()` (Code.js:1375).
 - **Rebuild semantics:** Sheet is cleared and fully repopulated every run. Never append.
 - **Hybrid attribution v3 formula** (per day, per campaign):
   ```
@@ -268,11 +279,11 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | 5 | context_block | Text (multi-KB) | Full data context sent to Claude |
 | 6 | narrative | Text | Claude Sonnet output |
 
-- **Writer:** `generateNarrativeForWeek_()` (Code.js:1373). Scheduled entry point: `generateWeeklyNarrative()` (Code.js:1303).
+- **Writer:** `generateNarrativeForWeek_()` (Code.js:1687). Scheduled entry point: `generateWeeklyNarrative()` (Code.js:1617).
 - **Invariants:**
   - `reporting_week` must be a Monday (asserted by parsing YYYY-MM-DD component parts to avoid UTC timezone quirk).
   - At most one row per week (scheduled wrapper skips if row already exists; manual regeneration uses `overwrite: true`).
-- **Backfill utility:** `backfillHistoricalNarratives()` (Code.js:1649) — one-time migration that deletes Sunday-convention rows and regenerates under Monday convention.
+- **Backfill utility:** `backfillHistoricalNarratives()` (Code.js:1982) — one-time migration that deletes Sunday-convention rows and regenerates under Monday convention.
 
 ### 3.6 `budget_queue` — Pending and executed budget changes
 
@@ -331,7 +342,7 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 
 ## 4. Configuration
 
-### 4.1 Hardcoded constants (Code.js:14-52)
+### 4.1 Hardcoded constants (Code.js:24-65)
 
 | Constant | Value | Purpose |
 |---|---|---|
@@ -398,8 +409,8 @@ Stored via `PropertiesService.getScriptProperties()` (`PROPS` in code). Set manu
 
 **Runtime override accessors:**
 
-- `getTargetWeeklySpend_()` (Code.js:4152) — returns override if set, otherwise the hardcoded constant.
-- `getWeeklySpendTolerance_()` (Code.js:4157) — same pattern.
+- `getTargetWeeklySpend_()` (Code.js:6323) — returns override if set, otherwise the hardcoded constant.
+- `getWeeklySpendTolerance_()` (Code.js:6353) — same pattern.
 
 ### 4.3 Apps Script manifest (`appsscript.json`)
 
@@ -431,7 +442,7 @@ Stored via `PropertiesService.getScriptProperties()` (`PROPS` in code). Set manu
 
 - **Base URL:** `https://graph.facebook.com/v21.0`
 - **Credential:** `META_ACCESS_TOKEN` (Script Property), passed as `access_token` query param or bearer
-- **Retry wrapper:** `fetchWithRetry_()` (Code.js:158) — retries 5xx/network errors up to 3× with backoff; 4xx fail immediately.
+- **Retry wrapper:** `fetchWithRetry_()` (Code.js:201) — retries 5xx/network errors up to 3× with backoff; 4xx fail immediately.
 
 **Endpoints used:**
 
@@ -469,18 +480,18 @@ Pagination: offset-based cursor via `json.paging.next.after`.
 
 - **Base URL:** `https://api.anthropic.com/v1/messages`
 - **Credential:** `ANTHROPIC_API_KEY` (Script Property), sent as `x-api-key` header
-- **Model:** Controlled by the `ANTHROPIC_MODEL` constant (Code.js:45). Currently set to `claude-opus-4-7`. All 5 call sites reference the constant.
+- **Model:** Controlled by the `ANTHROPIC_MODEL` constant (Code.js:65). Currently set to `claude-opus-4-7`. All 5 call sites reference the constant.
 - **Common headers:** `anthropic-version: 2023-06-01`, `Content-Type: application/json`
 
-**Five call sites:**
+**Five call sites** (none are separately-named "AI commentary" functions except where noted — three are inline `UrlFetchApp.fetch` calls nested inside a larger function):
 
 | Caller | `max_tokens` | System prompt purpose |
 |---|---|---|
-| `generateNarrativeForWeek_()` (Code.js:~1855) | 1000 | Weekly Slack narrative in fixed format (OVERALL / SEGMENTS / WATCH / ACTION). On failure now inlines the error (HTTP code + body excerpt, exception message, or response-shape note) directly into the Slack fallback string instead of pointing readers at `intelligence_log` (improved 2026-05-11). |
-| `buildAICommentary_()` for budget proposals (Code.js:~3537 → ~3568) | 800 | Commentary on proposed budget changes (SITUATION / CHANGES / WATCH). Bumped from 500 → 800 on 2026-05-09 after a CHANGES section truncated mid-word with 11 campaigns to summarize. |
-| AI helper inside `runDailyPipeline` (Code.js:~2210) | 200 | Short "yesterday in one sentence" tail on the daily digest |
-| `aiSummarizeRow_()` for portfolio-scaling brief (Code.js:~2630) | 20 | Single-token confidence label inside the strategic brief composer |
-| `handleChatRequest_()` (Code.js:~5700) | 1500 | "Hive Mind" interactive chat with live data context |
+| Inline call inside `generateNarrativeForWeek_()` (Code.js:1871, function starts 1687) | 1000 | Weekly Slack narrative in fixed format (OVERALL / SEGMENTS / WATCH / ACTION). On failure now inlines the error (HTTP code + body excerpt, exception message, or response-shape note) directly into the Slack fallback string instead of pointing readers at `intelligence_log` (improved 2026-05-11). |
+| Inline commentary call inside `postBudgetProposalToSlack_()` (Code.js:3727, function starts 3632) | 800 | Commentary on proposed budget changes (SITUATION / CHANGES / WATCH). Bumped from 500 → 800 on 2026-05-09 after a CHANGES section truncated mid-word with 11 campaigns to summarize. Not a separate function — earlier revisions of this doc called it `buildAICommentary_()`, which does not exist in `Code.js`. |
+| Inline call inside `postDailyDigest()` (Code.js:2250, function starts 2117) | 200 | Short "yesterday in one sentence" tail on the daily digest. Earlier revisions of this doc attributed this to `runDailyPipeline`; `runDailyPipeline` (Code.js:2310) only orchestrates the pipeline stages and doesn't call Anthropic directly — `postDailyDigest` is one of the functions it calls. |
+| `testAnthropicConnection()` (Code.js:2718, function starts 2704) | 20 | Diagnostic connectivity ping ("Reply with only the word: connected"), not part of any user-facing brief. Earlier revisions of this doc invented a 5th call site, `aiSummarizeRow_()` for a "portfolio-scaling brief" — that function does not exist anywhere in `Code.js`; the portfolio-scaling Slack brief is composed by `claude-code-action` reading committed JSON files (see `agent-portfolio-scaling.yml`), not by an in-script Anthropic call. |
+| Inline call inside `handleChatRequest_()` (Code.js:5916, function starts 5773) | 1500 | "Hive Mind" interactive chat with live data context |
 
 **Error handling (chat):** explicit branches for HTTP 401/403 (auth), 429 (rate limit), 400 (invalid/too-long history), 5xx (server), timeouts, DNS errors. Returns `{error: string}` to the client.
 
@@ -489,7 +500,7 @@ Pagination: offset-based cursor via `json.paging.next.after`.
 ### 6.2 Slack
 
 - **Credential:** `SLACK_WEBHOOK_URL` (Script Property) — incoming webhook URL
-- **Wrapper:** `postToSlack_(text)` (Code.js:137). Catches exceptions, logs non-200 responses, never throws.
+- **Wrapper:** `postToSlack_(text)` (Code.js:180). Catches exceptions, logs non-200 responses, never throws.
 
 **Where Slack messages are posted from:**
 
@@ -508,7 +519,7 @@ Pagination: offset-based cursor via `json.paging.next.after`.
 
 - **Base URL:** `https://api.github.com`
 - **Credential:** `GITHUB_PAT` (Script Property) — fine-grained PAT with Contents: Read/Write on this repo only
-- **Wrapper:** `pushSnapshotToGitHub_()` (Code.js:~4067)
+- **Wrapper:** `pushSnapshotToGitHub_()` (Code.js:6238)
 - **Repo/branch:** `tylerhoneycomb/marketing-claude-honeycomb` → `audit-snapshots`
 
 **Git Data API flow** (single atomic commit):
@@ -561,7 +572,7 @@ Thin wrapper:
 3. Scan `intelligence_log` for existing row via `resolveReportingWeek_()` — if found, **skip** (idempotent guard).
 4. Call `generateNarrativeForWeek_(targetWeek, { postToSlack: true, overwrite: false })`.
 
-**Core function: `generateNarrativeForWeek_()` (Code.js:1373)**
+**Core function: `generateNarrativeForWeek_()` (Code.js:1687)**
 
 - Validates `targetWeek` matches `/^\d{4}-\d{2}-\d{2}$/` (format guard).
 - Validates `targetWeek` is a Monday by parsing YYYY-MM-DD component parts (avoids `new Date('2026-03-09')` UTC quirk).
@@ -576,11 +587,11 @@ Thin wrapper:
 
 ### 7.4 Key utility functions
 
-- **`getWeekStart(date)`** (Code.js:92) — **Canonical week function.** Returns Monday as YYYY-MM-DD. The single source of truth for week bucketing. `buildWeeklyRollup` and `generateWeeklyNarrative` both depend on this. Never inline week math elsewhere.
-- **`dateToYMD_(val)`** (Code.js:106) — normalizes Date / ISO string / YYYY-MM-DD to YYYY-MM-DD.
-- **`resolveReportingWeek_(val)`** (Code.js:1349) — normalizes any `reporting_week` cell value (Date, YYYY-MM-DD, or `Date.toString()` format) to YYYY-MM-DD. Used by idempotency guards.
-- **`fetchWithRetry_(url, options, maxRetries)`** (Code.js:158) — retries 5xx/network errors up to 3× with backoff.
-- **`validateTokens_()`** (Code.js:59) — throws if any required Script Property is missing. Called at start of every public entry point.
+- **`getWeekStart(date)`** (Code.js:135) — **Canonical week function.** Returns Monday as YYYY-MM-DD. The single source of truth for week bucketing. `buildWeeklyRollup` and `generateWeeklyNarrative` both depend on this. Never inline week math elsewhere.
+- **`dateToYMD_(val)`** (Code.js:149) — normalizes Date / ISO string / YYYY-MM-DD to YYYY-MM-DD.
+- **`resolveReportingWeek_(val)`** (Code.js:1663) — normalizes any `reporting_week` cell value (Date, YYYY-MM-DD, or `Date.toString()` format) to YYYY-MM-DD. Used by idempotency guards.
+- **`fetchWithRetry_(url, options, maxRetries)`** (Code.js:201) — retries 5xx/network errors up to 3× with backoff.
+- **`validateTokens_()`** (Code.js:102) — throws if any required Script Property is missing. Called at start of every public entry point.
 
 ## 8. Budget Automation System
 
@@ -613,7 +624,7 @@ Four Script Properties drive the approval state:
    Clear state
 ```
 
-### 8.2 Signal computation — `computeBudgetSignals_()` (Code.js:~2772)
+### 8.2 Signal computation — `computeBudgetSignals_()` (Code.js:2808)
 
 Reads `rolling_data` and `hubspot_icps` for the last `ROLLING_DAYS` (14 days). For each campaign, computes:
 
@@ -625,7 +636,7 @@ Reads `rolling_data` and `hubspot_icps` for the last `ROLLING_DAYS` (14 days). F
 
 Returns `{campaignId: {cpicp, avgFreq, estimatedIcps, icpTrend, lifetimeConversions, ...}}`.
 
-### 8.3 Recommendations — `computeRecommendations_()` (Code.js:~3112)
+### 8.3 Recommendations — `computeRecommendations_()` (Code.js:3148)
 
 **Eligibility gate:** campaigns with `lifetimeConversions < LIFETIME_MIN_CONVERSIONS` (10) are excluded from changes. Their current spend still counts toward portfolio total.
 
@@ -662,12 +673,12 @@ Returns an array of changed campaigns with `changeCents`, `proposedDailyBudgetCe
 
 ### 8.4 Proposal + approval — `runBudgetAnalysis()` → `postBudgetProposalToSlack_()` → web app
 
-1. `runBudgetAnalysis()` (Code.js:~2729) orchestrates: fetch current budgets, compute signals, compute recommendations, write to queue, post to Slack.
-2. `writeToQueue_(recommendations, source)` (Code.js:~3477) generates a 16-char hex token, writes one row per recommendation with `status='pending'` and `source='optimizer'` (default), sets `BUDGET_PENDING_TOKEN`.
-3. `postBudgetProposalToSlack_()` (Code.js:~3537) builds approve/reject URLs (`{WEB_APP_URL}?action=approve&token=<token>`), calls Anthropic for commentary (`max_tokens: 800`, bumped from 500 on 2026-05-09 after a proposal CHANGES section truncated mid-word), posts formatted Slack message with budget changes, reasons, AI commentary, and both action links. Sub-dollar "reductions" (where rounded display dollars equal the previous value but cents-level changeCents is non-zero) render with `→` and `(held flat)` instead of `↓ (-0.1%)` so the per-row display doesn't contradict the AI commentary.
-4. User clicks link → `doGet(e)` validates token → `showBudgetConfirmationPage_()` (Code.js:~4177) returns an HTML **form** (replacing the previous click-only `<a>` link) with an optional `<input type="text" name="approver">` field plus the confirm button → user types name (or leaves blank) and submits → handler validates `token === BUDGET_PENDING_TOKEN` again (TOCTOU guard against a token rotation between page render and submit) → `resolveApprover_(e)` (Code.js:~6234) reads + sanitizes the typed name (strips Slack mrkdwn chars `<>*_~|\` + backticks) → sets `BUDGET_APPROVED_TOKEN` or `BUDGET_REJECTED_TOKEN` + writes `BUDGET_LAST_APPROVED_BY` + posts to Slack `Approved by <name>`. Blank submissions log as `"Slack approver (no identity captured)"` since `Session.getActiveUser().getEmail()` returns empty for cross-domain Slack clicks.
+1. `runBudgetAnalysis()` (Code.js:2765) orchestrates: fetch current budgets, compute signals, compute recommendations, write to queue, post to Slack.
+2. `writeToQueue_(recommendations, source)` (Code.js:3572) generates a 16-char hex token, writes one row per recommendation with `status='pending'` and `source='optimizer'` (default), sets `BUDGET_PENDING_TOKEN`.
+3. `postBudgetProposalToSlack_()` (Code.js:3632) builds approve/reject URLs (`{WEB_APP_URL}?action=approve&token=<token>`), calls Anthropic for commentary (`max_tokens: 800`, bumped from 500 on 2026-05-09 after a proposal CHANGES section truncated mid-word), posts formatted Slack message with budget changes, reasons, AI commentary, and both action links. Sub-dollar "reductions" (where rounded display dollars equal the previous value but cents-level changeCents is non-zero) render with `→` and `(held flat)` instead of `↓ (-0.1%)` so the per-row display doesn't contradict the AI commentary.
+4. User clicks link → `doGet(e)` validates token → `showBudgetConfirmationPage_()` (Code.js:4276) returns an HTML **form** (replacing the previous click-only `<a>` link) with an optional `<input type="text" name="approver">` field plus the confirm button → user types name (or leaves blank) and submits → handler validates `token === BUDGET_PENDING_TOKEN` again (TOCTOU guard against a token rotation between page render and submit) → `resolveApprover_(e)` (Code.js:6335) reads + sanitizes the typed name (strips Slack mrkdwn chars `<>*_~|\` + backticks) → sets `BUDGET_APPROVED_TOKEN` or `BUDGET_REJECTED_TOKEN` + writes `BUDGET_LAST_APPROVED_BY` + posts to Slack `Approved by <name>`. Blank submissions log as `"Slack approver (no identity captured)"` since `Session.getActiveUser().getEmail()` returns empty for cross-domain Slack clicks.
 
-### 8.5 Execution — `executeBudgetChanges()` (Code.js:~3722)
+### 8.5 Execution — `executeBudgetChanges()` (Code.js:3821)
 
 Runs daily at 3 AM:
 
@@ -686,7 +697,7 @@ Dashboard can propose a new weekly spend target via `handleDashboardApi_` action
 
 #### Source of truth for the weekly spend goal + tolerance
 
-**The runtime source of truth is the Apps Script Script Properties `DASHBOARD_TARGET_WEEKLY_SPEND` / `DASHBOARD_WEEKLY_SPEND_TOLERANCE`, read by every consumer through `/exec?action=get_spend_goal`** (Code.js:4607-4634). That handler returns `target_weekly_spend`, `weekly_spend_tolerance`, and a `source` field (`script_property_override` when an override is set, `hardcoded_default` otherwise).
+**The runtime source of truth is the Apps Script Script Properties `DASHBOARD_TARGET_WEEKLY_SPEND` / `DASHBOARD_WEEKLY_SPEND_TOLERANCE`, read by every consumer through `/exec?action=get_spend_goal`** (Code.js:4706, inside `handleDashboardApi_()` which starts at 4617). That handler returns `target_weekly_spend`, `weekly_spend_tolerance`, and a `source` field (`script_property_override` when an override is set, `hardcoded_default` otherwise).
 
 Consumers and how they read it:
 
@@ -707,9 +718,9 @@ The portfolio-scaling skill (`skills/portfolio-scaling/`) adds a structural over
 **Inputs at the start of `computeRecommendations_()`:**
 
 ```js
-var scalingProfiles = loadScalingProfiles_();  // raw GitHub fetch + 1hr cache
-var lockoutSet      = getScalingLockoutSet_();  // {} when SCALING_LOCKOUT_UNTIL absent or past
-var prevTue         = previousTuesdayUTC_();    // headroom window start
+var scalingProfiles = loadScalingProfiles_();  // raw GitHub fetch + 1hr cache — Code.js:2961
+var lockoutSet      = getScalingLockoutSet_();  // {} when SCALING_LOCKOUT_UNTIL absent or past — Code.js:3011
+var prevTue         = previousTuesdayUTC_();    // headroom window start — Code.js:3032
 ```
 
 **1. Lockout filter (eligibility loop).** Campaigns whose IDs appear in `SCALING_AFFECTED_CAMPAIGN_IDS` while `SCALING_LOCKOUT_UNTIL` is in the future are excluded from `eligible[]` with a logged reason. The optimizer doesn't propose any change for them.
@@ -742,10 +753,10 @@ var prevTue         = previousTuesdayUTC_();    // headroom window start
 
 ### 9.1 Apps Script Web App entry points
 
-- **`doGet(e)` (Code.js:3099)** — handles all GET requests.
-  - Delegates dashboard actions to `handleDashboardApi_(e)`. Returns `null` when `handleDashboardApi_` doesn't handle the action, then falls through to legacy approve/reject handlers.
+- **`doGet(e)` (Code.js:4162)** — handles all GET requests.
+  - Delegates dashboard actions to `handleDashboardApi_(e)` (Code.js:4617). Returns `null` when `handleDashboardApi_` doesn't handle the action, then falls through to legacy approve/reject handlers.
   - Legacy handlers: `approve`, `reject` (budget), `approve_target`, `reject_target`, `confirm_*` — all with token validation.
-- **`doPost(e)` (Code.js:3632)** — routes `action=chat` to `handleChatRequest_()`.
+- **`doPost(e)` (Code.js:5738)** — routes `action=chat` to `handleChatRequest_()`.
 
 ### 9.2 Dashboard API endpoints (via `handleDashboardApi_`)
 
@@ -777,7 +788,7 @@ All return `ContentService.createTextOutput(JSON.stringify(payload))` with MIME 
 | `scaling-queue-write` | POST | JSON body `{rows: [{campaign_id, campaign_name, current_daily_cents, proposed_daily_cents, change_cents, change_pct, signal_reasons}, ...], lockout_until: "ISO", affected_campaign_ids: [...]}` | Writes pending strategic rows to `budget_queue` with `source='strategic'` and a fresh token. Stashes lockout metadata under `SCALING_PENDING_*` properties. Returns `{ok, token, written, approve_url, reject_url, lockout_until}`. Called by the Tuesday agent workflow. |
 | `scaling-log-read` | GET | `since` (YYYY-MM-DD) optional, `vertical` (slug) optional, `limit` (default 200, max 1000) optional | Returns `{rows: [...], count: N}` from `scaling_log`, newest-first. Used by Hive Mind chat for scaling-keyword queries. |
 
-### 9.3 `buildDashboardContext_()` (Code.js:3836)
+### 9.3 `buildDashboardContext_()` (Code.js:6007)
 
 Builds a compact text snapshot for the chat LLM. Sections:
 
@@ -787,7 +798,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
 4. **Campaign mappings** — all rows.
 5. **Latest narrative** — from `intelligence_log`.
 
-### 9.4 Chat backend — `handleChatRequest_()` (Code.js:3643)
+### 9.4 Chat backend — `handleChatRequest_()` (Code.js:5773)
 
 - Validates `ANTHROPIC_API_KEY`.
 - Caps `message` at 4,000 chars; caps `history` at 30 turns (user/assistant only).
@@ -853,23 +864,23 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - **Why retired:** `check_health.py` is fully deterministic — it runs the four checks, writes the `pipeline_health` Sheet rows, and prints JSON. The LLM's only job was to reformat that JSON into a Slack string and `curl` it on WARN/FAIL — work that needs no model. Running `claude-code-action` daily for it was a per-day Anthropic spend, an extra scheduled workflow, and a duplicate checkout + Python setup one hour after `daily-data`.
 - **Replacement:** two steps appended to the `daily-data.yml` job (see §11.7): `check_health.py` (unchanged) → `report_health.py` (new — terminal summary + Slack alert on WARN/FAIL + the issue-#48 one-liner to `/tmp/health_status.txt`). The check runs right after the morning data pull instead of via a separate 9 AM workflow. No LLM, no `id-token`/OIDC, no separate cron. The Apps Script fallback `triggerAgentPipelineHealthIfNeeded` was repointed to dispatch `daily-data.yml`.
 
-**`agent-daily-check.yml`** _(added 2026-05-03)_
+**`agent-daily-check.yml`** _(added 2026-05-03, **PAUSED 2026-06-08**)_
 
 - Same template established by the (now-retired) `agent-pipeline-health.yml`: `id-token`, bypassPermissions, show_full_output, display_report, dump-log step.
-- Triggers: `workflow_dispatch` + active cron `30 12 * * *` (8:30 AM ET / UTC 12:30).
+- Triggers: `workflow_dispatch` only. The `schedule:` block and cron entry (`30 12 * * *`, 8:30 AM ET / UTC 12:30) are commented out in the YAML, not deleted, so the original timing is preserved for whoever unpauses it. The Apps Script fallback (`triggerAgentDailyCheckIfNeeded`) has a matching early-return guard.
 - timeout-minutes: 25 (fetch + analyze + 5 Meta API calls).
 - Prompt: run `fetch_daily_data.py > /tmp/daily_data.json` → `analyze_daily.py --input /tmp/daily_data.json` → compose sectioned summary (PACING, PORTFOLIO, WINNERS, BLEEDERS, FATIGUE WATCH, LEARNING, STALE).
 - Concurrency group `agent-daily-check`.
 
-**`agent-fatigue-monitor.yml`** _(added 2026-05-03)_
+**`agent-fatigue-monitor.yml`** _(added 2026-05-03, **PAUSED 2026-06-10**)_
 
 - Same template.
-- Triggers: `workflow_dispatch` + active cron `30 13 * * 1,4` (Mon + Thu 9:30 AM ET / UTC 13:30) — twice-weekly because fatigue moves slowly and daily would over-query Meta.
+- Triggers: `workflow_dispatch` only. The `schedule:` block and cron entry (`30 13 * * 1,4`, Mon + Thu 9:30 AM ET / UTC 13:30 — twice-weekly because fatigue moves slowly and daily would over-query Meta) are commented out, not deleted. The Apps Script fallback (`triggerAgentFatigueMonitorIfNeeded`) has a matching early-return guard.
 - timeout-minutes: 30 (the longest skill: 14-day fetch + creative metadata + Path-B historical query + classification).
 - Prompt: run the three scripts in sequence (fetch → baselines → classify) → compose summary grouped by severity, skip healthy ads, prominently surface budget conflicts.
 - Concurrency group `agent-fatigue-monitor`.
 
-**`agent-creative-intelligence.yml`** _(added 2026-05-05, validated 2026-05-05)_
+**`agent-creative-intelligence.yml`** _(added 2026-05-05, validated 2026-05-05, **PAUSED 2026-06-08**)_
 
 - Departs from the other agent workflows' template — runs Python scripts as ordinary workflow steps BEFORE invoking `claude-code-action`, AND commits cache changes BEFORE the action runs too. Two distinct production-run findings forced this architecture:
   - **Run 1 (2026-05-05 morning)** — categorizer hit `APIConnectionError` on 526/526 calls when running inside the action's Bash subprocess. Fatigue-monitor's Meta calls work fine from the same subprocess context, so it's specifically Anthropic SDK calls that fail. Suspected cause: subprocess inheritance of an `ANTHROPIC_BASE_URL` or HTTP-proxy env var the action sets for its own runtime. Fix: move scripts to ordinary workflow steps + add explicit `base_url="https://api.anthropic.com"` belt-and-suspenders in the categorizer.
@@ -877,7 +888,7 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - Pipeline (final order): `pip install requests==2.32.3 anthropic==0.98.1` → `build_creative_dataset.py` (refresh cache + emit dataset) → `categorize_creative.py` (LLM tagging, `continue-on-error: true` so a failure here doesn't kill the brief) → `build_creative_dataset.py` (re-emit with tags) → **`Commit cache updates`** (pushes `data/creatives/` to main with `fetch+rebase+push` retry while credentials still valid) → `claude-code-action@v1` (brief composition only, reads `/tmp/creative_dataset.json`) → `Dump Claude execution log` → `Post status to tracking issue` (combines `/tmp/agent_status.txt` from Claude with `/tmp/cache_commit_status.txt` from the commit step).
 - **Prompt caching:** the categorizer wraps its system message (≈5000 tokens of voice guide + compliance rules + definitions + enums) in `cache_control: {"type": "ephemeral"}`. Anthropic caches it after the first call and bills subsequent reads at ~10% of the normal rate. Production run 3 (2026-05-05 evening) confirmed: ~99% categorize success rate (vs 82% before caching), ~$1-2 cost (vs ~$5), well under the 30k tokens/min rate limit.
 - The categorizer constructs its Anthropic client with explicit `base_url="https://api.anthropic.com"` to defeat any stray env-var override (belt-and-suspenders alongside the workflow restructure).
-- Triggers: `workflow_dispatch` AND active cron `0 14 * * 1` (Mon 10 AM ET / 9 AM EST). Weekly cadence matches the corpus-aggregation attribution model.
+- Triggers: `workflow_dispatch` only. The `schedule:` block and cron entry (`0 14 * * 1`, Mon 10 AM ET / 9 AM EST — weekly cadence matches the corpus-aggregation attribution model) are commented out, not deleted, so Tyler can still run it on demand to refresh the cache. The Apps Script fallback (`triggerAgentCreativeIntelligenceIfNeeded`) has a matching early-return guard. Reason for the pause: stop the weekly Slack brief and the recurring Anthropic categorization spend.
 - timeout-minutes: 45 (longest of any skill: Anthropic categorization on first-ever run + 30-day snapshot aggregation + creative cache refresh + image downloads via /adimages resolution).
 - Concurrency group `agent-creative-intelligence`. Validated end-to-end on 2026-05-05: cache_commit=ok, confident=4 portfolio findings, sheet_rows=15, github-actions[bot] commit `ea115069` landed on main with 525-entry categorizations.json.
 
@@ -897,6 +908,14 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - timeout-minutes: 20 (no Meta calls, ~$0.10-0.80 of Anthropic, fast). Validated 2026-05-06: vertical=breweries produced 1 markdown file at `data/drafts/2026-05-06-breweries.md` with 5 drafts (1 flagged by the compliance regex backstop on "no personal guarantee" — a false positive the human reviewer adjudicates).
 - Permissions: `contents: write` (commit drafts) + `issues: write` (status comment). No `id-token: write` because this workflow doesn't use `claude-code-action` — the script calls Anthropic directly.
 - Concurrency group `agent-ad-copy-generator`.
+
+**`agent-portfolio-scaling.yml`** _(added 2026-05-08, active)_
+
+- Triggers: `workflow_dispatch` + active weekly cron `43 13 * * 2` (Tuesdays ~9:43 AM ET / UTC-4 EDT, ~8:43 AM ET during EST). Minute moved off `:30` on 2026-06-23 to dodge GitHub's scheduled-run queue contention, same reasoning as the `daily-data.yml` minute change.
+- Follows the scripts-before-`claude-code-action` pattern (§10.1.0.5): two Python steps (`compute_scaling_profiles.py` → `compute_reallocation.py`) run as ordinary workflow steps and commit `data/derived/scaling_profiles.json` + `reallocation.json` to main, THEN `claude-code-action@v1` reads that committed JSON, registers the proposal via `/exec?action=scaling-queue-write` to get an approval token, composes the four-section Slack brief, and posts it.
+- Permissions: `contents: write` (commit derived JSON) + `id-token: write` (OIDC for `claude-code-action`) + `issues: write` (status comment to issue #48).
+- Execution side runs separately: `executeStrategicChanges()` in `Code.js` fires daily at 3 AM (not just Wednesdays) so a no-op check is cheap and a late approval still executes on the next cycle — see §7.1 and §8.7.
+- Concurrency group `agent-portfolio-scaling`.
 
 ### 10.1.0.5 Architectural pattern: scripts before claude-code-action _(established 2026-05-05)_
 
@@ -927,7 +946,7 @@ Setup is one-time:
 
 Idempotency: `createAllTriggers()` deletes any existing triggers it owns before recreating them, so it's safe to re-run.
 
-### 10.2 Audit snapshots — `exportAuditSnapshot()` (Code.js:~3980)
+### 10.2 Audit snapshots — `exportAuditSnapshot()` (Code.js:6151)
 
 - Exports 4 sheets as JSON to the `audit-snapshots` branch via the GitHub Git Data API flow (see §6.3).
 - `rolling_data` is filtered to the last 90 days; other sheets export fully.
@@ -942,55 +961,55 @@ Key functions you'll reach for most often:
 
 | Function | Location | Purpose |
 |---|---|---|
-| `getWeekStart(date)` | Code.js:92 | **Canonical week function** (Monday-based) |
-| `dateToYMD_(val)` | Code.js:106 | Normalize any date-like to YYYY-MM-DD |
-| `getMostRecentCompletedWeek_` | Code.js:120 | Picks target week for narrative |
-| `resolveReportingWeek_` | Code.js:1349 | Normalize any `reporting_week` cell value |
-| `fetchWithRetry_` | Code.js:158 | HTTP retry wrapper |
-| `validateTokens_` | Code.js:59 | Assert all secrets are set |
-| `postToSlack_` | Code.js:137 | Slack webhook wrapper |
-| `syncCampaignMappings_` | Code.js:232 | Auto-discover new campaigns + custom conversions |
-| `buildCampaignUTMMap_` | Code.js:586 | `{campaignId: utm}` lookup |
-| `getICConversionMap_` | Code.js:653 | Identify IC-optimized campaigns |
-| `fetchMetaAdsData` | Code.js:713 | Daily Meta pull entry point |
-| `collectMetaRows_` | Code.js:841 | Parse Meta insights into rollup rows |
-| `fetchHubspotICPs` | Code.js:902 | Daily HubSpot pull |
-| `buildWeeklyRollup` | Code.js:1061 | **Core aggregation + hybrid attribution** |
-| `generateWeeklyNarrative` | Code.js:1303 | Scheduled narrative entry point |
-| `generateNarrativeForWeek_` | Code.js:1373 | Core narrative generator (takes explicit week) |
-| `backfillHistoricalNarratives` | Code.js:1649 | One-time data migration utility |
-| `postDailyDigest` | Code.js:1784 | Daily Slack summary |
-| `postWeeklyNarrativeToSlack_` | Code.js:~1673 | Weekly Slack summary |
-| `runBudgetAnalysis` | Code.js:~2729 | Scheduled budget-proposal entry point |
-| `computeBudgetSignals_` | Code.js:~2772 | 14-day rolling signals |
-| `computeRecommendations_` | Code.js:~3112 | Rules engine. Composite-rank tiering with hysteresis via `PROPS.BUDGET_RANK_TIERS` (added 2026-05-11). |
-| `writeToQueue_` | Code.js:~3477 | Write pending proposals. `source` parameter defaults to `'optimizer'`. |
-| `postBudgetProposalToSlack_` | Code.js:~3537 | Slack proposal with AI commentary. Sub-dollar "reductions" render with `→ (held flat)` instead of `↓ (-0.1%)`. |
-| `executeBudgetChanges` | Code.js:~3722 | Scheduled execution entry point. Expiry Slack header labeled with proposal date, not executor date. |
-| `applyBudgetChange_` | Code.js:~3810 | Single Meta budget update |
-| `applyBudgetQueueRows_` | Code.js:~3801 | Shared per-row apply loop (optimizer + strategic) |
-| `doGet` | Code.js:~3960 | Web App GET router |
-| `doPost` | Code.js:~5570 | Web App POST router (chat) |
-| `handleDashboardApi_` | Code.js:~3960 | Dashboard action router |
-| `handleChatRequest_` | Code.js:~5640 | Anthropic chat backend |
-| `buildDashboardContext_` | Code.js:~5780 | LLM context builder |
-| `resolveApprover_` | Code.js:~6234 | URL-param `approver` (typed on confirmation page) > session email > "Slack approver" fallback. Strips Slack mrkdwn characters from typed input. Used by all three approval flows (budget, scaling, target). |
-| `showBudgetConfirmationPage_` | Code.js:~4177 | HTML form with optional approver text input + confirm button. Form submits via GET. |
-| `exportAuditSnapshot` | Code.js:~3980 | GitHub audit export entry point |
-| `pushSnapshotToGitHub_` | Code.js:~4067 | GitHub Git Data API push |
-| `getTargetWeeklySpend_` | Code.js:4152 | Read runtime spend override |
-| `loadScalingProfiles_` | Code.js:~2875 | Fetch scaling_profiles.json from raw GitHub with Script Property cache (1hr TTL); returns `null` when stale or unavailable |
-| `getScalingLockoutSet_` | Code.js:~2925 | `{campaign_id: true}` map of currently-locked-out campaigns (empty when lockout absent or expired) |
-| `previousTuesdayUTC_` | Code.js:~2946 | UTC Tuesday strictly before now; mirrors Python `previous_tuesday` so headroom windows align |
-| `getCampaignWeeklyConsumed_` | Code.js:~2960 | Sum `|change_pct|/100` across `executed` rows since previous Tuesday for one campaign |
-| `applyBudgetQueueRows_` | Code.js:~3697 | Shared per-row apply loop. Both `executeBudgetChanges` and `executeStrategicChanges` delegate here with their own filter callback. |
-| `handleScalingQueueWrite_` | Code.js:~4480 | POST /exec?action=scaling-queue-write — writes strategic proposal rows + token + lockout metadata |
-| `handleScalingWrite_` | Code.js:~4570 | POST /exec?action=scaling-write — appends per-vertical scaling_log rows |
-| `getScalingQueueRows_` | Code.js:~4640 | GET /exec?action=scaling-queue-read — all-status budget_queue rows since date, optional source/campaign_id filter |
-| `getScalingLogRows_` | Code.js:~4700 | GET /exec?action=scaling-log-read — scaling_log rows newest-first, optional since/vertical filter |
-| `executeStrategicChanges` | Code.js:~4209 | Strategic-reallocation execution entry point (daily 3 AM trigger, no-ops without pending strategic token) |
-| `showScalingConfirmationPage_` | Code.js:~4104 | Two-step approval HTML page for strategic reallocations |
-| `triggerAgentPortfolioScalingIfNeeded` | Code.js:~2520 | Apps Script fallback dispatch for `agent-portfolio-scaling.yml` (Tuesdays at ~1 PM ET) |
+| `getWeekStart(date)` | Code.js:135 | **Canonical week function** (Monday-based) |
+| `dateToYMD_(val)` | Code.js:149 | Normalize any date-like to YYYY-MM-DD |
+| `getMostRecentCompletedWeek_` | Code.js:163 | Picks target week for narrative |
+| `resolveReportingWeek_` | Code.js:1663 | Normalize any `reporting_week` cell value |
+| `fetchWithRetry_` | Code.js:201 | HTTP retry wrapper |
+| `validateTokens_` | Code.js:102 | Assert all secrets are set |
+| `postToSlack_` | Code.js:180 | Slack webhook wrapper |
+| `syncCampaignMappings_` | Code.js:275 | Auto-discover new campaigns + custom conversions |
+| `buildCampaignUTMMap_` | Code.js:768 | `{campaignId: utm}` lookup |
+| `getICConversionMap_` | Code.js:963 | Identify IC-optimized campaigns |
+| `fetchMetaAdsData` | Code.js:1027 | Daily Meta pull entry point |
+| `collectMetaRows_` | Code.js:1155 | Parse Meta insights into rollup rows |
+| `fetchHubspotICPs` | Code.js:1216 | Daily HubSpot pull |
+| `buildWeeklyRollup` | Code.js:1375 | **Core aggregation + hybrid attribution** |
+| `generateWeeklyNarrative` | Code.js:1617 | Scheduled narrative entry point |
+| `generateNarrativeForWeek_` | Code.js:1687 | Core narrative generator (takes explicit week) |
+| `backfillHistoricalNarratives` | Code.js:1982 | One-time data migration utility |
+| `postWeeklyNarrativeToSlack_` | Code.js:2009 | Weekly Slack summary |
+| `postDailyDigest` | Code.js:2117 | Daily Slack summary |
+| `runDailyPipeline` | Code.js:2310 | Scheduled daily-pipeline orchestrator (calls the above in sequence) |
+| `runBudgetAnalysis` | Code.js:2765 | Scheduled budget-proposal entry point |
+| `computeBudgetSignals_` | Code.js:2808 | 14-day rolling signals |
+| `computeRecommendations_` | Code.js:3148 | Rules engine. Composite-rank tiering with hysteresis via `PROPS.BUDGET_RANK_TIERS` (added 2026-05-11). |
+| `writeToQueue_` | Code.js:3572 | Write pending proposals. `source` parameter defaults to `'optimizer'`. |
+| `postBudgetProposalToSlack_` | Code.js:3632 | Slack proposal with AI commentary. Sub-dollar "reductions" render with `→ (held flat)` instead of `↓ (-0.1%)`. |
+| `executeBudgetChanges` | Code.js:3821 | Scheduled execution entry point. Expiry Slack header labeled with proposal date, not executor date. |
+| `applyBudgetQueueRows_` | Code.js:3920 | Shared per-row apply loop. Both `executeBudgetChanges` and `executeStrategicChanges` delegate here with their own filter callback (optimizer + strategic). |
+| `applyBudgetChange_` | Code.js:3955 | Single Meta budget update |
+| `doGet` | Code.js:4162 | Web App GET router |
+| `showBudgetConfirmationPage_` | Code.js:4276 | HTML form with optional approver text input + confirm button. Form submits via GET. |
+| `showScalingConfirmationPage_` | Code.js:4339 | Two-step approval HTML page for strategic reallocations |
+| `executeStrategicChanges` | Code.js:4447 | Strategic-reallocation execution entry point (daily 3 AM trigger, no-ops without pending strategic token) |
+| `handleDashboardApi_` | Code.js:4617 | Dashboard action router |
+| `handleScalingQueueWrite_` | Code.js:5276 | POST /exec?action=scaling-queue-write — writes strategic proposal rows + token + lockout metadata |
+| `handleScalingWrite_` | Code.js:5368 | POST /exec?action=scaling-write — appends per-vertical scaling_log rows |
+| `getScalingQueueRows_` | Code.js:5444 | GET /exec?action=scaling-queue-read — all-status budget_queue rows since date, optional source/campaign_id filter |
+| `getScalingLogRows_` | Code.js:5509 | GET /exec?action=scaling-log-read — scaling_log rows newest-first, optional since/vertical filter |
+| `doPost` | Code.js:5738 | Web App POST router (chat) |
+| `handleChatRequest_` | Code.js:5773 | Anthropic chat backend |
+| `buildDashboardContext_` | Code.js:6007 | LLM context builder |
+| `exportAuditSnapshot` | Code.js:6151 | GitHub audit export entry point |
+| `pushSnapshotToGitHub_` | Code.js:6238 | GitHub Git Data API push |
+| `getTargetWeeklySpend_` | Code.js:6323 | Read runtime spend override |
+| `resolveApprover_` | Code.js:6335 | URL-param `approver` (typed on confirmation page) > session email > "Slack approver" fallback. Strips Slack mrkdwn characters from typed input. Used by all three approval flows (budget, scaling, target). |
+| `loadScalingProfiles_` | Code.js:2961 | Fetch scaling_profiles.json from raw GitHub with Script Property cache (1hr TTL); returns `null` when stale or unavailable |
+| `getScalingLockoutSet_` | Code.js:3011 | `{campaign_id: true}` map of currently-locked-out campaigns (empty when lockout absent or expired) |
+| `previousTuesdayUTC_` | Code.js:3032 | UTC Tuesday strictly before now; mirrors Python `previous_tuesday` so headroom windows align |
+| `getCampaignWeeklyConsumed_` | Code.js:3046 | Sum `|change_pct|/100` across `executed` rows since previous Tuesday for one campaign |
+| `triggerAgentPortfolioScalingIfNeeded` | Code.js:2589 | Apps Script fallback dispatch for `agent-portfolio-scaling.yml` (Tuesdays at ~1 PM ET) |
 
 ### 10.4 Technical debt index
 
@@ -998,12 +1017,12 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 
 | Issue | Location | Impact |
 |---|---|---|
-| ~~Claude model hardcoded in 3 places~~ | ~~Code.js~~ | **Resolved 2026-04-22.** Extracted to `ANTHROPIC_MODEL` constant (Code.js:45). All 5 call sites reference the constant. |
-| Hybrid attribution math duplicated | Code.js: `buildWeeklyRollup` ~1140s and `computeBudgetSignals_` ~2772 | Risk of drift between `buildWeeklyRollup` and `computeBudgetSignals_` |
-| Rules engine is 200+ lines of nested logic | Code.js: `computeRecommendations_` ~3112 | Hard to test; decision table would help. Hysteresis (2026-05-11) added another tier check. |
-| Dashboard API inline in `handleDashboardApi_` | Code.js: `handleDashboardApi_` ~3960 | Large switch; extract action handlers |
-| `SYNC_WARNED_CAMPAIGNS` as pipe-delimited string | Code.js:494 | Fragile if names contain pipes |
-| Slack digest duplicates WoW/4wk metric math | Code.js:~1676 | Shares logic with `generateNarrativeForWeek_` |
+| ~~Claude model hardcoded in 3 places~~ | ~~Code.js~~ | **Resolved 2026-04-22.** Extracted to `ANTHROPIC_MODEL` constant (Code.js:65). All 5 call sites reference the constant. |
+| Hybrid attribution math duplicated | Code.js: `buildWeeklyRollup` ~1485-1490 and `computeBudgetSignals_` ~2877-2893 | Risk of drift between `buildWeeklyRollup` and `computeBudgetSignals_` |
+| Rules engine is 200+ lines of nested logic | Code.js: `computeRecommendations_` 3148 | Hard to test; decision table would help. Hysteresis (2026-05-11) added another tier check. |
+| Dashboard API inline in `handleDashboardApi_` | Code.js: `handleDashboardApi_` 4617 | Large switch; extract action handlers |
+| `SYNC_WARNED_CAMPAIGNS` as pipe-delimited string | Code.js: `syncCampaignMappings_` ~613-663 | Fragile if names contain pipes |
+| Slack digest duplicates WoW/4wk metric math | Code.js: `postWeeklyNarrativeToSlack_` ~2044 and `postDailyDigest` ~2192 | Two separate WoW computations for the same underlying metric |
 | `budget_queue` grows unbounded | No archival | Table never cleaned; add 90-day retention |
 | No retry on GitHub API errors | `pushSnapshotToGitHub_` | Transient failures abort whole export |
 | No rate limiting on chat endpoint | `handleChatRequest_` | Runaway client could burn Anthropic budget |
@@ -1023,22 +1042,22 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 | Compliance regex backstop has known false positives | `skills/ad-copy-generator/scripts/generate_drafts.py` | E.g. "no personal guarantee" trips the `\bguarantee\b` pattern even though it's the OPPOSITE of a return-guarantee promise. The reviewer checklist catches these, but the ⚠️ flag is noisy. Could refine the regex to require return-context keywords nearby (`return`, `APY`, etc) instead of bare `\bguarantee\b`. |
 | Categorizer's prompt caching is fragile to system-message drift | `skills/creative-intelligence/scripts/categorize_creative.py` | The 30k tokens/min Anthropic rate limit is only survivable because the 5000-token system message is identical across all 526 calls in a run, hitting Anthropic's prompt cache at ~10% effective cost. If a future change makes the system message vary per-call (e.g. injecting variant context), caching breaks and the skill regresses to ~$5/run + 18% rate-limit failures. Test by running the categorize step locally with the new prompt shape against `--max-new 50` BEFORE shipping such a change. |
 | Daily Ads digest and Daily Check skill use different "yesterday spend" sources | `Code.js: postDailyDigest` reads `rolling_data` sheet (~7 AM snapshot) vs `skills/daily-check/scripts/fetch_daily_data.py` (fresh Meta call at ~11 AM) | Numbers can disagree by $100+ as Meta's attribution shifts between the two reads. Footers on each report now annotate the source (added 2026-05-11) so the discrepancy is transparent, but reconciling on a single source-of-truth would be the proper fix. Either delete-and-refetch yesterday's rolling_data row in `postDailyDigest`, or have Daily Check read the sheet via `/exec` to share the snapshot. |
-| Composite-rank weighting is 70/30 CPICP/trend, not data-driven | `Code.js: computeRecommendations_` ~3204 | Weights chosen by intuition. Could be calibrated by backtesting against historical CPICP outcomes once enough budget-cycle history accumulates. Hysteresis (2026-05-11) addresses timing volatility but not the weighting question. |
+| Composite-rank weighting is 70/30 CPICP/trend, not data-driven | `Code.js: computeRecommendations_` ~3247 | Weights chosen by intuition. Could be calibrated by backtesting against historical CPICP outcomes once enough budget-cycle history accumulates. Hysteresis (2026-05-11) addresses timing volatility but not the weighting question. |
 | Anthropic categorizer retry is brittle | `skills/creative-intelligence/scripts/categorize_creative.py` ~194 + ~258 | 2 attempts × fixed 2-second sleep, no exponential backoff, no Retry-After header parsing, all `Exception` types treated alike. Prompt caching (PR #68) masks the underlying brittleness; as the variant pool grows past ~600 the 1% failure rate will likely regress. Fix is to distinguish 429 (parse Retry-After + exponential backoff) from validation errors (don't retry). |
 | `MetaClient._paginate` and throttle backoff bounds are heuristic | `scripts/lib/meta.py: MAX_PAGES`, `MAX_BACKOFF_SECONDS` | Defensive caps (200 pages, 300 s) added 2026-05-11. The right fix for sustained Meta rate-limits is to parse `X-Business-Use-Case-Usage` headers and sleep the recommended duration — could be a major run-time saver during a true rate-limit event. |
 | `compute_signals.evaluate_fatigue` severity bucket conflates "no signal" with "below floor" | `scripts/compute_signals.py` ~186 | An ad with `frequency_critical` flag but only 2 days of data lands in `severity_counts["ok"]` (since `actionable=false` short-circuits severity to ok). Misleading for downstream consumers reading the count. Separate `below_floor_with_flags` bucket would be clearer. |
-| `daily-data.yml` backfill DETAIL line reads the wrong manifest | `.github/workflows/daily-data.yml` ~128 | In backfill mode, `DATE_LABEL` defaults to "yesterday UTC" so the manifest path resolved is yesterday's manifest, not the backfill range. HEADER is correct; DETAIL counts mismatch. Stitch a multi-date summary or skip DETAIL on backfill. |
+| `daily-data.yml` backfill DETAIL line reads the wrong manifest | `.github/workflows/daily-data.yml` ~193 | In backfill mode, `DATE_LABEL` defaults to "yesterday UTC" (`SNAPSHOT_DATE_INPUT` is unset when the run uses `start_date`/`end_date` instead) so the manifest path resolved is yesterday's manifest, not the backfill range. HEADER is correct; DETAIL counts mismatch. Stitch a multi-date summary or skip DETAIL on backfill. Still open — confirmed present as of 2026-07-10. |
 | `fetch_ad_data.py` single-day path silently overwrites existing snapshots | `scripts/fetch_ad_data.py: run()` (single-day default) vs `run_range()` | `run_range` checks `has_snapshot()` and skips existing dates; the single-day default path doesn't. Manual workflow_dispatch re-runs for the same date silently overwrite. Concurrency-grouped daily cron is safe; this only matters for operator re-runs. |
 | All agent cron times shift 1 hour in EST | `.github/workflows/agent-*.yml` + `daily-data.yml` | UTC cron expressions are tuned for EDT (summer). In EST (~Nov-Mar) every workflow runs an hour earlier than the documented ET times. Most files note this inline; CLAUDE.md and STATE_REPORT don't surface it in one place. Move to a DST-aware scheduler (or just document the drift centrally). |
 
 ### 10.5 Testing & verification
 
-- **`testMetaConnection()`** (Code.js:2016) — Meta API ping
-- **`testHubspotConnection()`** (Code.js:2034) — HubSpot API ping
-- **`testSlackWebhook()`** (Code.js:2056) — Slack webhook ping
-- **`testAnthropicConnection()`** (Code.js:2074) — Anthropic API ping
-- **`testBudgetSystem()`** (Code.js:3189) — full budget-system diagnostic
-- **`runFullDiagnostic()`** (Code.js:2103) — runs all connection tests
+- **`testMetaConnection()`** (Code.js:2646) — Meta API ping
+- **`testHubspotConnection()`** (Code.js:2664) — HubSpot API ping
+- **`testSlackWebhook()`** (Code.js:2686) — Slack webhook ping
+- **`testAnthropicConnection()`** (Code.js:2704) — Anthropic API ping
+- **`testBudgetSystem()`** (Code.js:4571) — full budget-system diagnostic
+- **`runFullDiagnostic()`** (Code.js:2733) — runs all connection tests
 
 To verify end-to-end after a change:
 
@@ -1222,11 +1241,14 @@ Skills are self-contained packages: a `SKILL.md` (with YAML frontmatter — `nam
 
 | Skill | Status | Purpose |
 |---|---|---|
-| `pipeline-health` | shipped 2026-05-03 | Four checks: data freshness, Meta token, IC conversion event, dashboard endpoint. Slack-silent on PASS. |
-| `daily-check` | shipped 2026-05-03 | Morning briefing: pacing vs weekly target, portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
-| `fatigue-monitor` | shipped 2026-05-03 | Three-script pipeline: 14-day fetch, baseline computation (Path A in-range / B historical-batched / C estimated), classification across 5 severity classes with budget-queue conflict cross-reference. Writes to `fatigue_log`. |
+| `pipeline-health` | shipped 2026-05-03; autonomous run merged into `daily-data.yml` 2026-06-23 (no longer a separate scheduled workflow or LLM call) | Four checks: data freshness, Meta token, IC conversion event, dashboard endpoint. Slack-silent on PASS. |
+| `daily-check` | shipped 2026-05-03; autonomous workflow PAUSED 2026-06-08 (manual `workflow_dispatch` still works) | Morning briefing: pacing vs weekly target, portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
+| `fatigue-monitor` | shipped 2026-05-03; autonomous workflow PAUSED 2026-06-10 (manual `workflow_dispatch` still works) | Three-script pipeline: 14-day fetch, baseline computation (Path A in-range / B historical-batched / C estimated), classification across 5 severity classes with budget-queue conflict cross-reference. Writes to `fatigue_log`. |
+| `creative-intelligence` | shipped 2026-05-05; autonomous workflow PAUSED 2026-06-08 (manual `workflow_dispatch` still works, useful for refreshing the cache) | Weekly Monday brief on winning creative copy/visual patterns via corpus-level text aggregation (see `docs/CREATIVE_INTELLIGENCE_DESIGN.md`). Writes to `creative_intelligence_log`. |
+| `ad-copy-generator` | shipped 2026-05-05; `workflow_dispatch`-only by design (drafts always need human review) | Drafts new ad-copy variants for a target vertical from the Creative Intelligence dataset. Never auto-published. |
+| `portfolio-scaling` | shipped 2026-05-08; autonomous, active weekly Tuesday cron | Structural diagnosis layer (elasticity, CPL degradation, frequency/CPM trends) on top of the daily budget optimizer, with pool-based reallocation. See §8.7. |
 
-The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earlier versions of the three above) were built against a less-refined spec and are being replaced session-by-session. `compute_signals.py`'s `data/derived/` outputs are now an audit trail rather than the canonical signal source — the skills compute their own canonical versions.
+`compute_signals.py`'s `data/derived/` outputs are an audit trail rather than the canonical signal source — the skills above compute their own canonical signals live from Meta.
 
 ### 11.7 Workflow (`.github/workflows/daily-data.yml`)
 
@@ -1284,6 +1306,7 @@ The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earl
 | `daily_check_log` | `daily-check` skill via `?action=daily-check-write` (auto-created in `handleDailyCheckWrite_`) | `date, pacing_status, total_spend, total_icps, portfolio_cpicp, fatigue_flag_count, recorded_at` |
 | `fatigue_log` | `fatigue-monitor` skill via `?action=fatigue-write` (auto-created in `handleFatigueWrite_`) | `date, ad_id, ad_name, campaign, classification, ctr_baseline, ctr_current, ctr_decline_pct, frequency, cpc_baseline, cpc_current, days_active, baseline_type, budget_conflict, recorded_at` |
 | `creative_intelligence_log` | `creative-intelligence` skill via `?action=creative-intelligence-write` (auto-created in `handleCreativeIntelligenceWrite_`) | `date, vertical, ad_count, median_cpicp, spend_total, ic_total, top_body_variant_id, top_body_text, top_body_cpicp, top_visual_hash, top_visual_style, bottom_decile_count, recorded_at` |
+| `scaling_log` | `portfolio-scaling` skill via `?action=scaling-write` (auto-created in `handleScalingWrite_`, Code.js:5368) | See §3.7 for the full 16-column schema (classification, confidence, elasticity_r, cpicp, frequency/CPM trend, etc.) |
 
 ### 11.10 Shared client (`scripts/lib/meta.py`, added 2026-05-03)
 
