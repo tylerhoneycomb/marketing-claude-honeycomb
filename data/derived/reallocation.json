@@ -1,16 +1,16 @@
 {
-  "computed_at": "2026-07-14T15:10:56.604659+00:00",
-  "today": "2026-07-14",
-  "lockout_until": "2026-07-21T00:00:00+00:00",
+  "computed_at": "2026-07-21T15:24:26.839497+00:00",
+  "today": "2026-07-21",
+  "lockout_until": "2026-07-28T00:00:00+00:00",
   "affected_campaign_ids": [],
   "pool": {
     "freed_daily_cents": 0,
     "allocated_daily_cents": 0,
     "net_change_daily_cents": 0,
     "net_change_type": "zero_sum",
-    "portfolio_current_daily_cents": 334245,
-    "portfolio_post_change_daily_cents": 334245,
-    "portfolio_post_change_weekly_dollars": 23397.15,
+    "portfolio_current_daily_cents": 277824,
+    "portfolio_post_change_daily_cents": 277824,
+    "portfolio_post_change_weekly_dollars": 19447.68,
     "target_weekly_dollars": 9000.0,
     "tolerance_weekly_dollars": 50.0,
     "knockdown_risk": true
