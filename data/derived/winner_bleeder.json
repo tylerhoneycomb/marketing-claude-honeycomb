@@ -1,12 +1,12 @@
 {
-  "computed_at": "2026-07-23T14:52:27.561674+00:00",
+  "computed_at": "2026-07-24T14:23:14.417125+00:00",
   "window_days": 7,
   "rows": [
     {
       "adset_id": "120244137988970631",
       "ad_id": "120244137988990631",
       "ad_name": "Juice / smoothie - Q1 2026",
-      "spend": 265.48,
+      "spend": 217.88,
       "spend_share": 1.0,
       "ctr": 0.0362,
       "ctr_vs_adset_avg": 1.0,
@@ -16,9 +16,9 @@
       "adset_id": "120245893431210631",
       "ad_id": "120245893431650631",
       "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
-      "spend": 12.3,
+      "spend": 12.29,
       "spend_share": 1.0,
-      "ctr": 0.0202,
+      "ctr": 0.0199,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -26,9 +26,9 @@
       "adset_id": "120245893431260631",
       "ad_id": "120245893431690631",
       "ad_name": "BR-Distilleries-Cohort2",
-      "spend": 506.25,
+      "spend": 458.24,
       "spend_share": 1.0,
-      "ctr": 0.0204,
+      "ctr": 0.02,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -36,9 +36,9 @@
       "adset_id": "120245893431410631",
       "ad_id": "120245893431860631",
       "ad_name": "BR-CocktailWineBars-Cohort2",
-      "spend": 981.62,
+      "spend": 878.18,
       "spend_share": 1.0,
-      "ctr": 0.025,
+      "ctr": 0.024,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -46,9 +46,9 @@
       "adset_id": "120245893441490631",
       "ad_id": "120245893441770631",
       "ad_name": "BR-FlowerShops-Cohort5",
-      "spend": 1513.94,
+      "spend": 1350.42,
       "spend_share": 1.0,
-      "ctr": 0.0388,
+      "ctr": 0.0396,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -56,9 +56,9 @@
       "adset_id": "120245893441310631",
       "ad_id": "120245893441990631",
       "ad_name": "BR-HairSalons-Cohort3",
-      "spend": 3.67,
+      "spend": 3.56,
       "spend_share": 1.0,
-      "ctr": 0.0128,
+      "ctr": 0.0133,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -76,9 +76,9 @@
       "adset_id": "120251610088600631",
       "ad_id": "120251814987180631",
       "ad_name": "broad_ad_725",
-      "spend": 254.2,
+      "spend": 365.22,
       "spend_share": 1.0,
-      "ctr": 0.0177,
+      "ctr": 0.0176,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     }
