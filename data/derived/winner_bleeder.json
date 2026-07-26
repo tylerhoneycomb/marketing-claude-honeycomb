@@ -1,24 +1,14 @@
 {
-  "computed_at": "2026-07-25T14:14:13.877980+00:00",
+  "computed_at": "2026-07-26T14:11:52.237339+00:00",
   "window_days": 7,
   "rows": [
-    {
-      "adset_id": "120242950140650631",
-      "ad_id": "120242950140670631",
-      "ad_name": "Industry Specific - BBQ - Q1 2026",
-      "spend": 0.0,
-      "spend_share": 0.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
-      "label": null
-    },
     {
       "adset_id": "120244137988970631",
       "ad_id": "120244137988990631",
       "ad_name": "Juice / smoothie - Q1 2026",
-      "spend": 171.71,
+      "spend": 126.52,
       "spend_share": 1.0,
-      "ctr": 0.0359,
+      "ctr": 0.038,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -26,9 +16,9 @@
       "adset_id": "120245893431210631",
       "ad_id": "120245893431650631",
       "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
-      "spend": 11.82,
+      "spend": 10.26,
       "spend_share": 1.0,
-      "ctr": 0.0203,
+      "ctr": 0.0242,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -36,7 +26,7 @@
       "adset_id": "120245893431260631",
       "ad_id": "120245893431690631",
       "ad_name": "BR-Distilleries-Cohort2",
-      "spend": 390.74,
+      "spend": 334.58,
       "spend_share": 1.0,
       "ctr": 0.022,
       "ctr_vs_adset_avg": 1.0,
@@ -46,9 +36,9 @@
       "adset_id": "120245893431410631",
       "ad_id": "120245893431860631",
       "ad_name": "BR-CocktailWineBars-Cohort2",
-      "spend": 792.52,
+      "spend": 694.6,
       "spend_share": 1.0,
-      "ctr": 0.0242,
+      "ctr": 0.0243,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -56,9 +46,9 @@
       "adset_id": "120245893441490631",
       "ad_id": "120245893441770631",
       "ad_name": "BR-FlowerShops-Cohort5",
-      "spend": 1201.08,
+      "spend": 1102.42,
       "spend_share": 1.0,
-      "ctr": 0.0405,
+      "ctr": 0.0402,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -66,9 +56,9 @@
       "adset_id": "120245893441310631",
       "ad_id": "120245893441990631",
       "ad_name": "BR-HairSalons-Cohort3",
-      "spend": 2.7,
+      "spend": 2.49,
       "spend_share": 1.0,
-      "ctr": 0.0175,
+      "ctr": 0.0192,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -76,9 +66,9 @@
       "adset_id": "120251610088600631",
       "ad_id": "120251814987180631",
       "ad_name": "broad_ad_725",
-      "spend": 476.25,
+      "spend": 603.04,
       "spend_share": 1.0,
-      "ctr": 0.0186,
+      "ctr": 0.0185,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     }
