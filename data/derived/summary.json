@@ -1,23 +1,23 @@
 {
-  "computed_at": "2026-07-28T15:03:04.664569+00:00",
+  "computed_at": "2026-07-29T14:56:04.924183+00:00",
   "window_days": 7,
   "snapshot_dates": [
-    "2026-07-21",
     "2026-07-22",
     "2026-07-23",
     "2026-07-24",
     "2026-07-25",
     "2026-07-26",
-    "2026-07-27"
+    "2026-07-27",
+    "2026-07-28"
   ],
-  "ad_count": 7,
-  "adset_count": 7,
-  "campaign_count": 4,
+  "ad_count": 6,
+  "adset_count": 6,
+  "campaign_count": 3,
   "fatigue_severity_counts": {
     "critical": 0,
     "warning": 0,
     "below_floor": 1,
-    "ok": 6
+    "ok": 5
   },
   "actionable_critical": [],
   "actionable_warning": [],
