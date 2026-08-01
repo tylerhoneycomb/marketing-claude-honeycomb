@@ -1,14 +1,14 @@
 {
-  "computed_at": "2026-07-31T15:05:46.814443+00:00",
+  "computed_at": "2026-08-01T14:09:07.600940+00:00",
   "window_days": 7,
   "rows": [
     {
       "adset_id": "120245893431210631",
       "ad_id": "120245893431650631",
       "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
-      "spend": 5.7,
+      "spend": 6.46,
       "spend_share": 1.0,
-      "ctr": 0.0091,
+      "ctr": 0.0085,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -16,9 +16,9 @@
       "adset_id": "120245893431260631",
       "ad_id": "120245893431690631",
       "ad_name": "BR-Distilleries-Cohort2",
-      "spend": 272.06,
+      "spend": 252.91,
       "spend_share": 1.0,
-      "ctr": 0.0243,
+      "ctr": 0.0234,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -26,9 +26,9 @@
       "adset_id": "120245893431410631",
       "ad_id": "120245893431860631",
       "ad_name": "BR-CocktailWineBars-Cohort2",
-      "spend": 405.04,
+      "spend": 401.28,
       "spend_share": 1.0,
-      "ctr": 0.0284,
+      "ctr": 0.0281,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -36,9 +36,9 @@
       "adset_id": "120245893441490631",
       "ad_id": "120245893441770631",
       "ad_name": "BR-FlowerShops-Cohort5",
-      "spend": 725.4,
+      "spend": 717.81,
       "spend_share": 1.0,
-      "ctr": 0.0451,
+      "ctr": 0.0447,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -46,9 +46,9 @@
       "adset_id": "120251610088600631",
       "ad_id": "120251814987180631",
       "ad_name": "broad_ad_725",
-      "spend": 947.67,
+      "spend": 986.31,
       "spend_share": 1.0,
-      "ctr": 0.0224,
+      "ctr": 0.0232,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -56,10 +56,10 @@
       "adset_id": "120245893441310631",
       "ad_id": "120245893441990631",
       "ad_name": "BR-HairSalons-Cohort3",
-      "spend": 0.43,
+      "spend": 0.65,
       "spend_share": 1.0,
-      "ctr": 0.0,
-      "ctr_vs_adset_avg": 0.0,
+      "ctr": 0.0625,
+      "ctr_vs_adset_avg": 1.0,
       "label": null
     }
   ]
