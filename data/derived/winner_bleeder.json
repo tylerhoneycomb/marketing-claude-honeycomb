@@ -1,14 +1,14 @@
 {
-  "computed_at": "2026-08-05T14:59:12.928919+00:00",
+  "computed_at": "2026-08-06T14:58:07.407905+00:00",
   "window_days": 7,
   "rows": [
     {
       "adset_id": "120245893431210631",
       "ad_id": "120245893431650631",
       "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
-      "spend": 10.81,
+      "spend": 8.05,
       "spend_share": 1.0,
-      "ctr": 0.0175,
+      "ctr": 0.0187,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -16,9 +16,9 @@
       "adset_id": "120245893431260631",
       "ad_id": "120245893431690631",
       "ad_name": "BR-Distilleries-Cohort2",
-      "spend": 207.98,
+      "spend": 187.6,
       "spend_share": 1.0,
-      "ctr": 0.0248,
+      "ctr": 0.0261,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -26,9 +26,9 @@
       "adset_id": "120245893431410631",
       "ad_id": "120245893431860631",
       "ad_name": "BR-CocktailWineBars-Cohort2",
-      "spend": 352.8,
+      "spend": 334.05,
       "spend_share": 1.0,
-      "ctr": 0.026,
+      "ctr": 0.0262,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -36,9 +36,9 @@
       "adset_id": "120245893441490631",
       "ad_id": "120245893441770631",
       "ad_name": "BR-FlowerShops-Cohort5",
-      "spend": 698.28,
+      "spend": 697.15,
       "spend_share": 1.0,
-      "ctr": 0.0446,
+      "ctr": 0.0457,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -46,9 +46,9 @@
       "adset_id": "120245893441310631",
       "ad_id": "120245893441990631",
       "ad_name": "BR-HairSalons-Cohort3",
-      "spend": 1.69,
+      "spend": 2.88,
       "spend_share": 1.0,
-      "ctr": 0.0286,
+      "ctr": 0.0204,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -56,9 +56,9 @@
       "adset_id": "120251610088600631",
       "ad_id": "120251814987180631",
       "ad_name": "broad_ad_725",
-      "spend": 1008.97,
+      "spend": 1028.52,
       "spend_share": 1.0,
-      "ctr": 0.024,
+      "ctr": 0.0233,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     }
