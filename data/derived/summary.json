@@ -1,14 +1,14 @@
 {
-  "computed_at": "2026-08-06T14:58:07.407905+00:00",
+  "computed_at": "2026-08-07T13:55:05.832888+00:00",
   "window_days": 7,
   "snapshot_dates": [
-    "2026-07-30",
     "2026-07-31",
     "2026-08-01",
     "2026-08-02",
     "2026-08-03",
     "2026-08-04",
-    "2026-08-05"
+    "2026-08-05",
+    "2026-08-06"
   ],
   "ad_count": 6,
   "adset_count": 6,
@@ -16,8 +16,8 @@
   "fatigue_severity_counts": {
     "critical": 0,
     "warning": 0,
-    "below_floor": 1,
-    "ok": 5
+    "below_floor": 2,
+    "ok": 4
   },
   "actionable_critical": [],
   "actionable_warning": [],
