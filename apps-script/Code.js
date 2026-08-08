@@ -2395,8 +2395,8 @@ function createAllTriggers() {
 //      the GITHUB_PAT in Script Properties has the right scopes
 //      (classic PAT with `repo` works; fine-grained needs Actions:
 //      Read AND Write).
-//   2. Run createAllTriggers() to install the three time-based triggers.
-//   3. Verify in Project Triggers that the three triggerAgent*IfNeeded
+//   2. Run createAllTriggers() to install the agent-fallback triggers.
+//   3. Verify in Project Triggers that the five triggerAgent*IfNeeded
 //      handlers are scheduled.
 
 const AGENT_WORKFLOW_REPO = 'tylerhoneycomb/marketing-claude-honeycomb';
@@ -2581,8 +2581,10 @@ function triggerAgentCreativeIntelligenceIfNeeded() {
 
 
 // Weekly Tuesday fallback for agent-portfolio-scaling.yml. GitHub cron
-// is Tue 13:30 UTC (9:30 AM EDT / 8:30 AM EST). The Apps Script trigger
-// fires daily and early-outs unless it's Tuesday. 12-hour window =
+// is Tue 13:43 UTC (9:43 AM EDT / 8:43 AM EST) — moved off :30 on
+// 2026-06-23 to dodge GitHub's scheduled-run queue contention. The
+// Apps Script trigger fires daily and early-outs unless it's Tuesday.
+// 12-hour window =
 // "did it run today?" — short window because Tuesday is the only day
 // the workflow runs and we want to fire the fallback within ~3 hours
 // of the GitHub cron's intended slot.

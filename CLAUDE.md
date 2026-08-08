@@ -36,24 +36,21 @@ Both documents have a `_Last updated: YYYY-MM-DD_` line at the top — bump it o
 ## Repo Structure
 
 - `/apps-script/` — Full Apps Script intelligence layer, deployed via clasp + GitHub Actions
-  - `Code.js` — The complete intelligence script (~3,600 lines). Edit here, never in the Apps Script web editor
+  - `Code.js` — The complete intelligence script (~6,500 lines). Edit here, never in the Apps Script web editor
   - `.clasp.json` — Points clasp at the Apps Script project (do not edit)
   - `appsscript.json` — Apps Script manifest (scopes, runtime, Web App settings)
 - `/docs/` — Living documentation (`STATE_REPORT.md`, `TECHNICAL_REFERENCE.md`) — keep in sync with code changes
 - `/webapp/` — Honeycomb Ads Intelligence Dashboard (single-file React SPA on GitHub Pages)
   - `index.html` — The full dashboard app
   - `apps-script-api.gs` — Reference copy of the web API layer (handleDashboardApi_, Hive Mind chat, Slack approval flow). This is a subset of Code.js for documentation purposes — the live deployed version comes from apps-script/Code.js
-- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`.
+- `/skills/` — Agent skill definitions (read at the start of every Claude Code session for the agent loop). Each subdirectory has a `SKILL.md` with YAML frontmatter (`name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Current: `pipeline-health`, `daily-check`, `fatigue-monitor`, `creative-intelligence`, `ad-copy-generator`, `portfolio-scaling`.
 - `/scripts/` — Python data-collection + signal-computation scripts for the ad-level pipeline. `fetch_ad_data.py` pulls from Meta; `compute_signals.py` derives fatigue/winner-bleeder; `run_daily.sh` orchestrates the pair.
 - `/data/` — Agent data repository.
   - `data/snapshots/<YYYY-MM-DD>/` — daily JSON snapshots from Meta (campaigns, adsets, ads, ad_insights, adset_insights, _manifest)
   - `data/creatives/creatives.json` — creative metadata, accreted over time
-  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`)
+  - `data/derived/` — computed signals (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json` from `compute_signals.py`; `scaling_profiles.json`, `reallocation.json` from the portfolio-scaling skill)
   - `data/config/benchmarks.json` — all thresholds; never hardcode them in scripts
-- `/ad-copy/` — Meta (Facebook/Instagram) ad copy organized by vertical
-- `/workflows/` — Automation scripts and marketing workflows
-- `/audiences/` — Audience lists and segmentation data (never commit PII)
-- `/reports/` — Campaign performance reports
+- `/ad-copy/`, `/workflows/`, `/audiences/`, `/reports/` — **do not currently exist in the repo.** These were originally planned as the content-library side of the monorepo (ad copy by vertical, marketing automation scripts, audience segmentation, performance reports) but were never created. If the team wants to use this repo as a content library too (not just automation), these directories need to be added.
 - `.github/workflows/` — GitHub Actions CI/CD
   - `deploy-webapp.yml` — Auto-deploys dashboard to GitHub Pages on changes to webapp/
   - `deploy-apps-script.yml` — Auto-deploys Apps Script via clasp on changes to apps-script/
@@ -122,7 +119,7 @@ The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent lo
 - **Thresholds live in one place.** All fatigue, budget, and performance thresholds live in `data/config/benchmarks.json`. Never hardcode threshold numbers inside scripts or skills — always read from the config.
 - **The agent never writes to Meta directly.** All budget recommendations flow through the existing Slack approval pipeline in `apps-script/Code.js`. The agent's role is to surface signals and propose actions, not to execute changes against the Meta API.
 - **Learning-phase protection.** Never propose budget changes to ad sets where `learning_stage_info.status == "LEARNING"`. The `compute_signals.py` step already filters these and marks them `actionable: false`; defensively re-check in any skill that proposes ad-set actions.
-- **Signal floors.** Fatigue signals require ≥ 3 days of data and ≥ 1,000 impressions before they're considered actionable. Don't promote a row whose `actionable` field is `false`, even if it has a flag set.
+- **Signal floors.** Fatigue signals require ≥ 7 days of data (`fatigue.min_days_active` in `benchmarks.json`) and ≥ 1,000 impressions before they're considered actionable. Don't promote a row whose `actionable` field is `false`, even if it has a flag set.
 - **Daily-data workflow runs autonomously.** `.github/workflows/daily-data.yml` is on a daily ~8:37 AM ET cron (`37 12 * * *` UTC — minute deliberately off `:00` to dodge GitHub's top-of-hour scheduled-run queue delay, which was pushing the old `0 12` run 2-5 hours late) and commits the snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
 
 ## Agent Skills
@@ -222,6 +219,22 @@ Each skill that needs a scheduled run gets its own workflow file under
   rather than weekly Wed-only because daily is more robust against
   missed-window risk at the same cost (one Script Property read on
   no-op days).
+  **Known issue (open as of 2026-06-30):** the `claude-code-action`
+  brief-composition step has failed twice in the last three weekly
+  runs (2026-06-16, 2026-06-30) with `"Credit balance is too low"` —
+  the `ANTHROPIC_API_KEY` GitHub Secret's account balance ran out
+  mid-run. The Python steps (profiles/reallocation/commit) always
+  succeed since they don't call Anthropic; only the Slack brief and,
+  on 2026-06-30, the post-registration evaluation step were lost.
+  Because the registration call (`?action=scaling-queue-write`) can
+  fire before the billing error hits, a strategic proposal can end up
+  silently `pending` in `budget_queue` with nobody notified — it just
+  expires unapproved at the next `executeStrategicChanges` 3 AM run
+  (safe, but a missed reallocation opportunity for that week). Status
+  comments to issue #48 show this as `(no brief status) data_commit=ok`.
+  Fix is operational (top up / raise the auto-reload threshold on the
+  Anthropic account backing that key) — see the Known Risks section of
+  `docs/STATE_REPORT.md`.
 
 ### New-skill architectural pattern _(established 2026-05-05)_
 
@@ -265,8 +278,8 @@ agent-pipeline-health iteration cycle):
 - `show_full_output: "true"` and `display_report: "true"` (surface
   Claude's output in the workflow log instead of saving it silently)
 - A "Dump Claude execution log" step with `if: always()` that cats
-  `/tmp/claude-execution-output.json` (belt-and-suspenders diagnostic
-  fallback)
+  `/home/runner/work/_temp/claude-execution-output.json` (belt-and-suspenders
+  diagnostic fallback)
 
 Each agent workflow needs these GitHub Secrets on the repo:
 - `ANTHROPIC_API_KEY` — already set (used by the existing `claude.yml` too)
@@ -387,16 +400,19 @@ agent-ad-copy-generator, agent-portfolio-scaling).
   distinct cohorts. Forces tool_use on a `draft_ads` tool returning
   `(patterns_observed, drafts[])` where each draft is a body + title +
   description + pattern_followed. Compliance regex backstop catches
-  quantified-return language, guarantee language, FDIC comparisons, and
-  multiple-x return claims; drafts are tagged ⚠️ when flagged. Output is
+  quantified-return language, multiple-x return claims, guarantee
+  language, FDIC comparisons, and specific-dollar-return language;
+  drafts are tagged ⚠️ when flagged. Output is
   human-readable markdown at `data/drafts/<date>-<vertical>.md` with a
-  6-item reviewer checklist appended. **Drafts are never auto-published**
+  7-item reviewer checklist appended. **Drafts are never auto-published**
   — every draft requires human review per the compliance checklist. The
   skill is `workflow_dispatch`-only; Tyler runs it after the Monday
   Creative Intelligence brief.
 - **portfolio-scaling** — weekly Tuesday brief that adds a structural
   diagnosis layer on top of the existing budget optimizer. Classifies
-  each vertical as scalable / stable / saturating / over-invested over a
+  each vertical as scalable / stable / saturating / over-invested (or
+  `insufficient` when confidence is too low to classify — those
+  verticals are skipped from the labels section) over a
   12-week trailing window using elasticity (Pearson r of weekly spend vs
   weekly CPL), median-split CPL degradation, and 4-week
   frequency/CPM trends. Modifier `new_audience_needed` fires when

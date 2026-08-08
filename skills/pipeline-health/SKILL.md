@@ -28,7 +28,7 @@ The four checks:
 1. **data_freshness** — calls `?action=rolling-latest-date`, compares to expected (yesterday in account timezone, or two days ago if running before 7 AM ET).
 2. **meta_token** — calls Meta `debug_token`, parses `is_valid` and `expires_at`.
 3. **ic_conversion_event** — calls Meta `customconversions`, verifies the IC custom conversion ID is present and active.
-4. **dashboard_endpoint** — calls `?action=leaderboard` with the configured timeout, verifies a JSON response.
+4. **dashboard_endpoint** — calls `?action=rollup` with the configured timeout, verifies a JSON response. (Was `?action=leaderboard` in an earlier draft of this skill; that action doesn't exist in `handleDashboardApi_` — the check was switched to the real `rollup` action.)
 
 The script's stdout JSON looks like:
 

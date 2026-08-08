@@ -61,7 +61,7 @@ Drafts that hit any pattern get a `⚠️ Compliance flags:` banner in the markd
 2. **Patterns observed** — Claude's 2-3 sentence summary of what distinguishes winners from losers
 3. **Structural pattern data** — the JSON block of feature deltas between winners and losers
 4. **N drafts** — each with body, title, description, `pattern_followed` explanation, and compliance-flag status (✓ or ⚠️)
-5. **Reviewer checklist** — the 6-item compliance + voice review the human runs before publishing
+5. **Reviewer checklist** — the 7-item compliance + voice review the human runs before publishing
 
 `stdout` summary lists which verticals got drafts, where the file landed, and how many drafts had compliance flags.
 
