@@ -1,6 +1,6 @@
 # Creative Intelligence Skill — Attribution Design
 
-_Last updated: 2026-05-04_
+_Last updated: 2026-07-09 (fixed the pipeline-shape script path — it lives at `skills/creative-intelligence/scripts/build_creative_dataset.py`, not `scripts/build_creative_dataset.py`)_
 
 ## Why this doc exists
 
@@ -51,7 +51,7 @@ data/snapshots/<date>/                    (already populated daily)
   ├── ads.json                            (creative_id per ad_id)
   └── ad_insights.json                    (per-ad CPICP)
 
-scripts/build_creative_dataset.py:
+skills/creative-intelligence/scripts/build_creative_dataset.py:
   1. Walk ads.json across the lookback window.
   2. Fetch each creative; extract bodies[]/titles[]/descriptions[]/images[]
      from asset_feed_spec.
