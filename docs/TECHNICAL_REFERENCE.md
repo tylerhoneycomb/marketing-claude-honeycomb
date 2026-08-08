@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-06-23 (Retired the standalone `agent-pipeline-health.yml` workflow and folded the pipeline-health check into `daily-data.yml` as two deterministic steps — `check_health.py` (unchanged) then the new `report_health.py` (terminal summary + Slack alert + issue-#48 one-liner). The check was always deterministic; running it via `claude-code-action` daily was a per-day Anthropic spend for pure JSON reformatting. The merge removes one scheduled workflow and one daily LLM invocation with zero loss of outcomes. Apps Script fallback `triggerAgentPipelineHealthIfNeeded` repointed to dispatch `daily-data.yml` (function name kept so the installed trigger binding stays valid). Also moved the two active scheduled crons off the top of the hour — `daily-data.yml` `0 12` → `37 12`, `agent-portfolio-scaling.yml` `30 13` → `43 13` — because GitHub's top-of-hour scheduled-run contention was delaying runs 1.8-5.1 h in this repo; uncommon minutes pull starts back toward schedule. Prior: 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; three agent workflows remain paused — daily-check, creative-intelligence, and fatigue-monitor)_
+_Last updated: 2026-06-24 (Documentation audit: corrected Code.js line count (~4,200 → ~6,500 lines, reflecting portfolio-scaling + strategic-reallocation growth), updated §2 repo structure tree to include all 6 skills / all 10 workflows / new data sub-directories / scripts/lib/, marked paused workflows (daily-check, fatigue-monitor, creative-intelligence) in §10.1, updated §11.6 skills table to include all 6 skills with current statuses, corrected outdated note about "earlier file-based skills". No code changes. Prior: 2026-06-23 Retired `agent-pipeline-health.yml`, folded check into `daily-data.yml`, nudged crons off top-of-hour. 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; three agent workflows remain paused — daily-check, creative-intelligence, and fatigue-monitor)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -27,7 +27,7 @@ Google Sheets is the system of record for the campaign-level pipeline. The repo 
 └───────────────────────────────────────────────────────────────┘
                              ↑↓
 ┌───────────────────────────────────────────────────────────────┐
-│    Apps Script (apps-script/Code.js, ~4,200 lines)             │
+│    Apps Script (apps-script/Code.js, ~6,500 lines)             │
 │  - Daily/weekly scheduled triggers (fetch, rollup, narrative)  │
 │  - Budget automation (signal → propose → approve → execute)    │
 │  - Web App: /exec?action=... for dashboard API                 │
@@ -79,46 +79,82 @@ Google Sheets is the system of record for the campaign-level pipeline. The repo 
 ```
 marketing-claude-honeycomb/
 ├── apps-script/
-│   ├── Code.js              # The full intelligence layer (~4,200 lines)
+│   ├── Code.js              # The full intelligence layer (~6,500 lines)
 │   ├── appsscript.json      # Apps Script manifest (scopes, runtime, web app access)
 │   └── .clasp.json          # clasp deployment config (script ID, file mappings)
 ├── webapp/
 │   ├── index.html           # Single-file React dashboard
 │   └── apps-script-api.gs   # Reference copy of the web API layer (docs only)
 ├── docs/
-│   ├── STATE_REPORT.md      # Non-technical project state
-│   └── TECHNICAL_REFERENCE.md  # This document
-├── scripts/                 # NEW (2026-05-02) Ad-level Python pipeline
+│   ├── STATE_REPORT.md            # Non-technical project state
+│   ├── TECHNICAL_REFERENCE.md     # This document
+│   └── CREATIVE_INTELLIGENCE_DESIGN.md  # Design notes for the attribution spine pivot
+├── scripts/                 # Ad-level Python pipeline (added 2026-05-02)
 │   ├── fetch_ad_data.py     # Daily Meta ad-set + ad insights pull
 │   ├── compute_signals.py   # Derived fatigue / winner-bleeder signals
-│   └── run_daily.sh         # Orchestrator (fetch → compute)
-├── skills/                  # NEW (2026-05-02) Agent skill definitions
-│   ├── daily-check/SKILL.md
-│   ├── fatigue-monitor/SKILL.md
-│   ├── creative-intelligence/   # NEW (2026-05-05)
+│   ├── preview_dataset.py   # Deterministic preview brief ($0, no LLM)
+│   ├── run_daily.sh         # Orchestrator (fetch → compute)
+│   └── lib/                 # Shared library used by pipeline AND skills
+│       ├── meta.py          # MetaClient: HTTP retries, paging, throttle, IC extraction
+│       ├── text_features.py # Deterministic structural fingerprinting per variant text
+│       ├── io.py            # atomic_write_json and other file helpers
+│       └── exec_api.py      # Canonical /exec GET wrapper + get_spend_goal accessor
+├── skills/                  # Agent skill definitions (added 2026-05-02)
+│   ├── pipeline-health/     # (merged into daily-data.yml 2026-06-23; no separate workflow)
 │   │   ├── SKILL.md
-│   │   ├── references/      # copy_angle + visual_style markdown
-│   │   └── scripts/         # build_creative_dataset.py, categorize_creative.py
-│   └── pipeline-health/SKILL.md
-├── data/                    # NEW (2026-05-02) Agent data repository
-│   ├── config/benchmarks.json     # All thresholds (single source)
-│   ├── snapshots/<YYYY-MM-DD>/    # Daily JSON snapshots from Meta
+│   │   ├── scripts/         # check_health.py, report_health.py
+│   │   └── references/      # fatigue_thresholds.md
+│   ├── daily-check/         # PAUSED 2026-06-08
+│   │   ├── SKILL.md
+│   │   └── scripts/         # fetch_daily_data.py, analyze_daily.py
+│   ├── fatigue-monitor/     # PAUSED 2026-06-10
+│   │   ├── SKILL.md
+│   │   ├── scripts/         # fetch_fatigue_data.py, compute_baselines.py, classify_fatigue.py
+│   │   └── references/      # fatigue_thresholds.md
+│   ├── creative-intelligence/  # PAUSED 2026-06-08 (manual dispatch still works)
+│   │   ├── SKILL.md
+│   │   ├── scripts/         # build_creative_dataset.py, categorize_creative.py
+│   │   └── references/      # copy_angle_definitions.md, visual_style_definitions.md
+│   ├── ad-copy-generator/   # workflow_dispatch only (never auto-published)
+│   │   ├── SKILL.md
+│   │   ├── scripts/         # generate_drafts.py
+│   │   └── references/      # compliance_rules.md, voice_guide.md
+│   └── portfolio-scaling/   # ACTIVE — Tuesdays ~9:43 AM ET
+│       ├── SKILL.md
+│       ├── scripts/         # compute_scaling_profiles.py, compute_reallocation.py
+│       └── references/      # meta_learning_phase_constraints.md
+├── data/                    # Agent data repository (added 2026-05-02)
+│   ├── config/benchmarks.json     # All thresholds (single source of truth)
+│   ├── snapshots/<YYYY-MM-DD>/    # Daily JSON snapshots from Meta (committed by daily-data.yml)
 │   │   ├── campaigns.json
 │   │   ├── adsets.json
 │   │   ├── ads.json
 │   │   ├── adset_insights.json
 │   │   ├── ad_insights.json
 │   │   └── _manifest.json
-│   ├── creatives/creatives.json   # Accumulating creative metadata
-│   └── derived/                   # Computed signals (regenerable)
-│       ├── fatigue_signals.json
-│       ├── winner_bleeder.json
-│       └── summary.json
+│   ├── creatives/                 # Accumulating creative metadata (committed by agent-creative-intelligence.yml)
+│   │   ├── creatives.json         # Creative metadata cache (accreted across runs)
+│   │   ├── categorizations.json   # LLM tags per variant (hash-deduped)
+│   │   └── images/<hash>.jpg      # Full-size creative images (~1440px, lazy-downloaded)
+│   ├── derived/                   # Computed signals (regenerable)
+│   │   ├── fatigue_signals.json
+│   │   ├── winner_bleeder.json
+│   │   ├── summary.json
+│   │   ├── scaling_profiles.json  # Per-vertical classifications (Tuesday workflow)
+│   │   └── reallocation.json      # Pool-based budget proposal (Tuesday workflow)
+│   ├── previews/                  # Deterministic briefs from agent-creative-preview.yml
+│   └── drafts/                    # Ad-copy drafts from agent-ad-copy-generator.yml (human review required)
 ├── .github/workflows/
-│   ├── deploy-apps-script.yml  # Push Code.js via clasp on merge to main
-│   ├── deploy-webapp.yml       # Publish dashboard to GitHub Pages on merge to main
-│   ├── daily-data.yml          # NEW (2026-05-02) Ad-level data pull (daily cron)
-│   └── claude.yml              # @claude mentions in issues/PRs
+│   ├── deploy-apps-script.yml         # Push Code.js via clasp on merge to main
+│   ├── deploy-webapp.yml              # Publish dashboard to GitHub Pages on merge to main
+│   ├── claude.yml                     # @claude mentions in issues/PRs
+│   ├── daily-data.yml                 # Ad-level data pull (daily cron ~8:37 AM ET) + pipeline-health check
+│   ├── agent-daily-check.yml          # PAUSED 2026-06-08 — manual dispatch only
+│   ├── agent-fatigue-monitor.yml      # PAUSED 2026-06-10 — manual dispatch only
+│   ├── agent-creative-intelligence.yml # PAUSED 2026-06-08 — manual dispatch only
+│   ├── agent-creative-preview.yml     # workflow_dispatch only ($0, no LLM)
+│   ├── agent-ad-copy-generator.yml    # workflow_dispatch only (drafts for human review)
+│   └── agent-portfolio-scaling.yml    # ACTIVE — weekly cron Tuesdays ~9:43 AM ET
 ├── ad-copy/          # (empty placeholder) Meta ad copy by vertical
 ├── workflows/        # (empty placeholder) Automation scripts
 ├── audiences/        # (empty placeholder) Audience segmentation — never commit PII
@@ -853,24 +889,28 @@ Builds a compact text snapshot for the chat LLM. Sections:
 - **Why retired:** `check_health.py` is fully deterministic — it runs the four checks, writes the `pipeline_health` Sheet rows, and prints JSON. The LLM's only job was to reformat that JSON into a Slack string and `curl` it on WARN/FAIL — work that needs no model. Running `claude-code-action` daily for it was a per-day Anthropic spend, an extra scheduled workflow, and a duplicate checkout + Python setup one hour after `daily-data`.
 - **Replacement:** two steps appended to the `daily-data.yml` job (see §11.7): `check_health.py` (unchanged) → `report_health.py` (new — terminal summary + Slack alert on WARN/FAIL + the issue-#48 one-liner to `/tmp/health_status.txt`). The check runs right after the morning data pull instead of via a separate 9 AM workflow. No LLM, no `id-token`/OIDC, no separate cron. The Apps Script fallback `triggerAgentPipelineHealthIfNeeded` was repointed to dispatch `daily-data.yml`.
 
-**`agent-daily-check.yml`** _(added 2026-05-03)_
+**`agent-daily-check.yml`** _(added 2026-05-03, **PAUSED 2026-06-08**)_
 
 - Same template established by the (now-retired) `agent-pipeline-health.yml`: `id-token`, bypassPermissions, show_full_output, display_report, dump-log step.
-- Triggers: `workflow_dispatch` + active cron `30 12 * * *` (8:30 AM ET / UTC 12:30).
+- **Paused:** Tyler asked to stop the daily Slack briefing. The `schedule:` cron block and the Apps Script fallback (`triggerAgentDailyCheckIfNeeded`) are both commented out / early-returned. `workflow_dispatch` still works for manual runs.
+- Original cron: `30 12 * * *` (8:30 AM ET / UTC 12:30) — preserved as a comment in the YAML.
 - timeout-minutes: 25 (fetch + analyze + 5 Meta API calls).
 - Prompt: run `fetch_daily_data.py > /tmp/daily_data.json` → `analyze_daily.py --input /tmp/daily_data.json` → compose sectioned summary (PACING, PORTFOLIO, WINNERS, BLEEDERS, FATIGUE WATCH, LEARNING, STALE).
 - Concurrency group `agent-daily-check`.
 
-**`agent-fatigue-monitor.yml`** _(added 2026-05-03)_
+**`agent-fatigue-monitor.yml`** _(added 2026-05-03, **PAUSED 2026-06-10**)_
 
 - Same template.
-- Triggers: `workflow_dispatch` + active cron `30 13 * * 1,4` (Mon + Thu 9:30 AM ET / UTC 13:30) — twice-weekly because fatigue moves slowly and daily would over-query Meta.
+- **Paused:** Tyler asked to stop the Mon/Thu Slack brief. The `schedule:` cron block and the Apps Script fallback (`triggerAgentFatigueMonitorIfNeeded`) are both commented out / early-returned. `workflow_dispatch` still works.
+- Original cron: `30 13 * * 1,4` (Mon + Thu 9:30 AM ET / UTC 13:30) — twice-weekly because fatigue moves slowly and daily would over-query Meta; preserved as a comment in the YAML.
 - timeout-minutes: 30 (the longest skill: 14-day fetch + creative metadata + Path-B historical query + classification).
 - Prompt: run the three scripts in sequence (fetch → baselines → classify) → compose summary grouped by severity, skip healthy ads, prominently surface budget conflicts.
 - Concurrency group `agent-fatigue-monitor`.
 
-**`agent-creative-intelligence.yml`** _(added 2026-05-05, validated 2026-05-05)_
+**`agent-creative-intelligence.yml`** _(added 2026-05-05, validated 2026-05-05, **PAUSED 2026-06-08**)_
 
+- **Paused:** Tyler asked to stop the weekly Slack brief and the recurring Anthropic categorization spend. The `schedule:` cron block and the Apps Script fallback (`triggerAgentCreativeIntelligenceIfNeeded`) are both commented out / early-returned. `workflow_dispatch` still works (useful for refreshing the cache on demand).
+- Original cron: `0 14 * * 1` (Mon 10 AM ET / 9 AM EST) — preserved as a comment in the YAML.
 - Departs from the other agent workflows' template — runs Python scripts as ordinary workflow steps BEFORE invoking `claude-code-action`, AND commits cache changes BEFORE the action runs too. Two distinct production-run findings forced this architecture:
   - **Run 1 (2026-05-05 morning)** — categorizer hit `APIConnectionError` on 526/526 calls when running inside the action's Bash subprocess. Fatigue-monitor's Meta calls work fine from the same subprocess context, so it's specifically Anthropic SDK calls that fail. Suspected cause: subprocess inheritance of an `ANTHROPIC_BASE_URL` or HTTP-proxy env var the action sets for its own runtime. Fix: move scripts to ordinary workflow steps + add explicit `base_url="https://api.anthropic.com"` belt-and-suspenders in the categorizer.
   - **Run 2 (2026-05-05 afternoon)** — categorize succeeded (with rate-limit issues — see below) but the cache `git push` failed all 4 retries with `Invalid username or token. Password authentication is not supported.` The persisted http extraheader credentials from `actions/checkout@v4` survive through Python script steps but get stripped or invalidated AFTER `claude-code-action@v1` runs. Daily-data.yml has no claude-code-action and commits successfully; this workflow had `Commit cache updates` AFTER the action and was getting auth-rejected. Fix: move `Commit cache updates` to BEFORE `claude-code-action`. Bonus: if Claude's brief composition fails for any reason, the $5 of categorization is preserved on main.
@@ -1220,13 +1260,16 @@ Top-level keys (current schema, 2026-05-03):
 
 Skills are self-contained packages: a `SKILL.md` (with YAML frontmatter — `name`, `description`) plus a `scripts/` directory of Python scripts the skill runs via bash. Scripts emit structured JSON; the skill interprets the JSON and chooses what to send to Slack and what to write to the Sheet.
 
-| Skill | Status | Purpose |
-|---|---|---|
-| `pipeline-health` | shipped 2026-05-03 | Four checks: data freshness, Meta token, IC conversion event, dashboard endpoint. Slack-silent on PASS. |
-| `daily-check` | shipped 2026-05-03 | Morning briefing: pacing vs weekly target, portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
-| `fatigue-monitor` | shipped 2026-05-03 | Three-script pipeline: 14-day fetch, baseline computation (Path A in-range / B historical-batched / C estimated), classification across 5 severity classes with budget-queue conflict cross-reference. Writes to `fatigue_log`. |
+| Skill | Status | Workflow | Purpose |
+|---|---|---|---|
+| `pipeline-health` | Active — merged into `daily-data.yml` 2026-06-23 | No standalone workflow | Four checks: data freshness, Meta token, IC conversion event, dashboard endpoint. Slack-silent on PASS. Runs as two deterministic steps at the end of `daily-data.yml` (`check_health.py` → `report_health.py`) — no LLM, no `claude-code-action`. |
+| `daily-check` | **PAUSED 2026-06-08** — manual dispatch only | `agent-daily-check.yml` | Morning briefing: pacing vs weekly target, portfolio CPICP rankings, top-3 winners + bleeders, early fatigue flags, learning-phase ad sets, stale creatives. Writes to `daily_check_log`. |
+| `fatigue-monitor` | **PAUSED 2026-06-10** — manual dispatch only | `agent-fatigue-monitor.yml` | Three-script pipeline: 14-day fetch, baseline computation (Path A in-range / B historical-batched / C estimated), classification across 5 severity classes with budget-queue conflict cross-reference. Writes to `fatigue_log`. |
+| `creative-intelligence` | **PAUSED 2026-06-08** — manual dispatch only | `agent-creative-intelligence.yml` | Weekly brief on winning creative copy + visual patterns. Corpus-level text aggregation. Two-script pipeline: `categorize_creative.py` (Anthropic API once per unique variant) + `build_creative_dataset.py` (joins snapshots + cache). Writes to `creative_intelligence_log`. See §10.1 for the architectural pattern. |
+| `ad-copy-generator` | Active — `workflow_dispatch` only | `agent-ad-copy-generator.yml` | Drafts new ad-copy variants for a target vertical from the Creative Intelligence dataset. Compliance regex backstop + 6-item reviewer checklist. Output: `data/drafts/<date>-<vertical>.md`. Drafts are never auto-published. |
+| `portfolio-scaling` | **Active** — weekly cron Tuesdays ~9:43 AM ET | `agent-portfolio-scaling.yml` | Classifies each vertical (scalable/stable/saturating/over-invested) over 12-week trailing window. Produces pool-based budget reallocation. Four-section Slack brief. Shares 12% weekly cap with daily optimizer. Writes to `scaling_log`. |
 
-The earlier file-based skills (`budget-optimizer`, `ad-copy-generator`, and earlier versions of the three above) were built against a less-refined spec and are being replaced session-by-session. `compute_signals.py`'s `data/derived/` outputs are now an audit trail rather than the canonical signal source — the skills compute their own canonical versions.
+`compute_signals.py`'s `data/derived/` outputs (`fatigue_signals.json`, `winner_bleeder.json`, `summary.json`) are an audit trail and historical backbone — the active skills compute their own canonical signals via live Meta API calls. `scaling_profiles.json` and `reallocation.json` (also in `data/derived/`) are committed by the Tuesday portfolio-scaling workflow and read back by Apps Script's `loadScalingProfiles_()` for optimizer tagging.
 
 ### 11.7 Workflow (`.github/workflows/daily-data.yml`)
 
