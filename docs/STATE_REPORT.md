@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-23 (Consolidated the daily pipeline-health check into the daily-data workflow. The standalone `agent-pipeline-health.yml` was retired: its check script was already deterministic, so the daily LLM run that only reformatted the results for Slack was pure waste. It now runs as plain steps at the end of `daily-data.yml`. Net effect: one fewer scheduled GitHub Action and one fewer daily AI cost, with identical checks, Slack alerts, and history logging. Also nudged the two active scheduled jobs off the top of the hour (daily-data ~8:37 AM ET, portfolio-scaling Tue ~9:43 AM ET) so they stop sitting in GitHub's top-of-hour run queue — the old timings were drifting 2-5 hours late. Prior: 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; daily-check, creative-intelligence, and fatigue-monitor remain paused)_
+_Last updated: 2026-07-08 (Documentation accuracy pass — no functional changes landed since 2026-06-23, only routine daily snapshot commits. Fixed a stale contradiction: the "Current limitations" and "Recommended next steps" sections still described "no recurring health check" as an open gap and recommended adding one, even though the `pipeline-health` skill has covered this since 2026-05-03 and was folded into the daily cron on 2026-06-23. Reworded those sections to reflect what `pipeline-health` actually covers (data freshness, Meta token, IC conversion event, dashboard endpoint) versus what it doesn't (HubSpot fetch, weekly narrative, and budget analysis completion aren't independently verified). Also corrected the content-gap note: `/ad-copy/`, `/workflows/`, `/audiences/`, `/reports/` don't exist in the repo at all, not just "empty." Prior: 2026-06-23 retired `agent-pipeline-health.yml`, folded pipeline-health into `daily-data.yml`, de-peaked the two active scheduled jobs off the top of the hour. 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; daily-check, creative-intelligence, and fatigue-monitor remain paused)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -14,7 +14,7 @@ A **marketing operations platform** for Honeycomb Credit's small-business invest
 
 Four things live inside the repo:
 
-1. **The "brain"** — a Google Apps Script program (~4,200 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
+1. **The "brain"** — a Google Apps Script program (~6,500 lines) that runs every day, pulls data from Meta and HubSpot, does the math, writes summaries, and proposes budget changes.
 2. **The "dashboard"** — a web page (hosted on GitHub Pages) where the team can see charts, check campaign health, and ask questions via an AI chat called "Hive Mind."
 3. **The "plumbing"** — GitHub Actions that automatically push code changes to the Google Apps Script servers whenever something is merged, so nobody has to copy/paste into the Apps Script web editor.
 4. **The "agent layer"** _(new, 2026-05-02)_ — an ad-level data pipeline (`scripts/`) and skill files (`skills/`) that let Claude Code monitor individual ads, detect creative fatigue, and propose budget shifts. Snapshots are stored as JSON files under `data/` (the repo itself acts as the database). The agent layer feeds recommendations into the existing Slack approval pipeline — it never writes to Meta directly.
@@ -128,7 +128,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 - **Audit snapshot pipeline.** Claude Code can pull the last 90 days of data anytime and do health checks.
 - **Campaign rename resilience.** Renaming a campaign in Meta is handled automatically: the sync detects the name change via `campaign_id`, updates the mapping row in place (preserving UTM and conversion settings), normalizes all historical `rolling_data` rows to the new name, and posts a Slack notification. Works for ALL campaigns, including those without URL tags.
 - **Two-step budget approval.** Budget proposal links in Slack now show an HTML confirmation page with a button — Slack's link-unfurling bot gets the page but can't click buttons, so only a human can approve or reject.
-- **AI upgraded to Claude Opus 4.7.** All 5 Anthropic API call sites (narrative, chat, budget commentary, daily digest, weekly Slack) use a single `ANTHROPIC_MODEL` constant — future upgrades are one line.
+- **AI upgraded to Claude Opus 4.7.** All 4 Anthropic API call sites (narrative, chat, budget commentary, daily digest) use a single `ANTHROPIC_MODEL` constant — future upgrades are one line.
 - **Dashboard line chart accuracy.** Daily granularity shows the full selected date range (no collapsed x-axis), and per-campaign lines break on paused days instead of drawing misleading straight lines across gaps.
 
 ---
@@ -145,22 +145,21 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 - **Ad-level pipeline is autonomous.** `.github/workflows/daily-data.yml` runs daily at ~8:37 AM ET on cron and commits each snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
 - **Two Meta tokens to keep current.** The legacy campaign-level pipeline reads `META_ACCESS_TOKEN` from Apps Script Script Properties; the new ad-level pipeline reads it from a GitHub Secret with the same name. Token rotation now has to happen in two places.
-- **No alerting on pipeline failures.** If the daily 7 AM pull breaks (e.g., expired Meta token), you only find out when someone notices the Slack digest didn't arrive or the dashboard shows stale data. No proactive "hey, this job failed" alert.
-- **No alerting on attribution-quality drops.** The 33% collapse that week could have gone unnoticed for days. A threshold-based alert ("IC attribution below 50% — investigate") would catch this earlier.
+- **Pipeline failure alerting is partial.** The `pipeline-health` skill (shipped 2026-05-03, folded into the daily `daily-data.yml` run since 2026-06-23) checks data freshness, Meta token validity, IC conversion event existence, and dashboard endpoint health every morning, and posts to Slack on WARN/FAIL. This catches the most common failure modes (expired token, broken pull, dead endpoint) automatically. It does NOT independently verify that the HubSpot fetch, weekly narrative, or budget analysis steps themselves completed — those still rely on someone noticing a missing Slack message or stale dashboard data.
+- **No alerting on attribution-quality drops.** The 33% collapse that week could have gone unnoticed for days. A threshold-based alert ("IC attribution below 50% — investigate") would catch this earlier. Not covered by `pipeline-health`, which checks freshness and connectivity but not attribution rate.
 - **Manual steps for new campaigns.** When the team launches a new Meta campaign, the mapping sheet auto-discovers the UTM tag and campaign_id, but conversion event mapping often needs manual verification. If a campaign's custom_conversion_id doesn't get filled in, its ICPs won't be properly tracked. Campaign renames in Meta are now handled automatically — the sync detects when a campaign_id's name has changed, updates it in place, and preserves all manually-set UTM and conversion settings.
 - **Audit snapshot is manual.** Someone has to run `exportAuditSnapshot()` from the Apps Script editor to refresh data for Claude Code. Adding a weekly time trigger would make this automatic.
-- **No recurring health check.** The Q1 audit uncovered 6 issues only because someone did a deep-dive. Without a scheduled audit — weekly or monthly — similar drift could accumulate again.
 
 ### Content / copy gaps
 
-- **The `/ad-copy/`, `/workflows/`, `/audiences/`, and `/reports/` directories are empty placeholders.** CLAUDE.md describes them as if populated, but no content exists. If the team wants to use this repo as their content library too (not just automation), those directories need work.
+- **The `/ad-copy/`, `/workflows/`, `/audiences/`, and `/reports/` directories don't exist in the repo yet.** CLAUDE.md describes their intended purpose, but none have been created (git doesn't track empty directories, so there's nothing to `ls` today). If the team wants to use this repo as their content library too (not just automation), those directories need to be created and populated.
 
 ### Technical debt
 
 - **Hybrid attribution math is duplicated.** The weekly rollup and the budget analyzer each compute hybrid ICPs independently. If one is updated and the other isn't, budget decisions could drift from reported numbers. Worth extracting into a single shared function.
 - **Multiple Meta campaigns map to one UTM value.** "for ag" covers 3 Meta campaigns, "for ICrev2test" covers 2. Not a bug — just means segment-level rollups combine spend across these.
 - **Campaign-mapping typo.** One row reads "Q4 2205" instead of "Q4 2025." Cosmetic but worth cleaning up.
-- ~~**Hardcoded Claude model in 3 places.**~~ _Resolved 2026-04-22._ Extracted to `ANTHROPIC_MODEL` constant (Code.js:45). Upgraded to Opus 4.7. All 5 call sites reference the constant.
+- ~~**Hardcoded Claude model in 3 places.**~~ _Resolved 2026-04-22._ Extracted to `ANTHROPIC_MODEL` constant. Upgraded to Opus 4.7. All 4 call sites reference the constant (see TECHNICAL_REFERENCE.md §6.1).
 - **No rate limiting on the chat endpoint.** Someone could hammer the Hive Mind chat and run up Anthropic API costs. Low likelihood given it's a hidden feature, but worth knowing. Cost impact is higher now with Opus 4.7 (more capable but more expensive per token).
 - **Audit snapshot uses GitHub's low-level Git API directly.** Works, but code is verbose and has no retry logic on GitHub API errors.
 
@@ -175,7 +174,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 ## Known risks worth watching
 
 1. **IC tracking pattern is still a string-match.** The 4/15 outage was rooted in a fragile `indexOf` check against a human-readable event name. Any future rename of the "Investment Crowdfunding Prequal Decision" event in Meta — or a change to the `conversion_event` column values — would break tracking again. Longer-term fix: key IC tracking off `custom_conversion_id` (the stable numeric Meta ID) instead of the event name string. Deferred for now.
-2. **Scheduled triggers can silently stop.** Apps Script occasionally revokes triggers after script updates. A weekly "is the pipeline still running?" check would be worthwhile — currently relies on noticing the digest didn't arrive.
+2. **Scheduled triggers can silently stop.** Apps Script occasionally revokes triggers after script updates. The daily `pipeline-health` check (since 2026-05-03) catches the downstream symptom — `rolling_data` going stale — within a day, which covers the highest-impact case (the 7 AM campaign pull). It does not directly verify that every individual Apps Script trigger (weekly narrative, budget analysis, HubSpot fetch) is still installed and firing; a trigger revocation on one of those could still go unnoticed longer.
 3. **Meta access token expiration.** Long-lived Meta access tokens eventually expire. When it happens, every data pull fails until someone regenerates it. No proactive warning.
 4. **Budget automation could over-react in low-volume weeks.** The eligibility gate (≥10 lifetime conversions) prevents new campaigns from getting changes, but in quiet weeks the rules engine could still move money based on small-sample signals. The ±2% cap limits damage per cycle, but repeated cycles compound.
 
@@ -186,7 +185,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 ### High impact, low effort
 - Add a weekly time trigger for `exportAuditSnapshot()` so audit data refreshes automatically.
 - Add a threshold alert for attribution quality dropping below 50% (Slack message).
-- Add a pipeline-health check: if the daily digest hasn't posted by 8 AM, something's broken — alert.
+- ~~Add a pipeline-health check: if the daily digest hasn't posted by 8 AM, something's broken — alert.~~ **Done 2026-05-03**, and folded into the daily cron on 2026-06-23 — see the `pipeline-health` skill.
 - Fix the "Q4 2205" typo in campaign_mapping.
 
 ### High impact, medium effort
