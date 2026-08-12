@@ -1,0 +1,3521 @@
+[
+  {
+    "ad_id": "120251814987180631",
+    "ad_name": "broad_ad_725",
+    "adset_id": "120251610088600631",
+    "campaign_id": "120249802543740631",
+    "created_time": "2026-07-21T08:16:17-0400",
+    "creative_id": "907280728431607",
+    "effective_status": "ACTIVE"
+  },
+  {
+    "ad_id": "120249222014730631",
+    "ad_name": "Industry Specific - Breweries - Q4 2025",
+    "adset_id": "120249222014710631",
+    "campaign_id": "120249222014720631",
+    "created_time": "2026-06-01T17:10:08-0400",
+    "creative_id": "1916447162351587",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697110631",
+    "ad_name": "q2-2026_bb_pain_img10",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1696815504654462",
+    "effective_status": "WITH_ISSUES"
+  },
+  {
+    "ad_id": "120245893431860631",
+    "ad_name": "BR-CocktailWineBars-Cohort2",
+    "adset_id": "120245893431410631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:16-0400",
+    "creative_id": "1387165393458788",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893431650631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
+    "adset_id": "120245893431210631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:06-0400",
+    "creative_id": "1713804073104271",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697040631",
+    "ad_name": "q2-2026_bb_pain_img2",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "975452408754412",
+    "effective_status": "WITH_ISSUES"
+  },
+  {
+    "ad_id": "120247429697100631",
+    "ad_name": "q2-2026_bb_pain_img4",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1524621982354027",
+    "effective_status": "WITH_ISSUES"
+  },
+  {
+    "ad_id": "120247429696860631",
+    "ad_name": "q2-2026_bb_pain_img3",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "957014876950629",
+    "effective_status": "WITH_ISSUES"
+  },
+  {
+    "ad_id": "120247429697210631",
+    "ad_name": "q2-2026_bb_outcome_img1",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "3250482945339344",
+    "effective_status": "WITH_ISSUES"
+  },
+  {
+    "ad_id": "120249222014690631",
+    "ad_name": "Industry Specific - Breweries - Q4 2025",
+    "adset_id": "120249222014700631",
+    "campaign_id": "120249222014720631",
+    "created_time": "2026-06-01T17:10:59-0400",
+    "creative_id": "1836126947362088",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120241324161090631",
+    "ad_name": "Industry Specific - Breweries - Q4 2025",
+    "adset_id": "120241324161100631",
+    "campaign_id": "120240869767800631",
+    "created_time": "2025-12-26T18:14:13-0500",
+    "creative_id": "1898836090774991",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120240869767780631",
+    "ad_name": "Industry Specific - Breweries - Q4 2025",
+    "adset_id": "120240869767790631",
+    "campaign_id": "120240869767800631",
+    "created_time": "2025-12-26T15:56:50-0500",
+    "creative_id": "2150824532374781",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120244137988990631",
+    "ad_name": "Juice / smoothie - Q1 2026",
+    "adset_id": "120244137988970631",
+    "campaign_id": "120244137988980631",
+    "created_time": "2026-03-11T19:08:15-0400",
+    "creative_id": "2795759650781470",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893431820631",
+    "ad_name": "BR-CocktailWineBars-Cohort8",
+    "adset_id": "120245893431360631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:54-0400",
+    "creative_id": "855995816797266",
+    "effective_status": "WITH_ISSUES"
+  },
+  {
+    "ad_id": "120247429697140631",
+    "ad_name": "q2-2026_bb_community_img2",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1388431613092099",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697150631",
+    "ad_name": "q2-2026_bb_pain_img9",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1398767758953756",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697190631",
+    "ad_name": "q2-2026_bb_community_img7",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1048992794971901",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697230631",
+    "ad_name": "q2-2026_bb_community_img10",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "964264856461491",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697120631",
+    "ad_name": "q2-2026_bb_community_img1",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1607680140342403",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696900631",
+    "ad_name": "q2-2026_bb_outcome_img8",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1302615398517326",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697060631",
+    "ad_name": "q2-2026_bb_pain_img1",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1646149689940713",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696930631",
+    "ad_name": "q2-2026_bb_outcome_img10",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "2014098072834232",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696970631",
+    "ad_name": "q2-2026_bb_outcome_img3",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1496139178618341",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697070631",
+    "ad_name": "q2-2026_bb_community_img9",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1698595667970226",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697010631",
+    "ad_name": "q2-2026_bb_proof_img5",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1565065141637036",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697130631",
+    "ad_name": "q2-2026_bb_community_img3",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1047311141806602",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697240631",
+    "ad_name": "q2-2026_bb_outcome_img6",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "959188183767841",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697080631",
+    "ad_name": "q2-2026_bb_pain_img7",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "878153751956943",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696920631",
+    "ad_name": "q2-2026_bb_proof_img1",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1282087110801988",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696880631",
+    "ad_name": "q2-2026_bb_outcome_img9",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "2493297337774401",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697250631",
+    "ad_name": "q2-2026_bb_community_img6",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1996857694372377",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697170631",
+    "ad_name": "q2-2026_bb_pain_img6",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1340268181279158",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697050631",
+    "ad_name": "q2-2026_bb_proof_img10",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1176722017857036",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697020631",
+    "ad_name": "q2-2026_bb_proof_img8",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "26414367158245037",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697160631",
+    "ad_name": "q2-2026_bb_community_img5",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "2438113010034494",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696940631",
+    "ad_name": "q2-2026_bb_proof_img4",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "4677545719145433",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696990631",
+    "ad_name": "q2-2026_bb_proof_img2",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1682297829856489",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696980631",
+    "ad_name": "q2-2026_bb_outcome_img4",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1654554825764552",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696960631",
+    "ad_name": "q2-2026_bb_proof_img6",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1691910238731679",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697090631",
+    "ad_name": "q2-2026_bb_pain_img8",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "990570806774699",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697180631",
+    "ad_name": "q2-2026_bb_community_img4",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1289510026626689",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697200631",
+    "ad_name": "q2-2026_bb_outcome_img2",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "822041304297001",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697000631",
+    "ad_name": "q2-2026_bb_proof_img7",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "1608538480235613",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696890631",
+    "ad_name": "q2-2026_bb_outcome_img7",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "2196684664457395",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696950631",
+    "ad_name": "q2-2026_bb_proof_img3",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "946350628202198",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697030631",
+    "ad_name": "q2-2026_bb_proof_img9",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "2180611822686214",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429697220631",
+    "ad_name": "q2-2026_bb_community_img8",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "958166160259799",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696910631",
+    "ad_name": "q2-2026_bb_outcome_img5",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "3503326613177708",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120247429696870631",
+    "ad_name": "q2-2026_bb_pain_img5",
+    "adset_id": "120247429696850631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-05-06T14:25:39-0400",
+    "creative_id": "4322719571302820",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893421500631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort6",
+    "adset_id": "120245893421330631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:40:55-0400",
+    "creative_id": "949860884492970",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893431900631",
+    "ad_name": "BR-CoffeeRoasters-Cohort7",
+    "adset_id": "120245893431460631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:38:38-0400",
+    "creative_id": "976629611684442",
+    "effective_status": "DISAPPROVED"
+  },
+  {
+    "ad_id": "120245893431790631",
+    "ad_name": "BR-CocktailWineBars-Cohort4",
+    "adset_id": "120245893431320631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:14-0400",
+    "creative_id": "781195311590717",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442300631",
+    "ad_name": "BR-FlowerShops-Cohort1",
+    "adset_id": "120245893441650631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:02-0400",
+    "creative_id": "4240540702827019",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442200631",
+    "ad_name": "BR-DaySpas-Cohort2",
+    "adset_id": "120245893441630631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:32-0400",
+    "creative_id": "811256405037760",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431700631",
+    "ad_name": "BR-Distilleries-Cohort3",
+    "adset_id": "120245893431270631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:38:44-0400",
+    "creative_id": "845751487920178",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421410631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort3",
+    "adset_id": "120245893421060631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:13-0400",
+    "creative_id": "957770733551457",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893441990631",
+    "ad_name": "BR-HairSalons-Cohort3",
+    "adset_id": "120245893441310631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:42:02-0400",
+    "creative_id": "960672249940029",
+    "effective_status": "ACTIVE"
+  },
+  {
+    "ad_id": "120245893421430631",
+    "ad_name": "BR-WineriesVineyards-Cohort10",
+    "adset_id": "120245893421150631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:03-0400",
+    "creative_id": "972151758843736",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400630631",
+    "ad_name": "BR-NailSalons-Cohort9",
+    "adset_id": "120245893400260631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:07-0400",
+    "creative_id": "1022168163486747",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431850631",
+    "ad_name": "BR-CoffeeRoasters-Cohort11",
+    "adset_id": "120245893431400631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:45-0400",
+    "creative_id": "1707777570355515",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421440631",
+    "ad_name": "BR-WineriesVineyards-Cohort2",
+    "adset_id": "120245893421240631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:40:21-0400",
+    "creative_id": "2243751073038031",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431810631",
+    "ad_name": "BR-CocktailWineBars-Cohort6",
+    "adset_id": "120245893431370631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:03-0400",
+    "creative_id": "949933914624678",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441780631",
+    "ad_name": "BR-HairSalons-Cohort4",
+    "adset_id": "120245893441320631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:42:12-0400",
+    "creative_id": "993562496516552",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431910631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort9",
+    "adset_id": "120245893431490631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:38:59-0400",
+    "creative_id": "2019611668985867",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400500631",
+    "ad_name": "BR-YogaStudios-Cohort9",
+    "adset_id": "120245893400110631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:04-0400",
+    "creative_id": "947259884699604",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893441890631",
+    "ad_name": "BR-DanceStudios-Cohort4",
+    "adset_id": "120245893441360631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:41:52-0400",
+    "creative_id": "2025835711679933",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421660631",
+    "ad_name": "BR-SportsBars-Cohort5",
+    "adset_id": "120245893421320631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:38:54-0400",
+    "creative_id": "1171613138351731",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893441830631",
+    "ad_name": "BR-HairSalons-Cohort10",
+    "adset_id": "120245893441570631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:44:53-0400",
+    "creative_id": "27070283952589558",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441800631",
+    "ad_name": "BR-HairSalons-Cohort7",
+    "adset_id": "120245893441330631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:43:17-0400",
+    "creative_id": "1865175794128323",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421570631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort5",
+    "adset_id": "120245893421070631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:56-0400",
+    "creative_id": "1028870149474980",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893421640631",
+    "ad_name": "BR-WineriesVineyards-Cohort11",
+    "adset_id": "120245893421360631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:40:21-0400",
+    "creative_id": "933979109465353",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893400640631",
+    "ad_name": "BR-BedandBreakfasts-Cohort10",
+    "adset_id": "120245893400280631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:57-0400",
+    "creative_id": "3755517211255267",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421630631",
+    "ad_name": "BR-SportsBars-Cohort2",
+    "adset_id": "120245893421300631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:46-0400",
+    "creative_id": "2225480911596410",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893441680631",
+    "ad_name": "BR-DanceStudios-Cohort1",
+    "adset_id": "120245893441520631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:45:24-0400",
+    "creative_id": "1444219780361112",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421460631",
+    "ad_name": "BR-SportsBars-Cohort3",
+    "adset_id": "120245893421200631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:38:54-0400",
+    "creative_id": "2474097259720670",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400480631",
+    "ad_name": "BR-YogaStudios-Cohort1",
+    "adset_id": "120245893400080631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:16-0400",
+    "creative_id": "989665016968762",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893442240631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort7",
+    "adset_id": "120245893441480631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:44:12-0400",
+    "creative_id": "1886924832026689",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400540631",
+    "ad_name": "BR-BedandBreakfasts-Cohort4",
+    "adset_id": "120245893400010631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:10-0400",
+    "creative_id": "1539894017850767",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421400631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort2",
+    "adset_id": "120245893421210631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:41:07-0400",
+    "creative_id": "1863190497704134",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431610631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort7",
+    "adset_id": "120245893431180631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:23-0400",
+    "creative_id": "978299184795092",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441920631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort3",
+    "adset_id": "120245893441450631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:25-0400",
+    "creative_id": "26668466346136804",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400580631",
+    "ad_name": "BR-NailSalons-Cohort5",
+    "adset_id": "120245893400230631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:41-0400",
+    "creative_id": "1227753946100425",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421510631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort4",
+    "adset_id": "120245893421340631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:41:23-0400",
+    "creative_id": "2013222959403148",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431630631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort10",
+    "adset_id": "120245893431190631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:38:48-0400",
+    "creative_id": "772102232523038",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400530631",
+    "ad_name": "BR-YogaStudios-Cohort11",
+    "adset_id": "120245893400090631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:25-0400",
+    "creative_id": "774996842364892",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893442170631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort11",
+    "adset_id": "120245893441560631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:43:38-0400",
+    "creative_id": "2828454014174507",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441850631",
+    "ad_name": "BR-IndependentBookstores-Cohort4",
+    "adset_id": "120245893441660631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:43:10-0400",
+    "creative_id": "1517496879900132",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431720631",
+    "ad_name": "BR-Distilleries-Cohort7",
+    "adset_id": "120245893431290631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:01-0400",
+    "creative_id": "946554551579741",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400680631",
+    "ad_name": "BR-BedandBreakfasts-Cohort1",
+    "adset_id": "120245893400000631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:27-0400",
+    "creative_id": "1495967862128279",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400620631",
+    "ad_name": "BR-NailSalons-Cohort11",
+    "adset_id": "120245893400240631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:12-0400",
+    "creative_id": "1476860780249326",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400380631",
+    "ad_name": "BR-NailSalons-Cohort7",
+    "adset_id": "120245893400190631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:38:47-0400",
+    "creative_id": "1282887700667251",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893442160631",
+    "ad_name": "BR-DaySpas-Cohort6",
+    "adset_id": "120245893441420631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:42:23-0400",
+    "creative_id": "1431520392112555",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400430631",
+    "ad_name": "BR-YogaStudios-Cohort7",
+    "adset_id": "120245893400060631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:06-0400",
+    "creative_id": "1603604120715710",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431680631",
+    "ad_name": "BR-Distilleries-Cohort11",
+    "adset_id": "120245893431230631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:42:10-0400",
+    "creative_id": "2772530726438360",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400400631",
+    "ad_name": "BR-YogaStudios-Cohort5",
+    "adset_id": "120245893400120631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:35-0400",
+    "creative_id": "1643189387008142",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400660631",
+    "ad_name": "BR-BedandBreakfasts-Cohort7",
+    "adset_id": "120245893400310631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:57-0400",
+    "creative_id": "804721952440436",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421540631",
+    "ad_name": "BR-WineriesVineyards-Cohort5",
+    "adset_id": "120245893421130631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:38:40-0400",
+    "creative_id": "951568001112015",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893442050631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort8",
+    "adset_id": "120245893441540631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:04-0400",
+    "creative_id": "962056256544282",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431640631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort5",
+    "adset_id": "120245893431120631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:57-0400",
+    "creative_id": "4596415007247290",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431800631",
+    "ad_name": "BR-CocktailWineBars-Cohort10",
+    "adset_id": "120245893431350631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:26-0400",
+    "creative_id": "983459517433450",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421610631",
+    "ad_name": "BR-SportsBars-Cohort4",
+    "adset_id": "120245893421190631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:40:55-0400",
+    "creative_id": "947931661210886",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431730631",
+    "ad_name": "BR-Distilleries-Cohort10",
+    "adset_id": "120245893431300631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:10-0400",
+    "creative_id": "35345175485129084",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442310631",
+    "ad_name": "BR-FlowerShops-Cohort8",
+    "adset_id": "120245893441470631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:45:38-0400",
+    "creative_id": "1231194392197298",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400420631",
+    "ad_name": "BR-YogaStudios-Cohort8",
+    "adset_id": "120245893400130631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:38:38-0400",
+    "creative_id": "1505399807902245",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893441820631",
+    "ad_name": "BR-IndependentBookstores-Cohort8",
+    "adset_id": "120245893441350631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:32-0400",
+    "creative_id": "978667517978209",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441700631",
+    "ad_name": "BR-DanceStudios-Cohort3",
+    "adset_id": "120245893441430631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:14-0400",
+    "creative_id": "1263457789271313",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431660631",
+    "ad_name": "BR-CoffeeRoasters-Cohort5",
+    "adset_id": "120245893431220631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:43-0400",
+    "creative_id": "26449845668032192",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441900631",
+    "ad_name": "BR-DanceStudios-Cohort7",
+    "adset_id": "120245893441530631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:43:44-0400",
+    "creative_id": "816923207736719",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431560631",
+    "ad_name": "BR-Distilleries-Cohort9",
+    "adset_id": "120245893431240631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:34-0400",
+    "creative_id": "26626379957015249",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442280631",
+    "ad_name": "BR-IndependentBookstores-Cohort3",
+    "adset_id": "120245893441340631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:45:55-0400",
+    "creative_id": "3521510431324728",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400450631",
+    "ad_name": "BR-YogaStudios-Cohort4",
+    "adset_id": "120245893400150631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:39-0400",
+    "creative_id": "2078477182727824",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893442000631",
+    "ad_name": "BR-HairSalons-Cohort8",
+    "adset_id": "120245893441580631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:38:49-0400",
+    "creative_id": "1736143500690122",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431960631",
+    "ad_name": "BR-CocktailWineBars-Cohort11",
+    "adset_id": "120245893431540631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:58-0400",
+    "creative_id": "27296030239994973",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431750631",
+    "ad_name": "BR-Distilleries-Cohort8",
+    "adset_id": "120245893431510631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:38:39-0400",
+    "creative_id": "1430247405457225",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441730631",
+    "ad_name": "BR-FlowerShops-Cohort2",
+    "adset_id": "120245893441410631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:44:37-0400",
+    "creative_id": "822927440865095",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431740631",
+    "ad_name": "BR-Distilleries-Cohort6",
+    "adset_id": "120245893431500631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:16-0400",
+    "creative_id": "4550520415177474",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400460631",
+    "ad_name": "BR-YogaStudios-Cohort3",
+    "adset_id": "120245893400070631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:38:53-0400",
+    "creative_id": "912882805133704",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421450631",
+    "ad_name": "BR-SportsBars-Cohort8",
+    "adset_id": "120245893421170631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:40:05-0400",
+    "creative_id": "2449191505503129",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400510631",
+    "ad_name": "BR-NailSalons-Cohort10",
+    "adset_id": "120245893400020631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:41:03-0400",
+    "creative_id": "961816319727807",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400440631",
+    "ad_name": "BR-YogaStudios-Cohort10",
+    "adset_id": "120245893400050631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:19-0400",
+    "creative_id": "982491734333669",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431620631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort6",
+    "adset_id": "120245893431200631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:00-0400",
+    "creative_id": "3045110769020192",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431590631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort3",
+    "adset_id": "120245893431140631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:44-0400",
+    "creative_id": "1646778259895172",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421670631",
+    "ad_name": "BR-SportsBars-Cohort7",
+    "adset_id": "120245893421160631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:46-0400",
+    "creative_id": "1477091884055006",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400360631",
+    "ad_name": "BR-BedandBreakfasts-Cohort3",
+    "adset_id": "120245893400180631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:29-0400",
+    "creative_id": "830044439652150",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431570631",
+    "ad_name": "BR-CoffeeRoasters-Cohort8",
+    "adset_id": "120245893431480631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:42:06-0400",
+    "creative_id": "2208950559907036",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400520631",
+    "ad_name": "BR-NailSalons-Cohort6",
+    "adset_id": "120245893400160631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:22-0400",
+    "creative_id": "2246047509136276",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431830631",
+    "ad_name": "BR-CoffeeRoasters-Cohort9",
+    "adset_id": "120245893431390631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:36-0400",
+    "creative_id": "1588362853296991",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421550631",
+    "ad_name": "BR-WineriesVineyards-Cohort8",
+    "adset_id": "120245893421120631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:37-0400",
+    "creative_id": "35417662837849468",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400550631",
+    "ad_name": "BR-NailSalons-Cohort8",
+    "adset_id": "120245893400170631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:38:59-0400",
+    "creative_id": "1314005890638000",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421520631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort11",
+    "adset_id": "120245893421230631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:41:39-0400",
+    "creative_id": "971789385227882",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421710631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort10",
+    "adset_id": "120245893421090631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:41:07-0400",
+    "creative_id": "1661546321554411",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893442180631",
+    "ad_name": "BR-FlowerShops-Cohort7",
+    "adset_id": "120245893441300631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:45:48-0400",
+    "creative_id": "972048955337073",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441940631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort5",
+    "adset_id": "120245893441550631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:41:37-0400",
+    "creative_id": "1574398680791348",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431920631",
+    "ad_name": "BR-CoffeeRoasters-Cohort10",
+    "adset_id": "120245893431450631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:28-0400",
+    "creative_id": "1496164658615587",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421620631",
+    "ad_name": "BR-SportsBars-Cohort10",
+    "adset_id": "120245893421180631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:38:40-0400",
+    "creative_id": "833748149787759",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431930631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort11",
+    "adset_id": "120245893431130631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:29-0400",
+    "creative_id": "4586948371592142",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431690631",
+    "ad_name": "BR-Distilleries-Cohort2",
+    "adset_id": "120245893431260631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:34-0400",
+    "creative_id": "4274246452837779",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893421690631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort7",
+    "adset_id": "120245893421250631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:37-0400",
+    "creative_id": "1516591916710516",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431780631",
+    "ad_name": "BR-CocktailWineBars-Cohort7",
+    "adset_id": "120245893431340631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:39-0400",
+    "creative_id": "26732676516365680",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431890631",
+    "ad_name": "BR-CoffeeRoasters-Cohort4",
+    "adset_id": "120245893431440631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:02-0400",
+    "creative_id": "955385567136772",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431600631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort4",
+    "adset_id": "120245893431150631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:27-0400",
+    "creative_id": "1282411867352671",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442230631",
+    "ad_name": "BR-DaySpas-Cohort7",
+    "adset_id": "120245893441590631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:41:21-0400",
+    "creative_id": "985958323908692",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442060631",
+    "ad_name": "BR-DaySpas-Cohort9",
+    "adset_id": "120245893441600631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:41:07-0400",
+    "creative_id": "1175449017972535",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400410631",
+    "ad_name": "BR-BedandBreakfasts-Cohort9",
+    "adset_id": "120245893400030631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:50-0400",
+    "creative_id": "4020021404962231",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421490631",
+    "ad_name": "BR-SportsBars-Cohort9",
+    "adset_id": "120245893421080631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:26-0400",
+    "creative_id": "2765727453805690",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400390631",
+    "ad_name": "BR-BedandBreakfasts-Cohort11",
+    "adset_id": "120245893400040631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:48-0400",
+    "creative_id": "1623494045598224",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421560631",
+    "ad_name": "BR-WineriesVineyards-Cohort3",
+    "adset_id": "120245893421290631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:26-0400",
+    "creative_id": "2643933639385511",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893441770631",
+    "ad_name": "BR-FlowerShops-Cohort5",
+    "adset_id": "120245893441490631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:02-0400",
+    "creative_id": "1845018979498611",
+    "effective_status": "ACTIVE"
+  },
+  {
+    "ad_id": "120245893441970631",
+    "ad_name": "BR-FlowerShops-Cohort11",
+    "adset_id": "120245893441640631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:45:10-0400",
+    "creative_id": "2881623252184038",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441930631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort4",
+    "adset_id": "120245893441460631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:56-0400",
+    "creative_id": "2413365059163515",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431840631",
+    "ad_name": "BR-CocktailWineBars-Cohort5",
+    "adset_id": "120245893431380631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:39-0400",
+    "creative_id": "953743750852446",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442220631",
+    "ad_name": "BR-HairSalons-Cohort11",
+    "adset_id": "120245893441510631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:41:07-0400",
+    "creative_id": "779132761801279",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431980631",
+    "ad_name": "BR-Distilleries-Cohort5",
+    "adset_id": "120245893431520631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:27-0400",
+    "creative_id": "1907622819895780",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441960631",
+    "ad_name": "BR-DaySpas-Cohort5",
+    "adset_id": "120245893441610631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:09-0400",
+    "creative_id": "908864085503729",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431940631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort1",
+    "adset_id": "120245893431160631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:08-0400",
+    "creative_id": "1275113501409784",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400370631",
+    "ad_name": "BR-BedandBreakfasts-Cohort6",
+    "adset_id": "120245893400270631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:51-0400",
+    "creative_id": "2186337295495947",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400670631",
+    "ad_name": "BR-BedandBreakfasts-Cohort2",
+    "adset_id": "120245893400320631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:18-0400",
+    "creative_id": "948718767969990",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400600631",
+    "ad_name": "BR-NailSalons-Cohort1",
+    "adset_id": "120245893400250631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:44-0400",
+    "creative_id": "1906992393349665",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400560631",
+    "ad_name": "BR-NailSalons-Cohort3",
+    "adset_id": "120245893400210631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:01-0400",
+    "creative_id": "1360712822535328",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893442030631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort1",
+    "adset_id": "120245893441440631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:54-0400",
+    "creative_id": "924912877207135",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431670631",
+    "ad_name": "BR-Distilleries-Cohort1",
+    "adset_id": "120245893431250631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:14-0400",
+    "creative_id": "1314835950750210",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431870631",
+    "ad_name": "BR-CoffeeRoasters-Cohort3",
+    "adset_id": "120245893431430631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:51-0400",
+    "creative_id": "2750693841957808",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400470631",
+    "ad_name": "BR-YogaStudios-Cohort6",
+    "adset_id": "120245893400140631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:56-0400",
+    "creative_id": "987092627171656",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421700631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort8",
+    "adset_id": "120245893421310631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:40:38-0400",
+    "creative_id": "970082839325157",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421530631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort9",
+    "adset_id": "120245893421280631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:41:23-0400",
+    "creative_id": "3405761842947577",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421680631",
+    "ad_name": "BR-SportsBars-Cohort6",
+    "adset_id": "120245893421270631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:41:54-0400",
+    "creative_id": "1528021045404494",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431550631",
+    "ad_name": "BR-CocktailWineBars-Cohort1",
+    "adset_id": "120245893431110631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:50-0400",
+    "creative_id": "1661182255123633",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400570631",
+    "ad_name": "BR-NailSalons-Cohort4",
+    "adset_id": "120245893400220631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:29-0400",
+    "creative_id": "1984970185740910",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421580631",
+    "ad_name": "BR-WineriesVineyards-Cohort6",
+    "adset_id": "120245893421110631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:40:13-0400",
+    "creative_id": "948207994672638",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421590631",
+    "ad_name": "BR-WineriesVineyards-Cohort7",
+    "adset_id": "120245893421140631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:41:39-0400",
+    "creative_id": "959524193497532",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400650631",
+    "ad_name": "BR-BedandBreakfasts-Cohort8",
+    "adset_id": "120245893400290631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:38-0400",
+    "creative_id": "2005529166699249",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421420631",
+    "ad_name": "BR-WineriesVineyards-Cohort1",
+    "adset_id": "120245893421100631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:13-0400",
+    "creative_id": "1804696604276100",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400590631",
+    "ad_name": "BR-NailSalons-Cohort2",
+    "adset_id": "120245893400200631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:38:40-0400",
+    "creative_id": "1692396521915748",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893421390631",
+    "ad_name": "BR-IndependentCoffeeShops-Cohort1",
+    "adset_id": "120245893421220631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:40:13-0400",
+    "creative_id": "2363253557517426",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893431580631",
+    "ad_name": "BR-CraftBreweriesBrewpubs-Cohort2",
+    "adset_id": "120245893431170631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:58-0400",
+    "creative_id": "946399321617198",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442290631",
+    "ad_name": "BR-FlowerShops-Cohort9",
+    "adset_id": "120245893441620631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:37-0400",
+    "creative_id": "2051237008792818",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431970631",
+    "ad_name": "BR-CocktailWineBars-Cohort9",
+    "adset_id": "120245893431530631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:39:37-0400",
+    "creative_id": "974115152252123",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893421650631",
+    "ad_name": "BR-WineriesVineyards-Cohort9",
+    "adset_id": "120245893421260631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:03-0400",
+    "creative_id": "2085782231970602",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893431950631",
+    "ad_name": "BR-CoffeeRoasters-Cohort6",
+    "adset_id": "120245893431470631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:21-0400",
+    "creative_id": "1505167711359829",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893400490631",
+    "ad_name": "BR-YogaStudios-Cohort2",
+    "adset_id": "120245893400100631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:40:03-0400",
+    "creative_id": "1054871287258980",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893400610631",
+    "ad_name": "BR-BedandBreakfasts-Cohort5",
+    "adset_id": "120245893400300631",
+    "campaign_id": "120245893173830631",
+    "created_time": "2026-04-09T13:39:14-0400",
+    "creative_id": "1275014574843739",
+    "effective_status": "WITH_ISSUES"
+  },
+  {
+    "ad_id": "120245893421600631",
+    "ad_name": "BR-WineriesVineyards-Cohort4",
+    "adset_id": "120245893421350631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:39:56-0400",
+    "creative_id": "978478025077500",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893421470631",
+    "ad_name": "BR-SportsBars-Cohort11",
+    "adset_id": "120245893421380631",
+    "campaign_id": "120245893173820631",
+    "created_time": "2026-04-09T13:40:38-0400",
+    "creative_id": "959848886900495",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120246483523280631",
+    "ad_name": "Pizza Shops - DC - 2026-04-18 - Community",
+    "adset_id": "120246483523260631",
+    "campaign_id": "120241959190970631",
+    "created_time": "2026-04-19T15:17:40-0400",
+    "creative_id": "943785585190825",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120246516495080631",
+    "ad_name": "Fitness Wellness - DC - 2026-04-18 - Outcome",
+    "adset_id": "120246516495090631",
+    "campaign_id": "120244094020690631",
+    "created_time": "2026-04-20T08:13:44-0400",
+    "creative_id": "3008186312905897",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120246516495100631",
+    "ad_name": "Fitness Wellness - DC - 2026-04-18 - Community",
+    "adset_id": "120246516495110631",
+    "campaign_id": "120244094020690631",
+    "created_time": "2026-04-20T08:13:52-0400",
+    "creative_id": "3116406658747116",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120246483523270631",
+    "ad_name": "Pizza Shops - DC - 2026-04-18 - Pain",
+    "adset_id": "120246483523250631",
+    "campaign_id": "120241959190970631",
+    "created_time": "2026-04-19T15:17:40-0400",
+    "creative_id": "2044899083050161",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120246482969630631",
+    "ad_name": "Creameries - DC - 2026-04-18 - Community",
+    "adset_id": "120246482969620631",
+    "campaign_id": "120241605050900631",
+    "created_time": "2026-04-19T14:18:15-0400",
+    "creative_id": "964636783192914",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120246482969640631",
+    "ad_name": "Creameries - DC - 2026-04-18 - Pain",
+    "adset_id": "120246482969610631",
+    "campaign_id": "120241605050900631",
+    "created_time": "2026-04-19T14:17:26-0400",
+    "creative_id": "1635557344162899",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441950631",
+    "ad_name": "BR-DaySpas-Cohort4",
+    "adset_id": "120245893441390631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:18-0400",
+    "creative_id": "1303594158310120",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442110631",
+    "ad_name": "BR-DanceStudios-Cohort6",
+    "adset_id": "120245893441250631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:38:49-0400",
+    "creative_id": "1466481965123632",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441870631",
+    "ad_name": "BR-HairSalons-Cohort1",
+    "adset_id": "120245893441100631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:38:41-0400",
+    "creative_id": "948069674588886",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442320631",
+    "ad_name": "BR-FlowerShops-Cohort4",
+    "adset_id": "120245893441200631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:44:19-0400",
+    "creative_id": "1842942359717540",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442080631",
+    "ad_name": "BR-DaySpas-Cohort1",
+    "adset_id": "120245893441370631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:46-0400",
+    "creative_id": "1613816209829046",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441690631",
+    "ad_name": "BR-DanceStudios-Cohort9",
+    "adset_id": "120245893441210631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:43:25-0400",
+    "creative_id": "1277356043891728",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441720631",
+    "ad_name": "BR-HairSalons-Cohort5",
+    "adset_id": "120245893441150631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:25-0400",
+    "creative_id": "1686774572485681",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442210631",
+    "ad_name": "BR-DanceStudios-Cohort10",
+    "adset_id": "120245893441020631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:45:02-0400",
+    "creative_id": "968092168973313",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441860631",
+    "ad_name": "BR-DanceStudios-Cohort11",
+    "adset_id": "120245893441140631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:42:54-0400",
+    "creative_id": "981679860877109",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441740631",
+    "ad_name": "BR-IndependentBookstores-Cohort9",
+    "adset_id": "120245893441130631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:43:53-0400",
+    "creative_id": "1551214713002979",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442100631",
+    "ad_name": "BR-DaySpas-Cohort10",
+    "adset_id": "120245893441400631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:56-0400",
+    "creative_id": "1513585753668463",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441750631",
+    "ad_name": "BR-FlowerShops-Cohort3",
+    "adset_id": "120245893441080631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:42:38-0400",
+    "creative_id": "1752176436140664",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441810631",
+    "ad_name": "BR-IndependentBookstores-Cohort6",
+    "adset_id": "120245893441040631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:09-0400",
+    "creative_id": "969171528862223",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442140631",
+    "ad_name": "BR-DaySpas-Cohort8",
+    "adset_id": "120245893441050631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:44:45-0400",
+    "creative_id": "1643554230047741",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442010631",
+    "ad_name": "BR-IndependentBookstores-Cohort11",
+    "adset_id": "120245893441120631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:37-0400",
+    "creative_id": "1248719714098687",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442270631",
+    "ad_name": "BR-DaySpas-Cohort11",
+    "adset_id": "120245893441280631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:18-0400",
+    "creative_id": "4223451681249914",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442090631",
+    "ad_name": "BR-DaySpas-Cohort3",
+    "adset_id": "120245893441380631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:45:19-0400",
+    "creative_id": "1540314227736474",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442250631",
+    "ad_name": "BR-IndependentBookstores-Cohort2",
+    "adset_id": "120245893441180631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:44:25-0400",
+    "creative_id": "1266406401802605",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442190631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort6",
+    "adset_id": "120245893441290631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:44:33-0400",
+    "creative_id": "1654958608871421",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441880631",
+    "ad_name": "BR-IndependentBookstores-Cohort5",
+    "adset_id": "120245893441220631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:43:58-0400",
+    "creative_id": "942231678454803",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441910631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort2",
+    "adset_id": "120245893441260631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:38:41-0400",
+    "creative_id": "1912960416078094",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442120631",
+    "ad_name": "BR-DanceStudios-Cohort8",
+    "adset_id": "120245893441030631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:14-0400",
+    "creative_id": "848705981567457",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442130631",
+    "ad_name": "BR-DanceStudios-Cohort5",
+    "adset_id": "120245893441240631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:43:03-0400",
+    "creative_id": "1293096042882536",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442040631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort10",
+    "adset_id": "120245893441270631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:44:05-0400",
+    "creative_id": "1630619228145261",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441840631",
+    "ad_name": "BR-HairSalons-Cohort6",
+    "adset_id": "120245893441090631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:04-0400",
+    "creative_id": "850532308059035",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442330631",
+    "ad_name": "BR-HairSalons-Cohort9",
+    "adset_id": "120245893441110631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:40:54-0400",
+    "creative_id": "2112350509607352",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441760631",
+    "ad_name": "BR-FlowerShops-Cohort6",
+    "adset_id": "120245893441070631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:42:45-0400",
+    "creative_id": "1475091821003838",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893441980631",
+    "ad_name": "BR-FlowerShops-Cohort10",
+    "adset_id": "120245893441060631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:45:32-0400",
+    "creative_id": "1591012888674713",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442020631",
+    "ad_name": "BR-IndependentBookstores-Cohort10",
+    "adset_id": "120245893441170631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:43:29-0400",
+    "creative_id": "2433531613773492",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442150631",
+    "ad_name": "BR-DayCareEarlyChildhoodCenters-Cohort9",
+    "adset_id": "120245893441230631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:45:59-0400",
+    "creative_id": "1707362297095329",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442070631",
+    "ad_name": "BR-DanceStudios-Cohort2",
+    "adset_id": "120245893441190631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:41:21-0400",
+    "creative_id": "1231966585416545",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893442260631",
+    "ad_name": "BR-IndependentBookstores-Cohort1",
+    "adset_id": "120245893441160631",
+    "campaign_id": "120245893173810631",
+    "created_time": "2026-04-09T13:39:46-0400",
+    "creative_id": "1607852447094799",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893454110631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort10",
+    "adset_id": "120245893453110631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:03-0400",
+    "creative_id": "987285127178402",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454030631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort10",
+    "adset_id": "120245893453340631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:24-0400",
+    "creative_id": "1307182254590109",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454270631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort9",
+    "adset_id": "120245893453600631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:51-0400",
+    "creative_id": "1280286490121016",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454300631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort4",
+    "adset_id": "120245893453610631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:17-0400",
+    "creative_id": "2021098655504993",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453900631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort4",
+    "adset_id": "120245893453240631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:52-0400",
+    "creative_id": "1458587628590626",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453800631",
+    "ad_name": "BR-PizzaRestaurants-Cohort7",
+    "adset_id": "120245893453150631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:10-0400",
+    "creative_id": "1334146255436230",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454250631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort3",
+    "adset_id": "120245893453090631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:46-0400",
+    "creative_id": "954099630440119",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454140631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort7",
+    "adset_id": "120245893453120631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:54-0400",
+    "creative_id": "884145508006743",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454120631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort8",
+    "adset_id": "120245893453460631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:10-0400",
+    "creative_id": "922617930406151",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454070631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort11",
+    "adset_id": "120245893453430631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:06-0400",
+    "creative_id": "1586366179088926",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453830631",
+    "ad_name": "BR-PizzaRestaurants-Cohort8",
+    "adset_id": "120245893453200631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:44-0400",
+    "creative_id": "2670788523306837",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454340631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort10",
+    "adset_id": "120245893453640631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:13-0400",
+    "creative_id": "3888457981289678",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454230631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort7",
+    "adset_id": "120245893453510631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:40-0400",
+    "creative_id": "995965473103329",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453940631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort10",
+    "adset_id": "120245893453270631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:23-0400",
+    "creative_id": "926990610110357",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454330631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort2",
+    "adset_id": "120245893453440631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:40-0400",
+    "creative_id": "1317010787008479",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454280631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort11",
+    "adset_id": "120245893453620631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:06-0400",
+    "creative_id": "817675124193650",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454210631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort4",
+    "adset_id": "120245893453540631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:00-0400",
+    "creative_id": "1491498159367367",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454200631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort3",
+    "adset_id": "120245893453530631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:21-0400",
+    "creative_id": "1615105146211301",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454170631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort11",
+    "adset_id": "120245893453500631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:23-0400",
+    "creative_id": "972135015283926",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454220631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort10",
+    "adset_id": "120245893453550631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:59-0400",
+    "creative_id": "1652656165937247",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454370631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort5",
+    "adset_id": "120245893453670631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:41-0400",
+    "creative_id": "1963920430984570",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454020631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort3",
+    "adset_id": "120245893453320631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:51-0400",
+    "creative_id": "1107855199070449",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453850631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort1",
+    "adset_id": "120245893453220631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:36-0400",
+    "creative_id": "913395631374812",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453750631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort2",
+    "adset_id": "120245893453100631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:23-0400",
+    "creative_id": "1127781789493589",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454390631",
+    "ad_name": "BR-PizzaRestaurants-Cohort3",
+    "adset_id": "120245893453290631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:37-0400",
+    "creative_id": "839477232517720",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454380631",
+    "ad_name": "BR-PizzaRestaurants-Cohort9",
+    "adset_id": "120245893453710631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:01-0400",
+    "creative_id": "1984401125620191",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454350631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort8",
+    "adset_id": "120245893453680631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:22-0400",
+    "creative_id": "1313576004007105",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454310631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort3",
+    "adset_id": "120245893453630631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:08-0400",
+    "creative_id": "785912364336578",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454130631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort4",
+    "adset_id": "120245893453130631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:38:39-0400",
+    "creative_id": "1472237594396998",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454100631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort9",
+    "adset_id": "120245893453450631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:08-0400",
+    "creative_id": "5439186699640836",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454060631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort5",
+    "adset_id": "120245893453390631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:39-0400",
+    "creative_id": "1591095131947811",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454000631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort2",
+    "adset_id": "120245893453370631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:16-0400",
+    "creative_id": "1656047982092703",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453950631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort5",
+    "adset_id": "120245893453140631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:46-0400",
+    "creative_id": "1950524025557451",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453790631",
+    "ad_name": "BR-PizzaRestaurants-Cohort1",
+    "adset_id": "120245893453700631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:01-0400",
+    "creative_id": "906266679034607",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454290631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort1",
+    "adset_id": "120245893453580631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:28-0400",
+    "creative_id": "1587130625734131",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454240631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort6",
+    "adset_id": "120245893453570631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:55-0400",
+    "creative_id": "1487444353090438",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454190631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort2",
+    "adset_id": "120245893453480631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:57-0400",
+    "creative_id": "929376336550652",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454180631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort1",
+    "adset_id": "120245893453490631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:26-0400",
+    "creative_id": "1133829568875366",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454160631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort5",
+    "adset_id": "120245893453470631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:15-0400",
+    "creative_id": "969261135658788",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454080631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort9",
+    "adset_id": "120245893453410631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:38:38-0400",
+    "creative_id": "948182138071046",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453910631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort8",
+    "adset_id": "120245893453280631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:23-0400",
+    "creative_id": "1098487382484666",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453890631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort7",
+    "adset_id": "120245893453260631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:21-0400",
+    "creative_id": "1653149702487129",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453840631",
+    "ad_name": "BR-PizzaRestaurants-Cohort5",
+    "adset_id": "120245893453180631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:56-0400",
+    "creative_id": "794283926735922",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453820631",
+    "ad_name": "BR-PizzaRestaurants-Cohort10",
+    "adset_id": "120245893453170631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:09-0400",
+    "creative_id": "2485727041879796",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453810631",
+    "ad_name": "BR-PizzaRestaurants-Cohort6",
+    "adset_id": "120245893453160631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:11-0400",
+    "creative_id": "1588153648924699",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453780631",
+    "ad_name": "BR-PizzaRestaurants-Cohort4",
+    "adset_id": "120245893453730631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:52-0400",
+    "creative_id": "2392009367937636",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453770631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort3",
+    "adset_id": "120245893453250631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:05-0400",
+    "creative_id": "2960373087489948",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453760631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort1",
+    "adset_id": "120245893453080631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:44:02-0400",
+    "creative_id": "2280273352776225",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454260631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort8",
+    "adset_id": "120245893453520631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:31-0400",
+    "creative_id": "2379056675904693",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454150631",
+    "ad_name": "BR-IndependentCateringCompanies-Cohort6",
+    "adset_id": "120245893453590631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:31-0400",
+    "creative_id": "1716117952987809",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454050631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort8",
+    "adset_id": "120245893453350631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:38:47-0400",
+    "creative_id": "1468265468223141",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454040631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort6",
+    "adset_id": "120245893453400631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:47-0400",
+    "creative_id": "26878581898415747",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453990631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort4",
+    "adset_id": "120245893453330631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:41:03-0400",
+    "creative_id": "1366352565518932",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453970631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort11",
+    "adset_id": "120245893453380631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:34-0400",
+    "creative_id": "1962152634509545",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453960631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort9",
+    "adset_id": "120245893453360631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:37-0400",
+    "creative_id": "1628618971762949",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453880631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort2",
+    "adset_id": "120245893453230631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:31-0400",
+    "creative_id": "1592126232018645",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453870631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort9",
+    "adset_id": "120245893453210631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:46-0400",
+    "creative_id": "795786103604403",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453860631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort11",
+    "adset_id": "120245893453190631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:29-0400",
+    "creative_id": "2486631188460728",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453980631",
+    "ad_name": "BR-TeaHousesBubbleTeaShops-Cohort1",
+    "adset_id": "120245893453310631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:16-0400",
+    "creative_id": "1476655964044570",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454400631",
+    "ad_name": "BR-PizzaRestaurants-Cohort2",
+    "adset_id": "120245893453720631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:01-0400",
+    "creative_id": "2502910933445143",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454320631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort7",
+    "adset_id": "120245893453650631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:40:15-0400",
+    "creative_id": "1442466494025642",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454360631",
+    "ad_name": "BR-JuiceSmoothieBars-Cohort6",
+    "adset_id": "120245893453660631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:38:44-0400",
+    "creative_id": "963676819339533",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893454090631",
+    "ad_name": "BR-IndependentGroceryStores-Cohort5",
+    "adset_id": "120245893453560631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:39:38-0400",
+    "creative_id": "942046308545640",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453920631",
+    "ad_name": "BR-SushiJapaneseRestaurants-Cohort6",
+    "adset_id": "120245893453300631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:42:35-0400",
+    "creative_id": "1510877620553281",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893453930631",
+    "ad_name": "BR-PizzaRestaurants-Cohort11",
+    "adset_id": "120245893453690631",
+    "campaign_id": "120245893173780631",
+    "created_time": "2026-04-09T13:43:45-0400",
+    "creative_id": "1000122519240165",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893431760631",
+    "ad_name": "BR-CoffeeRoasters-Cohort1",
+    "adset_id": "120245893431310631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:17-0400",
+    "creative_id": "2502632176823253",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431770631",
+    "ad_name": "BR-CocktailWineBars-Cohort3",
+    "adset_id": "120245893431330631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:41:12-0400",
+    "creative_id": "1737230110592149",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120245893431710631",
+    "ad_name": "BR-Distilleries-Cohort4",
+    "adset_id": "120245893431280631",
+    "campaign_id": "120245893173800631",
+    "created_time": "2026-04-09T13:40:05-0400",
+    "creative_id": "1489337619237801",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120244509567540631",
+    "ad_name": "Industry Specific - Bakery",
+    "adset_id": "120244509567530631",
+    "campaign_id": "120238791690590631",
+    "created_time": "2026-03-18T17:53:51-0400",
+    "creative_id": "988795553726881",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241323300850631",
+    "ad_name": "Industry Specific - Bakery",
+    "adset_id": "120241323300840631",
+    "campaign_id": "120238791690590631",
+    "created_time": "2025-12-26T16:58:08-0500",
+    "creative_id": "1282601619919968",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120245893456700631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort3",
+    "adset_id": "120245893456120631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:24-0400",
+    "creative_id": "950940067627639",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457230631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort5",
+    "adset_id": "120245893456480631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:51-0400",
+    "creative_id": "26126049553684851",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457170631",
+    "ad_name": "BR-IceCreamShops-Cohort5",
+    "adset_id": "120245893456580631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:44:02-0400",
+    "creative_id": "972563421908566",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457160631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort11",
+    "adset_id": "120245893456560631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:21-0400",
+    "creative_id": "1665420908129284",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457110631",
+    "ad_name": "BR-BBQRestaurants-Cohort11",
+    "adset_id": "120245893456250631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:29-0400",
+    "creative_id": "2685744891798220",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457100631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort11",
+    "adset_id": "120245893456020631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:26-0400",
+    "creative_id": "1553526509077056",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456770631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort10",
+    "adset_id": "120245893456150631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:37-0400",
+    "creative_id": "969502525600447",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456870631",
+    "ad_name": "BR-IceCreamShops-Cohort10",
+    "adset_id": "120245893456540631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:57-0400",
+    "creative_id": "2161421784680580",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456690631",
+    "ad_name": "BR-CheeseShops-Cohort5",
+    "adset_id": "120245893456090631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:41-0400",
+    "creative_id": "1346509760638992",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456960631",
+    "ad_name": "BR-BBQRestaurants-Cohort3",
+    "adset_id": "120245893456260631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:48-0400",
+    "creative_id": "1118266750454794",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456610631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort10",
+    "adset_id": "120245893456350631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:51-0400",
+    "creative_id": "4322531888013736",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457040631",
+    "ad_name": "BR-BBQRestaurants-Cohort5",
+    "adset_id": "120245893456300631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:41:39-0400",
+    "creative_id": "1435425994469710",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456760631",
+    "ad_name": "BR-CheeseShops-Cohort11",
+    "adset_id": "120245893456420631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:45-0400",
+    "creative_id": "881709194889909",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456930631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort8",
+    "adset_id": "120245893456220631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:41:29-0400",
+    "creative_id": "1280589320940880",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457210631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort8",
+    "adset_id": "120245893456460631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:09-0400",
+    "creative_id": "1688255619025731",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456860631",
+    "ad_name": "BR-CheeseShops-Cohort10",
+    "adset_id": "120245893456040631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:41:52-0400",
+    "creative_id": "1626351438440449",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457090631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort8",
+    "adset_id": "120245893456370631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:33-0400",
+    "creative_id": "1495109552281577",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457010631",
+    "ad_name": "BR-BBQRestaurants-Cohort10",
+    "adset_id": "120245893456240631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:41:09-0400",
+    "creative_id": "3478776035594533",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457130631",
+    "ad_name": "BR-CheeseShops-Cohort3",
+    "adset_id": "120245893455990631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:53-0400",
+    "creative_id": "1164964052345726",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456730631",
+    "ad_name": "BR-IceCreamShops-Cohort9",
+    "adset_id": "120245893456440631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:18-0400",
+    "creative_id": "1497498525416975",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457080631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort7",
+    "adset_id": "120245893455950631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:20-0400",
+    "creative_id": "1336443111648790",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457120631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort5",
+    "adset_id": "120245893456070631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:10-0400",
+    "creative_id": "1722403745809301",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456790631",
+    "ad_name": "BR-IceCreamShops-Cohort3",
+    "adset_id": "120245893456570631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:02-0400",
+    "creative_id": "940280161952160",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456910631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort5",
+    "adset_id": "120245893456390631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:12-0400",
+    "creative_id": "2097981370751891",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456900631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort3",
+    "adset_id": "120245893456200631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:44-0400",
+    "creative_id": "1867193553943525",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457200631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort7",
+    "adset_id": "120245893456130631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:55-0400",
+    "creative_id": "1896384117686491",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456820631",
+    "ad_name": "BR-IceCreamShops-Cohort11",
+    "adset_id": "120245893456490631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:27-0400",
+    "creative_id": "1271360708304992",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456680631",
+    "ad_name": "BR-CheeseShops-Cohort8",
+    "adset_id": "120245893456050631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:03-0400",
+    "creative_id": "1656130168990015",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456630631",
+    "ad_name": "BR-CheeseShops-Cohort2",
+    "adset_id": "120245893456170631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:47-0400",
+    "creative_id": "2350186335473559",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456840631",
+    "ad_name": "BR-IceCreamShops-Cohort4",
+    "adset_id": "120245893456450631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:39-0400",
+    "creative_id": "875675622179975",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456670631",
+    "ad_name": "BR-BBQRestaurants-Cohort8",
+    "adset_id": "120245893456280631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:26-0400",
+    "creative_id": "1730122601657842",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456780631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort6",
+    "adset_id": "120245893456430631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:14-0400",
+    "creative_id": "1856565841580238",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456710631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort9",
+    "adset_id": "120245893456100631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:20-0400",
+    "creative_id": "932530626257003",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457240631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort9",
+    "adset_id": "120245893456550631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:13-0400",
+    "creative_id": "2248529789292018",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457180631",
+    "ad_name": "BR-CheeseShops-Cohort6",
+    "adset_id": "120245893456010631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:38:39-0400",
+    "creative_id": "1270159884679216",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456970631",
+    "ad_name": "BR-BBQRestaurants-Cohort7",
+    "adset_id": "120245893456230631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:38:38-0400",
+    "creative_id": "949950731072954",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457190631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort4",
+    "adset_id": "120245893456180631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:38:59-0400",
+    "creative_id": "1914166395883619",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457060631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort9",
+    "adset_id": "120245893456320631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:02-0400",
+    "creative_id": "939139472344032",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456620631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort6",
+    "adset_id": "120245893456410631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:38-0400",
+    "creative_id": "1303538554986172",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456980631",
+    "ad_name": "BR-BBQRestaurants-Cohort6",
+    "adset_id": "120245893456290631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:44:03-0400",
+    "creative_id": "1442764377330470",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456660631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort11",
+    "adset_id": "120245893456110631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:52-0400",
+    "creative_id": "2108457786672219",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457050631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort3",
+    "adset_id": "120245893456330631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:45-0400",
+    "creative_id": "1509706367182067",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457220631",
+    "ad_name": "BR-BBQRestaurants-Cohort9",
+    "adset_id": "120245893456210631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:39-0400",
+    "creative_id": "1510389330430874",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456800631",
+    "ad_name": "BR-IceCreamShops-Cohort7",
+    "adset_id": "120245893456510631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:15-0400",
+    "creative_id": "945541134543449",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456590631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort7",
+    "adset_id": "120245893456340631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:10-0400",
+    "creative_id": "889605280774270",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457020631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort4",
+    "adset_id": "120245893456190631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:00-0400",
+    "creative_id": "2322306471594225",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457000631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort1",
+    "adset_id": "120245893455930631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:43:07-0400",
+    "creative_id": "1711204916987839",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456720631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort1",
+    "adset_id": "120245893456160631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:28-0400",
+    "creative_id": "876741158745617",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456880631",
+    "ad_name": "BR-IceCreamShops-Cohort6",
+    "adset_id": "120245893456520631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:27-0400",
+    "creative_id": "1488287482702032",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456740631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort10",
+    "adset_id": "120245893456080631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:41:39-0400",
+    "creative_id": "2739447919743843",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456640631",
+    "ad_name": "BR-CheeseShops-Cohort7",
+    "adset_id": "120245893456000631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:07-0400",
+    "creative_id": "1597781131299357",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456600631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort2",
+    "adset_id": "120245893455940631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:18-0400",
+    "creative_id": "1260620189530687",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457030631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort2",
+    "adset_id": "120245893456380631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:42:17-0400",
+    "creative_id": "1461949792389314",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456650631",
+    "ad_name": "BR-CheeseShops-Cohort4",
+    "adset_id": "120245893456030631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:41:56-0400",
+    "creative_id": "1643331403553569",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457070631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort4",
+    "adset_id": "120245893456060631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:41:17-0400",
+    "creative_id": "1260934505668376",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456810631",
+    "ad_name": "BR-CheeseShops-Cohort9",
+    "adset_id": "120245893456400631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:59-0400",
+    "creative_id": "4343021019276172",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456850631",
+    "ad_name": "BR-IceCreamShops-Cohort2",
+    "adset_id": "120245893456500631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:41:23-0400",
+    "creative_id": "1440879900510703",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456920631",
+    "ad_name": "BR-ArtisanBakeriesPatisseries-Cohort6",
+    "adset_id": "120245893456310631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:41:04-0400",
+    "creative_id": "2012738289279378",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456990631",
+    "ad_name": "BR-BBQRestaurants-Cohort4",
+    "adset_id": "120245893455980631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:38-0400",
+    "creative_id": "26254570290851833",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456830631",
+    "ad_name": "BR-IceCreamShops-Cohort1",
+    "adset_id": "120245893456470631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:40:27-0400",
+    "creative_id": "1660097295336770",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456940631",
+    "ad_name": "BR-BBQRestaurants-Cohort1",
+    "adset_id": "120245893456270631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:07-0400",
+    "creative_id": "942009491518150",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457150631",
+    "ad_name": "BR-IceCreamShops-Cohort8",
+    "adset_id": "120245893456530631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:54-0400",
+    "creative_id": "2717225318656520",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456750631",
+    "ad_name": "BR-EthnicCulturalRestaurants-Cohort2",
+    "adset_id": "120245893456140631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:39:33-0400",
+    "creative_id": "1602639657711318",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893456890631",
+    "ad_name": "BR-ButcherShopsDelis-Cohort1",
+    "adset_id": "120245893456360631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:38:45-0400",
+    "creative_id": "975197821735512",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120245893457140631",
+    "ad_name": "BR-CheeseShops-Cohort1",
+    "adset_id": "120245893455960631",
+    "campaign_id": "120245893173790631",
+    "created_time": "2026-04-09T13:38:46-0400",
+    "creative_id": "1916472688998096",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120244135874620631",
+    "ad_name": "Industry Specific - Fitness / wellness - Q1 2026",
+    "adset_id": "120244135874610631",
+    "campaign_id": "120244094020690631",
+    "created_time": "2026-03-11T16:54:55-0400",
+    "creative_id": "26156941843955191",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120244510368860631",
+    "ad_name": "Industry Specific - Bakery",
+    "adset_id": "120244510368850631",
+    "campaign_id": "120238791690590631",
+    "created_time": "2026-03-18T18:45:22-0400",
+    "creative_id": "921018194057099",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120244510347060631",
+    "ad_name": "Industry Specific - Bakery",
+    "adset_id": "120244510347050631",
+    "campaign_id": "120238791690590631",
+    "created_time": "2026-03-18T18:43:29-0400",
+    "creative_id": "1511435167304596",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120244232850240631",
+    "ad_name": "Winery / vineyard targeting",
+    "adset_id": "120244232850230631",
+    "campaign_id": "120241360795650631",
+    "created_time": "2026-03-13T13:26:07-0400",
+    "creative_id": "1306885594596327",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241361310160631",
+    "ad_name": "Winery / vineyard targeting",
+    "adset_id": "120241361310150631",
+    "campaign_id": "120241360795650631",
+    "created_time": "2025-12-28T18:51:36-0500",
+    "creative_id": "1568316167605635",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120244138133060631",
+    "ad_name": "Juice / smoothie - Q1 2026",
+    "adset_id": "120244138133050631",
+    "campaign_id": "120244137988980631",
+    "created_time": "2026-03-11T19:09:32-0400",
+    "creative_id": "1249230143329955",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120244094020710631",
+    "ad_name": "Industry Specific - Fitness / wellness - Q1 2026",
+    "adset_id": "120244094020700631",
+    "campaign_id": "120244094020690631",
+    "created_time": "2026-03-11T14:23:52-0400",
+    "creative_id": "1423637762875419",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120243109874840631",
+    "ad_name": "Delis / butchers - Q1 2026",
+    "adset_id": "120243109874850631",
+    "campaign_id": "120243109874830631",
+    "created_time": "2026-02-17T15:18:07-0500",
+    "creative_id": "1448017570449363",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120243111129220631",
+    "ad_name": "Delis / butchers - Q1 2026",
+    "adset_id": "120243111129230631",
+    "campaign_id": "120243109874830631",
+    "created_time": "2026-02-17T15:41:10-0500",
+    "creative_id": "938142988883179",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120243070857050631",
+    "ad_name": "Industry Specific - BBQ - Q1 2026",
+    "adset_id": "120243070857060631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-02-16T12:54:38-0500",
+    "creative_id": "1430781785452997",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120242950140670631",
+    "ad_name": "Industry Specific - BBQ - Q1 2026",
+    "adset_id": "120242950140650631",
+    "campaign_id": "120242949904880631",
+    "created_time": "2026-02-13T14:37:07-0500",
+    "creative_id": "1891359061523388",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120242871665660631",
+    "ad_name": "Farms - Q1 2026",
+    "adset_id": "120242871665670631",
+    "campaign_id": "120242871665680631",
+    "created_time": "2026-02-10T18:09:59-0500",
+    "creative_id": "1263133365737817",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120242950044510631",
+    "ad_name": "Industry Specific - Creameries - Q1 2026",
+    "adset_id": "120242950044520631",
+    "campaign_id": "120241605050900631",
+    "created_time": "2026-02-12T15:56:42-0500",
+    "creative_id": "4190677914507448",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120242867161880631",
+    "ad_name": "Pizza Shops - Q1 2026",
+    "adset_id": "120242867161870631",
+    "campaign_id": "120241959190970631",
+    "created_time": "2026-02-10T13:29:31-0500",
+    "creative_id": "2060903801498591",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241959883680631",
+    "ad_name": "Pizza Shops - Q1 2026",
+    "adset_id": "120241959883670631",
+    "campaign_id": "120241959190970631",
+    "created_time": "2026-01-14T15:34:51-0500",
+    "creative_id": "1453546969465227",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241608378000631",
+    "ad_name": "Sustainable Main Street - Q1 2026",
+    "adset_id": "120241608377990631",
+    "campaign_id": "120241607362530631",
+    "created_time": "2026-01-07T11:50:36-0500",
+    "creative_id": "1798812731075862",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241685521330631",
+    "ad_name": "Industry Specific - Creameries - Q1 2026",
+    "adset_id": "120241685521320631",
+    "campaign_id": "120241680199330631",
+    "created_time": "2026-01-07T13:36:43-0500",
+    "creative_id": "892740473360394",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241361289110631",
+    "ad_name": "Winery / vineyard targeting",
+    "adset_id": "120241360795630631",
+    "campaign_id": "120241360795650631",
+    "created_time": "2025-12-28T18:50:16-0500",
+    "creative_id": "754091174424818",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241421568930631",
+    "ad_name": "Distiller ads - Q4 2025",
+    "adset_id": "120241421568920631",
+    "campaign_id": "120241420440650631",
+    "created_time": "2025-12-30T14:46:59-0500",
+    "creative_id": "1128142405990545",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241722324500631",
+    "ad_name": "LPFs - Industry Specific - Bakery - Q1 2026",
+    "adset_id": "120241722324510631",
+    "campaign_id": "120241680199330631",
+    "created_time": "2026-01-08T09:25:00-0500",
+    "creative_id": "902072122777626",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120242749985570631",
+    "ad_name": "Industry agnostic - Q1 2026",
+    "adset_id": "120242749985560631",
+    "campaign_id": "120242749985550631",
+    "created_time": "2026-02-06T13:50:28-0500",
+    "creative_id": "1787377321929166",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120242750129790631",
+    "ad_name": "Industry agnostic - Q1 2026",
+    "adset_id": "120242750129800631",
+    "campaign_id": "120242749985550631",
+    "created_time": "2026-02-06T13:53:00-0500",
+    "creative_id": "1630041924796806",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120240518624640631",
+    "ad_name": "Coffee Shop Dynamic",
+    "adset_id": "120240518624630631",
+    "campaign_id": "120238791928400631",
+    "created_time": "2025-12-10T12:03:52-0500",
+    "creative_id": "858787040250955",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120242253829090631",
+    "ad_name": "Sustainable Main Street - Q1 2026 - Copy",
+    "adset_id": "120242253829100631",
+    "campaign_id": "120242253294330631",
+    "created_time": "2026-01-22T16:55:00-0500",
+    "creative_id": "970245952011665",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120242253628030631",
+    "ad_name": "Sustainable Main Street - Q1 2026 - Copy",
+    "adset_id": "120242253627600631",
+    "campaign_id": "120242253294330631",
+    "created_time": "2026-01-22T16:52:11-0500",
+    "creative_id": "859755813628662",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241995271960631",
+    "ad_name": "Industry Specific - Coffee Shops rev2 - Q1 2026",
+    "adset_id": "120241995271950631",
+    "campaign_id": "120241680199330631",
+    "created_time": "2026-01-15T11:39:38-0500",
+    "creative_id": "1423298299588736",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241685589610631",
+    "ad_name": "LPFs - Sustainable Main Street - Q1 2026",
+    "adset_id": "120241685589600631",
+    "campaign_id": "120241680199330631",
+    "created_time": "2026-01-07T13:33:11-0500",
+    "creative_id": "1187656666819061",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241722199150631",
+    "ad_name": "LPFs - Distiller ads - Q1 2026",
+    "adset_id": "120241722199160631",
+    "campaign_id": "120241680199330631",
+    "created_time": "2026-01-08T09:20:11-0500",
+    "creative_id": "2263374860840873",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241722349350631",
+    "ad_name": "LPFs - Winery / vineyard targeting - Q1 2026",
+    "adset_id": "120241722349340631",
+    "campaign_id": "120241680199330631",
+    "created_time": "2026-01-08T09:26:10-0500",
+    "creative_id": "881500480930039",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241722626430631",
+    "ad_name": "LPFs - Industry Specific - Breweries - Q1 2026",
+    "adset_id": "120241722626420631",
+    "campaign_id": "120241680199330631",
+    "created_time": "2026-01-08T09:37:17-0500",
+    "creative_id": "869605395792940",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120241681996750631",
+    "ad_name": "DEPRECIATED - LPFs - Coffee Shop Dynamic - 1 2025",
+    "adset_id": "120241680956280631",
+    "campaign_id": "120241680199330631",
+    "created_time": "2026-01-07T12:05:36-0500",
+    "creative_id": "3272992522859715",
+    "effective_status": "PAUSED"
+  },
+  {
+    "ad_id": "120241608386660631",
+    "ad_name": "Sustainable Main Street - Q1 2026",
+    "adset_id": "120241608386670631",
+    "campaign_id": "120241607362530631",
+    "created_time": "2026-01-07T11:50:20-0500",
+    "creative_id": "1184531543826218",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120241605050890631",
+    "ad_name": "Industry Specific - Creameries - Q1 2026",
+    "adset_id": "120241605050910631",
+    "campaign_id": "120241605050900631",
+    "created_time": "2026-01-05T14:22:24-0500",
+    "creative_id": "4111023285804927",
+    "effective_status": "ADSET_PAUSED"
+  },
+  {
+    "ad_id": "120241421715200631",
+    "ad_name": "Distiller ads - Q4 2025",
+    "adset_id": "120241421715210631",
+    "campaign_id": "120241420440650631",
+    "created_time": "2025-12-30T14:49:14-0500",
+    "creative_id": "882229191086376",
+    "effective_status": "CAMPAIGN_PAUSED"
+  },
+  {
+    "ad_id": "120239247655840631",
+    "ad_name": "Industry Specific - Bakery",
+    "adset_id": "120239247655850631",
+    "campaign_id": "120239247655830631",
+    "created_time": "2025-11-18T16:03:51-0500",
+    "creative_id": "1536359217601829",
+    "effective_status": "CAMPAIGN_PAUSED"
+  }
+]
