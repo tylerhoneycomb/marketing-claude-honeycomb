@@ -1,0 +1,21 @@
+[
+  {
+    "ad_id": "120251814987180631",
+    "ad_name": "broad_ad_725",
+    "adset_id": "120251610088600631",
+    "adset_name": "broad_2026_07_21",
+    "campaign_id": "120249802543740631",
+    "campaign_name": "ICD-Broad-Q2-2026",
+    "clicks": 87,
+    "conversions": 22,
+    "cpc": 2.44046,
+    "cpm": 71.657104,
+    "ctr": 2.936213,
+    "date": "2026-08-16",
+    "frequency": 1.319234,
+    "ic_conversions": 0,
+    "impressions": 2963,
+    "reach": 2246,
+    "spend": 212.32
+  }
+]

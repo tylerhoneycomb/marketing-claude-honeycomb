@@ -1,14 +1,14 @@
 {
-  "computed_at": "2026-08-16T13:16:01.558381+00:00",
+  "computed_at": "2026-08-17T13:23:42.825405+00:00",
   "window_days": 7,
   "rows": [
     {
       "adset_id": "120245893431210631",
       "ad_id": "120245893431650631",
       "ad_name": "BR-CraftBreweriesBrewpubs-Cohort8",
-      "spend": 3.98,
+      "spend": 3.26,
       "spend_share": 1.0,
-      "ctr": 0.0541,
+      "ctr": 0.06,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -16,9 +16,9 @@
       "adset_id": "120245893431260631",
       "ad_id": "120245893431690631",
       "ad_name": "BR-Distilleries-Cohort2",
-      "spend": 91.35,
+      "spend": 49.26,
       "spend_share": 1.0,
-      "ctr": 0.0269,
+      "ctr": 0.0211,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -26,9 +26,9 @@
       "adset_id": "120245893431410631",
       "ad_id": "120245893431860631",
       "ad_name": "BR-CocktailWineBars-Cohort2",
-      "spend": 93.07,
+      "spend": 52.87,
       "spend_share": 1.0,
-      "ctr": 0.0301,
+      "ctr": 0.0246,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -36,9 +36,9 @@
       "adset_id": "120245893441490631",
       "ad_id": "120245893441770631",
       "ad_name": "BR-FlowerShops-Cohort5",
-      "spend": 656.72,
+      "spend": 538.6,
       "spend_share": 1.0,
-      "ctr": 0.0445,
+      "ctr": 0.0446,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -46,9 +46,9 @@
       "adset_id": "120245893441310631",
       "ad_id": "120245893441990631",
       "ad_name": "BR-HairSalons-Cohort3",
-      "spend": 7.34,
+      "spend": 6.74,
       "spend_share": 1.0,
-      "ctr": 0.0331,
+      "ctr": 0.0303,
       "ctr_vs_adset_avg": 1.0,
       "label": null
     },
@@ -56,9 +56,9 @@
       "adset_id": "120251610088600631",
       "ad_id": "120251814987180631",
       "ad_name": "broad_ad_725",
-      "spend": 837.84,
+      "spend": 889.19,
       "spend_share": 1.0,
-      "ctr": 0.024,
+      "ctr": 0.0254,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     }
