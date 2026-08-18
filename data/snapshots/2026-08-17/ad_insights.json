@@ -1,0 +1,40 @@
+[
+  {
+    "ad_id": "120245893441770631",
+    "ad_name": "BR-FlowerShops-Cohort5",
+    "adset_id": "120245893441490631",
+    "adset_name": "BR-Flower Shops-Cohort5-LAL1-20260414-Health_Fitness_and_Personal_Care",
+    "campaign_id": "120245893173810631",
+    "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
+    "clicks": 0,
+    "conversions": 2,
+    "cpc": 0.0,
+    "cpm": 0.0,
+    "ctr": 0.0,
+    "date": "2026-08-17",
+    "frequency": 0.0,
+    "ic_conversions": 0,
+    "impressions": 0,
+    "reach": 0,
+    "spend": 0.0
+  },
+  {
+    "ad_id": "120251814987180631",
+    "ad_name": "broad_ad_725",
+    "adset_id": "120251610088600631",
+    "adset_name": "broad_2026_07_21",
+    "campaign_id": "120249802543740631",
+    "campaign_name": "ICD-Broad-Q2-2026",
+    "clicks": 129,
+    "conversions": 17,
+    "cpc": 2.695271,
+    "cpm": 69.845319,
+    "ctr": 2.591402,
+    "date": "2026-08-17",
+    "frequency": 1.324641,
+    "ic_conversions": 0,
+    "impressions": 4978,
+    "reach": 3758,
+    "spend": 347.69
+  }
+]
