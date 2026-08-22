@@ -1,44 +1,34 @@
 {
-  "computed_at": "2026-08-21T13:28:57.815777+00:00",
+  "computed_at": "2026-08-22T13:15:53.555474+00:00",
   "window_days": 7,
   "rows": [
     {
-      "adset_id": "120245893441490631",
-      "ad_id": "120245893441770631",
-      "ad_name": "BR-FlowerShops-Cohort5",
-      "spend": 54.19,
+      "adset_id": "120251610088600631",
+      "ad_id": "120251814987180631",
+      "ad_name": "broad_ad_725",
+      "spend": 958.49,
       "spend_share": 1.0,
-      "ctr": 0.0434,
+      "ctr": 0.0257,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
     {
-      "adset_id": "120245893441310631",
-      "ad_id": "120245893441990631",
-      "ad_name": "BR-HairSalons-Cohort3",
-      "spend": 1.54,
-      "spend_share": 1.0,
+      "adset_id": "120245893441490631",
+      "ad_id": "120245893441770631",
+      "ad_name": "BR-FlowerShops-Cohort5",
+      "spend": 0.0,
+      "spend_share": 0.0,
       "ctr": 0.0,
       "ctr_vs_adset_avg": 0.0,
       "label": null
     },
     {
-      "adset_id": "120251610088600631",
-      "ad_id": "120251814987180631",
-      "ad_name": "broad_ad_725",
-      "spend": 1007.46,
-      "spend_share": 1.0,
-      "ctr": 0.0253,
-      "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
-    },
-    {
       "adset_id": "120252841681000631",
       "ad_id": "120252841680990631",
       "ad_name": "broad_ad_adpc_819",
-      "spend": 334.77,
+      "spend": 749.54,
       "spend_share": 1.0,
-      "ctr": 0.0298,
+      "ctr": 0.0293,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     }
