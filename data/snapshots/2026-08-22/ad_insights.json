@@ -1,0 +1,21 @@
+[
+  {
+    "ad_id": "120252841680990631",
+    "ad_name": "broad_ad_adpc_819",
+    "adset_id": "120252841681000631",
+    "adset_name": "broad_ADPC_2026_08_19",
+    "campaign_id": "120252841681010631",
+    "campaign_name": "LEADS-Broad-Q3-2026",
+    "clicks": 105,
+    "conversions": 13,
+    "cpc": 2.208857,
+    "cpm": 67.915081,
+    "ctr": 3.074671,
+    "date": "2026-08-22",
+    "frequency": 1.253211,
+    "ic_conversions": 0,
+    "impressions": 3415,
+    "reach": 2725,
+    "spend": 231.93
+  }
+]
