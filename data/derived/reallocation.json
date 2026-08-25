@@ -1,18 +1,18 @@
 {
-  "computed_at": "2026-08-18T14:16:01.832906+00:00",
-  "today": "2026-08-18",
-  "lockout_until": "2026-08-25T00:00:00+00:00",
+  "computed_at": "2026-08-25T14:25:08.087627+00:00",
+  "today": "2026-08-25",
+  "lockout_until": "2026-09-01T00:00:00+00:00",
   "affected_campaign_ids": [
     "120243109874830631"
   ],
   "pool": {
-    "freed_daily_cents": 1,
+    "freed_daily_cents": 26,
     "allocated_daily_cents": 0,
-    "net_change_daily_cents": -1,
+    "net_change_daily_cents": -26,
     "net_change_type": "net_negative",
-    "portfolio_current_daily_cents": 315324,
-    "portfolio_post_change_daily_cents": 315323,
-    "portfolio_post_change_weekly_dollars": 22072.61,
+    "portfolio_current_daily_cents": 345324,
+    "portfolio_post_change_daily_cents": 345298,
+    "portfolio_post_change_weekly_dollars": 24170.86,
     "target_weekly_dollars": 9000.0,
     "tolerance_weekly_dollars": 50.0,
     "knockdown_risk": true
@@ -23,13 +23,13 @@
       "campaign_id": "120243109874830631",
       "campaign_name": "AD-Delis & Butchers-Q1-2026",
       "current_daily_cents": 4707,
-      "change_cents": -1,
-      "change_pct": -0.0002,
-      "post_change_cents": 4706,
+      "change_cents": -26,
+      "change_pct": -0.0055,
+      "post_change_cents": 4681,
       "classification": "over-invested",
-      "elasticity_r": 0.5007,
+      "elasticity_r": 0.5152,
       "remaining_headroom_pct": 0.12,
-      "reason": "over-invested (r=0.5007); severity 0.00 * remaining headroom 12.00% \u2192 -0.02%"
+      "reason": "over-invested (r=0.5152); severity 0.05 * remaining headroom 12.00% \u2192 -0.55%"
     }
   ],
   "increases": [],

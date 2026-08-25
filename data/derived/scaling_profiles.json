@@ -1,7 +1,7 @@
 {
-  "computed_at": "2026-08-18T14:16:00.497491+00:00",
-  "today": "2026-08-18",
-  "previous_tuesday": "2026-08-11",
+  "computed_at": "2026-08-25T14:25:06.911913+00:00",
+  "today": "2026-08-25",
+  "previous_tuesday": "2026-08-18",
   "elasticity_window_weeks": 12,
   "benchmarks": {
     "max_weekly_total_change_pct": 0.12,
@@ -19,36 +19,34 @@
     "campaign_floor_buffer_pct": 0.04
   },
   "portfolio": {
-    "current_total_daily_cents": 315324,
-    "current_total_weekly_dollars": 22072.68,
+    "current_total_daily_cents": 345324,
+    "current_total_weekly_dollars": 24172.68,
     "target_weekly_spend": 9000.0,
     "weekly_spend_tolerance": 50.0,
-    "tolerance_headroom_daily_cents": -186038,
-    "median_cpicp": 199.75,
-    "median_ic_rate": 0.0525,
+    "tolerance_headroom_daily_cents": -216038,
+    "median_cpicp": 150.15,
+    "median_ic_rate": 0.0623,
     "optimizer_cycles_this_week": 0
   },
   "verticals": {
     "bakeries": {
-      "weeks_in_window": 2,
-      "weeks_with_conversions": 2,
-      "elasticity_r": 1.0,
-      "elasticity_n_weeks": 2,
+      "weeks_in_window": 1,
+      "weeks_with_conversions": 1,
+      "elasticity_r": null,
+      "elasticity_n_weeks": 1,
       "high_spend_cpl_degradation_pct": null,
-      "ic_rate": 0.0476,
-      "cpicp": 336.06,
-      "total_spend": 672.13,
-      "total_conversions": 42,
-      "total_ic_conversions": 2,
-      "avg_frequency": 1.197,
+      "ic_rate": 0.0909,
+      "cpicp": 129.86,
+      "total_spend": 129.86,
+      "total_conversions": 11,
+      "total_ic_conversions": 1,
+      "avg_frequency": 1.171,
       "frequency_trend": "flat",
       "cpm_trend": "flat",
       "frequency_series": [
-        1.203,
         1.171
       ],
       "cpm_series": [
-        52.61,
         51.53
       ],
       "campaign_ids": [
@@ -61,19 +59,19 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 1.09
+      "spend_share_pct": 0.24
     },
     "bbq": {
-      "weeks_in_window": 7,
-      "weeks_with_conversions": 7,
-      "elasticity_r": -0.4002,
-      "elasticity_n_weeks": 7,
-      "high_spend_cpl_degradation_pct": -0.0301,
-      "ic_rate": 0.078,
-      "cpicp": 150.9,
-      "total_spend": 5734.15,
-      "total_conversions": 487,
-      "total_ic_conversions": 38,
+      "weeks_in_window": 6,
+      "weeks_with_conversions": 6,
+      "elasticity_r": -0.2609,
+      "elasticity_n_weeks": 6,
+      "high_spend_cpl_degradation_pct": -0.0169,
+      "ic_rate": 0.0714,
+      "cpicp": 167.85,
+      "total_spend": 4699.67,
+      "total_conversions": 392,
+      "total_ic_conversions": 28,
       "avg_frequency": 1.121,
       "frequency_trend": "flat",
       "cpm_trend": "flat",
@@ -99,71 +97,33 @@
       "classification": "stable",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 9.33
-    },
-    "breweries": {
-      "weeks_in_window": 1,
-      "weeks_with_conversions": 0,
-      "elasticity_r": null,
-      "elasticity_n_weeks": 0,
-      "high_spend_cpl_degradation_pct": null,
-      "ic_rate": null,
-      "cpicp": null,
-      "total_spend": 37.81,
-      "total_conversions": 0,
-      "total_ic_conversions": 0,
-      "avg_frequency": 1.535,
-      "frequency_trend": "flat",
-      "cpm_trend": "falling",
-      "frequency_series": [
-        1.463,
-        1.734,
-        1.431,
-        1.521
-      ],
-      "cpm_series": [
-        61.39,
-        64.1,
-        54.94,
-        52.17
-      ],
-      "campaign_ids": [
-        "120240869767800631"
-      ],
-      "campaign_names": [
-        "AD-Breweries-Q4-2025"
-      ],
-      "optimizer_eligible": true,
-      "classification": "insufficient",
-      "new_audience_needed": false,
-      "confidence": "insufficient",
-      "spend_share_pct": 0.06
+      "spend_share_pct": 8.57
     },
     "broad": {
       "weeks_in_window": 10,
       "weeks_with_conversions": 10,
-      "elasticity_r": -0.5079,
+      "elasticity_r": -0.5925,
       "elasticity_n_weeks": 10,
-      "high_spend_cpl_degradation_pct": -0.3028,
-      "ic_rate": 0.1374,
-      "cpicp": 127.42,
-      "total_spend": 10066.27,
-      "total_conversions": 575,
+      "high_spend_cpl_degradation_pct": -0.3295,
+      "ic_rate": 0.1346,
+      "cpicp": 132.46,
+      "total_spend": 10464.59,
+      "total_conversions": 587,
       "total_ic_conversions": 79,
-      "avg_frequency": 1.252,
+      "avg_frequency": 1.261,
       "frequency_trend": "flat",
-      "cpm_trend": "flat",
+      "cpm_trend": "rising",
       "frequency_series": [
         1.232,
         1.231,
         1.272,
-        1.325
+        1.329
       ],
       "cpm_series": [
         63.91,
         55.58,
         62.3,
-        69.85
+        72.66
       ],
       "campaign_ids": [
         "120249802543740631"
@@ -175,19 +135,19 @@
       "classification": "stable",
       "new_audience_needed": false,
       "confidence": "confident",
-      "spend_share_pct": 16.38
+      "spend_share_pct": 19.08
     },
     "craft producers & bars": {
-      "weeks_in_window": 11,
-      "weeks_with_conversions": 11,
-      "elasticity_r": 0.599,
-      "elasticity_n_weeks": 11,
-      "high_spend_cpl_degradation_pct": 0.2948,
-      "ic_rate": 0.1571,
-      "cpicp": 119.42,
-      "total_spend": 15046.86,
-      "total_conversions": 802,
-      "total_ic_conversions": 126,
+      "weeks_in_window": 10,
+      "weeks_with_conversions": 10,
+      "elasticity_r": 0.6081,
+      "elasticity_n_weeks": 10,
+      "high_spend_cpl_degradation_pct": 0.271,
+      "ic_rate": 0.1575,
+      "cpicp": 120.15,
+      "total_spend": 13457.08,
+      "total_conversions": 711,
+      "total_ic_conversions": 112,
       "avg_frequency": 1.129,
       "frequency_trend": "flat",
       "cpm_trend": "flat",
@@ -213,28 +173,26 @@
       "classification": "stable",
       "new_audience_needed": false,
       "confidence": "confident",
-      "spend_share_pct": 24.48
+      "spend_share_pct": 24.54
     },
     "creameries": {
-      "weeks_in_window": 2,
-      "weeks_with_conversions": 1,
+      "weeks_in_window": 1,
+      "weeks_with_conversions": 0,
       "elasticity_r": null,
-      "elasticity_n_weeks": 1,
+      "elasticity_n_weeks": 0,
       "high_spend_cpl_degradation_pct": null,
-      "ic_rate": 0.0,
+      "ic_rate": null,
       "cpicp": null,
-      "total_spend": 684.4,
-      "total_conversions": 32,
+      "total_spend": 124.97,
+      "total_conversions": 0,
       "total_ic_conversions": 0,
-      "avg_frequency": 1.149,
+      "avg_frequency": 1.122,
       "frequency_trend": "flat",
-      "cpm_trend": "falling",
+      "cpm_trend": "flat",
       "frequency_series": [
-        1.155,
         1.122
       ],
       "cpm_series": [
-        66.49,
         54.63
       ],
       "campaign_ids": [
@@ -247,19 +205,19 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 1.11
+      "spend_share_pct": 0.23
     },
     "delis & butchers": {
-      "weeks_in_window": 7,
-      "weeks_with_conversions": 7,
-      "elasticity_r": 0.5007,
-      "elasticity_n_weeks": 7,
-      "high_spend_cpl_degradation_pct": 0.4764,
-      "ic_rate": 0.0411,
-      "cpicp": 244.78,
-      "total_spend": 2937.34,
-      "total_conversions": 292,
-      "total_ic_conversions": 12,
+      "weeks_in_window": 6,
+      "weeks_with_conversions": 6,
+      "elasticity_r": 0.5152,
+      "elasticity_n_weeks": 6,
+      "high_spend_cpl_degradation_pct": 0.3998,
+      "ic_rate": 0.0429,
+      "cpicp": 230.19,
+      "total_spend": 2301.89,
+      "total_conversions": 233,
+      "total_ic_conversions": 10,
       "avg_frequency": 1.28,
       "frequency_trend": "flat",
       "cpm_trend": "flat",
@@ -285,19 +243,19 @@
       "classification": "over-invested",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 4.78
+      "spend_share_pct": 4.2
     },
     "fitness & wellness": {
-      "weeks_in_window": 7,
-      "weeks_with_conversions": 7,
-      "elasticity_r": 0.2297,
-      "elasticity_n_weeks": 7,
-      "high_spend_cpl_degradation_pct": -0.2463,
-      "ic_rate": 0.0277,
-      "cpicp": 199.75,
-      "total_spend": 4394.53,
-      "total_conversions": 794,
-      "total_ic_conversions": 22,
+      "weeks_in_window": 6,
+      "weeks_with_conversions": 6,
+      "elasticity_r": 0.2969,
+      "elasticity_n_weeks": 6,
+      "high_spend_cpl_degradation_pct": -0.2429,
+      "ic_rate": 0.0264,
+      "cpicp": 214.2,
+      "total_spend": 3641.33,
+      "total_conversions": 645,
+      "total_ic_conversions": 17,
       "avg_frequency": 1.145,
       "frequency_trend": "flat",
       "cpm_trend": "flat",
@@ -323,19 +281,19 @@
       "classification": "stable",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 7.15
+      "spend_share_pct": 6.64
     },
     "health, fitness & personal care": {
-      "weeks_in_window": 11,
-      "weeks_with_conversions": 11,
-      "elasticity_r": 0.476,
-      "elasticity_n_weeks": 11,
+      "weeks_in_window": 10,
+      "weeks_with_conversions": 10,
+      "elasticity_r": 0.5259,
+      "elasticity_n_weeks": 10,
       "high_spend_cpl_degradation_pct": 0.0777,
-      "ic_rate": 0.0956,
-      "cpicp": 125.03,
-      "total_spend": 16004.06,
-      "total_conversions": 1339,
-      "total_ic_conversions": 128,
+      "ic_rate": 0.0967,
+      "cpicp": 125.73,
+      "total_spend": 14207.8,
+      "total_conversions": 1169,
+      "total_ic_conversions": 113,
       "avg_frequency": 1.142,
       "frequency_trend": "flat",
       "cpm_trend": "rising",
@@ -359,19 +317,19 @@
       "classification": "stable",
       "new_audience_needed": false,
       "confidence": "confident",
-      "spend_share_pct": 26.04
+      "spend_share_pct": 25.91
     },
     "juice & smoothie": {
-      "weeks_in_window": 8,
-      "weeks_with_conversions": 8,
-      "elasticity_r": 0.7007,
-      "elasticity_n_weeks": 8,
-      "high_spend_cpl_degradation_pct": 0.2241,
-      "ic_rate": 0.0575,
-      "cpicp": 216.72,
-      "total_spend": 5417.99,
-      "total_conversions": 435,
-      "total_ic_conversions": 25,
+      "weeks_in_window": 7,
+      "weeks_with_conversions": 7,
+      "elasticity_r": 0.6899,
+      "elasticity_n_weeks": 7,
+      "high_spend_cpl_degradation_pct": 0.1817,
+      "ic_rate": 0.0531,
+      "cpicp": 224.95,
+      "total_spend": 4049.18,
+      "total_conversions": 339,
+      "total_ic_conversions": 18,
       "avg_frequency": 1.114,
       "frequency_trend": "flat",
       "cpm_trend": "flat",
@@ -397,28 +355,60 @@
       "classification": "stable",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 8.82
+      "spend_share_pct": 7.38
     },
-    "sustainable main street": {
+    "leads-broad-q3-2026": {
       "weeks_in_window": 2,
       "weeks_with_conversions": 2,
-      "elasticity_r": -1.0,
+      "elasticity_r": 1.0,
       "elasticity_n_weeks": 2,
       "high_spend_cpl_degradation_pct": null,
-      "ic_rate": 0.0244,
-      "cpicp": 461.78,
-      "total_spend": 461.78,
-      "total_conversions": 41,
-      "total_ic_conversions": 1,
-      "avg_frequency": 1.109,
-      "frequency_trend": "flat",
+      "ic_rate": 0.0,
+      "cpicp": null,
+      "total_spend": 1675.84,
+      "total_conversions": 91,
+      "total_ic_conversions": 0,
+      "avg_frequency": 1.31,
+      "frequency_trend": "falling",
       "cpm_trend": "falling",
       "frequency_series": [
-        1.112,
+        1.33,
+        1.241
+      ],
+      "cpm_series": [
+        65.56,
+        55.83
+      ],
+      "campaign_ids": [
+        "120252841681010631"
+      ],
+      "campaign_names": [
+        "LEADS-Broad-Q3-2026"
+      ],
+      "optimizer_eligible": false,
+      "classification": "insufficient",
+      "new_audience_needed": false,
+      "confidence": "insufficient",
+      "spend_share_pct": 3.06
+    },
+    "sustainable main street": {
+      "weeks_in_window": 1,
+      "weeks_with_conversions": 1,
+      "elasticity_r": null,
+      "elasticity_n_weeks": 1,
+      "high_spend_cpl_degradation_pct": null,
+      "ic_rate": 0.0,
+      "cpicp": null,
+      "total_spend": 80.67,
+      "total_conversions": 4,
+      "total_ic_conversions": 0,
+      "avg_frequency": 1.093,
+      "frequency_trend": "flat",
+      "cpm_trend": "flat",
+      "frequency_series": [
         1.093
       ],
       "cpm_series": [
-        59.19,
         47.54
       ],
       "campaign_ids": [
@@ -431,10 +421,21 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 0.75
+      "spend_share_pct": 0.15
     }
   },
   "campaigns": {
+    "120252841681010631": {
+      "campaign_id": "120252841681010631",
+      "campaign_name": "LEADS-Broad-Q3-2026",
+      "effective_status": "ACTIVE",
+      "daily_budget_cents": 30000,
+      "lifetime_ic_conversions": 0,
+      "vertical": "leads-broad-q3-2026",
+      "weekly_consumed_pct": 0.0,
+      "weekly_remaining_pct": 0.12,
+      "knockdown_applied_this_week": false
+    },
     "120252806172990631": {
       "campaign_id": "120252806172990631",
       "campaign_name": "LEADS-Broad-Q3-2026",
@@ -449,7 +450,7 @@
     "120249802543740631": {
       "campaign_id": "120249802543740631",
       "campaign_name": "ICD-Broad-Q2-2026",
-      "effective_status": "ACTIVE",
+      "effective_status": "PAUSED",
       "daily_budget_cents": 30000,
       "lifetime_ic_conversions": 79,
       "vertical": "broad",
