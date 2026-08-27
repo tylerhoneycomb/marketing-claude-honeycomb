@@ -1,5 +1,5 @@
 {
-  "count": 480,
+  "count": 481,
   "creatives": [
     {
       "body": null,
@@ -6499,6 +6499,40 @@
       "titles": []
     },
     {
+      "bodies": [
+        "Support women-owned businesses!\n\n500+ women-owned, small businesses have raised community-backed capital through IFW (ifundwomen) instead - turning loyal customers into investors. \n\nSee if your woman-owned business qualifies."
+      ],
+      "body": "Support women-owned businesses!\n\n500+ women-owned, small businesses have raised community-backed capital through IFW (ifundwomen) instead - turning loyal customers into investors. \n\nSee if your woman-owned business qualifies.",
+      "call_to_action_type": null,
+      "creative_id": "2127823031425018",
+      "cta_types": [],
+      "descriptions": [],
+      "effective_object_story_id": "527535544101765_1740455717842029",
+      "first_seen_date": "2026-08-26",
+      "image_hash": "6819fb379fa68d11ca861e94e14a48fa",
+      "image_hashes": [
+        "6819fb379fa68d11ca861e94e14a48fa",
+        "ec9956b9a42e9ae50a8fe2c58244f3cd",
+        "32b5df44a16081ad01198225d32c1d1c",
+        "c31df0ad6d928b8e6feaf7e7ba79ff2b",
+        "f5d24ae49920e4d49ad36a1fd6c9fa6e",
+        "90823e0ccb674e3a2a0b5bc8ce511a36"
+      ],
+      "image_url": "https://scontent-fra5-2.xx.fbcdn.net/v/t45.1600-4/719908309_10104676526699849_4031079144797171518_n.png?_nc_cat=109&ccb=1-7&_nc_ohc=TFcRiu36FYMQ7kNvwFtQU6-&_nc_oc=AdpTTGZiYT-K74kwgI6cvp5zZltZ0Du8xcnEW1bOeps6vOhhw6BgN9tMzESwCXZ6RXQ&_nc_zt=1&_nc_ht=scontent-fra5-2.xx&edm=AAT1rw8EAAAA&_nc_gid=Y_fSEXEjenxeD3IZdoSXyA&_nc_tpa=Q5bMBQIdKa0ytVeNU-gcwG51cihIaYWg1IfBKP4JoglkyrgPXyJZD1j6g7c22thoMupn57qGsQ7ET_wP3FI&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=52f3c4&_nc_sid=58080a&oh=00_AQEHaOfF_4egVdB-zn4vu2AN6NbaZfQuqmP8hAI5TCXmDA&oe=6A967E11",
+      "last_seen_date": "2026-08-26",
+      "link_url": "https://start.honeycomb.credit/",
+      "link_urls": [
+        "https://start.honeycomb.credit/"
+      ],
+      "name": "{{product.name}} 2026-08-26-1b510d19198fc47a40140312bc31c2ef",
+      "thumbnail_url": "https://scontent-fra5-2.xx.fbcdn.net/v/t45.1600-4/719908309_10104676526699849_4031079144797171518_n.png?_nc_cat=109&ccb=1-7&_nc_ohc=TFcRiu36FYMQ7kNvwFtQU6-&_nc_oc=AdpTTGZiYT-K74kwgI6cvp5zZltZ0Du8xcnEW1bOeps6vOhhw6BgN9tMzESwCXZ6RXQ&_nc_zt=1&_nc_ht=scontent-fra5-2.xx&edm=AAT1rw8EAAAA&_nc_gid=Y_fSEXEjenxeD3IZdoSXyA&_nc_tpa=Q5bMBQIdKa0ytVeNU-gcwG51cihIaYWg1IfBKP4JoglkyrgPXyJZD1j6g7c22thoMupn57qGsQ7ET_wP3FI&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=52f3c4&_nc_sid=58080a&oh=00_AQEHaOfF_4egVdB-zn4vu2AN6NbaZfQuqmP8hAI5TCXmDA&oe=6A967E11",
+      "title": "Does Your Business Qualify?",
+      "titles": [
+        "Does Your Business Qualify?",
+        "Growth Solutions for Women-Owned Businesses"
+      ]
+    },
+    {
       "bodies": [],
       "body": "MCAs drain your margins with daily withdrawals and a renewal cycle that never ends. 500+ small businesses have raised community-backed capital through Honeycomb instead \u2014 turning loyal customers into investors. See if your BBQ spot qualifies.",
       "call_to_action_type": "LEARN_MORE",
@@ -12426,5 +12460,5 @@
       "title": null
     }
   ],
-  "updated_at": "2026-08-20T13:29:53.575048+00:00"
+  "updated_at": "2026-08-27T22:32:56.556450+00:00"
 }
