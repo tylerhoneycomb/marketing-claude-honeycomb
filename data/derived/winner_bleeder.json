@@ -1,14 +1,14 @@
 {
-  "computed_at": "2026-08-27T22:32:56.684160+00:00",
+  "computed_at": "2026-08-28T22:35:54.251571+00:00",
   "window_days": 7,
   "rows": [
     {
       "adset_id": "120252841681000631",
       "ad_id": "120252841680990631",
       "ad_name": "broad_ad_adpc_819",
-      "spend": 2142.29,
+      "spend": 2114.79,
       "spend_share": 1.0,
-      "ctr": 0.0333,
+      "ctr": 0.0338,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     },
@@ -16,9 +16,9 @@
       "adset_id": "120252962579540631",
       "ad_id": "120252962579530631",
       "ad_name": "ifw_broad_ad_adpc_819",
-      "spend": 73.94,
+      "spend": 180.12,
       "spend_share": 1.0,
-      "ctr": 0.0312,
+      "ctr": 0.0334,
       "ctr_vs_adset_avg": 1.0,
       "label": "winner"
     }
