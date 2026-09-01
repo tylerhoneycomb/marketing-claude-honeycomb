@@ -1,35 +1,35 @@
 {
-  "computed_at": "2026-08-25T14:25:08.087627+00:00",
-  "today": "2026-08-25",
-  "lockout_until": "2026-09-01T00:00:00+00:00",
+  "computed_at": "2026-09-01T17:26:27.960540+00:00",
+  "today": "2026-09-01",
+  "lockout_until": "2026-09-08T00:00:00+00:00",
   "affected_campaign_ids": [
-    "120243109874830631"
+    "120245893173800631"
   ],
   "pool": {
-    "freed_daily_cents": 26,
+    "freed_daily_cents": 199,
     "allocated_daily_cents": 0,
-    "net_change_daily_cents": -26,
+    "net_change_daily_cents": -199,
     "net_change_type": "net_negative",
     "portfolio_current_daily_cents": 345324,
-    "portfolio_post_change_daily_cents": 345298,
-    "portfolio_post_change_weekly_dollars": 24170.86,
+    "portfolio_post_change_daily_cents": 345125,
+    "portfolio_post_change_weekly_dollars": 24158.75,
     "target_weekly_dollars": 9000.0,
     "tolerance_weekly_dollars": 50.0,
     "knockdown_risk": true
   },
   "decreases": [
     {
-      "vertical": "delis & butchers",
-      "campaign_id": "120243109874830631",
-      "campaign_name": "AD-Delis & Butchers-Q1-2026",
-      "current_daily_cents": 4707,
-      "change_cents": -26,
-      "change_pct": -0.0055,
-      "post_change_cents": 4681,
-      "classification": "over-invested",
-      "elasticity_r": 0.5152,
+      "vertical": "craft producers & bars",
+      "campaign_id": "120245893173800631",
+      "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
+      "current_daily_cents": 7500,
+      "change_cents": -199,
+      "change_pct": -0.0265,
+      "post_change_cents": 7301,
+      "classification": "saturating",
+      "elasticity_r": 0.6107,
       "remaining_headroom_pct": 0.12,
-      "reason": "over-invested (r=0.5152); severity 0.05 * remaining headroom 12.00% \u2192 -0.55%"
+      "reason": "saturating (r=0.6107); severity 0.22 * remaining headroom 12.00% \u2192 -2.65%"
     }
   ],
   "increases": [],
