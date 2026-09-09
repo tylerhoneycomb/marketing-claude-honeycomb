@@ -43,7 +43,7 @@ from lib.meta import (  # noqa: E402
     DEFAULT_SLEEP_BETWEEN_CALLS,
     INSIGHTS_FIELDS_AD,
     MetaClient,
-    ic_action_type_from_config,
+    funnel_from_config,
     load_config,
     normalize_ad,
     normalize_creative,
@@ -129,7 +129,7 @@ def main(argv: list[str] | None = None) -> int:
     account_id = os.environ.get("META_AD_ACCOUNT_ID") or config["account"]["id"]
     api_version = config["account"]["meta_api_version"]
     tz = ZoneInfo(config["account"]["timezone"])
-    ic_action_type = ic_action_type_from_config(config)
+    funnel = funnel_from_config(config)
 
     token = os.environ.get("META_ACCESS_TOKEN")
     if not token:
@@ -146,7 +146,7 @@ def main(argv: list[str] | None = None) -> int:
 
     logging.warning("fetching ad insights %s → %s (daily breakdown)", since, until)
     raw_ads = client.insights("ad", INSIGHTS_FIELDS_AD, since, until)
-    ads_insights = [normalize_insights_row(r, ic_action_type) for r in raw_ads]
+    ads_insights = [normalize_insights_row(r, funnel) for r in raw_ads]
 
     active_filter = [{"field": "effective_status",
                       "operator": "IN", "value": ["ACTIVE", "PAUSED"]}]

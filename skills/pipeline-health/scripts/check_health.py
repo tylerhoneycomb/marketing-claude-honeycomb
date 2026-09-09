@@ -160,13 +160,40 @@ def check_meta_token(token: str, api_version: str, tz: ZoneInfo,
             "detail": f"valid, expires in {days_left} days"}
 
 
-def check_ic_conversion_event(token: str, account_id: str, api_version: str,
-                              expected_id: str) -> dict[str, Any]:
-    name = "ic_conversion_event"
+def check_funnel_conversions(token: str, account_id: str, api_version: str,
+                             config: dict[str, Any]) -> dict[str, Any]:
+    """Verify every configured custom conversion still exists and is live.
+
+    Checks the quality tier and each subtype. A missing or archived QUALITY
+    conversion is a FAIL (it feeds reported metrics); an archived SUBTYPE is
+    a WARN, since subtypes are reported-only and may legitimately retire.
+    Also surfaces `last_fired_time` so a conversion that silently stopped
+    firing is visible instead of passing on mere existence — the failure mode
+    that let IC drop to n=1 through August 2026 without any alert.
+    """
+    name = "funnel_conversions"
+    conv = config.get("conversions") or {}
+    expected: list[tuple[str, str, bool]] = []  # (id, label, is_required)
+
+    quality = conv.get("quality") or {}
+    if quality.get("custom_conversion_id"):
+        expected.append((str(quality["custom_conversion_id"]),
+                         quality.get("metric") or "quality", True))
+    for key, spec in sorted((conv.get("subtypes") or {}).items()):
+        if isinstance(spec, dict) and spec.get("custom_conversion_id"):
+            expected.append((str(spec["custom_conversion_id"]), key, False))
+
+    if not expected:
+        return {"name": name, "status": "WARN",
+                "detail": "no custom conversions configured in benchmarks.json"}
+
     url = f"https://graph.facebook.com/{api_version}/{account_id}/customconversions"
     try:
-        resp = requests.get(url, params={"fields": "id,name",
-                                          "access_token": token}, timeout=15)
+        resp = requests.get(url, params={
+            "fields": "id,name,is_archived,last_fired_time",
+            "limit": 100,
+            "access_token": token,
+        }, timeout=15)
     except requests.RequestException as exc:
         return {"name": name, "status": "FAIL",
                 "detail": f"could not reach Meta: {exc}"}
@@ -175,15 +202,75 @@ def check_ic_conversion_event(token: str, account_id: str, api_version: str,
         return {"name": name, "status": "FAIL",
                 "detail": f"HTTP {resp.status_code}: {resp.text[:200]}"}
 
-    items = resp.json().get("data", [])
-    for c in items:
-        if str(c.get("id")) == str(expected_id):
-            return {"name": name, "status": "PASS",
-                    "detail": f"custom conversion {expected_id} ('{c.get('name')}') exists"}
+    by_id = {str(c.get("id")): c for c in resp.json().get("data", [])}
+    problems: list[str] = []
+    notes: list[str] = []
+    status = "PASS"
 
-    return {"name": name, "status": "FAIL",
-            "detail": f"custom conversion {expected_id} not found "
-                      f"in account {account_id} ({len(items)} conversions checked)"}
+    for cid, label, required in expected:
+        found = by_id.get(cid)
+        if not found:
+            problems.append(f"{label}: {cid} not found in account")
+            status = "FAIL" if required else ("WARN" if status == "PASS" else status)
+            continue
+        if found.get("is_archived"):
+            problems.append(f"{label}: {cid} is ARCHIVED")
+            status = "FAIL" if required else ("WARN" if status == "PASS" else status)
+            continue
+        last_fired = (found.get("last_fired_time") or "never")[:10]
+        notes.append(f"{label}={last_fired}")
+
+    detail = "; ".join(problems) if problems else ""
+    if notes:
+        detail = (detail + " | " if detail else "") + "last fired: " + ", ".join(notes)
+    return {"name": name, "status": status, "detail": detail}
+
+
+def check_snapshot_volume(config: dict[str, Any]) -> dict[str, Any]:
+    """Guard the empty-snapshot failure mode.
+
+    On 2026-08-15 the pipeline committed `ad_insights.json` as `[]` while
+    `ads.json` held hundreds of objects, and every check still passed. This
+    fails when the newest snapshot has ad objects but no insight rows, and
+    warns when insight rows fall under the configured floor.
+    """
+    name = "snapshot_volume"
+    snapshots = REPO_ROOT / "data" / "snapshots"
+    if not snapshots.is_dir():
+        return {"name": name, "status": "WARN", "detail": "no data/snapshots directory"}
+
+    dated = sorted(d for d in snapshots.iterdir()
+                   if d.is_dir() and len(d.name) == 10 and d.name[4] == "-")
+    if not dated:
+        return {"name": name, "status": "WARN", "detail": "no snapshots on disk"}
+
+    latest = dated[-1]
+    floor = int((config.get("pipeline_health") or {}).get("min_expected_insight_rows", 1))
+
+    def _count(filename: str) -> int | None:
+        path = latest / filename
+        if not path.exists():
+            return None
+        try:
+            return len(json.loads(path.read_text()))
+        except (json.JSONDecodeError, OSError):
+            return None
+
+    insights = _count("ad_insights.json")
+    ads = _count("ads.json")
+
+    if insights is None:
+        return {"name": name, "status": "FAIL",
+                "detail": f"{latest.name}: ad_insights.json missing or unreadable"}
+    if ads and insights == 0:
+        return {"name": name, "status": "FAIL",
+                "detail": f"{latest.name}: 0 insight rows against {ads} ad objects "
+                          f"— pull returned no delivery data"}
+    if insights < floor:
+        return {"name": name, "status": "WARN",
+                "detail": f"{latest.name}: {insights} insight row(s), below floor of {floor}"}
+    return {"name": name, "status": "PASS",
+            "detail": f"{latest.name}: {insights} insight row(s), {ads} ad object(s)"}
 
 
 def check_dashboard_endpoint(exec_endpoint: str, timeout_s: int) -> dict[str, Any]:
@@ -271,7 +358,6 @@ def main(argv: list[str] | None = None) -> int:
     api_version = config["account"]["meta_api_version"]
     tz = ZoneInfo(config["account"]["timezone"])
     exec_endpoint = os.environ.get("EXEC_ENDPOINT") or config["exec_endpoint"]
-    ic_id = config["ic_tracking"]["custom_conversion_id"]
     health_cfg = config["pipeline_health"]
 
     token = os.environ.get("META_ACCESS_TOKEN")
@@ -285,9 +371,10 @@ def main(argv: list[str] | None = None) -> int:
                              health_cfg["data_freshness_max_gap_weekdays"]),
         check_meta_token(token, api_version, tz,
                          health_cfg["token_warning_days"]),
-        check_ic_conversion_event(token, account_id, api_version, ic_id),
+        check_funnel_conversions(token, account_id, api_version, config),
         check_dashboard_endpoint(exec_endpoint,
                                  health_cfg["endpoint_timeout_seconds"]),
+        check_snapshot_volume(config),
     ]
 
     payload: dict[str, Any] = {"date": today_local, "checks": checks}

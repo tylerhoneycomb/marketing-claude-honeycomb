@@ -1,5 +1,5 @@
 {
-  "computed_at": "2026-09-08T16:49:26.880792+00:00",
+  "computed_at": "2026-09-09T12:13:05.936297+00:00",
   "window_days": 7,
   "snapshot_dates": [
     "2026-09-01",
@@ -15,16 +15,15 @@
   "campaign_count": 2,
   "fatigue_severity_counts": {
     "critical": 0,
-    "warning": 0,
+    "warning": 1,
     "below_floor": 0,
-    "ok": 2
+    "ok": 1
   },
   "actionable_critical": [],
-  "actionable_warning": [],
-  "winners": [
-    "120252841680990631",
+  "actionable_warning": [
     "120252962579530631"
   ],
+  "winners": [],
   "bleeders": [],
   "learning_phase_adsets_skipped": 0
 }

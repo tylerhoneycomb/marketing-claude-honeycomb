@@ -42,7 +42,7 @@ from lib.meta import (  # noqa: E402
     DEFAULT_SLEEP_BETWEEN_CALLS,
     INSIGHTS_FIELDS_AD,
     MetaClient,
-    ic_action_type_from_config,
+    funnel_from_config,
     load_config,
     normalize_insights_row,
 )
@@ -215,7 +215,7 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         account_id = os.environ.get("META_AD_ACCOUNT_ID") or config["account"]["id"]
         api_version = config["account"]["meta_api_version"]
-        ic_action_type = ic_action_type_from_config(config)
+        funnel = funnel_from_config(config)
 
         starts = [parse_date(classified[a]["baseline_since"]) for a in path_b_ids]
         ends = [parse_date(classified[a]["baseline_until"]) for a in path_b_ids]
@@ -238,7 +238,7 @@ def main(argv: list[str] | None = None) -> int:
             historical_rows.extend(raw)
             historical_query_count += 1
 
-        normalized = [normalize_insights_row(r, ic_action_type) for r in historical_rows]
+        normalized = [normalize_insights_row(r, funnel) for r in historical_rows]
         hist_by_ad: dict[str, list[dict[str, Any]]] = defaultdict(list)
         for r in normalized:
             if r.get("ad_id"):
