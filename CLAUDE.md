@@ -143,8 +143,43 @@ Skills write results to the Google Sheet by calling `/exec` action handlers
 defined in `Code.js`. To add a new write endpoint:
 1. Add an action handler to `doGet` (or `doPost` for bulk JSON payloads) in
    `apps-script/Code.js`
-2. Push to `main` — CI/CD deploys automatically via `clasp`
-3. Call the endpoint from the skill
+2. Add the action to `PROTECTED_EXEC_ACTIONS` in `Code.js` if it costs money
+   or changes state
+3. Push to `main` — CI/CD deploys automatically via `clasp`
+4. Call the endpoint from the skill, passing `key=exec_key()` (see
+   `scripts/lib/exec_api.py`)
+
+### /exec is authenticated _(added 2026-09-09)_
+
+The Web App is deployed `ANYONE_ANONYMOUS` and its URL is committed in
+`benchmarks.json`, so before this every caller who had the URL could spend
+the Anthropic key through `chat`, trigger `run_budget_analysis`, and POST
+`scaling-queue-write` to append budget rows **and get back a valid approval
+token**.
+
+Side-effecting actions now require a shared secret:
+
+- **Script Property** `EXEC_SHARED_SECRET` in the Apps Script project
+  (Project Settings → Script Properties), at least 16 characters.
+- **GitHub secret** `EXEC_SHARED_SECRET` with the same value, so skills
+  authenticate.
+- **Dashboard**: optional "API key" field in the Connect API dialog, stored
+  in that browser only. Needed only for chat / budget analysis / spend
+  target; all charts and tables load without it.
+
+The gate **fails closed** — if the Script Property is unset or under 16
+characters, protected actions are refused rather than left open. Read-only
+actions are never gated. Slack approve/reject links are not gated either:
+they already authenticate with a per-proposal token, and a shared key in a
+Slack URL would be visible to the channel.
+
+Covered by `scripts/tests/exec_auth.test.js` (`node scripts/tests/exec_auth.test.js`).
+
+> **`apps-script/` has no `.claspignore`,** and `.clasp.json` sets
+> `skipSubdirectories: false` — so every `.js` file under `apps-script/` is
+> uploaded into the live Apps Script project by `clasp push`. Never put
+> tests or helper scripts there; the exec-auth test lives in
+> `scripts/tests/` for exactly this reason.
 
 ### Execution modes
 
@@ -273,6 +308,10 @@ Each agent workflow needs these GitHub Secrets on the repo:
 - `META_ACCESS_TOKEN` — same secret used by `daily-data.yml`
 - `SLACK_WEBHOOK_URL` — optional; if unset, skills skip Slack and surface
   output in the workflow log only
+- `EXEC_SHARED_SECRET` — **required for any skill that writes to the Sheet.**
+  Must match the Script Property of the same name in the Apps Script
+  project. Without it the `*-write` and `scaling-queue-write` actions
+  return `{"error": "unauthorized"}`. See "/exec is authenticated" below.
 
 ### Dual scheduling: GitHub cron + Apps Script fallback
 

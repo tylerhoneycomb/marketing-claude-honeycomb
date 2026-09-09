@@ -36,7 +36,7 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 from lib.meta import load_config  # noqa: E402
-from lib.exec_api import get_spend_goal  # noqa: E402
+from lib.exec_api import exec_key, get_spend_goal  # noqa: E402
 
 
 def parse_date(s: str) -> date:
@@ -397,7 +397,8 @@ def write_to_sheet(exec_endpoint: str, until_iso: str, summary: dict[str, Any]
     try:
         resp = requests.post(exec_endpoint,
                              params={"action": "daily-check-write"},
-                             json=payload, timeout=20)
+                             json={**payload, "key": exec_key()},
+                             timeout=20)
     except requests.RequestException as exc:
         return {"posted": False, "error": str(exc)}
     if resp.status_code != 200:

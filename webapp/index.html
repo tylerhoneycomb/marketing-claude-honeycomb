@@ -56,6 +56,22 @@
     } = Recharts;
 
     const STORAGE_KEY = 'honeycomb_api_url';
+    const API_KEY_STORAGE_KEY = 'honeycomb_api_key';
+
+    // Actions gated by EXEC_SHARED_SECRET on the Apps Script side
+    // (see PROTECTED_EXEC_ACTIONS in apps-script/Code.js). These either
+    // cost money or change state, so the /exec Web App — which is
+    // deployed ANYONE_ANONYMOUS — refuses them without the key. Read-only
+    // actions are unaffected, so the dashboard still loads all its data
+    // with no key configured.
+    const PROTECTED_ACTIONS = new Set([
+      'chat', 'run_budget_analysis', 'propose_spend_target',
+    ]);
+
+    function getApiKey() {
+      try { return localStorage.getItem(API_KEY_STORAGE_KEY) || ''; }
+      catch (e) { return ''; }
+    }
 
 
     // ─── FORMATTING HELPERS ───────────────────────────────
@@ -500,7 +516,10 @@
         return [];
       }
 
-      const qs = new URLSearchParams({ action, ...params }).toString();
+      const withKey = PROTECTED_ACTIONS.has(action)
+        ? { action, ...params, key: getApiKey() }
+        : { action, ...params };
+      const qs = new URLSearchParams(withKey).toString();
       let resp;
       try {
         resp = await fetch(`${apiUrl}?${qs}`);
@@ -989,13 +1008,16 @@
 
     function ConfigModal({ open, current, onSave, onClose }) {
       const [url, setUrl] = useState(current || '');
+      const [apiKey, setApiKey] = useState(() => getApiKey());
       // Live validation — recomputed on every keystroke.
       // Empty string is intentionally allowed (mock mode).
       const validationError = useMemo(
         () => validateAppsScriptUrl(url.trim()),
         [url]
       );
-      useEffect(() => { if (open) setUrl(current || ''); }, [open, current]);
+      useEffect(() => {
+        if (open) { setUrl(current || ''); setApiKey(getApiKey()); }
+      }, [open, current]);
 
       const handleSave = () => {
         const trimmed = url.trim();
@@ -1003,6 +1025,14 @@
         // is OK (clears the saved URL and drops back to
         // mock data).
         if (trimmed && validationError) return;
+        try {
+          const k = apiKey.trim();
+          if (k) localStorage.setItem(API_KEY_STORAGE_KEY, k);
+          else localStorage.removeItem(API_KEY_STORAGE_KEY);
+        } catch (e) {
+          // Private browsing / storage disabled — the dashboard still
+          // works for reads, only the gated actions will be refused.
+        }
         onSave(trimmed);
       };
 
@@ -1036,6 +1066,23 @@
                 Leaving this blank switches the dashboard to preview mode with generated mock data.
               </p>
             )}
+
+            <label className="block text-sm font-medium text-stone-700 mt-4 mb-1">
+              API key <span className="font-normal text-stone-500">(optional)</span>
+            </label>
+            <input
+              type="password"
+              value={apiKey}
+              onChange={e => setApiKey(e.target.value)}
+              placeholder="EXEC_SHARED_SECRET"
+              className="w-full border border-stone-300 rounded px-3 py-2 text-sm font-mono focus:ring-2 focus:ring-amber-200"
+            />
+            <p className="mt-2 text-xs text-stone-500 leading-relaxed">
+              Only needed for actions that cost money or change state — Hive Mind chat,
+              running a budget analysis, and proposing a spend target. All charts and
+              tables load without it. Must match the <code className="bg-stone-100 px-1 rounded">EXEC_SHARED_SECRET</code>{' '}
+              Script Property in the Apps Script project. Stored in this browser only.
+            </p>
             <div className="flex justify-end gap-2 mt-4">
               <button
                 onClick={onClose}

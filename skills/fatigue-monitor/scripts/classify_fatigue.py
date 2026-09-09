@@ -30,6 +30,7 @@ import requests
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from lib.exec_api import exec_key  # noqa: E402
 from lib.meta import load_config  # noqa: E402
 
 CURRENT_WINDOW_DAYS = 7  # last 7 days of the 14-day fetch
@@ -151,7 +152,8 @@ def post_to_sheet(exec_endpoint: str, rows: list[dict[str, Any]]) -> dict[str, A
     try:
         resp = requests.post(exec_endpoint,
                              params={"action": "fatigue-write"},
-                             json={"rows": rows}, timeout=30)
+                             json={"rows": rows, "key": exec_key()},
+                             timeout=30)
     except requests.RequestException as exc:
         return {"posted": False, "error": str(exc)}
     if resp.status_code != 200:

@@ -40,6 +40,7 @@ import requests
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from lib.exec_api import exec_key  # noqa: E402
 from lib.meta import load_config  # noqa: E402
 from lib.io import atomic_write_json  # noqa: E402
 
@@ -117,7 +118,13 @@ def fetch_json(url: str, params: dict[str, Any] | None = None,
 
 
 def post_json(url: str, payload: dict[str, Any], timeout: int = 30) -> Any:
-    r = requests.post(url, json=payload, timeout=timeout)
+    """POST to /exec, carrying the shared secret.
+
+    scaling-write and scaling-queue-write are side-effecting and gated by
+    EXEC_SHARED_SECRET on the Apps Script side; without the key they return
+    {"error": "unauthorized"}.
+    """
+    r = requests.post(url, json={**payload, "key": exec_key()}, timeout=timeout)
     r.raise_for_status()
     return r.json()
 

@@ -52,6 +52,7 @@ jobs:
           # Same secret the daily-data + other agent workflows use.
           # The skill scripts read it directly via os.environ.
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
           # Optional. If unset, Claude skips Slack posting and only
           # surfaces results in this workflow's logs.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

@@ -33,7 +33,7 @@
         "field": "ic_conversions",
         "custom_conversion_id": "2330338620810873",
         "event_name": "Investment Crowdfunding Prequal Decision",
-        "_doc": "Historically the sole optimization target. Collapsed to n=1 over the 30d to 2026-09-08 — the conversion is live and correctly configured (last fired 2026-09-03); the Q3 broad audience simply does not qualify for IC."
+        "_doc": "Historically the sole optimization target. Collapsed to n=1 over the 30d to 2026-09-08 \u2014 the conversion is live and correctly configured (last fired 2026-09-03); the Q3 broad audience simply does not qualify for IC."
       },
       "rewards_crowdfunding": {
         "field": "rewards_conversions",
@@ -49,7 +49,9 @@
     "cpl_critical_multiple": 2.0
   },
   "pacing": {
-    "weekly_spend_target_dollars": 10000,
+    "_doc": "Set 2026-09-09 to $300/day = $2,100/week, matching the account's actual run rate. The live value comes from /exec?action=get_spend_goal (dashboard-managed); this is the fallback used only when /exec is unreachable. Keep the two in step.",
+    "weekly_spend_target_dollars": 2100,
+    "weekly_spend_tolerance_dollars": 315,
     "pacing_tolerance_pct": 15
   },
   "fatigue": {

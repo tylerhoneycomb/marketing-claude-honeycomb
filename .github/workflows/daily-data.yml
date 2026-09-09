@@ -68,6 +68,7 @@ jobs:
       - name: Fetch ad-level data from Meta
         env:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
           META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
           SNAPSHOT_DATE: ${{ github.event.inputs.snapshot_date }}
           START_DATE: ${{ github.event.inputs.start_date }}
@@ -150,6 +151,7 @@ jobs:
         if: always()
         env:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
           META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
           # Optional. If unset, report_health.py prints to the log only.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}

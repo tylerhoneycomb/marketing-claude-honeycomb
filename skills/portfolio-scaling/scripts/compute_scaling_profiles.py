@@ -476,8 +476,16 @@ def main() -> int:
     logging.info("Fetching campaign_mapping")
     mappings = fetch_json(exec_url, {"action": "mappings"}) or []
     logging.info("Fetching dynamic spend goal")
-    spend_goal = get_spend_goal(exec_url, fallback_target=10000,
-                                fallback_tolerance=500)
+    # Fallbacks come from benchmarks.json, not literals — per CLAUDE.md
+    # thresholds live in one place. The hardcoded 10000/500 here silently
+    # disagreed with pacing.weekly_spend_target_dollars whenever /exec was
+    # unreachable, so a portfolio brief could size its pool against a
+    # target nobody had configured.
+    pacing_cfg = config.get("pacing", {})
+    spend_goal = get_spend_goal(
+        exec_url,
+        fallback_target=pacing_cfg.get("weekly_spend_target_dollars", 2100),
+        fallback_tolerance=pacing_cfg.get("weekly_spend_tolerance_dollars", 315))
     target_weekly = spend_goal["target_weekly_spend"]
     tolerance_weekly = spend_goal["weekly_spend_tolerance"]
 

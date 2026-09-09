@@ -2764,6 +2764,29 @@ function runFullDiagnostic() {
 
 function runBudgetAnalysis() {
   Logger.log('=== runBudgetAnalysis ===');
+  // PAUSED 2026-09-09 — turned off at Tyler's request.
+  //
+  // This optimizer ranks campaigns by 14-day CPICP (cost per Investment
+  // Crowdfunding prequal decision) and adjusts each budget +/-2-4% daily.
+  // That metric fired ONCE across $6,296 of spend and 395 leads in the 30
+  // days to 2026-09-08 — the account moved to lead-optimized campaigns on
+  // 2026-08-19 and the broad audience now converts to rewards crowdfunding
+  // rather than IC. With cpicp null for nearly every campaign, the
+  // composite rank (70% CPICP / 30% trend) was ordering campaigns on a
+  // mostly-absent value and moving real money on the result.
+  //
+  // The rest of the agent loop was converted to leads on 2026-09-09; this
+  // file was not, so the honest move is to stop it rather than let it keep
+  // deciding. Strategic reallocation from the portfolio-scaling skill is
+  // UNAFFECTED — it runs through executeStrategicChanges() on the separate
+  // SCALING_* tokens and stays live.
+  //
+  // To re-enable: convert the ranking in computeRecommendations_ to CPL
+  // first (see tech-debt index in docs/TECHNICAL_REFERENCE.md §10.4), then
+  // remove this guard. The original logic below is untouched.
+  Logger.log('runBudgetAnalysis: PAUSED — IC-based ranking retired 2026-09-09.');
+  return;
+
   // Record timestamp so the dashboard can show "last run".
   PROPS.setProperty('BUDGET_LAST_RUN_AT', new Date().toISOString());
   validateTokens_();
@@ -3820,6 +3843,19 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
 
 function executeBudgetChanges() {
   Logger.log('=== executeBudgetChanges ===');
+  // PAUSED 2026-09-09 — paired with the runBudgetAnalysis() guard above.
+  //
+  // Without this, any BUDGET_APPROVED_TOKEN still sitting in Script
+  // Properties from a proposal approved before the pause would execute on
+  // the next 3 AM run, pushing IC-ranked budget changes to Meta days after
+  // the optimizer was supposed to be off.
+  //
+  // executeStrategicChanges() is deliberately NOT guarded — the
+  // portfolio-scaling path uses the separate SCALING_* tokens and remains
+  // active.
+  Logger.log('executeBudgetChanges: PAUSED — optimizer retired 2026-09-09.');
+  return;
+
   validateTokens_();
 
   var pendingToken = PROPS.getProperty('BUDGET_PENDING_TOKEN');
@@ -4152,6 +4188,110 @@ function buildBudgetWeeklySummary_() {
   lines.push('_Next proposal: tomorrow morning (daily cadence)_');
 
   return lines.join('\n');
+}
+
+
+// ============================================================
+// WEB APP — SHARED-SECRET GATE
+// ============================================================
+//
+// Added 2026-09-09. The Web App is deployed ANYONE_ANONYMOUS (see
+// appsscript.json) and its /exec URL is committed in cleartext in
+// data/config/benchmarks.json, so before this gate ANY caller who had the
+// URL could:
+//   - run `chat`, spending the Anthropic key with no cap;
+//   - run `run_budget_analysis`, making a live Meta call, writing pending
+//     rows to budget_queue and posting to Slack;
+//   - POST `scaling-queue-write`, appending arbitrary campaign budget rows
+//     AND receiving back a valid approval token.
+//
+// Read-only dashboard actions stay open: they expose the same numbers the
+// dashboard already serves, and gating them would break the deployed
+// dashboard with no proportional gain. The endpoints that cost money or
+// change state are gated here.
+//
+// The Slack approve/reject actions are deliberately NOT in this list —
+// they already authenticate against a per-proposal unguessable token, and
+// putting a shared key in a Slack URL would expose it to the channel.
+//
+// SETUP (required before deploying this change):
+//   Apps Script editor → Project Settings → Script Properties →
+//   add EXEC_SHARED_SECRET with a random value of at least 16 characters.
+//   Then add the same value as the GitHub secret EXEC_SHARED_SECRET so
+//   the skills can authenticate.
+//
+// This gate FAILS CLOSED. If EXEC_SHARED_SECRET is unset or shorter than
+// 16 characters, the protected actions are refused rather than left open —
+// an unset secret silently reopening the hole is exactly the failure this
+// exists to prevent.
+
+var EXEC_SECRET_PROP = 'EXEC_SHARED_SECRET';
+var EXEC_SECRET_MIN_LENGTH = 16;
+
+var PROTECTED_EXEC_ACTIONS = {
+  'chat': true,
+  'run_budget_analysis': true,
+  'propose_spend_target': true,
+  'health-write': true,
+  'daily-check-write': true,
+  'fatigue-write': true,
+  'creative-intelligence-write': true,
+  'scaling-write': true,
+  'scaling-queue-write': true
+};
+
+// Length-independent comparison on the common path, so a caller cannot
+// discover the secret one character at a time from response timing.
+function constantTimeEquals_(a, b) {
+  a = String(a);
+  b = String(b);
+  if (a.length !== b.length) return false;
+  var diff = 0;
+  for (var i = 0; i < a.length; i++) {
+    diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return diff === 0;
+}
+
+// Pull the caller's key from the query string or a JSON POST body.
+function suppliedExecKey_(e) {
+  var fromParam = e && e.parameter && e.parameter.key;
+  if (fromParam) return String(fromParam);
+  if (e && e.postData && e.postData.contents) {
+    try {
+      var parsed = JSON.parse(e.postData.contents);
+      if (parsed && parsed.key) return String(parsed.key);
+    } catch (err) {
+      // Non-JSON body — nothing to read.
+    }
+  }
+  return '';
+}
+
+function checkExecSecret_(e) {
+  var expected = PROPS.getProperty(EXEC_SECRET_PROP);
+  if (!expected || String(expected).length < EXEC_SECRET_MIN_LENGTH) {
+    return {
+      ok: false,
+      detail: 'EXEC_SHARED_SECRET is not set in Script Properties (or is ' +
+              'shorter than ' + EXEC_SECRET_MIN_LENGTH + ' characters). ' +
+              'Side-effecting actions are disabled until it is set.'
+    };
+  }
+  if (!constantTimeEquals_(suppliedExecKey_(e), expected)) {
+    return { ok: false, detail: 'missing or invalid key parameter' };
+  }
+  return { ok: true };
+}
+
+// Returns a rejection Response when the action is protected and the
+// caller did not authenticate; returns null when the call may proceed.
+function execAuthFailure_(e, action) {
+  if (!PROTECTED_EXEC_ACTIONS[action]) return null;
+  var auth = checkExecSecret_(e);
+  if (auth.ok) return null;
+  Logger.log('exec auth REJECTED for action=' + action + ': ' + auth.detail);
+  return jsonResponse_({ error: 'unauthorized', action: action, detail: auth.detail });
 }
 
 
@@ -4646,6 +4786,9 @@ function handleDashboardApi_(e) {
   };
 
   if (!action || !dashboardActions[action]) return null;
+
+  var authFailure = execAuthFailure_(e, action);
+  if (authFailure) return authFailure;
 
   // Chat returns its own Response object.
   if (action === 'chat') {
@@ -5737,6 +5880,9 @@ function getCampaignList_() {
 
 function doPost(e) {
   var action = e && e.parameter && e.parameter.action;
+
+  var postAuthFailure = execAuthFailure_(e, action);
+  if (postAuthFailure) return postAuthFailure;
 
   if (action === 'chat') {
     return handleChatRequest_(e);

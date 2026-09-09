@@ -38,6 +38,18 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONFIG_PATH = REPO_ROOT / "data" / "config" / "benchmarks.json"
 
+# This script is deliberately standalone — it is the checker that runs when
+# other things are broken, so it imports nothing from scripts/lib. That is
+# why the shared secret is read here rather than via
+# scripts/lib/exec_api.exec_key(), which is the canonical definition for
+# every other caller. Keep the env var name in step with it.
+EXEC_SECRET_ENV_VAR = "EXEC_SHARED_SECRET"
+
+
+def exec_key() -> str:
+    """Shared secret for side-effecting /exec actions (e.g. health-write)."""
+    return os.environ.get(EXEC_SECRET_ENV_VAR, "")
+
 
 def load_config() -> dict[str, Any]:
     with CONFIG_PATH.open() as f:
@@ -326,7 +338,7 @@ def write_to_sheet(exec_endpoint: str, today_local: str,
         resp = requests.post(
             exec_endpoint,
             params={"action": "health-write"},
-            json={"rows": rows},
+            json={"rows": rows, "key": exec_key()},
             timeout=20,
         )
     except requests.RequestException as exc:

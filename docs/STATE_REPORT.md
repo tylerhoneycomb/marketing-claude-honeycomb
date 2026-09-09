@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-09-09 (**Pivoted the whole system from Investment Crowdfunding conversions to leads.** The ad account moved to lead-optimized campaigns on 2026-08-19; the code had not followed, so every ranking and budget decision was sorting on a metric that fired once in 30 days. Leads are now the primary metric end to end — extraction, signals, all six skills, and the dashboard, where IC moved to its own secondary tab. Also fixed three latent defects the pivot exposed: winners were ranked by CPC rather than cost per lead, budget increases could never be produced because their weighting divided by a null CPICP, and nothing anywhere checked whether a campaign was still ACTIVE before proposing a budget change to it. Prior: 2026-06-23 consolidated the pipeline-health check into `daily-data.yml` and nudged both active crons off the top of the hour; 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; daily-check, creative-intelligence and fatigue-monitor remain paused)_
+_Last updated: 2026-09-09 (**Pivoted the whole system from Investment Crowdfunding conversions to leads**, then acted on three things the pivot surfaced. (1) **Turned off the daily budget optimizer** — it ranked campaigns by cost-per-IC, a number that fired once in 30 days, and was moving real money on it. Strategic reallocation from the weekly portfolio brief is unaffected. (2) **Closed the open `/exec` endpoint** — the web app was reachable by anyone with the URL, which is public in this repo; anyone could spend the Anthropic key, trigger a budget analysis, or queue budget rows and receive a valid approval token. Money-spending and state-changing actions now require a shared secret. (3) **Set the spend target to $300/day ($2,100/week)** to match the account's actual run rate, replacing a $10,000/week figure that no longer reflected anything. Prior: 2026-06-23 consolidated the pipeline-health check into `daily-data.yml`; 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; daily-check, creative-intelligence and fatigue-monitor remain paused)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -166,6 +166,28 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 - **Dashboard line chart accuracy.** Daily granularity shows the full selected date range (no collapsed x-axis), and per-campaign lines break on paused days instead of drawing misleading straight lines across gaps.
 
 ---
+
+## What changed on 2026-09-09, in plain terms
+
+**The daily budget optimizer is off.** Every morning at 6 it ranked campaigns
+by cost-per-IC-decision and nudged budgets up or down a few percent. That
+number is now essentially zero, so the ranking was close to meaningless and it
+was still moving money. It is switched off until the ranking is rebuilt around
+cost per lead. The **weekly** strategic reallocation is untouched and still
+runs.
+
+**The dashboard's API is no longer open to the world.** The Google Apps Script
+web app accepts requests from anyone, and its address is written down in this
+public repository. That meant a stranger with the link could run up an
+Anthropic bill through the chat box, kick off a budget analysis, or file budget
+changes and be handed the approval code for them. Anything that spends money or
+changes state now needs a password that only this repo's automation and your
+browser hold. Reading charts still needs nothing, so the dashboard works as
+before.
+
+**The spend target matches reality.** It said $10,000/week; the account runs
+about $300/day. Pacing was measuring against a number that had not been true
+for months.
 
 ## Current limitations and gaps
 

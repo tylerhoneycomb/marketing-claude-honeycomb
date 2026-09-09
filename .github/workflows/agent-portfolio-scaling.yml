@@ -59,6 +59,7 @@ jobs:
       - name: Compute scaling profiles
         env:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
         run: |
           python3 skills/portfolio-scaling/scripts/compute_scaling_profiles.py
 
@@ -70,6 +71,7 @@ jobs:
       - name: Compute reallocation
         env:
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
         run: |
           python3 skills/portfolio-scaling/scripts/compute_reallocation.py \
             --write-log
