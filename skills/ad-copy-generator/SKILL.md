@@ -32,14 +32,14 @@ Requires:
 For each target vertical:
 
 1. Filter the dataset's `variants[]` to those that appear in this vertical's ads.
-2. Compute median CPICP for each dimension (body / title / description).
-3. **Winners** = top 5 by lowest CPICP, below-median.
-4. **Losers** = top 5 by highest CPICP, above-median.
+2. Compute median CPL for each dimension (body / title / description).
+3. **Winners** = top 5 by lowest CPL, below-median.
+4. **Losers** = top 5 by highest CPL, above-median.
 5. Compute structural-feature deltas between winners and losers (avg word count, % with proper noun, % with question mark, % imperative opener, etc.).
 6. Build a Claude prompt that includes the full voice guide, the full compliance rules, the winning examples (verbatim from the corpus), the losing examples to avoid, and the structural pattern data.
 7. Force `tool_use` on a `draft_ads` tool whose schema requires `patterns_observed` (a 2-3 sentence model summary) plus an array of `drafts` each with `body`, `title`, `description`, `pattern_followed`.
 
-Median split (rather than naive top-5 / bottom-5) ensures winners and losers are always distinct cohorts even on small variant pools. With only 3 variants in a dimension, naive ranking would put the WORST variant in winners just because it's "top 5 by ascending CPICP."
+Median split (rather than naive top-5 / bottom-5) ensures winners and losers are always distinct cohorts even on small variant pools. With only 3 variants in a dimension, naive ranking would put the WORST variant in winners just because it's "top 5 by ascending CPL."
 
 ## Compliance backstop
 
@@ -57,7 +57,7 @@ Drafts that hit any pattern get a `⚠️ Compliance flags:` banner in the markd
 
 `data/drafts/<YYYY-MM-DD>-<vertical>.md` — Markdown file with:
 
-1. **Source corpus stats** — ad count, IC count, median CPICP, total spend
+1. **Source corpus stats** — ad count, lead count, median CPL, total spend
 2. **Patterns observed** — Claude's 2-3 sentence summary of what distinguishes winners from losers
 3. **Structural pattern data** — the JSON block of feature deltas between winners and losers
 4. **N drafts** — each with body, title, description, `pattern_followed` explanation, and compliance-flag status (✓ or ⚠️)

@@ -53,6 +53,20 @@ CREATIVE_CACHE_PATH = REPO_ROOT / "data" / "creatives" / "categorizations.json"
 CAMPAIGN_DAILY_MIN_CENTS = 2500
 
 
+def is_actionable_campaign(cinfo: dict[str, Any] | None) -> bool:
+    """True only for campaigns Meta is actually delivering.
+
+    Budget moves against a PAUSED or ARCHIVED campaign are inert at best and
+    misleading at worst: before this guard the weekly brief proposed a
+    -397 cents/day cut to ICD-Health, Fitness & Personal Care-Q2-2026, a
+    campaign with every ad set paused and no delivery since 2026-08-17, and
+    86% of the "portfolio" total was paused-campaign budget.
+    """
+    if not cinfo:
+        return False
+    return (cinfo.get("effective_status") or "").upper() == "ACTIVE"
+
+
 def floor_cents(buffer_pct: float) -> int:
     return int(round(CAMPAIGN_DAILY_MIN_CENTS * (1 + buffer_pct)))
 
@@ -131,7 +145,7 @@ def compute_decreases(profiles: dict[str, Any],
 
         for cid in m.get("campaign_ids", []):
             cinfo = profiles["campaigns"].get(cid)
-            if not cinfo:
+            if not is_actionable_campaign(cinfo):
                 continue
             current_cents = cinfo["daily_budget_cents"]
             remaining = cinfo["weekly_remaining_pct"]
@@ -171,7 +185,12 @@ def compute_increases(profiles: dict[str, Any],
                       benchmarks: dict[str, Any],
                       pool_cents: int) -> list[dict[str, Any]]:
     """Allocate pool_cents across scalable + stable verticals weighted
-    by inverse CPICP. Stable gets 0.5x weight (secondary priority).
+    by inverse CPL. Stable gets 0.5x weight (secondary priority).
+
+    Weighting used to key on CPICP. Because IC now fires on well under 1% of
+    leads, `cpicp` was None for nearly every vertical, every weight was
+    skipped, total_w came to 0 and this function returned [] — which is why
+    recent briefs carried decreases but never a single increase.
     """
     if pool_cents <= 0:
         return []
@@ -179,11 +198,11 @@ def compute_increases(profiles: dict[str, Any],
     weights: dict[str, float] = {}
     for vertical, m in profiles["verticals"].items():
         cls = m.get("classification")
-        cpicp = m.get("cpicp")
-        if cls == "scalable" and cpicp:
-            weights[vertical] = safe_inv(cpicp)
-        elif cls == "stable" and cpicp:
-            weights[vertical] = safe_inv(cpicp) * 0.5
+        cpl = m.get("cpl")
+        if cls == "scalable" and cpl:
+            weights[vertical] = safe_inv(cpl)
+        elif cls == "stable" and cpl:
+            weights[vertical] = safe_inv(cpl) * 0.5
     total_w = sum(weights.values())
     if total_w <= 0:
         return []
@@ -198,7 +217,8 @@ def compute_increases(profiles: dict[str, Any],
         # Distribute vertical_pool across the vertical's campaigns,
         # proportionally by current daily budget, capped per-campaign by
         # weekly_remaining_pct.
-        cids = m.get("campaign_ids", [])
+        cids = [cid for cid in m.get("campaign_ids", [])
+                if is_actionable_campaign(profiles["campaigns"].get(cid))]
         total_budget = sum(
             profiles["campaigns"].get(cid, {}).get("daily_budget_cents", 0)
             for cid in cids
@@ -208,7 +228,7 @@ def compute_increases(profiles: dict[str, Any],
 
         for cid in cids:
             cinfo = profiles["campaigns"].get(cid)
-            if not cinfo:
+            if not is_actionable_campaign(cinfo):
                 continue
             current = cinfo["daily_budget_cents"]
             remaining = cinfo["weekly_remaining_pct"]
@@ -230,10 +250,12 @@ def compute_increases(profiles: dict[str, Any],
                 "change_pct": round(actual_pct, 4),
                 "post_change_cents": current + actual_cents,
                 "classification": m.get("classification"),
-                "cpicp": m.get("cpicp"),
+                "cpl": m.get("cpl"),
+                "cpl": m.get("cpl"),
+            "cpicp": m.get("cpicp"),
                 "remaining_headroom_pct": round(remaining, 4),
                 "allocation_weight_reason": (
-                    f"inverse-CPICP weight {w:.4f} of {total_w:.4f}"
+                    f"inverse-CPL weight {w:.4f} of {total_w:.4f}"
                     + (" (secondary, 0.5x for stable)"
                        if m.get("classification") == "stable" else "")
                 ),
@@ -251,7 +273,7 @@ def absorption_capacity(profiles: dict[str, Any]) -> int:
             continue
         for cid in m.get("campaign_ids", []):
             cinfo = profiles["campaigns"].get(cid)
-            if not cinfo:
+            if not is_actionable_campaign(cinfo):
                 continue
             cap += int(round(cinfo["daily_budget_cents"]
                              * cinfo["weekly_remaining_pct"]))
@@ -568,6 +590,7 @@ def compose_scaling_log_rows(profiles: dict[str, Any],
             "confidence": m.get("confidence"),
             "elasticity_r": m.get("elasticity_r"),
             "ic_rate": m.get("ic_rate"),
+            "cpl": m.get("cpl"),
             "cpicp": m.get("cpicp"),
             "spend_share_pct": m.get("spend_share_pct"),
             "avg_frequency": m.get("avg_frequency"),

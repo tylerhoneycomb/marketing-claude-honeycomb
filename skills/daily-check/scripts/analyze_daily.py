@@ -104,7 +104,8 @@ def rollup_by(rows: list[dict[str, Any]], key: str) -> dict[str, dict[str, Any]]
     """Sum daily metrics keyed by `key` (e.g. 'campaign_id', 'ad_id', 'adset_id')."""
     out: dict[str, dict[str, Any]] = defaultdict(
         lambda: {"spend": 0.0, "impressions": 0, "clicks": 0,
-                 "reach": 0, "conversions": 0, "ic_conversions": 0,
+                 "reach": 0, "conversions": 0, "leads": 0,
+                 "prequal_decisions": 0, "ic_conversions": 0,
                  "frequency_sum": 0.0, "frequency_n": 0}
     )
     names: dict[str, dict[str, Any]] = {}
@@ -118,6 +119,8 @@ def rollup_by(rows: list[dict[str, Any]], key: str) -> dict[str, dict[str, Any]]
         agg["clicks"] += int(r.get("clicks") or 0)
         agg["reach"] += int(r.get("reach") or 0)
         agg["conversions"] += int(r.get("conversions") or 0)
+        agg["leads"] += int(r.get("leads", r.get("conversions")) or 0)
+        agg["prequal_decisions"] += int(r.get("prequal_decisions") or 0)
         agg["ic_conversions"] += int(r.get("ic_conversions") or 0)
         f = float(r.get("frequency") or 0.0)
         if f > 0:
@@ -138,6 +141,7 @@ def rollup_by(rows: list[dict[str, Any]], key: str) -> dict[str, dict[str, Any]]
         ctr = safe_div(agg["clicks"], agg["impressions"])
         cpc = safe_div(agg["spend"], agg["clicks"])
         avg_freq = safe_div(agg["frequency_sum"], agg["frequency_n"])
+        cpl = safe_div(agg["spend"], agg["leads"])
         cpicp = safe_div(agg["spend"], agg["ic_conversions"])
         result[k] = {
             **names[k],
@@ -146,16 +150,19 @@ def rollup_by(rows: list[dict[str, Any]], key: str) -> dict[str, dict[str, Any]]
             "clicks": agg["clicks"],
             "reach": agg["reach"],
             "conversions": agg["conversions"],
+            "leads": agg["leads"],
+            "prequal_decisions": agg["prequal_decisions"],
             "ic_conversions": agg["ic_conversions"],
             "ctr": round(ctr * 100, 3) if ctr is not None else None,
             "cpc": round(cpc, 3) if cpc is not None else None,
             "frequency": round(avg_freq, 2) if avg_freq is not None else None,
+            "cpl": round(cpl, 2) if cpl is not None else None,
             "cpicp": round(cpicp, 2) if cpicp is not None else None,
         }
     return result
 
 
-# ─── Portfolio (campaigns sorted by CPICP asc) ────────────────────────────
+# ─── Portfolio (campaigns sorted by CPL asc) ──────────────────────────────
 
 def compute_portfolio(campaigns_rollup: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
     rows = []
@@ -163,33 +170,46 @@ def compute_portfolio(campaigns_rollup: dict[str, dict[str, Any]]) -> list[dict[
         rows.append({
             "campaign": agg.get("campaign_name") or cid,
             "spend": agg["spend"],
+            "leads": agg["leads"],
+            "cpl": agg["cpl"],
+            "prequal_decisions": agg["prequal_decisions"],
             "ic_conversions": agg["ic_conversions"],
             "cpicp": agg["cpicp"],
             "ctr": agg["ctr"],
             "frequency": agg["frequency"],
         })
-    # Best CPICP first; campaigns with no IC conversions sort last.
-    rows.sort(key=lambda r: (r["cpicp"] is None, r["cpicp"] or float("inf")))
+    # Best CPL first; campaigns with no leads sort last. Ordering keyed on
+    # CPICP until 2026-09-09, which ranked on a metric that was None for
+    # nearly every campaign and therefore produced an arbitrary order.
+    rows.sort(key=lambda r: (r["cpl"] is None, r["cpl"] or float("inf")))
     return rows
 
 
 # ─── Winners / Bleeders (ad-level) ────────────────────────────────────────
 
 def compute_winners(ads_rollup: dict[str, dict[str, Any]],
-                    min_conversions: int, min_impressions: int) -> list[dict[str, Any]]:
+                    min_leads: int, min_impressions: int) -> list[dict[str, Any]]:
+    """Top ads by COST PER LEAD.
+
+    This gated on leads but then ranked by CPC, so the "winners" were the ads
+    that bought the cheapest clicks, not the cheapest leads — an ad with a
+    great CPC and a poor click-to-lead rate outranked a genuinely efficient
+    one. Ranking now uses the metric the gate implies.
+    """
     eligible = [
         a for a in ads_rollup.values()
-        if a["conversions"] >= min_conversions
+        if a["leads"] >= min_leads
         and a["impressions"] >= min_impressions
-        and a["cpc"] is not None
+        and a.get("cpl") is not None
     ]
-    eligible.sort(key=lambda a: a["cpc"])
+    eligible.sort(key=lambda a: a["cpl"])
     return [
         {
             "ad_name": a.get("ad_name"),
             "campaign": a.get("campaign_name"),
+            "cpl": a["cpl"],
+            "leads": a["leads"],
             "cpc": a["cpc"],
-            "conversions": a["conversions"],
             "ctr": a["ctr"],
         }
         for a in eligible[:3]
@@ -200,32 +220,61 @@ def compute_bleeders(ads_rollup: dict[str, dict[str, Any]],
                      adsets_rollup: dict[str, dict[str, Any]],
                      min_impressions: int,
                      spend_share_min_pct: float,
-                     ctr_vs_avg_max_pct: float) -> list[dict[str, Any]]:
-    """Bleeders: spend share > spend_share_min_pct of their ad set AND
-    CTR < ctr_vs_avg_max_pct% of ad-set average CTR."""
+                     ctr_vs_avg_max_pct: float,
+                     cpl_vs_avg_min_mult: float) -> list[dict[str, Any]]:
+    """Ads taking a meaningful share of their ad set's spend without earning it.
+
+    An ad qualifies on either of two grounds, both requiring it to hold more
+    than `spend_share_min_pct` of ad-set spend:
+
+      - it produced no leads at all while spending, or
+      - its CPL is at least `cpl_vs_avg_min_mult` times the ad-set CPL.
+
+    CTR is retained as a fallback for ad sets where nothing has leads yet, so
+    the check still says something during a cold start, but outcome beats
+    proxy wherever outcome data exists.
+    """
     candidates = []
     for ad in ads_rollup.values():
         adset_id = ad.get("adset_id")
         if not adset_id or ad["impressions"] < min_impressions:
             continue
         adset = adsets_rollup.get(adset_id)
-        if not adset or not adset["spend"] or adset["ctr"] is None or ad["ctr"] is None:
+        if not adset or not adset["spend"]:
             continue
 
-        spend_share_pct = (ad["spend"] / adset["spend"]) * 100 if adset["spend"] else 0
+        spend_share_pct = (ad["spend"] / adset["spend"]) * 100
         if spend_share_pct <= spend_share_min_pct:
             continue
-        if ad["ctr"] >= adset["ctr"] * (ctr_vs_avg_max_pct / 100):
+
+        adset_cpl = adset.get("cpl")
+        reason = None
+        if ad["leads"] == 0 and ad["spend"] > 0:
+            reason = "spend_without_leads"
+        elif ad.get("cpl") is not None and adset_cpl:
+            if ad["cpl"] >= adset_cpl * cpl_vs_avg_min_mult:
+                reason = "cpl_above_adset"
+        elif adset_cpl is None and ad["ctr"] is not None and adset["ctr"] is not None:
+            # Nothing in this ad set has leads yet — fall back to CTR.
+            if ad["ctr"] < adset["ctr"] * (ctr_vs_avg_max_pct / 100):
+                reason = "ctr_below_adset_no_lead_data"
+        if not reason:
             continue
 
         candidates.append({
             "ad_name": ad.get("ad_name"),
             "campaign": ad.get("campaign_name"),
+            "reason": reason,
+            "leads": ad["leads"],
+            "cpl": ad.get("cpl"),
+            "adset_cpl": adset_cpl,
             "ctr": ad["ctr"],
             "adset_avg_ctr": adset["ctr"],
             "spend_share_pct": round(spend_share_pct, 1),
         })
-    candidates.sort(key=lambda r: r["ctr"])
+    # Worst first: no-lead spenders, then the most inflated CPL.
+    candidates.sort(key=lambda r: (r["reason"] != "spend_without_leads",
+                                   -(r["cpl"] or 0)))
     return candidates[:3]
 
 
@@ -338,6 +387,8 @@ def write_to_sheet(exec_endpoint: str, until_iso: str, summary: dict[str, Any]
             "date": until_iso,
             "pacing_status": summary["pacing"]["status"],
             "total_spend": summary["totals"]["spend"],
+            "total_leads": summary["totals"]["leads"],
+            "portfolio_cpl": summary["totals"]["cpl"],
             "total_icps": summary["totals"]["ic_conversions"],
             "portfolio_cpicp": summary["totals"]["cpicp"],
             "fatigue_flag_count": len(summary["fatigue_flags"]),
@@ -421,6 +472,7 @@ def main(argv: list[str] | None = None) -> int:
         daily_cfg["min_impressions_for_signal"],
         daily_cfg["bleeder_min_spend_share_pct"],
         daily_cfg["bleeder_ctr_vs_adset_avg_pct"],
+        config["lead_economics"]["cpl_warning_multiple"],
     )
     fatigue_flags = compute_fatigue_flags(
         data["ads"], until,
@@ -435,6 +487,9 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     total_spend = round(sum(c["spend"] for c in campaigns_rollup.values()), 2)
+    total_leads = sum(c["leads"] for c in campaigns_rollup.values())
+    total_prequal = sum(c["prequal_decisions"] for c in campaigns_rollup.values())
+    total_cpl = round(total_spend / total_leads, 2) if total_leads else None
     total_ic = sum(c["ic_conversions"] for c in campaigns_rollup.values())
     total_cpicp = round(total_spend / total_ic, 2) if total_ic else None
 
@@ -451,6 +506,9 @@ def main(argv: list[str] | None = None) -> int:
         "stale_creatives": stale_creatives,
         "totals": {
             "spend": total_spend,
+            "leads": total_leads,
+            "cpl": total_cpl,
+            "prequal_decisions": total_prequal,
             "ic_conversions": total_ic,
             "cpicp": total_cpicp,
         },

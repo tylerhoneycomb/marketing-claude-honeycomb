@@ -17,7 +17,7 @@ Writes: data/derived/scaling_profiles.json
 
 Per-vertical: classification (scalable | stable | saturating | over-invested),
 new_audience_needed modifier, confidence (confident | directional | insufficient),
-elasticity_r, ic_rate, cpicp, frequency + CPM trends, spend_share.
+elasticity_r, cpl, ic_rate, cpicp, frequency + CPM trends, spend_share.
 
 Per-campaign: weekly_consumed_pct (absolute sum of |change_pct| across all
 sources since previous Tuesday — optimizer + knockdown + any prior strategic),
@@ -303,12 +303,15 @@ def confidence_label(weeks_with_conversions: int,
 
 
 def classify_vertical(metrics: dict[str, Any], benchmarks: dict[str, Any],
-                      portfolio_median_cpicp: float | None) -> str:
+                      portfolio_median_cpl: float | None) -> str:
     """scalable / stable / saturating / over-invested.
 
-    `over-invested` is the saturating verticals whose CPICP is also worse
-    than portfolio median. `new_audience_needed` is a separate modifier
-    computed in compute_new_audience_needed().
+    `over-invested` is the saturating verticals whose CPL is also worse than
+    portfolio median. This axis used to be CPICP; with IC firing on well
+    under 1% of leads, CPICP was None for almost every vertical, so the
+    over-invested branch was effectively unreachable and saturating verticals
+    were silently downgraded to `stable`. `new_audience_needed` is a separate
+    modifier computed in compute_new_audience_needed().
     """
     r = metrics.get("elasticity_r")
     if r is None:
@@ -316,7 +319,7 @@ def classify_vertical(metrics: dict[str, Any], benchmarks: dict[str, Any],
     abs_r = abs(r)
     cpl_degradation = metrics.get("high_spend_cpl_degradation_pct")
     cpl_deg_threshold = benchmarks["high_spend_cpl_degradation_threshold"]
-    cpicp = metrics.get("cpicp")
+    cpl = metrics.get("cpl")
 
     if abs_r < benchmarks["elasticity_scalable_threshold"]:
         return "scalable"
@@ -324,8 +327,8 @@ def classify_vertical(metrics: dict[str, Any], benchmarks: dict[str, Any],
         return "stable"
     # r >= saturating_threshold
     if (cpl_degradation is not None and cpl_degradation > cpl_deg_threshold):
-        if (cpicp is not None and portfolio_median_cpicp is not None
-                and cpicp > portfolio_median_cpicp):
+        if (cpl is not None and portfolio_median_cpl is not None
+                and cpl > portfolio_median_cpl):
             return "over-invested"
         return "saturating"
     return "stable"
@@ -521,6 +524,8 @@ def main() -> int:
     vertical_metrics: dict[str, dict[str, Any]] = {}
     portfolio_total_spend = 0.0
     portfolio_total_ic = 0
+    portfolio_total_conv = 0
+    portfolio_cpls: list[float] = []
     portfolio_cpicps: list[float] = []
     portfolio_ic_rates: list[float] = []
 
@@ -582,15 +587,19 @@ def main() -> int:
             recent_freq_x_spend / recent_weeks_freq_spend
             if recent_weeks_freq_spend else None
         )
+        cpl = (total_spend / total_conv) if total_conv > 0 else None
         cpicp = (total_spend / total_ic) if total_ic > 0 else None
         ic_rate = (total_ic / total_conv) if total_conv > 0 else None
 
+        if cpl is not None:
+            portfolio_cpls.append(cpl)
         if cpicp is not None:
             portfolio_cpicps.append(cpicp)
         if ic_rate is not None:
             portfolio_ic_rates.append(ic_rate)
         portfolio_total_spend += total_spend
         portfolio_total_ic += total_ic
+        portfolio_total_conv += total_conv
 
         # Optimizer eligibility: at least one campaign in this vertical clears
         # the LIFETIME_MIN_CONVERSIONS gate (10).
@@ -614,6 +623,7 @@ def main() -> int:
             "high_spend_cpl_degradation_pct": (
                 round(cpl_degradation, 4) if cpl_degradation is not None else None
             ),
+            "cpl": round(cpl, 2) if cpl is not None else None,
             "ic_rate": round(ic_rate, 4) if ic_rate is not None else None,
             "cpicp": round(cpicp, 2) if cpicp is not None else None,
             "total_spend": round(total_spend, 2),
@@ -631,6 +641,8 @@ def main() -> int:
         }
 
     # Portfolio medians.
+    portfolio_median_cpl = (statistics.median(portfolio_cpls)
+                            if portfolio_cpls else None)
     portfolio_median_cpicp = (statistics.median(portfolio_cpicps)
                               if portfolio_cpicps else None)
     portfolio_median_ic_rate = (statistics.median(portfolio_ic_rates)
@@ -639,7 +651,7 @@ def main() -> int:
     # ─── Classification + confidence + new_audience_needed ─────────────
     for vertical, m in vertical_metrics.items():
         m["classification"] = classify_vertical(
-            m, benchmarks, portfolio_median_cpicp
+            m, benchmarks, portfolio_median_cpl
         )
         m["new_audience_needed"] = compute_new_audience_needed(m, benchmarks)
         m["confidence"] = confidence_label(
@@ -699,6 +711,8 @@ def main() -> int:
         "target_weekly_spend": target_weekly_dollars,
         "weekly_spend_tolerance": tolerance_weekly,
         "tolerance_headroom_daily_cents": int(tolerance_headroom_daily),
+        "median_cpl": (round(portfolio_median_cpl, 2)
+                       if portfolio_median_cpl is not None else None),
         "median_cpicp": (round(portfolio_median_cpicp, 2)
                          if portfolio_median_cpicp is not None else None),
         "median_ic_rate": (round(portfolio_median_ic_rate, 4)

@@ -29,7 +29,7 @@ Pipeline:
   7. Aggregate spend + IC + impressions per variant.
   8. Find side-by-side pairs (ads sharing an image_hash but differing
      on body text).
-  9. Identify top/bottom decile ads by CPICP among ads with
+  9. Identify top/bottom decile ads by CPL among ads with
      sufficient spend + days_active.
  10. Emit /tmp/creative_dataset.json.
 
@@ -129,13 +129,14 @@ def list_snapshot_dates_in_window(since: str, until: str) -> list[str]:
 
 def aggregate_ad_performance(
         snapshot_dates: list[str]) -> dict[str, dict[str, Any]]:
-    """Sum impressions / clicks / spend / ic_conversions per ad_id
+    """Sum impressions / clicks / spend / leads / ic_conversions per ad_id
     across the snapshot window. Track first/last active date and
     days_active. Pulls campaign_name from whichever insight row first
     has it (handles campaign renames mid-window by taking the most
     recent non-empty value)."""
     agg: dict[str, dict[str, Any]] = defaultdict(lambda: {
         "impressions": 0, "clicks": 0, "spend": 0.0,
+        "leads": 0, "prequal_decisions": 0,
         "ic_conversions": 0, "first_date": None, "last_date": None,
         "active_dates": set(), "campaign_name": "", "ad_name": "",
     })
@@ -157,6 +158,8 @@ def aggregate_ad_performance(
             entry["impressions"] += imps
             entry["clicks"] += int(r.get("clicks") or 0)
             entry["spend"] += float(r.get("spend") or 0.0)
+            entry["leads"] += int(r.get("leads", r.get("conversions")) or 0)
+            entry["prequal_decisions"] += int(r.get("prequal_decisions") or 0)
             entry["ic_conversions"] += int(r.get("ic_conversions") or 0)
             if imps > 0:
                 entry["active_dates"].add(d)
@@ -365,20 +368,24 @@ def aggregate_variant_performance(
         variants: dict[str, dict[str, Any]],
         ad_performance: dict[str, dict[str, Any]],
         ) -> None:
-    """In-place: for each variant, sum spend / impressions / IC across
-    the ads where it appears."""
+    """In-place: for each variant, sum spend / impressions / leads / IC
+    across the ads where it appears."""
     for entry in variants.values():
         spend = 0.0
         imps = 0
+        leads = 0
         ic = 0
         for ad_id in entry["appears_in_ads"]:
             perf = ad_performance.get(ad_id) or {}
             spend += perf.get("spend", 0.0)
             imps += perf.get("impressions", 0)
+            leads += perf.get("leads", 0)
             ic += perf.get("ic_conversions", 0)
         entry["ad_count"] = len(entry["appears_in_ads"])
         entry["total_spend"] = round(spend, 2)
         entry["total_impressions"] = imps
+        entry["total_leads"] = leads
+        entry["cpl"] = round(spend / leads, 2) if leads > 0 else None
         entry["total_ic_conversions"] = ic
         entry["cpicp"] = round(spend / ic, 2) if ic > 0 else None
 
@@ -391,7 +398,7 @@ def find_side_by_side_pairs(
     """Find ad pairs that share at least one image_hash but differ on
     body text. The "same audience, same image, same time, different
     copy" comparison Tyler called load-bearing — Meta's audience
-    targeting + image are held constant by the join, so any CPICP
+    targeting + image are held constant by the join, so any CPL
     delta within a pair leans causally on the body difference."""
     by_image: dict[str, list[str]] = defaultdict(list)
     for ad_id, creative_id in ad_to_creative.items():
@@ -426,12 +433,12 @@ def find_side_by_side_pairs(
                 diff_pairs.append({
                     "ad_a": ad_a,
                     "ad_b": ad_b,
-                    "ad_a_cpicp": (
-                        round(perf_a["spend"] / perf_a["ic_conversions"], 2)
-                        if perf_a.get("ic_conversions") else None),
-                    "ad_b_cpicp": (
-                        round(perf_b["spend"] / perf_b["ic_conversions"], 2)
-                        if perf_b.get("ic_conversions") else None),
+                    "ad_a_cpl": (
+                        round(perf_a["spend"] / perf_a["leads"], 2)
+                        if perf_a.get("leads") else None),
+                    "ad_b_cpl": (
+                        round(perf_b["spend"] / perf_b["leads"], 2)
+                        if perf_b.get("leads") else None),
                     "bodies_only_in_a": list(only_a),
                     "bodies_only_in_b": list(only_b),
                 })
@@ -447,18 +454,22 @@ def find_side_by_side_pairs(
 def compute_decile_lists(
         ad_performance: dict[str, dict[str, Any]],
         ) -> tuple[list[str], list[str]]:
-    """Return (top_decile_by_cpicp, bottom_decile_by_cpicp). Top = best
-    = lowest CPICP. Both lists empty if fewer than 10 eligible ads."""
+    """Return (top_decile_by_cpl, bottom_decile_by_cpl). Top = best = lowest
+    CPL. Both lists empty if fewer than 10 eligible ads.
+
+    Deciles keyed on CPICP until 2026-09-09. Because IC fired on well under
+    1% of leads, the eligible pool almost never reached 10 ads and both
+    deciles came back empty, so creative comparison silently did nothing."""
     eligible: list[tuple[str, float]] = []
     for ad_id, perf in ad_performance.items():
-        if perf.get("ic_conversions", 0) <= 0:
+        if perf.get("leads", 0) <= 0:
             continue
         if perf.get("spend", 0.0) < MIN_SPEND_FOR_DECILE:
             continue
         if perf.get("days_active", 0) < MIN_DAYS_ACTIVE_FOR_DECILE:
             continue
-        cpicp = perf["spend"] / perf["ic_conversions"]
-        eligible.append((ad_id, cpicp))
+        cpl = perf["spend"] / perf["leads"]
+        eligible.append((ad_id, cpl))
     if len(eligible) < 10:
         return [], []
     eligible.sort(key=lambda kv: kv[1])
@@ -597,6 +608,8 @@ def main(argv: list[str] | None = None) -> int:
                     "visual_style": tag.get("visual_style"),
                     "rationale": tag.get("rationale"),
                 })
+        cpl = (round(perf["spend"] / perf["leads"], 2)
+               if perf.get("leads") else None)
         cpicp = (round(perf["spend"] / perf["ic_conversions"], 2)
                  if perf.get("ic_conversions") else None)
         ads_out.append({
@@ -610,6 +623,9 @@ def main(argv: list[str] | None = None) -> int:
             "impressions": perf["impressions"],
             "clicks": perf["clicks"],
             "spend": round(perf["spend"], 2),
+            "leads": perf["leads"],
+            "cpl": cpl,
+            "prequal_decisions": perf["prequal_decisions"],
             "ic_conversions": perf["ic_conversions"],
             "cpicp": cpicp,
             "days_active": perf["days_active"],
@@ -638,10 +654,10 @@ def main(argv: list[str] | None = None) -> int:
         "pair_group_count": len(pairs),
         "fresh_creative_fetches": fresh_count,
         "image_paths_cached": len(image_paths),
-        "ads": sorted(ads_out, key=lambda a: a.get("cpicp") or 1e9),
+        "ads": sorted(ads_out, key=lambda a: a.get("cpl") or 1e9),
         "variants": sorted(
             variants.values(),
-            key=lambda v: v.get("cpicp") if v.get("cpicp") is not None
+            key=lambda v: v.get("cpl") if v.get("cpl") is not None
                           else 1e9),
         "side_by_side_pairs": pairs,
         "top_decile_ads": top_ads,

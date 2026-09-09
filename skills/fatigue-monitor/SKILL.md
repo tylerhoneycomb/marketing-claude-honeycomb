@@ -7,7 +7,7 @@ description: Detect ad creative fatigue — CTR decay, frequency saturation, CPC
 
 ## Purpose
 
-Identify ads losing effectiveness before CPICP degrades. Classify severity so Tyler can act: pause, replace, or monitor. Surface pending budget conflicts so a fatiguing ad doesn't get more spend tomorrow.
+Identify ads losing effectiveness before CPL degrades. Classify severity so Tyler can act: pause, replace, or monitor. Surface pending budget conflicts so a fatiguing ad doesn't get more spend tomorrow.
 
 ## Scripts
 

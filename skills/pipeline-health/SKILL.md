@@ -27,7 +27,7 @@ Requires:
 The four checks:
 1. **data_freshness** — calls `?action=rolling-latest-date`, compares to expected (yesterday in account timezone, or two days ago if running before 7 AM ET).
 2. **meta_token** — calls Meta `debug_token`, parses `is_valid` and `expires_at`.
-3. **ic_conversion_event** — calls Meta `customconversions`, verifies the IC custom conversion ID is present and active.
+3. **funnel_conversions** — calls Meta `customconversions` and verifies every conversion configured under `conversions` in `benchmarks.json` (the quality tier and each reported subtype) still exists and is not archived. Reports each one's `last_fired_time`, so a conversion that silently stops firing is visible rather than passing on mere existence. A missing/archived quality conversion is FAIL; a subtype is WARN.
 4. **dashboard_endpoint** — calls `?action=leaderboard` with the configured timeout, verifies a JSON response.
 
 The script's stdout JSON looks like:
@@ -79,7 +79,7 @@ Pipeline Health — 2026-05-03
 
 [PASS] data_freshness — latest data: 2026-05-02, expected: 2026-05-02
 [PASS] meta_token — valid, expires in 47 days
-[PASS] ic_conversion_event — custom conversion 2330338620810873 ('Investment Crowdfunding Prequal Decision') exists
+[PASS] funnel_conversions — last fired: prequal_decisions=2026-09-09, investment_crowdfunding=2026-09-03, rewards_crowdfunding=2026-09-09
 [WARN] dashboard_endpoint — valid JSON in 8.2s (slow cold start)
 
 Sheet log: 4 rows written to pipeline_health

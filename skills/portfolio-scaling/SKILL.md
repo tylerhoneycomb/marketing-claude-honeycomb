@@ -7,7 +7,7 @@ description: Weekly structural diagnosis per vertical (scalable / stable / satur
 
 ## Purpose
 
-The daily budget optimizer adjusts each campaign by ±2-4% based on 14-day CPICP rank and ICP trend. That's a short-horizon, campaign-grain signal. This skill adds the missing **structural** layer: 12-week trailing diagnoses per vertical to answer "is this vertical *able* to absorb more spend?" — which short-window scoring can't see.
+The daily budget optimizer adjusts each campaign by ±2-4% based on 14-day CPL rank and lead trend. That's a short-horizon, campaign-grain signal. This skill adds the missing **structural** layer: 12-week trailing diagnoses per vertical to answer "is this vertical *able* to absorb more spend?" — which short-window scoring can't see.
 
 It produces two deliverables:
 
@@ -43,7 +43,8 @@ Per vertical, computed over the last 12 weeks:
 | `cpl_degradation` | Median-split the qualifying weeks by spend; compare avg CPL of high-spend half vs low-spend half. |
 | `frequency_trend` | Linear-regression slope of spend-weighted weekly frequency over the last `frequency_trend_saturation_weeks` (4). Labelled rising / flat / falling at ±5% of mean. |
 | `cpm_trend` | Same, on CPM, over `cpm_trend_weeks` (4). |
-| `cpicp` | Total spend / total IC, last 12 weeks. Compared to portfolio median. |
+| `cpl` | Total spend / total leads, last 12 weeks. Compared to portfolio median. This is the cost axis for classification. |
+| `cpicp` | Total spend / total IC, last 12 weeks. Reported only — IC is too sparse to classify on. |
 
 Classification rule:
 
@@ -51,8 +52,8 @@ Classification rule:
 |---|---|
 | `|r| < 0.2` | **scalable** |
 | `0.2 ≤ |r| < 0.5` | **stable** |
-| `|r| ≥ 0.5` AND `cpl_degradation > 30%` AND `cpicp > portfolio_median_cpicp` | **over-invested** |
-| `|r| ≥ 0.5` AND `cpl_degradation > 30%` (CPICP not above median) | **saturating** |
+| `|r| ≥ 0.5` AND `cpl_degradation > 30%` AND `cpl > portfolio_median_cpl` | **over-invested** |
+| `|r| ≥ 0.5` AND `cpl_degradation > 30%` (CPL not above median) | **saturating** |
 | `|r| ≥ 0.5` AND no CPL degradation signal | **stable** |
 
 Modifier (orthogonal to classification): **`new_audience_needed`** when `frequency_trend == rising` AND `cpm_trend == rising` over the same 4-week window. This fires *before* any single campaign in the vertical hits the optimizer's frequency-2.0 watch threshold — it's a vertical-level early warning that audience expansion (not budget) is the lever.
@@ -79,6 +80,21 @@ Computed empirically from `budget_queue` rows with `status == "executed"`. The o
 
 `compute_scaling_profiles.py` does this by calling `?action=scaling-queue-read&since=<previous_tuesday>`.
 
+## Only ACTIVE campaigns are actionable
+
+Every campaign considered for a decrease, an increase, or absorption capacity
+must have `effective_status == "ACTIVE"`. A budget move against a PAUSED or
+ARCHIVED campaign is inert at best and misleading at worst.
+
+This guard was added 2026-09-09 after the brief proposed a −397 cents/day cut
+to `ICD-Health, Fitness & Personal Care-Q2-2026`, a campaign whose ad sets had
+all been paused since 2026-08-17. At the time 26 of 29 campaigns were paused
+and 86% of the reported portfolio budget belonged to campaigns Meta was not
+delivering, so the portfolio total and the tolerance band were both meaningless.
+
+If every campaign in a saturating vertical is paused, propose nothing for that
+vertical and say so — do not fall back to the paused budget.
+
 ## Reallocation pool
 
 Pool, not pairings. Decreases free dollars; the pool is then allocated across receiving verticals.
@@ -90,7 +106,7 @@ Pool, not pairings. Decreases free dollars; the pool is then allocated across re
 - Floor protection: post-change daily ≥ `$25 × (1 + campaign_floor_buffer_pct)` = $26/day
 
 **Increases** (across scalable + stable verticals):
-- Weight = inverse CPICP. Stable gets 0.5× weight (secondary priority)
+- Weight = inverse CPL. Stable gets 0.5× weight (secondary priority)
 - Vertical's pool share = its weight / total weight
 - Per campaign: distributed proportionally by current daily budget, capped by `weekly_remaining_pct`
 
@@ -118,13 +134,13 @@ The lockout list (`SCALING_AFFECTED_CAMPAIGN_IDS`) covers every campaign in the 
     "current_total_daily_cents", "current_total_weekly_dollars",
     "target_weekly_spend", "weekly_spend_tolerance",
     "tolerance_headroom_daily_cents",
-    "median_cpicp", "median_ic_rate", "optimizer_cycles_this_week"
+    "median_cpl", "median_cpicp", "median_ic_rate", "optimizer_cycles_this_week"
   },
   "verticals": {
     "<vertical>": {
       "classification", "confidence", "new_audience_needed",
       "elasticity_r", "elasticity_n_weeks",
-      "ic_rate", "cpicp", "spend_share_pct",
+      "cpl", "ic_rate", "cpicp", "spend_share_pct",
       "avg_frequency", "frequency_trend", "frequency_series",
       "cpm_trend", "cpm_series",
       "high_spend_cpl_degradation_pct",
@@ -164,7 +180,7 @@ The lockout list (`SCALING_AFFECTED_CAMPAIGN_IDS`) covers every campaign in the 
                  remaining_headroom_pct, reason}],
   "increases": [{vertical, campaign_id, campaign_name,
                  current_daily_cents, change_cents, change_pct,
-                 post_change_cents, classification, cpicp,
+                 post_change_cents, classification, cpl, cpicp,
                  remaining_headroom_pct, allocation_weight_reason}],
   "audience_actions": [{vertical, diagnosis, action,
                         creative_prescription, creative_source}]
@@ -177,17 +193,25 @@ The lockout list (`SCALING_AFFECTED_CAMPAIGN_IDS`) covers every campaign in the 
 
 Written to via `?action=scaling-write` on `--write-log`. Auto-creates the `scaling_log` tab on first call. One row per vertical per run: `date, vertical, classification, confidence, elasticity_r, ic_rate, cpicp, spend_share_pct, avg_frequency, frequency_trend, cpm_trend, new_audience_needed, weeks_with_conversions, contributed_to_pool, received_from_pool, recorded_at`.
 
+> **Wire contract is still IC-named.** The `handleScalingWrite_` handler in
+> `apps-script/Code.js` reads its payload keys by name, so the legacy
+> `cpicp` and `ic_rate` keys must keep being sent even though every metric above is
+> lead-based. Unrecognised keys are written as blanks. Renaming them needs
+> the matching `Code.js` edit plus a redeploy, tracked separately — the
+> Apps Script deploy pipeline has not run since 2026-06-23.
+
+
 ## Slack output rules
 
 The skill prompt (NOT the script) composes the Slack message. It has four sections, in order:
 
-1. **Scaling labels** — every vertical with classification + supporting numbers (`r`, CPICP, IC rate, spend share). One line per vertical with the appropriate emoji (✅ scalable, ── stable, ⚠️ saturating/over-invested). Tag `directional` confidence verticals explicitly. Skip `insufficient`.
+1. **Scaling labels** — every vertical with classification + supporting numbers (`r`, CPL, IC rate, spend share). One line per vertical with the appropriate emoji (✅ scalable, ── stable, ⚠️ saturating/over-invested). Tag `directional` confidence verticals explicitly. Skip `insufficient`.
 
 2. **Strategic reallocation** — pool freed/allocated dollars, net portfolio change, target-vs-actual weekly spend, and headroom-consumed-this-week per affected campaign (showing optimizer + strategic split). When `knockdown_risk: true`, add a one-line "may trigger 1% knockdown next cycle" note. End with the lockout window: "Lockout: Wed-Mon. Optimizer paused on affected campaigns until <next Tuesday>." Append the two-step approval link pair.
 
 3. **Audience action required** — for each `new_audience_needed` vertical, show diagnosis + duplicate-ad-set recommendation. Include the creative prescription line if `creative_source` is set.
 
-4. **Last week's evaluation** — if a strategic reallocation was approved last Tuesday, summarize what happened (CPICP movement, frequency response, classification confirmed/changing). Skip if no prior reallocation. The Hive Mind handler `?action=scaling-log-read` provides historical rows for this synthesis.
+4. **Last week's evaluation** — if a strategic reallocation was approved last Tuesday, summarize what happened (CPL movement, frequency response, classification confirmed/changing). Skip if no prior reallocation. The Hive Mind handler `?action=scaling-log-read` provides historical rows for this synthesis.
 
 ## Status comment one-liner
 

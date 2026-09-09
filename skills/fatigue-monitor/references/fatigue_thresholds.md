@@ -37,4 +37,4 @@ For ads outside the 93-day insight retention window, we fall back to the oldest 
 
 - Pause ads or change budgets. This skill is read-only on Meta.
 - Distinguish "the creative is fatigued" from "the audience is exhausted." That distinction is left for Tyler — surface the metrics, let the human decide whether to refresh the ad or broaden the audience.
-- Cross-reference HubSpot ICP volume. The classifier is purely Meta-side. CPICP attribution lives in the campaign-level Apps Script pipeline.
+- Cross-reference HubSpot ICP volume. The classifier is purely Meta-side. CPL is the primary cost metric; CPICP attribution lives in the campaign-level Apps Script pipeline and is reported only.
