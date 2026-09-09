@@ -1,0 +1,40 @@
+[
+  {
+    "ad_id": null,
+    "ad_name": null,
+    "adset_id": "120252841681000631",
+    "adset_name": "broad_ADPC_2026_08_19",
+    "campaign_id": "120252841681010631",
+    "campaign_name": "LEADS-Broad-Q3-2026",
+    "clicks": 40,
+    "conversions": 4,
+    "cpc": 2.292,
+    "cpm": 81.061008,
+    "ctr": 3.536693,
+    "date": "2026-09-08",
+    "frequency": 1.170807,
+    "ic_conversions": 0,
+    "impressions": 1131,
+    "reach": 966,
+    "spend": 91.68
+  },
+  {
+    "ad_id": null,
+    "ad_name": null,
+    "adset_id": "120252962579540631",
+    "adset_name": "broad_IFW_ADPC_2026_08_26",
+    "campaign_id": "120252962579520631",
+    "campaign_name": "LEADS-IFW-Broad-Q3-2026",
+    "clicks": 200,
+    "conversions": 16,
+    "cpc": 0.88185,
+    "cpm": 43.927771,
+    "ctr": 4.98132,
+    "date": "2026-09-08",
+    "frequency": 1.154399,
+    "ic_conversions": 0,
+    "impressions": 4015,
+    "reach": 3478,
+    "spend": 176.37
+  }
+]
