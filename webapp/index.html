@@ -1505,7 +1505,7 @@
     // first) so zero-ICP or zero-CTR campaigns don't crowd
     // the leaderboard with noise.
     function PerformanceLeaderboard({ rollup, rangeStart, rangeEnd, direction }) {
-      const [metricKey, setMetricKey] = useState('cpicp_blended');
+      const [metricKey, setMetricKey] = useState('cpl');
       // Each leaderboard now owns its own "Only mature"
       // state so Top 3 and Bottom 3 can be filtered
       // independently.
@@ -1563,7 +1563,7 @@
               <span>{isBest ? 'Top 3 Performers' : 'Bottom 3 Performers'}</span>
               <InfoTip
                 text={isBest
-                  ? 'The three campaigns ranking highest on the selected metric, using its natural direction (e.g. lowest CPICP, highest CTR). Ties broken by total spend.'
+                  ? 'The three campaigns ranking highest on the selected metric, using its natural direction (e.g. lowest CPL, highest CTR). Ties broken by total spend.'
                   : 'The three campaigns ranking lowest on the selected metric. Useful for spotting laggards. Campaigns with no data for the chosen metric are excluded.'}
                 side="bottom"
               />
@@ -1605,7 +1605,7 @@
                     {c.campaign_name}
                   </div>
                   <div className="text-[11px] text-stone-500">
-                    {fmtCurrency(c.spend)} spend · {fmtNumber(c.estimated_icps, 1)} ICPs
+                    {fmtCurrency(c.spend)} spend · {fmtNumber(c.meta_conversions || 0)} leads
                   </div>
                 </div>
                 <div className="flex-shrink-0 text-right">
@@ -1626,7 +1626,12 @@
     // headline. Gives a day-level operational view (is my
     // spend actually going out the door? is CTR healthy?)
     // that complements the ICP-focused cards above.
-    function DailyOpsCards({ daily }) {
+    // ── HEADLINE (Leads view) ──
+    // Lead-first topline. Defined but never rendered until
+    // 2026-09-09, when Leads replaced Investment Crowdfunding
+    // as the primary optimization target and this became the
+    // default headline. The IC cards moved to their own tab.
+    function LeadSummaryCards({ daily }) {
       const totals = useMemo(() => {
         const t = { spend: 0, conversions: 0, clicks: 0, impressions: 0 };
         daily.forEach(r => {
@@ -1643,19 +1648,19 @@
 
       const cards = [
         {
-          label: 'Daily-range Spend',
+          label: 'Spend',
           value: fmtCurrency(totals.spend),
           tooltip: 'Total Meta ad spend across all campaigns over the daily rows in the selected date range. Matches the topline Spend card when the range is the same.',
         },
         {
-          label: 'Meta Conversions',
+          label: 'Leads',
           value: fmtNumber(totals.conversions),
-          tooltip: 'Conversions as reported by Meta (lead events from the pixel or lead ads). These are Meta\u2019s own count and can disagree with HubSpot\u2019s ICP count — CPICP is generally the more reliable efficiency metric.',
+          tooltip: 'Leads as reported by Meta. This is the primary optimization target: every ranking, budget and pacing decision in the agent loop keys on leads and cost per lead. Investment Crowdfunding prequal decisions are a subtype of these leads and live on the IC tab.',
         },
         {
-          label: 'Avg CPL (Meta)',
+          label: 'CPL',
           value: fmtCurrencyCents(cpl),
-          tooltip: 'Cost Per Lead from Meta-reported conversions. Total spend ÷ Meta conversions. Useful as a cross-check against CPICP, but CPICP is typically the truer efficiency signal because it uses HubSpot\u2019s actual decision data.',
+          tooltip: 'Cost Per Lead. Total spend ÷ leads. The headline efficiency metric for the account. Blended CPL across 2026 is about $15.41.',
         },
         {
           label: 'CTR',
@@ -1700,7 +1705,7 @@
     function MetricTrendChart({ daily, rollup, rangeStart, rangeEnd }) {
       const [granularity, setGranularity]     = useState('week');
       const [chartMode, setChartMode]         = useState('per_campaign');
-      const [primaryKey, setPrimaryKey]       = useState('cpicp_blended');
+      const [primaryKey, setPrimaryKey]       = useState('cpl');
       const [comparisonKey, setComparisonKey] = useState(''); // '' = none
       const [showTrendlines, setShowTrendlines] = useState(true);
 
@@ -2482,8 +2487,8 @@
     ];
 
     function CampaignPerformanceTable({ rollup, mappings, icCampaignNames, pausedCampaignNames, daily, apiUrl }) {
-      const [sortKey, setSortKey] = useState('blendedCpicp');
-      const [sortDir, setSortDir] = useState('asc'); // lowest CPICP first
+      const [sortKey, setSortKey] = useState('cpl');
+      const [sortDir, setSortDir] = useState('asc'); // lowest CPL first
       const [showInactive, setShowInactive] = useState(false);
       const icSet = icCampaignNames || new Set();
       const pausedSet = pausedCampaignNames || new Set();
@@ -2563,6 +2568,7 @@
             byCampaign[key] = {
               campaign: key,
               spend: 0,
+              leads: 0,
               estIcps: 0,
               icConversions: 0,
               weeks: [],
@@ -2570,6 +2576,7 @@
           }
           const c = byCampaign[key];
           c.spend         += Number(r.spend) || 0;
+          c.leads         += Number(r.meta_conversions) || 0;
           c.estIcps       += Number(r.estimated_icps) || 0;
           c.icConversions += Number(r.ic_conversions) || 0;
           c.weeks.push({
@@ -2612,12 +2619,14 @@
             ? (reg.slope * (validCpicps.length - 1) / (reg.intercept || 1)) * 100
             : null;
 
+          const cpl = c.leads > 0 ? c.spend / c.leads : null;
           const blendedCpicp = c.estIcps > 0 ? c.spend / c.estIcps : null;
           // v3: attribution_rate = ic_conversions / estimated_icps
           const attribRate = c.estIcps > 0 ? (c.icConversions / c.estIcps) * 100 : null;
 
           return {
             ...c,
+            cpl,
             blendedCpicp,
             latestCpicp,
             base4Avg,
@@ -2650,6 +2659,7 @@
             spend: 0,
             estIcps: 0,
             icConversions: 0,
+            cpl: null,
             blendedCpicp: null,
             latestCpicp: null,
             base4Avg: null,
@@ -2810,6 +2820,14 @@
                 <tr>
                   <Th k="campaign" defaultDir="asc">Campaign</Th>
                   <Th k="spend" align="right">Spend</Th>
+                  <Th k="leads" align="right">
+                    Leads
+                    <InfoTip text="Meta-reported leads for this campaign over the selected period. The primary optimization target — every ranking and budget decision in the agent loop keys on leads and CPL." />
+                  </Th>
+                  <Th k="cpl" align="right" defaultDir="asc">
+                    CPL
+                    <InfoTip text="Cost Per Lead. Spend \u00f7 leads. Blended CPL across 2026 is about $15.41. This is the table's default sort." />
+                  </Th>
                   <Th k="estIcps" align="right">
                     Est. ICPs
                     <InfoTip text="ICPs credited to this campaign: direct IC conversions (floor) + proportional share of unattributed HubSpot ICPs." />
@@ -2851,7 +2869,7 @@
               <tbody>
                 {sorted.length === 0 ? (
                   <tr>
-                    <td colSpan={11} className="text-center py-10 text-stone-500">
+                    <td colSpan={13} className="text-center py-10 text-stone-500">
                       No weekly rollup data in the selected range.
                     </td>
                   </tr>
@@ -2889,6 +2907,12 @@
                       </div>
                     </td>
                     <td className="px-3 py-2 text-right">{fmtCurrency(r.spend)}</td>
+                    <td className={`px-3 py-2 text-right ${r.leads > 0 ? 'font-semibold text-stone-900' : 'text-stone-300'}`}>
+                      {r.leads > 0 ? fmtNumber(r.leads) : '—'}
+                    </td>
+                    <td className={`px-3 py-2 text-right ${r.cpl != null ? 'font-semibold text-stone-900' : 'text-stone-300'}`}>
+                      {r.cpl != null ? fmtCurrencyCents(r.cpl) : '—'}
+                    </td>
                     <td className="px-3 py-2 text-right">{fmtNumber(r.estIcps, 1)}</td>
                     <td className={`px-3 py-2 text-right ${r.icConversions > 0 ? 'text-lime-700 font-semibold' : 'text-stone-300'}`}>
                       {r.icConversions > 0 ? fmtNumber(r.icConversions) : '—'}
@@ -3769,6 +3793,13 @@
         });
       }, [chatUnlocked]);
 
+      // Primary view. 'leads' is the default because leads are
+      // the optimization target; 'ic' is a deliberately
+      // secondary tab for the Investment Crowdfunding subtype,
+      // which fired once in the 30 days to 2026-09-08 and is
+      // no longer dense enough to steer decisions.
+      const [view, setView] = useState('leads');
+
       const [preset, setPreset] = useState(2); // Last 30 days default
       const [useCustom, setUseCustom] = useState(false);
       const [customStart, setCustomStart] = useState(daysAgo(30));
@@ -3897,23 +3928,70 @@
               </div>
             )}
 
-            {/* ─── CPICP TRAJECTORY ALERT ───────────────── */}
-            <CPICPAlert
-              rollup={rollup}
-              rangeStart={start}
-              rangeEnd={end}
-            />
+            {/* ─── VIEW TABS ─────────────────────────────
+                Leads is primary. Investment Crowdfunding is a
+                subtype of Leads and gets its own tab so the
+                main view isn't steered by a metric that has
+                gone quiet. */}
+            <div className="flex items-center gap-1 border-b border-stone-200">
+              {[
+                { key: 'leads', label: 'Leads' },
+                { key: 'ic',    label: 'Investment Crowdfunding' },
+              ].map(t => (
+                <button
+                  key={t.key}
+                  onClick={() => setView(t.key)}
+                  className={
+                    'px-4 py-2 text-sm font-medium -mb-px border-b-2 transition-colors ' +
+                    (view === t.key
+                      ? 'border-amber-500 text-stone-900'
+                      : 'border-transparent text-stone-500 hover:text-stone-700')
+                  }
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
 
-            {/* ─── HEADLINE: ICP / CPICP metrics ─────────── */}
-            <ICPSummaryCards
-              rollup={rollup.filter(r => {
-                const ws = String(r.week_start).substring(0, 10);
-                return ws >= start && ws <= end;
-              })}
-              daily={daily}
-              rangeStart={start}
-              rangeEnd={end}
-            />
+            {view === 'ic' && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+                <span className="font-semibold">Investment Crowdfunding is a subtype of Leads.</span>{' '}
+                These figures cover the IC prequal decision only, not the full lead volume.
+                IC fired once across $6,296 of spend and 395 leads in the 30 days to
+                2026-09-08 — the conversion is configured correctly, but the current
+                broad audience converts to rewards crowdfunding instead. Treat this tab
+                as reporting, not as a steer: nothing in the agent loop optimizes on it.
+              </div>
+            )}
+
+            {view === 'ic' && (
+              <React.Fragment>
+                {/* ─── CPICP TRAJECTORY ALERT ───────────────── */}
+                <CPICPAlert
+                  rollup={rollup}
+                  rangeStart={start}
+                  rangeEnd={end}
+                />
+
+                {/* ─── ICP / CPICP metrics ─────────── */}
+                <ICPSummaryCards
+                  rollup={rollup.filter(r => {
+                    const ws = String(r.week_start).substring(0, 10);
+                    return ws >= start && ws <= end;
+                  })}
+                  daily={daily}
+                  rangeStart={start}
+                  rangeEnd={end}
+                />
+              </React.Fragment>
+            )}
+
+            {view === 'leads' && (
+              <React.Fragment>
+                {/* ─── HEADLINE: lead volume + CPL ─────────── */}
+                <LeadSummaryCards daily={daily} />
+              </React.Fragment>
+            )}
 
             {/* ─── LEADERBOARDS: Top 3 / Bottom 3 tiles ───── */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
