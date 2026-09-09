@@ -23,6 +23,11 @@ on:
         description: 'Min seconds between Meta API calls (rate limiting).'
         required: false
         default: '1.0'
+      force:
+        description: 'Overwrite snapshots that already exist. Needed to RESTATE history after a field-meaning change (e.g. the 2026-09-09 lead pivot) - without it a backfill over existing dates is a no-op.'
+        required: false
+        type: boolean
+        default: false
   schedule:
     # Deliberately off the top of the hour. GitHub queues + deprioritizes
     # scheduled runs, worst at :00 (also heavy at :30/:15/:45). The old
@@ -68,14 +73,20 @@ jobs:
           START_DATE: ${{ github.event.inputs.start_date }}
           END_DATE: ${{ github.event.inputs.end_date }}
           SLEEP_BETWEEN: ${{ github.event.inputs.sleep_between_calls }}
+          FORCE_INPUT: ${{ github.event.inputs.force }}
         run: |
           set -e
           SLEEP_ARG="--sleep ${SLEEP_BETWEEN:-1.0}"
+          FORCE_ARG=""
+          if [ "$FORCE_INPUT" = "true" ]; then
+            FORCE_ARG="--force"
+            echo "FORCE enabled: existing snapshots in range will be overwritten."
+          fi
           if [ -n "$START_DATE" ] && [ -n "$END_DATE" ]; then
             echo "Backfill mode: $START_DATE → $END_DATE"
-            python scripts/fetch_ad_data.py --start "$START_DATE" --end "$END_DATE" $SLEEP_ARG
+            python scripts/fetch_ad_data.py --start "$START_DATE" --end "$END_DATE" $SLEEP_ARG $FORCE_ARG
           else
-            python scripts/fetch_ad_data.py $SLEEP_ARG
+            python scripts/fetch_ad_data.py $SLEEP_ARG $FORCE_ARG
           fi
 
       - name: Compute derived signals

@@ -1,6 +1,6 @@
 # Project State Report
 
-_Last updated: 2026-06-23 (Consolidated the daily pipeline-health check into the daily-data workflow. The standalone `agent-pipeline-health.yml` was retired: its check script was already deterministic, so the daily LLM run that only reformatted the results for Slack was pure waste. It now runs as plain steps at the end of `daily-data.yml`. Net effect: one fewer scheduled GitHub Action and one fewer daily AI cost, with identical checks, Slack alerts, and history logging. Also nudged the two active scheduled jobs off the top of the hour (daily-data ~8:37 AM ET, portfolio-scaling Tue ~9:43 AM ET) so they stop sitting in GitHub's top-of-hour run queue — the old timings were drifting 2-5 hours late. Prior: 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; daily-check, creative-intelligence, and fatigue-monitor remain paused)_
+_Last updated: 2026-09-09 (**Pivoted the whole system from Investment Crowdfunding conversions to leads.** The ad account moved to lead-optimized campaigns on 2026-08-19; the code had not followed, so every ranking and budget decision was sorting on a metric that fired once in 30 days. Leads are now the primary metric end to end — extraction, signals, all six skills, and the dashboard, where IC moved to its own secondary tab. Also fixed three latent defects the pivot exposed: winners were ranked by CPC rather than cost per lead, budget increases could never be produced because their weighting divided by a null CPICP, and nothing anywhere checked whether a campaign was still ACTIVE before proposing a budget change to it. Prior: 2026-06-23 consolidated the pipeline-health check into `daily-data.yml` and nudged both active crons off the top of the hour; 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; daily-check, creative-intelligence and fatigue-monitor remain paused)_
 
 This report describes what the `marketing-claude-honeycomb` project is, what it currently does, what's working well, and where the current limitations are. Written in plain English for non-technical stakeholders. For implementation details see [TECHNICAL_REFERENCE.md](./TECHNICAL_REFERENCE.md).
 
@@ -23,13 +23,47 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 
 ---
 
+## What we measure, and why it changed
+
+For most of 2026 this system optimized on one number: the cost of an
+**Investment Crowdfunding prequal decision** (CPICP). That was the right
+choice while IC decisions were 5-12% of all leads. It stopped being the right
+choice in August.
+
+On 2026-08-19 the ad account was rebuilt around lead-optimized campaigns
+(`ICD-Broad-Q2-2026` gave way to `LEADS-Broad-Q3-2026`). The new broad audience
+converts to *rewards* crowdfunding, not investment crowdfunding. The result:
+
+| Month | Spend | Leads | Cost per lead | IC decisions |
+|---|---|---|---|---|
+| June | $39,862 | 2,998 | $13.30 | 244 |
+| July | $22,340 | 1,591 | $14.04 | 189 |
+| August | $8,970 | 576 | $15.57 | 23 |
+| Sept (first 7 days) | $2,245 | 178 | $12.61 | 1 |
+
+The IC tracking was never broken — the conversion is live and correctly
+configured, and last fired on 2026-09-03. The audience simply changed. But
+because the code still ranked everything by cost-per-IC, it was sorting on a
+number that was undefined for nearly every campaign.
+
+As of 2026-09-09 the funnel is measured in three tiers:
+
+- **Leads** — the primary metric. Everything automated keys on this.
+- **Prequal decisions** — a lead that reached a decision. Fires on about 90%
+  of leads, so it is dense enough to be trustworthy. Reported, not optimized on.
+- **Decision subtypes** — investment crowdfunding and rewards crowdfunding.
+  Reported only, on their own dashboard tab.
+
+Nothing was lost in the change: leads were already being collected on every
+one of the 250 days of history, so the full record is intact.
+
 ## What it currently does
 
 ### Every morning at 7 AM (automatic)
 
 - Pulls yesterday's ad spend, impressions, clicks, and conversions from every active Meta campaign.
 - Pulls new "ICP" records from HubSpot (an ICP = a small business that completed the prequal form and got approved for investment crowdfunding).
-- Rebuilds the weekly rollup — a big table that tells you, for every campaign in every week: how much was spent, how many ICPs were generated, and the cost per ICP (CPICP — the single most important metric).
+- Rebuilds the weekly rollup — a big table that tells you, for every campaign in every week: how much was spent, how many leads were generated, and the cost per lead (CPL — the primary metric since 2026-09-09; cost per IC decision is still recorded alongside it, as a reported subtype).
 - Posts a daily Slack digest summarizing yesterday's performance, this week's pacing, and last 30 days. The digest now annotates its data source — `rolling_data` sheet (this morning's pipeline snapshot) — so the user can reconcile against the parallel `daily-check` ad-level skill that fetches fresh from Meta later in the morning. The two reports may show different "yesterday spend" values because Meta's attribution can shift between the snapshot and the live read; the footer makes the source unambiguous.
 
 ### Every Monday at 8 AM (automatic)
@@ -63,11 +97,11 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 ### On-demand via dashboard
 
 - **Leaderboards** — top 3 / bottom 3 campaigns sortable by different metrics.
-- **Trend charts** — CPICP, ICPs, spend, CPL, CTR over time (daily or weekly granularity; per-campaign or portfolio-wide).
-- **Campaign performance table** — spend, clicks, CPICP, frequency per campaign, with paused-campaign badges.
+- **Trend charts** — CPL (the default), leads, spend, CTR, plus CPICP and ICPs over time (daily or weekly granularity; per-campaign or portfolio-wide).
+- **Campaign performance table** — spend, leads, CPL (the default sort), then the IC columns, frequency per campaign, with paused-campaign badges.
 - **Goal tracking** — weekly ICP pace vs. target, weekly spend vs. $10K target.
 - **Budget controls** — run-analysis-now button, adjust the weekly spend goal via a Slack approval flow.
-- **Hive Mind chat** — hidden behind a 5-click easter egg on the 🐝 logo; lets the team ask natural-language questions ("what was our CPICP last Tuesday?") and get answers from Claude with live data.
+- **Hive Mind chat** — hidden behind a 5-click easter egg on the 🐝 logo; lets the team ask natural-language questions ("what was our CPL last Tuesday?") and get answers from Claude with live data.
 
 ### On-demand via Apps Script
 
@@ -83,12 +117,12 @@ The campaign-level system is connected through a single Google Spreadsheet. The 
 
 Skills are self-contained packages under `skills/<name>/` with a `SKILL.md` operating manual and Python scripts that handle Meta API calls and computation. Claude Code reads them at session start and runs the scripts via bash. Three skills are scoped:
 
-- **pipeline-health** _(shipped 2026-05-03)_ — runs four checks (data freshness, Meta token validity, IC conversion event existence, dashboard endpoint health) and writes results to a new `pipeline_health` Sheet tab via `Code.js?action=health-write`. Posts to Slack only on WARN/FAIL.
-- **daily-check** _(shipped 2026-05-03)_ — pulls 7 days of campaign/adset/ad insights, computes pacing vs weekly target, portfolio CPICP rankings, top 3 winners + bleeders, early fatigue flags, learning-phase ad sets, and stale creatives. Writes a summary row to a new `daily_check_log` Sheet tab via `Code.js?action=daily-check-write`. Runs alongside the existing campaign-level Apps Script daily digest — does not replace it. The weekly spend goal used for pacing is fetched live from `/exec?action=get_spend_goal` (the dashboard-managed value), so changing the goal in the dashboard is reflected in the next briefing without a code change; `benchmarks.json` holds a fallback used only if `/exec` is unreachable.
+- **pipeline-health** _(shipped 2026-05-03)_ — runs five checks (data freshness, Meta token validity, every configured funnel conversion including when each last fired, snapshot row volume, dashboard endpoint health) and writes results to a new `pipeline_health` Sheet tab via `Code.js?action=health-write`. Posts to Slack only on WARN/FAIL.
+- **daily-check** _(shipped 2026-05-03)_ — pulls 7 days of campaign/adset/ad insights, computes pacing vs weekly target, portfolio CPL rankings, top 3 winners + bleeders, early fatigue flags, learning-phase ad sets, and stale creatives. Writes a summary row to a new `daily_check_log` Sheet tab via `Code.js?action=daily-check-write`. Runs alongside the existing campaign-level Apps Script daily digest — does not replace it. The weekly spend goal used for pacing is fetched live from `/exec?action=get_spend_goal` (the dashboard-managed value), so changing the goal in the dashboard is reflected in the next briefing without a code change; `benchmarks.json` holds a fallback used only if `/exec` is unreachable.
 - **fatigue-monitor** _(shipped 2026-05-03)_ — pulls 14 days of ad-level insights, computes each ad's peak-window baseline (days 4–7 after launch), and classifies the current 7 days as `saturated` / `fatigued` / `early_fatigue` / `underperforming` / `healthy`. Cross-references pending budget proposals via `Code.js?action=budget-queue-read` and surfaces conflicts. Writes per-ad rows to a new `fatigue_log` Sheet tab via `Code.js?action=fatigue-write`. Caches creative metadata in `data/creatives/creatives.json` so thumbnails + ad copy are pulled once per creative, not per run.
 - **creative-intelligence** _(shipped 2026-05-05)_ — weekly Monday brief on what creative copy and visual patterns are winning across the portfolio. Tells Tyler what to write next by quoting actual winning copy alongside its real numbers (CPICP, IC count, ad count) and structural fingerprint (length, opening word, syntactic markers). The attribution model is corpus-level text aggregation: when the same body text appears across many ads, sum spend + IC across all of them to produce a meaningful per-variant CPICP. Three rounds of Meta API investigation proved that asset-level breakdown insights — the original spec's spine — won't return reliable per-variant conversion data for Honeycomb's `asset_feed_spec` ad mix; the design pivot is captured in [docs/CREATIVE_INTELLIGENCE_DESIGN.md](./CREATIVE_INTELLIGENCE_DESIGN.md). Two-script pipeline: `categorize_creative.py` (Anthropic API once per unique variant text + image, hash-deduped, ~$5 first run on Sonnet 4.5) and `build_creative_dataset.py` (joins snapshots + creative cache + categorizations, downloads full-size images via `/adimages` resolution, finds same-image-different-body side-by-side pairs). Writes per-vertical rollups to a new `creative_intelligence_log` Sheet tab. SKILL.md output rules require briefs that quote actual copy + cite real numbers + honor confidence labels — never recommend categories.
-- **ad-copy-generator** _(shipped 2026-05-05)_ — drafts new ad-copy variants for a target vertical from the Creative Intelligence dataset, closing the loop from "what's working" to "what to write next." Reads `/tmp/creative_dataset.json`, splits each dimension (body / title / description) at median CPICP so winners and losers are always distinct cohorts even on small variant pools, asks Claude to draft N new (body, title, description) triples following the winning patterns, runs a compliance regex backstop (catches quantified returns, guarantee language, FDIC comparisons, multiple-x returns, dollar-return testimonials), and writes a human-readable markdown file to `data/drafts/<date>-<vertical>.md` with a 6-item reviewer checklist appended. **Drafts are never auto-published** — every draft requires human review per the compliance checklist before going live in any campaign. The skill is `workflow_dispatch`-only; Tyler invokes it after the Monday Creative Intelligence brief, picking which verticals warrant new drafts. Cost: ~$0.05-0.10 per Anthropic call, ~$0.50-0.80 for `--all-verticals` × 8 verticals.
-- **portfolio-scaling** _(shipped 2026-05-08)_ — weekly Tuesday brief that adds a structural diagnosis layer on top of the daily optimizer. Classifies verticals over a 12-week window using elasticity (Pearson correlation of weekly spend vs weekly CPL), median-split CPL degradation between high- and low-spend weeks, and 4-week frequency/CPM trends. Produces a pool-based budget reallocation: saturating + over-invested verticals contribute decreases sized by elasticity severity; scalable + stable verticals absorb the pool weighted by inverse CPICP. Bounded by the spend tolerance band so total portfolio spend stays within `target ± tolerance` per week. Two scripts (`compute_scaling_profiles.py` + `compute_reallocation.py`) commit deterministic JSON to `data/derived/`, then Claude composes the four-section Slack brief from that JSON. The Slack brief uses the same two-step approval as the daily optimizer; on approval, Wed 3 AM applies the changes via Meta API and writes a Wed-Mon optimizer-lockout window on the affected campaigns. **Shares a 12% weekly cap with the daily optimizer.** All thresholds in `data/config/benchmarks.json:scaling`. Dependencies on the creative-intelligence cache are optional — audience action items work without it.
+- **ad-copy-generator** _(shipped 2026-05-05)_ — drafts new ad-copy variants for a target vertical from the Creative Intelligence dataset, closing the loop from "what's working" to "what to write next." Reads `/tmp/creative_dataset.json`, splits each dimension (body / title / description) at median CPL so winners and losers are always distinct cohorts even on small variant pools, asks Claude to draft N new (body, title, description) triples following the winning patterns, runs a compliance regex backstop (catches quantified returns, guarantee language, FDIC comparisons, multiple-x returns, dollar-return testimonials), and writes a human-readable markdown file to `data/drafts/<date>-<vertical>.md` with a 6-item reviewer checklist appended. **Drafts are never auto-published** — every draft requires human review per the compliance checklist before going live in any campaign. The skill is `workflow_dispatch`-only; Tyler invokes it after the Monday Creative Intelligence brief, picking which verticals warrant new drafts. Cost: ~$0.05-0.10 per Anthropic call, ~$0.50-0.80 for `--all-verticals` × 8 verticals.
+- **portfolio-scaling** _(shipped 2026-05-08)_ — weekly Tuesday brief that adds a structural diagnosis layer on top of the daily optimizer. Classifies verticals over a 12-week window using elasticity (Pearson correlation of weekly spend vs weekly CPL), median-split CPL degradation between high- and low-spend weeks, and 4-week frequency/CPM trends. Produces a pool-based budget reallocation: saturating + over-invested verticals contribute decreases sized by elasticity severity; scalable + stable verticals absorb the pool weighted by inverse CPL. Bounded by the spend tolerance band so total portfolio spend stays within `target ± tolerance` per week. Two scripts (`compute_scaling_profiles.py` + `compute_reallocation.py`) commit deterministic JSON to `data/derived/`, then Claude composes the four-section Slack brief from that JSON. The Slack brief uses the same two-step approval as the daily optimizer; on approval, Wed 3 AM applies the changes via Meta API and writes a Wed-Mon optimizer-lockout window on the affected campaigns. **Shares a 12% weekly cap with the daily optimizer.** All thresholds in `data/config/benchmarks.json:scaling`. Dependencies on the creative-intelligence cache are optional — audience action items work without it.
 
 Skills query Meta live for operational decisions; the snapshot pipeline above provides the historical backbone. Both share a single Meta client at `scripts/lib/meta.py` (HTTP retries, paging, throttle handling, IC extraction, row normalization).
 
@@ -174,7 +208,7 @@ GitHub Actions cron is best-effort — runs can be delayed, occasionally skipped
 
 ## Known risks worth watching
 
-1. **IC tracking pattern is still a string-match.** The 4/15 outage was rooted in a fragile `indexOf` check against a human-readable event name. Any future rename of the "Investment Crowdfunding Prequal Decision" event in Meta — or a change to the `conversion_event` column values — would break tracking again. Longer-term fix: key IC tracking off `custom_conversion_id` (the stable numeric Meta ID) instead of the event name string. Deferred for now.
+1. **~~IC tracking pattern is still a string-match.~~** _Resolved on the Python side 2026-09-09._ The ad-level pipeline and all six skills now resolve every conversion from stable numeric IDs held in `data/config/benchmarks.json`, so a rename in Meta can no longer break tracking there. **Still open in Apps Script:** `Code.js` retains the fragile `IC_CONVERSION_EVENT_PATTERN` string match, and the campaign-level pipeline still depends on it.
 2. **Scheduled triggers can silently stop.** Apps Script occasionally revokes triggers after script updates. A weekly "is the pipeline still running?" check would be worthwhile — currently relies on noticing the digest didn't arrive.
 3. **Meta access token expiration.** Long-lived Meta access tokens eventually expire. When it happens, every data pull fails until someone regenerates it. No proactive warning.
 4. **Budget automation could over-react in low-volume weeks.** The eligibility gate (≥10 lifetime conversions) prevents new campaigns from getting changes, but in quiet weeks the rules engine could still move money based on small-sample signals. The ±2% cap limits damage per cycle, but repeated cycles compound.

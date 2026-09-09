@@ -117,7 +117,7 @@ The pipeline supports exporting sheet data as JSON to a dedicated `audit-snapsho
 
 The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent loop. The legacy campaign-level Apps Script pipeline keeps running unchanged.
 
-- **Snapshots are read-only.** Files under `data/snapshots/` are committed by the `daily-data.yml` GitHub Action and represent ground truth from Meta. Do NOT manually edit them.
+- **Snapshots are read-only.** Files under `data/snapshots/` are committed by the `daily-data.yml` GitHub Action and represent ground truth from Meta. Do NOT manually edit them. To *restate* history after a field's meaning changes, re-pull it: dispatch `daily-data.yml` with `start_date` + `end_date` and `force: true`. Without `force` a backfill over dates that already have a manifest is a silent no-op.
 - **Derived signals are regenerable.** Files under `data/derived/` are computed artifacts. Re-running `python3 scripts/compute_signals.py` rebuilds them from the snapshots. They can be deleted and regenerated at any time.
 - **Thresholds live in one place.** All fatigue, budget, and performance thresholds live in `data/config/benchmarks.json`. Never hardcode threshold numbers inside scripts or skills — always read from the config.
 - **The agent never writes to Meta directly.** All budget recommendations flow through the existing Slack approval pipeline in `apps-script/Code.js`. The agent's role is to surface signals and propose actions, not to execute changes against the Meta API.
@@ -343,24 +343,50 @@ agent-ad-copy-generator, agent-portfolio-scaling).
 
 - API version: `v21.0` (matches `apps-script/Code.js:25`)
 - Account ID: `act_1953544531525812`
-- IC conversions: extracted from `actions[]` where `action_type` is
-  `offsite_conversion.custom.2330338620810873` (the "Investment Crowdfunding
-  Prequal Decision" custom conversion)
-- General lead conversions: `lead`, `offsite_conversion.fb_pixel_lead`,
-  `onsite_conversion.lead_grouped`
+- The funnel is defined in exactly one place: `conversions` in
+  `data/config/benchmarks.json`, read via `funnel_from_config()` in
+  `scripts/lib/meta.py`. Never hardcode a conversion ID or action type.
+
+**Leads are the primary metric.** Every ranking, budget, pacing and
+classification decision keys on leads and CPL. The account pivoted to
+lead-optimized campaigns on 2026-08-19 (`ICD-Broad-Q2-2026` →
+`LEADS-Broad-Q3-2026`) and the code followed on 2026-09-09.
+
+| Tier | Field | Source | Role |
+|---|---|---|---|
+| Primary | `leads` | `lead` → `offsite_conversion.fb_pixel_lead` → `onsite_web_lead` → `onsite_conversion.lead_grouped` | Drives every automated decision |
+| Quality | `prequal_decisions` | `custom.1153878920152279` | Reported; a lead that reached a prequal decision (~90% of leads) |
+| Subtype | `ic_conversions` | `custom.2330338620810873` | Reported only |
+| Subtype | `rewards_conversions` | `custom.1527298745037132` | Reported only |
+
+- **Lead action types are a priority chain, never a sum.** Verified
+  2026-09-09 against both live campaigns: `lead`,
+  `offsite_conversion.fb_pixel_lead` and `onsite_web_lead` return
+  *identical* values (215/215/215 and 180/180/180). They are alternative
+  counts of one event; summing them multiplies leads. First present type wins.
+- **IC is reported, never optimized on.** It fired once against $6,296 of
+  spend and 395 leads over the 30 days to 2026-09-08. The conversion is
+  configured correctly and still active — the current broad audience simply
+  converts to rewards crowdfunding instead. Do not reintroduce CPICP as a
+  sort key, threshold or weight.
 - Always filter on `effective_status=["ACTIVE","PAUSED"]` unless explicitly
-  checking for deleted/archived entities
+  checking for deleted/archived entities. **Budget proposals require
+  `effective_status == "ACTIVE"`** — a move against a paused campaign is
+  inert, and as of 2026-09-08 only 3 of 29 campaigns were active while 86%
+  of the reported portfolio budget belonged to paused ones.
 
 ### Current skills
 
-- **pipeline-health** — verifies data freshness, Meta token validity, IC
-  conversion event existence, and dashboard endpoint health. Run before any
+- **pipeline-health** — verifies data freshness, Meta token validity, every
+  configured funnel conversion (existence, archived state and
+  `last_fired_time`), snapshot row volume, and dashboard endpoint health. Run before any
   other skill so a downstream "all clear" reading isn't masking a broken
   pipeline. Autonomously it runs as two deterministic steps inside
   `daily-data.yml` (`check_health.py` → `report_health.py`); there is no
   separate scheduled workflow and no LLM in the autonomous path.
 - **daily-check** — morning briefing: pacing vs weekly target, campaign
-  portfolio sorted by CPICP, top 3 winners + bleeders, early fatigue flags,
+  portfolio sorted by CPL, top 3 winners + bleeders (ranked on CPL, with
+  spend-without-leads flagged first), early fatigue flags,
   learning-phase ad sets, and stale creatives (>21 days active).
 - **fatigue-monitor** — per-ad fatigue classification (saturated / fatigued /
   early_fatigue / underperforming / healthy) with baseline-aware severity
@@ -383,7 +409,7 @@ agent-ad-copy-generator, agent-portfolio-scaling).
   directional; below = insufficient hypothesis-only).
 - **ad-copy-generator** — drafts new ad-copy variants for a target vertical
   from the Creative Intelligence dataset. Splits each dimension at median
-  CPICP (winners below, losers above) so small variant pools still produce
+  CPL (winners below, losers above) so small variant pools still produce
   distinct cohorts. Forces tool_use on a `draft_ads` tool returning
   `(patterns_observed, drafts[])` where each draft is a body + title +
   description + pattern_followed. Compliance regex backstop catches
@@ -404,7 +430,7 @@ agent-ad-copy-generator, agent-portfolio-scaling).
   before any single campaign hits the optimizer's freq=2.0 threshold).
   Produces a pool-based budget reallocation: saturating + over-invested
   verticals contribute decreases sized by elasticity severity, scalable +
-  stable verticals absorb weighted by inverse CPICP. The pool is bounded
+  stable verticals absorb weighted by inverse CPL. The pool is bounded
   by the spend tolerance band; can be net-positive or net-negative.
   **Shares a 12% weekly cap with the daily optimizer** (the cap counts
   optimizer + knockdown + strategic movement summed across the week).
@@ -421,7 +447,7 @@ agent-ad-copy-generator, agent-portfolio-scaling).
 `scripts/lib/meta.py` is the single Meta Graph API client used by the
 snapshot pipeline AND the skills. It owns: HTTP retries, paging, throttle
 error codes (1, 2, 4, 17, 32, 341, 613, 80000, 80004), per-call rate
-limiting, IC conversion extraction, and row normalization. New skills that
+limiting, funnel-tier conversion extraction, and row normalization. New skills that
 need Meta data should import from this module rather than duplicate the
 client.
 

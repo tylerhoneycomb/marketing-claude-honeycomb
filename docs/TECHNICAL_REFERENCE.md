@@ -1,6 +1,6 @@
 # Technical Reference
 
-_Last updated: 2026-06-23 (Retired the standalone `agent-pipeline-health.yml` workflow and folded the pipeline-health check into `daily-data.yml` as two deterministic steps — `check_health.py` (unchanged) then the new `report_health.py` (terminal summary + Slack alert + issue-#48 one-liner). The check was always deterministic; running it via `claude-code-action` daily was a per-day Anthropic spend for pure JSON reformatting. The merge removes one scheduled workflow and one daily LLM invocation with zero loss of outcomes. Apps Script fallback `triggerAgentPipelineHealthIfNeeded` repointed to dispatch `daily-data.yml` (function name kept so the installed trigger binding stays valid). Also moved the two active scheduled crons off the top of the hour — `daily-data.yml` `0 12` → `37 12`, `agent-portfolio-scaling.yml` `30 13` → `43 13` — because GitHub's top-of-hour scheduled-run contention was delaying runs 1.8-5.1 h in this repo; uncommon minutes pull starts back toward schedule. Prior: 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; three agent workflows remain paused — daily-check, creative-intelligence, and fatigue-monitor)_
+_Last updated: 2026-09-09 (**Lead-first pivot of the ad-level pipeline, the six skills and the dashboard.** `ic_tracking` (a single scalar conversion ID) is replaced by a three-tier `conversions` spec in `benchmarks.json`, read through the new `FunnelSpec` / `funnel_from_config()` in `scripts/lib/meta.py`; leads resolve by an explicit priority chain because `lead`, `offsite_conversion.fb_pixel_lead` and `onsite_web_lead` are alternative counts of the same event and must never be summed. Winner/bleeder ranking, vertical classification, reallocation weighting and creative deciles all move from CPICP to CPL. Adds an ACTIVE-only guard to budget proposals, a CPL-inflation fatigue flag, a snapshot-volume health check, and `scripts/tests/test_funnel_extraction.py` pinned to live Meta payloads. `apps-script/Code.js` is unchanged — §8 and the campaign-level parts of §3-§7 still describe the IC-based Apps Script pipeline accurately. Prior: 2026-06-23 folded pipeline-health into `daily-data.yml` and moved both active crons off the top of the hour; 2026-06-10 PAUSED `agent-fatigue-monitor.yml`; three agent workflows remain paused)_
 
 This document is the engineering reference for the `marketing-claude-honeycomb` repository. It describes architecture, data model, APIs, deployment, and key implementation details. For a higher-level overview see [STATE_REPORT.md](./STATE_REPORT.md).
 
@@ -803,9 +803,11 @@ Builds a compact text snapshot for the chat LLM. Sections:
 
 - **API URL config modal** — user pastes Apps Script `/exec` URL; saved to `localStorage`. Falls back to mock data if unset.
 - **Date range bar** — presets (7/14/30 days, this month/quarter/year) + custom picker. Default: last 30 days.
-- **CPICP alert card** — week-over-week trend indicator.
-- **ICP summary cards** — total spend, estimated ICPs, overall CPICP, blended/attributed CPICP, attribution rate.
-- **Leaderboards** — top 3 / bottom 3 campaigns, sortable by CPICP / ICPs / attribution / CPL / CTR / spend. "Mature only" toggle hides campaigns under 10 lifetime conversions.
+- **View tabs** — `Leads` (default) and `Investment Crowdfunding`. Added 2026-09-09; IC is a reported subtype and no longer steers the primary view.
+- **Lead summary cards** (Leads tab) — spend, leads, CPL, CTR.
+- **CPICP alert card** (IC tab) — week-over-week trend indicator.
+- **ICP summary cards** (IC tab) — total spend, estimated ICPs, overall CPICP, blended/attributed CPICP, attribution rate.
+- **Leaderboards** — top 3 / bottom 3 campaigns, defaulting to CPL and sortable by CPL / CPICP / ICPs / attribution / CTR / spend. Row subtitles show lead counts. "Mature only" toggle hides campaigns under 10 lifetime conversions.
 - **Metric trend chart** — multi-select metric visualization, per-campaign or portfolio, daily/weekly granularity. Recharts line chart with weighted regression trendlines.
 - **Goal tracker** — 7-day and 30-day ICP pace vs target; weekly spend vs $10K target with ±$500 tolerance.
 - **Budget controls** — run-analysis button, spend goal editor (two-step Slack approval).
@@ -998,6 +1000,8 @@ Tracked so future contributors can see what's been consciously deferred. Each it
 
 | Issue | Location | Impact |
 |---|---|---|
+| Sheet write handlers still use IC-named payload keys | `Code.js: handleDailyCheckWrite_`, `handleScalingWrite_`, `handleCreativeIntelligenceWrite_` | Added 2026-09-09. The three handlers read `total_icps`, `portfolio_cpicp`, `cpicp`, `ic_rate`, `median_cpicp`, `ic_total` and `top_body_cpicp` by name, and write blanks for unrecognised keys. The skills are lead-based but must keep sending the legacy key names, which is confusing to read. Renaming to `total_leads` / `portfolio_cpl` / `cpl` / `median_cpl` / `lead_total` / `top_body_cpl` requires the matching `Code.js` edit, a header migration on three existing tabs, and a redeploy. Each SKILL.md carries a note at the write-contract section. |
+| Apps Script pipeline still IC-first | `Code.js` throughout, esp. `computeRecommendations_`, `IC_CONVERSION_EVENT_PATTERN` | Added 2026-09-09. The 2026-09-09 pivot covered the Python ad-level pipeline, the skills and the dashboard. The campaign-level Apps Script pipeline — including the daily budget optimizer's CPICP rank and `PUMP_CPICP_CEILING` — still ranks on cost per IC decision, a metric that fired once in the 30 days to 2026-09-08. The optimizer is therefore ranking on a mostly-null value. Not changed here because the Apps Script deploy pipeline has not run since 2026-06-23 and should be verified before anyone edits `Code.js`. |
 | ~~Claude model hardcoded in 3 places~~ | ~~Code.js~~ | **Resolved 2026-04-22.** Extracted to `ANTHROPIC_MODEL` constant (Code.js:45). All 5 call sites reference the constant. |
 | Hybrid attribution math duplicated | Code.js: `buildWeeklyRollup` ~1140s and `computeBudgetSignals_` ~2772 | Risk of drift between `buildWeeklyRollup` and `computeBudgetSignals_` |
 | Rules engine is 200+ lines of nested logic | Code.js: `computeRecommendations_` ~3112 | Hard to test; decision table would help. Hysteresis (2026-05-11) added another tier check. |
@@ -1210,11 +1214,40 @@ Top-level keys (current schema, 2026-05-03):
 - `pipeline_health.{token_warning_days, endpoint_timeout_seconds, data_freshness_max_gap_weekdays}` — used by pipeline-health skill
 - `campaign_defaults.type` — `prospecting` vs `retargeting` (affects fatigue frequency thresholds)
 
-### 11.5 IC conversion extraction
+### 11.5 Funnel conversion extraction
 
-`fetch_ad_data.py:extract_conversions` mirrors `collectMetaRows_` in `apps-script/Code.js` (line ~1135-1188): for each `actions[]` array, take the first matching lead action type as `conversions`, sum any matches against `offsite_conversion.custom.<ic_tracking.custom_conversion_id>` as `ic_conversions`. This keeps daily ad-level totals reconcilable with the campaign-level `rolling_data` totals.
+The funnel is declared once, in `conversions` in `data/config/benchmarks.json`,
+and materialised by `funnel_from_config()` in `scripts/lib/meta.py` into a
+frozen `FunnelSpec`. `extract_conversions(actions, funnel)` returns one count
+per tier:
 
-**Limitation:** Because the ad-level pipeline cannot read `campaign_mapping` (which lives in the Google Sheet), it cannot dynamically discover new IC custom conversion IDs. If marketing adds a second IC conversion in Meta, `benchmarks.json` must be updated by hand. See tech-debt index §10.4.
+| Tier | Field | Resolution |
+|---|---|---|
+| Primary | `leads` | First present type in `conversions.primary.action_type_priority` |
+| Quality | `prequal_decisions` | `offsite_conversion.custom.1153878920152279` |
+| Subtype | `ic_conversions` | `offsite_conversion.custom.2330338620810873` |
+| Subtype | `rewards_conversions` | `offsite_conversion.custom.1527298745037132` |
+
+**Leads resolve by priority, never by sum.** Verified 2026-09-09 against both
+live Q3 campaigns, `lead`, `offsite_conversion.fb_pixel_lead` and
+`onsite_web_lead` returned identical values (215/215/215 and 180/180/180) —
+they are three counts of one event, so summing multiplies leads. The previous
+implementation took "the first matching type in array order", which produced
+the right number only because the values happened to agree; the priority list
+makes it deterministic and order-independent.
+
+`normalize_insights_row` emits canonical `leads` plus `conversions` as a
+deprecated alias, so pre-pivot snapshots and the campaign-level `rolling_data`
+rollup stay mutually readable until the 250-day backfill lands.
+
+Covered by `scripts/tests/test_funnel_extraction.py`, whose fixtures are
+verbatim Meta payloads rather than reimplementations (15 checks).
+
+**Limitation:** the ad-level pipeline still cannot read `campaign_mapping`
+(which lives in the Google Sheet), so new custom conversion IDs must be added
+to `benchmarks.json` by hand. The impact is smaller than before — the config
+now holds a list of tiers rather than one scalar ID — but discovery is still
+manual. See tech-debt index §10.4.
 
 ### 11.6 Skills (`/skills/`)
 
