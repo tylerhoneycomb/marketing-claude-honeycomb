@@ -36,9 +36,7 @@ const WEEKLY_SPEND_TOLERANCE = 500;     // dollars ±
 const CAMPAIGN_DAILY_MIN_CENTS = 2500;    // $25.00/day floor
 const MAX_CHANGE_PCT = 0.02;    // ±2% per cycle
 const MAX_REDUCTION_PCT = 0.04;    // hard cap: dramatic underperformers only, max 4% reduction per cycle
-const PUMP_CPICP_CEILING = 175;    // pump-up baseline skips campaigns with CPICP > $175 or null — don't ramp bad performers toward an underspend target
-const LIFETIME_MIN_CONVERSIONS = 10;      // eligibility gate
-const WEEKLY_ICP_TARGET = 75;      // weekly ICP benchmark (informational — no kill switch)
+const LIFETIME_MIN_CONVERSIONS = 10;      // eligibility gate (lifetime leads)
 const ROLLING_DAYS = 14;      // signal window
 const FREQ_WATCH_THRESHOLD = 2.0;     // modifier
 const FREQ_HIGH_THRESHOLD = 3.0;     // override
@@ -61,6 +59,27 @@ const SCALING_PROFILES_MAX_AGE_DAYS = 14;
 //   SCALING_AFFECTED_CAMPAIGN_IDS  (comma-separated)
 //   SCALING_PROFILES_CACHE  (JSON string of last successful profile fetch)
 //   SCALING_PROFILES_CACHED_AT  (ISO timestamp of that fetch)
+
+// Lead-economics thresholds used by the daily digest and the weekly
+// narrative (lead pivot, 2026-09-09). Mirror data/config/benchmarks.json —
+// dual-source like SCALING_MAX_WEEKLY_PCT above. Change both if you ever
+// change one. Frequency uses FREQ_HIGH_THRESHOLD (= fatigue.frequency_critical).
+const TARGET_CPL_DOLLARS = 16;            // lead_economics.target_cpl_dollars
+const CPL_CRITICAL_MULTIPLE = 2.0;        // lead_economics.cpl_critical_multiple
+const CPL_SPIKE_WARNING_PCT = 25;         // fatigue.cpl_inflation_warning_pct
+const CPL_FLAG_MIN_WEEKLY_LEADS = 10;     // scaling.min_weekly_conversions — weekly CPL flags need this many leads
+const CPL_FLAG_MIN_DAILY_LEADS = 5;       // daily_check.winner_min_conversions — daily CPL watch needs this many leads
+const ZERO_LEAD_SPEND_WATCH_DOLLARS = 50; // daily spend with zero leads before the digest flags it
+// Pump-up baseline skips campaigns with CPL above the critical line (or
+// null CPL = 0 leads in the window) — don't ramp bad performers toward an
+// underspend target. Derived from the two mirrored constants above.
+const PUMP_CPL_CEILING = TARGET_CPL_DOLLARS * CPL_CRITICAL_MULTIPLE;
+
+// The daily optimizer (runBudgetAnalysis / executeBudgetChanges) is hard-
+// paused by early returns in those functions. This flag only drives the
+// status footer in buildBudgetWeeklySummary_ — flip it when the guards
+// come out so the Monday post stops saying the optimizer is off.
+const BUDGET_OPTIMIZER_PAUSED = true;
 
 const ANTHROPIC_MODEL = 'claude-opus-4-7';  // used by narrative, chat, budget commentary, daily digest
 
@@ -158,6 +177,14 @@ function dateToYMD_(val) {
     return Utilities.formatDate(d, Session.getScriptTimeZone(), 'yyyy-MM-dd');
   }
   return s;
+}
+
+// Rollup writers store "no value" as JS null via setValues, but Apps Script
+// stores a blank cell and getValues() hands it back as '' — never null.
+// Use this for any nullable rollup column (cpl, cpicp, attribution_rate,
+// trend pcts) so '' - number doesn't coerce blanks to 0 and sort them "best".
+function isBlankCell_(v) {
+  return v === null || v === undefined || v === '';
 }
 
 function getMostRecentCompletedWeek_(allWeeks) {
@@ -561,7 +588,7 @@ function syncCampaignMappings_() {
       newRows.length + ' new campaign' + (newRows.length !== 1 ? 's' : '') +
       ' discovered and mapped from Meta destination URLs:\n\n' +
       newRows.map(function (r) {
-        var convLabel = r[2] ? ' [' + r[2] + ']' : '';
+        var convLabel = r[2] ? ' (optimizes for: ' + r[2] + ')' : '';
         return '• ' + r[0] + ' → `' + r[1] + '`' + convLabel;
       }).join('\n') +
       '\n\nThese have been added to `campaign_mapping`. Edit the tab to override if needed.'
@@ -637,7 +664,8 @@ function syncCampaignMappings_() {
         newlyUnresolved.length + ' new campaign' + (newlyUnresolved.length !== 1 ? 's' : '') +
         ' could not be auto-mapped (no active/paused ads with destination URLs found):\n\n' +
         newlyUnresolved.map(function (n) { return '• ' + n; }).join('\n') +
-        '\n\nThese will be excluded from rollup and budget optimizer until mapped. ' +
+        '\n\nThese will be excluded from the weekly rollup, the daily/weekly lead digests ' +
+        'and any budget tooling until mapped. ' +
         'Add them manually to `campaign_mapping` or ensure ads have destination URLs with utm_campaign.\n' +
         '_This alert will not repeat for these campaigns._'
       );
@@ -1735,104 +1763,149 @@ function generateNarrativeForWeek_(targetWeek, opts) {
   Logger.log('Generating narrative for week of: ' + targetWeek +
     ' (' + weekRows.length + ' campaign rows)');
 
-  var totalSpend = 0, totalICPs = 0, totalAttrICPs = 0, totalConversions = 0, totalICConversions = 0;
+  // Leads (rollup col 9) and CPL (col 14) are the headline; IC prequal
+  // decisions (col 10) are reported as a subtype only. The hybrid ICP
+  // estimate and CPICP are still computed because intelligence_log persists
+  // them positionally in cols 4-5 (read by getLatestNarrative_ and the
+  // dashboard) — they no longer appear in the Slack post or the prompt.
+  var totalSpend = 0, totalLeads = 0, totalICConversions = 0, totalICPs = 0, totalAttrICPs = 0;
   weekRows.forEach(function (r) {
     totalSpend += r[3] || 0;
+    totalLeads += r[9] || 0;
+    totalICConversions += r[10] || 0;
     totalICPs += r[12] || 0;
     totalAttrICPs += r[11] || 0;
-    totalConversions += r[9] || 0;
-    totalICConversions += r[10] || 0;
   });
   totalSpend = Math.round(totalSpend * 100) / 100;
   totalICPs = Math.round(totalICPs * 10) / 10;
   totalAttrICPs = Math.round(totalAttrICPs * 10) / 10;
+  var overallCPL = totalLeads > 0 ? (totalSpend / totalLeads).toFixed(2) : 'N/A';
   var overallCPICP = totalICPs > 0 ? (totalSpend / totalICPs).toFixed(2) : 'N/A';
-  var overallCPL = totalConversions > 0 ? (totalSpend / totalConversions).toFixed(2) : 'N/A';
   var overallAttrRate = totalICPs > 0
     ? Math.round((totalICConversions / totalICPs) * 1000) / 10 + '%' : 'N/A';
+  var cplCriticalDollars = TARGET_CPL_DOLLARS * CPL_CRITICAL_MULTIPLE;
 
+  // Per-campaign CPL history for the WoW / 4-week comparisons. weekly_rollup
+  // only carries CPICP trend columns (17-21), so derive the CPL equivalents
+  // here from the earlier rollup rows instead of widening the sheet schema.
+  // Keyed by campaign name and averaged the same way as the history block
+  // in buildWeeklyRollup (mean of up to 4 prior non-blank weeks).
+  var cplHistory = {};
+  data.slice(1).forEach(function (r) {
+    var w = dateToYMD_(r[0]);
+    if (!w || w >= targetWeek) return;
+    if (!cplHistory[r[1]]) cplHistory[r[1]] = [];
+    cplHistory[r[1]].push({ week: w, cpl: isBlankCell_(r[14]) ? null : Number(r[14]) });
+  });
+  Object.keys(cplHistory).forEach(function (k) {
+    cplHistory[k].sort(function (a, b) { return a.week.localeCompare(b.week); });
+  });
+  var cplTrend = function (r) {
+    var h = cplHistory[r[1]] || [];
+    var cur = isBlankCell_(r[14]) ? null : Number(r[14]);
+    var prior = h.length > 0 ? h[h.length - 1].cpl : null;
+    var prior4 = h.slice(-4).filter(function (x) { return x.cpl !== null; });
+    var avg4 = prior4.length > 0
+      ? prior4.reduce(function (s, x) { return s + x.cpl; }, 0) / prior4.length : null;
+    var wow = (cur !== null && prior !== null && prior > 0)
+      ? Math.round(((cur - prior) / prior) * 1000) / 10 : null;
+    var vs4 = (cur !== null && avg4 !== null && avg4 > 0)
+      ? Math.round(((cur - avg4) / avg4) * 1000) / 10 : null;
+    return { cpl: cur, wowPct: wow, vs4wkPct: vs4 };
+  };
+  var pctStr = function (p) { return p > 0 ? '+' + p + '%' : p + '%'; };
+
+  // Sort by CPL ascending. Blank CPL means zero leads — those rows go last,
+  // biggest spend first, so dead spend is easy to spot at the bottom.
   var sortedRows = weekRows.slice().sort(function (a, b) {
-    if (a[16] === null && b[16] === null) return 0;
-    if (a[16] === null) return 1;
-    if (b[16] === null) return -1;
-    return a[16] - b[16];
+    var am = isBlankCell_(a[14]), bm = isBlankCell_(b[14]);
+    if (am && bm) return (b[3] || 0) - (a[3] || 0);
+    if (am) return 1;
+    if (bm) return -1;
+    return a[14] - b[14];
   });
 
   var campaignLines = sortedRows.map(function (r) {
-    var wowStr = (r[19] !== null && r[19] !== '')
-      ? (r[19] > 0 ? '+' + r[19] + '%' : r[19] + '%') : 'no prior week';
-    var vsStr = (r[20] !== null && r[20] !== '')
-      ? (r[20] > 0 ? '+' + r[20] + '%' : r[20] + '%') : 'no baseline yet';
-    var cpicpStr = r[16] !== null ? '$' + r[16] : 'no est. ICPs';
-    var attrStr = r[13] !== null ? r[13] + '% IC attributed' : 'no IC data';
-    var icConvStr = (r[10] || 0) > 0 ? ' | IC convs ' + r[10] : '';
+    var t = cplTrend(r);
+    var cplStr = t.cpl !== null ? '$' + t.cpl : 'no leads';
+    var wowStr = t.wowPct !== null ? pctStr(t.wowPct) : 'no prior week';
+    var vsStr = t.vs4wkPct !== null ? pctStr(t.vs4wkPct) : 'no baseline yet';
+    var icStr = (r[10] || 0) > 0 ? ' | IC decisions ' + r[10] : '';
     return '  ' + r[2] + ' (' + r[1] + ')' +
       ': spend $' + (r[3] || 0).toFixed(0) +
-      ' | est. ICPs ' + (r[12] || 0) +
-      ' | CPICP ' + cpicpStr +
+      ' | leads ' + (r[9] || 0) +
+      ' | CPL ' + cplStr +
       ' | WoW ' + wowStr +
       ' | vs 4wk avg ' + vsStr +
       ' | freq ' + (r[7] || 0) +
-      ' | attr. quality ' + attrStr +
-      icConvStr;
+      icStr;
   }).join('\n');
 
-  var freqAlerts = weekRows
-    .filter(function (r) { return (r[7] || 0) > 3.5; })
-    .map(function (r) { return '  ' + r[2] + ': frequency ' + r[7]; })
+  var enoughLeads = function (r) { return (r[9] || 0) >= CPL_FLAG_MIN_WEEKLY_LEADS; };
+
+  var aboveTargetLines = weekRows
+    .filter(function (r) { return enoughLeads(r) && !isBlankCell_(r[14]) && r[14] > cplCriticalDollars; })
+    .sort(function (a, b) { return b[14] - a[14]; })
+    .map(function (r) { return '  ' + r[2] + ': CPL $' + r[14] + ' on ' + r[9] + ' leads'; })
     .join('\n') || '  None';
 
   var spikeAlerts = weekRows
-    .filter(function (r) { return r[20] !== null && r[20] !== '' && r[20] > 25 && (r[12] || 0) > 0; })
-    .map(function (r) { return '  ' + r[2] + ': CPICP $' + r[16] + ' (+' + r[20] + '% vs 4wk avg)'; })
+    .filter(function (r) {
+      if (!enoughLeads(r)) return false;
+      var t = cplTrend(r);
+      return t.vs4wkPct !== null && t.vs4wkPct > CPL_SPIKE_WARNING_PCT;
+    })
+    .map(function (r) {
+      var t = cplTrend(r);
+      return '  ' + r[2] + ': CPL $' + t.cpl + ' (+' + t.vs4wkPct + '% vs 4wk avg)';
+    })
     .join('\n') || '  None';
 
-  var zeroICPLines = weekRows
-    .filter(function (r) { return (r[12] || 0) === 0 && (r[3] || 0) > 0; })
-    .map(function (r) { return '  ' + r[2] + ': $' + (r[3] || 0).toFixed(0) + ' spend, 0 est. ICPs'; })
+  var freqAlerts = weekRows
+    .filter(function (r) { return (r[7] || 0) > FREQ_HIGH_THRESHOLD; })
+    .map(function (r) { return '  ' + r[2] + ': frequency ' + r[7]; })
+    .join('\n') || '  None';
+
+  var noLeadLines = weekRows
+    .filter(function (r) { return (r[9] || 0) === 0 && (r[3] || 0) > 0; })
+    .sort(function (a, b) { return (b[3] || 0) - (a[3] || 0); })
+    .map(function (r) { return '  ' + r[2] + ': $' + (r[3] || 0).toFixed(0) + ' spend, 0 leads'; })
     .join('\n') || '  None';
 
   var contextBlock = [
     'REPORTING WEEK: ' + targetWeek,
+    'TOTAL LEADS: ' + totalLeads,
+    'OVERALL CPL: $' + overallCPL + ' (target $' + TARGET_CPL_DOLLARS + ')',
     'TOTAL SPEND: $' + totalSpend.toFixed(2),
-    'TOTAL ICPs (hybrid est.): ' + totalICPs,
-    'TOTAL ICPs (UTM attributed): ' + totalAttrICPs,
-    'TOTAL IC CONVERSIONS (direct from Meta custom conversion): ' + totalICConversions,
-    'ATTRIBUTION QUALITY: ' + overallAttrRate + ' of estimated ICPs backed by IC conversions',
-    'OVERALL CPICP (hybrid): $' + overallCPICP,
-    'OVERALL CPL: $' + overallCPL,
+    'IC PREQUAL DECISIONS (Meta custom conversion, reported only): ' + totalICConversions +
+      ' of those leads reached an investment-crowdfunding decision',
     '',
-    'NOTE: ICP counts use hybrid attribution (v3). Each campaign receives its Meta IC conversions',
-    '(deduplicated by Meta, last-click priority) plus a proportional share of unattributed ICPs',
-    '(HubSpot ICPs not traceable to any campaign, distributed by Meta conversion volume).',
-    '',
-    'IC CONVERSIONS: Meta tracks the "Investment Crowdfunding Prequal Decision" custom conversion',
-    'across all campaigns. IC conversions are the attribution foundation — each ICP decision is',
-    'attributed to exactly one campaign by Meta (last-click priority, deduplicated).',
-    '',
-    'CAMPAIGN BREAKDOWN (sorted by hybrid CPICP, best first):',
+    'CAMPAIGN BREAKDOWN (sorted by CPL, best first; campaigns with no leads last):',
     campaignLines,
     '',
-    'FREQUENCY ALERTS (threshold: >3.5):',
-    freqAlerts,
+    'CPL ABOVE TARGET (>$' + cplCriticalDollars + ', i.e. ' + CPL_CRITICAL_MULTIPLE +
+      'x the $' + TARGET_CPL_DOLLARS + ' target; campaigns with >=' + CPL_FLAG_MIN_WEEKLY_LEADS + ' leads):',
+    aboveTargetLines,
     '',
-    'CPICP SPIKE ALERTS (>25% above 4-week average):',
+    'CPL SPIKE ALERTS (>' + CPL_SPIKE_WARNING_PCT + '% above 4-week average; campaigns with >=' +
+      CPL_FLAG_MIN_WEEKLY_LEADS + ' leads):',
     spikeAlerts,
     '',
-    'ZERO-ICP CAMPAIGNS WITH ACTIVE SPEND:',
-    zeroICPLines
+    'FREQUENCY ALERTS (threshold: >' + FREQ_HIGH_THRESHOLD + '):',
+    freqAlerts,
+    '',
+    'SPEND WITHOUT LEADS:',
+    noLeadLines
   ].join('\n');
 
   Logger.log('Context block:\n' + contextBlock);
 
   var systemPrompt = [
-    'You are a performance marketing analyst for Honeycomb Credit, a fintech providing investment crowdfunding capital to small food and beverage businesses.',
+    'You are a performance marketing analyst for Honeycomb Credit, a community-investment platform that helps small businesses raise capital from their own customers and communities.',
     'Audience: Marketing Director, Sales Director, CEO, CFO.',
-    'Primary metrics: CPICP, CPL, frequency, spend, segment conversion.',
-    '',
-    'ICP = contact where Prequal Decision = investment_crowdfunding.',
-    'ICP counts use hybrid attribution (v3): Meta IC conversions (deduplicated, last-click) + proportional share of unattributed pool.',
-    'IC conversions are the foundation. Unattributed ICPs (organic, email, lost UTMs) distributed by Meta conversion volume.',
+    'Primary metrics: leads, CPL (cost per lead), spend, frequency. The CPL target is $' + TARGET_CPL_DOLLARS + '.',
+    'IC prequal decisions are a reported subtype of leads — never the verdict, never a ranking key.',
+    'IC may appear only as "of which N reached an IC decision". Never mention ICPs or CPICP.',
     '',
     'Write a SHORT weekly summary for Slack. Plain text only.',
     'No Markdown headers (no ##, ###), no horizontal rules (no ---), no bold (**text**).',
@@ -1841,14 +1914,14 @@ function generateNarrativeForWeek_(targetWeek, opts) {
     'Format exactly as below — use these exact section labels:',
     '',
     'OVERALL',
-    '1-2 direct sentences. State verdict and key number. Flag attribution quality if below 50%.',
+    '1-2 direct sentences. State the verdict on leads and CPL vs the $' + TARGET_CPL_DOLLARS + ' target, with the key number.',
     '',
     'SEGMENTS',
-    '- [utm value]: $[CPICP] CPICP, [N] ICPs  (one line per campaign with ICPs, best first)',
-    '- Zero ICPs: [utm values that spent but produced nothing, comma-separated]',
+    '- [utm value]: [N] leads, $[CPL] CPL  (one line per campaign with leads, best CPL first)',
+    '- No leads: [utm values that spent but produced none, comma-separated]',
     '',
     'WATCH',
-    '- One line per flag (dead spend, CPICP spike, frequency issue)',
+    '- One line per flag (spend without leads, CPL above target, CPL spike, frequency issue)',
     '',
     'ACTION',
     '- One line per recommendation. Specific. No hedging.',
@@ -1940,7 +2013,8 @@ function generateNarrativeForWeek_(targetWeek, opts) {
     contextBlock, narrative
   ]);
   Logger.log('  APPEND: reporting_week=' + targetWeek +
-    ' spend=$' + totalSpend.toFixed(2) + ' icps=' + totalICPs);
+    ' spend=$' + totalSpend.toFixed(2) + ' leads=' + totalLeads +
+    ' cpl=$' + overallCPL + ' icps=' + totalICPs);
 
   // ── Reconciliation: verify spend matches rollup ────
   var rollupCheck = 0;
@@ -1963,7 +2037,8 @@ function generateNarrativeForWeek_(targetWeek, opts) {
   if (postSlack) {
     postWeeklyNarrativeToSlack_(
       targetWeek, totalSpend, totalICPs, overallCPICP, overallCPL,
-      totalAttrICPs, overallAttrRate, weekRows, allWeeks, data, narrative
+      totalAttrICPs, overallAttrRate, weekRows, allWeeks, data, narrative,
+      totalLeads, totalICConversions
     );
   }
 }
@@ -2006,8 +2081,14 @@ function backfillHistoricalNarratives() {
 // WEEKLY NARRATIVE SLACK POST
 // ============================================================
 
+// Lead pivot (2026-09-09): the post headlines leads and CPL. `icps`,
+// `cpicp`, `attrICPs` and `attrRate` are still passed by the caller but no
+// longer rendered — kept in the signature so the call shape is stable;
+// `leads` and `icConversions` were appended for the lead rows and the one
+// secondary IC line.
 function postWeeklyNarrativeToSlack_(week, spend, icps, cpicp, cpl,
-  attrICPs, attrRate, weekRows, allWeeks, rollupData, narrative) {
+  attrICPs, attrRate, weekRows, allWeeks, rollupData, narrative,
+  leads, icConversions) {
 
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var tz = Session.getScriptTimeZone();
@@ -2016,7 +2097,7 @@ function postWeeklyNarrativeToSlack_(week, spend, icps, cpicp, cpl,
   var ydStr = Utilities.formatDate(yesterday, tz, 'yyyy-MM-dd');
   var ydLabel = Utilities.formatDate(yesterday, tz, 'MMM d');
   var metaSheet = ss.getSheetByName(META_SHEET);
-  var ydSpend = 0, ydConvs = 0, ydClicks = 0;
+  var ydSpend = 0, ydConvs = 0, ydClicks = 0, ydIC = 0;
   if (metaSheet) {
     var metaData = metaSheet.getDataRange().getValues();
     for (var mi = 1; mi < metaData.length; mi++) {
@@ -2024,18 +2105,9 @@ function postWeeklyNarrativeToSlack_(week, spend, icps, cpicp, cpl,
       ydSpend += parseFloat(metaData[mi][7]) || 0;
       ydConvs += parseInt(metaData[mi][9]) || 0;
       ydClicks += parseInt(metaData[mi][6]) || 0;
+      ydIC += parseInt(metaData[mi][12]) || 0;
     }
   }
-
-  var hsSheet = ss.getSheetByName(HS_SHEET);
-  var ydICPs = 0;
-  if (hsSheet) {
-    var hsData = hsSheet.getDataRange().getValues();
-    for (var hi = 1; hi < hsData.length; hi++) {
-      if (dateToYMD_(hsData[hi][1]) === ydStr) ydICPs++;
-    }
-  }
-  var ydCPICP = ydICPs > 0 ? '$' + (ydSpend / ydICPs).toFixed(0) : 'N/A';
   var ydCPL = ydConvs > 0 ? '$' + (ydSpend / ydConvs).toFixed(2) : 'N/A';
 
   var priorWeek = null;
@@ -2044,63 +2116,61 @@ function postWeeklyNarrativeToSlack_(week, spend, icps, cpicp, cpl,
   var wowStr = '';
   if (priorWeek) {
     var priorRows = rollupData.slice(1).filter(function (r) { return dateToYMD_(r[0]) === priorWeek; });
-    var priorSpend = 0, priorICPs = 0;
-    priorRows.forEach(function (r) { priorSpend += r[3] || 0; priorICPs += r[12] || 0; });
-    if (priorICPs > 0 && cpicp !== 'N/A') {
-      var priorCPICP = priorSpend / priorICPs;
-      var wowPct = Math.round(((parseFloat(cpicp) - priorCPICP) / priorCPICP) * 1000) / 10;
-      wowStr = '  |  WoW: ' + (wowPct > 0 ? '+' : '') + wowPct + '%  (prior $' + priorCPICP.toFixed(0) + ')';
+    var priorSpend = 0, priorConvs = 0;
+    priorRows.forEach(function (r) { priorSpend += r[3] || 0; priorConvs += r[9] || 0; });
+    if (priorConvs > 0 && cpl !== 'N/A') {
+      var priorCPL = priorSpend / priorConvs;
+      var wowPct = Math.round(((parseFloat(cpl) - priorCPL) / priorCPL) * 1000) / 10;
+      wowStr = '  |  WoW: ' + (wowPct > 0 ? '+' : '') + wowPct + '%  (prior $' + priorCPL.toFixed(2) + ' CPL)';
     }
   }
 
   var last4 = completed.slice(-4);
   var d30Rows = rollupData.slice(1).filter(function (r) { return last4.indexOf(dateToYMD_(r[0])) > -1; });
-  var d30Spend = 0, d30ICPs = 0, d30Convs = 0;
-  d30Rows.forEach(function (r) { d30Spend += r[3] || 0; d30ICPs += r[12] || 0; d30Convs += r[9] || 0; });
-  var d30CPICP = d30ICPs > 0 ? '$' + (d30Spend / d30ICPs).toFixed(0) : 'N/A';
+  var d30Spend = 0, d30Convs = 0, d30IC = 0;
+  d30Rows.forEach(function (r) { d30Spend += r[3] || 0; d30Convs += r[9] || 0; d30IC += r[10] || 0; });
   var d30CPL = d30Convs > 0 ? '$' + (d30Spend / d30Convs).toFixed(2) : 'N/A';
 
   var prior4 = completed.slice(-8, -4);
   var p30Rows = rollupData.slice(1).filter(function (r) { return prior4.indexOf(dateToYMD_(r[0])) > -1; });
-  var p30Spend = 0, p30ICPs = 0;
-  p30Rows.forEach(function (r) { p30Spend += r[3] || 0; p30ICPs += r[12] || 0; });
+  var p30Spend = 0, p30Convs = 0;
+  p30Rows.forEach(function (r) { p30Spend += r[3] || 0; p30Convs += r[9] || 0; });
   var d30WowStr = '';
-  if (p30ICPs > 0 && d30ICPs > 0) {
-    var p30CPICP = p30Spend / p30ICPs;
-    var c30CPICP = d30Spend / d30ICPs;
-    var d30Pct = Math.round(((c30CPICP - p30CPICP) / p30CPICP) * 1000) / 10;
+  if (p30Convs > 0 && d30Convs > 0) {
+    var p30CPL = p30Spend / p30Convs;
+    var c30CPL = d30Spend / d30Convs;
+    var d30Pct = Math.round(((c30CPL - p30CPL) / p30CPL) * 1000) / 10;
     d30WowStr = '  |  vs prior 30: ' + (d30Pct > 0 ? '+' : '') + d30Pct + '%';
   }
 
-  var text = '*Honeycomb Ads — Week of ' + week + '*\n\n';
+  var text = '*Honeycomb Leads — Week of ' + week + '*\n\n';
 
   text += '*Yesterday (' + ydLabel + ')*\n';
   text += 'Spend: $' + ydSpend.toFixed(0) +
-    '  |  ICPs: ' + ydICPs +
-    '  |  CPICP: ' + ydCPICP +
+    '  |  Leads: ' + ydConvs +
     '  |  CPL: ' + ydCPL + '\n\n';
 
   text += '*Week of ' + week + '*\n';
   text += 'Spend: $' + Number(spend).toFixed(0) +
-    '  |  ICPs: ' + Math.round(icps * 10) / 10 +
-    '  |  CPICP: $' + cpicp +
-    '  |  CPL: $' + cpl +
-    wowStr + '\n';
-  if (attrRate !== 'N/A') {
-    text += '_IC attribution: ' + attrRate + ' of estimated ICPs_\n';
-  }
-  text += '\n';
+    '  |  Leads: ' + (leads || 0) +
+    '  |  CPL: ' + (cpl !== 'N/A' ? '$' + cpl : 'N/A') +
+    '  (target $' + TARGET_CPL_DOLLARS + ')' +
+    wowStr + '\n\n';
 
   text += '*Last 30 days*\n';
   text += 'Spend: $' + d30Spend.toFixed(0) +
-    '  |  ICPs: ' + Math.round(d30ICPs * 10) / 10 +
-    '  |  CPICP: ' + d30CPICP +
+    '  |  Leads: ' + d30Convs +
     '  |  CPL: ' + d30CPL +
-    d30WowStr + '\n\n';
+    d30WowStr + '\n';
+
+  // IC prequal decisions are a subtype of leads (Meta custom conversion) —
+  // one secondary line, never a headline.
+  text += '_of which reached an IC decision: yesterday ' + ydIC +
+    ' · week ' + (icConversions || 0) + ' · last 30 days ' + d30IC + '_\n\n';
 
   text += '─────────────────\n' + narrative;
 
-  var budgetSummary = buildBudgetWeeklySummary_();
+  var budgetSummary = buildBudgetWeeklySummary_(leads, cpl);
   if (budgetSummary) {
     text += '\n\n─────────────────\n' + budgetSummary;
   }
@@ -2120,7 +2190,6 @@ function postDailyDigest() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
 
   var metaSheet = ss.getSheetByName(META_SHEET);
-  var hsSheet = ss.getSheetByName(HS_SHEET);
   var rollupSheet = ss.getSheetByName(ROLLUP_SHEET);
   if (!metaSheet || !rollupSheet) {
     Logger.log('ERROR: rolling_data or weekly_rollup sheet not found.');
@@ -2132,8 +2201,10 @@ function postDailyDigest() {
   var ydStr = Utilities.formatDate(yesterday, tz, 'yyyy-MM-dd');
   var ydLabel = Utilities.formatDate(yesterday, tz, 'EEE MMM d');
 
+  // rolling_data columns: Spend(7) Conversions(9) = leads, Frequency(10),
+  // IC Conversions(12) = leads that reached an IC prequal decision.
   var metaData = metaSheet.getDataRange().getValues();
-  var ydSpend = 0, ydConvs = 0, ydClicks = 0, ydFreqSum = 0, ydFreqCount = 0;
+  var ydSpend = 0, ydConvs = 0, ydClicks = 0, ydIC = 0, ydFreqSum = 0, ydFreqCount = 0;
   var ydByCampaign = [];
   for (var mi = 1; mi < metaData.length; mi++) {
     if (dateToYMD_(metaData[mi][0]) !== ydStr) continue;
@@ -2143,21 +2214,25 @@ function postDailyDigest() {
     ydSpend += rs;
     ydConvs += rc;
     ydClicks += parseInt(metaData[mi][6]) || 0;
+    ydIC += parseInt(metaData[mi][12]) || 0;
     if (rf > 0) { ydFreqSum += rf; ydFreqCount++; }
     ydByCampaign.push({ name: String(metaData[mi][3]), spend: rs, convs: rc, freq: rf });
   }
 
-  var ydICPs = 0;
-  if (hsSheet) {
-    var hsData = hsSheet.getDataRange().getValues();
-    for (var hi = 1; hi < hsData.length; hi++) {
-      if (dateToYMD_(hsData[hi][1]) === ydStr) ydICPs++;
-    }
-  }
-
   var ydCPL = ydConvs > 0 ? '$' + (ydSpend / ydConvs).toFixed(2) : 'N/A';
-  var ydCPICP = ydICPs > 0 ? '$' + (ydSpend / ydICPs).toFixed(0) : 'N/A';
   var ydFreq = ydFreqCount > 0 ? Math.round((ydFreqSum / ydFreqCount) * 100) / 100 : 'N/A';
+
+  // Best / worst CPL yesterday among campaigns that produced leads.
+  var ydRanked = ydByCampaign
+    .filter(function (c) { return c.convs > 0; })
+    .map(function (c) { return { name: c.name, cpl: c.spend / c.convs }; })
+    .sort(function (a, b) { return a.cpl - b.cpl; });
+  var ydRankLine = '';
+  if (ydRanked.length >= 2) {
+    var best = ydRanked[0], worst = ydRanked[ydRanked.length - 1];
+    ydRankLine = 'Best CPL → ' + best.name + ' $' + best.cpl.toFixed(2) +
+      '  ·  Worst → ' + worst.name + ' $' + worst.cpl.toFixed(2);
+  }
 
   var rollupData = rollupSheet.getDataRange().getValues();
   var weekSet = {}, allWeeks = [];
@@ -2171,13 +2246,13 @@ function postDailyDigest() {
   var currentWeek = allWeeks[allWeeks.length - 1];
   var wtdRows = rollupData.slice(1).filter(function (r) { return dateToYMD_(r[0]) === currentWeek; });
 
-  var wtdSpend = 0, wtdICPs = 0, wtdConvs = 0;
+  // weekly_rollup columns: spend(3) meta_conversions(9) = leads, ic_conversions(10)
+  var wtdSpend = 0, wtdConvs = 0, wtdIC = 0;
   wtdRows.forEach(function (r) {
     wtdSpend += r[3] || 0;
-    wtdICPs += r[12] || 0;
     wtdConvs += r[9] || 0;
+    wtdIC += r[10] || 0;
   });
-  var wtdCPICP = wtdICPs > 0 ? '$' + (wtdSpend / wtdICPs).toFixed(0) : 'N/A';
   var wtdCPL = wtdConvs > 0 ? '$' + (wtdSpend / wtdConvs).toFixed(2) : 'N/A';
 
   var wsParts = currentWeek.split('-');
@@ -2185,58 +2260,74 @@ function postDailyDigest() {
   var ydDate = new Date(); ydDate.setDate(ydDate.getDate() - 1);
   var daysElapsed = Math.max(1, Math.round((ydDate - wsDate) / 86400000) + 1);
   var pacedSpend = Math.round(wtdSpend / daysElapsed * 7);
-  var pacedICPs = Math.round(wtdICPs / daysElapsed * 7 * 10) / 10;
-  var wtdPaceLine = 'Pacing → $' + pacedSpend.toLocaleString() + ' spend  |  ' + pacedICPs + ' ICPs  (' + daysElapsed + ' of 7 days)';
+  var pacedLeads = Math.round(wtdConvs / daysElapsed * 7);
+  var weeklyTarget = getTargetWeeklySpend_();
+  var wtdPaceLine = 'Pacing → $' + pacedSpend.toLocaleString() + ' spend vs $' +
+    weeklyTarget.toLocaleString() + ' target  |  ' + pacedLeads + ' leads  (' +
+    daysElapsed + ' of 7 days)';
 
   var completed = allWeeks.filter(function (w) { return w < currentWeek; });
   var wtdWoWStr = '';
   if (completed.length > 0) {
     var priorWeek = completed[completed.length - 1];
     var priorRows = rollupData.slice(1).filter(function (r) { return dateToYMD_(r[0]) === priorWeek; });
-    var priorSpend = 0, priorICPs = 0;
-    priorRows.forEach(function (r) { priorSpend += r[3] || 0; priorICPs += r[12] || 0; });
-    if (priorICPs > 0 && wtdICPs > 0) {
-      var priorCPICP = priorSpend / priorICPs;
-      var wtdCPICPNum = wtdSpend / wtdICPs;
-      var wowPct = Math.round(((wtdCPICPNum - priorCPICP) / priorCPICP) * 1000) / 10;
-      wtdWoWStr = '  |  WoW: ' + (wowPct > 0 ? '+' : '') + wowPct + '%';
+    var priorSpend = 0, priorConvs = 0;
+    priorRows.forEach(function (r) { priorSpend += r[3] || 0; priorConvs += r[9] || 0; });
+    if (priorConvs > 0 && wtdConvs > 0) {
+      var priorCPL = priorSpend / priorConvs;
+      var wtdCPLNum = wtdSpend / wtdConvs;
+      var wowPct = Math.round(((wtdCPLNum - priorCPL) / priorCPL) * 1000) / 10;
+      wtdWoWStr = '  |  WoW: ' + (wowPct > 0 ? '+' : '') + wowPct + '% (CPL)';
     }
   }
 
   var last4 = completed.slice(-4);
   var d30Rows = rollupData.slice(1).filter(function (r) { return last4.indexOf(dateToYMD_(r[0])) > -1; });
-  var d30Spend = 0, d30ICPs = 0, d30Convs = 0;
-  d30Rows.forEach(function (r) { d30Spend += r[3] || 0; d30ICPs += r[12] || 0; d30Convs += r[9] || 0; });
-  var d30CPICP = d30ICPs > 0 ? '$' + (d30Spend / d30ICPs).toFixed(0) : 'N/A';
+  var d30Spend = 0, d30Convs = 0, d30IC = 0;
+  d30Rows.forEach(function (r) { d30Spend += r[3] || 0; d30Convs += r[9] || 0; d30IC += r[10] || 0; });
   var d30CPL = d30Convs > 0 ? '$' + (d30Spend / d30Convs).toFixed(2) : 'N/A';
 
   var d30WeeklySpend = last4.length > 0 ? Math.round(d30Spend / last4.length) : 0;
-  var d30WeeklyICPs = last4.length > 0 ? Math.round(d30ICPs / last4.length * 10) / 10 : 0;
-  var d30PaceLine = 'Run rate → $' + d30WeeklySpend.toLocaleString() + '/week  |  ' + d30WeeklyICPs + ' ICPs/week';
+  var d30WeeklyLeads = last4.length > 0 ? Math.round(d30Convs / last4.length) : 0;
+  var d30PaceLine = 'Run rate → $' + d30WeeklySpend.toLocaleString() + '/week  |  ' + d30WeeklyLeads + ' leads/week';
 
+  // Watch precedence: spend with zero leads, then CPL past the critical
+  // multiple on a meaningful lead count, then frequency.
+  var cplCriticalDollars = TARGET_CPL_DOLLARS * CPL_CRITICAL_MULTIPLE;
   var watchLine = '';
-  var highFreq = ydByCampaign.filter(function (c) { return c.freq > 3.5; })
-    .sort(function (a, b) { return b.freq - a.freq; });
-  var zeroConv = ydByCampaign.filter(function (c) { return c.convs === 0 && c.spend > 50; })
+  var zeroConv = ydByCampaign
+    .filter(function (c) { return c.convs === 0 && c.spend > ZERO_LEAD_SPEND_WATCH_DOLLARS; })
     .sort(function (a, b) { return b.spend - a.spend; });
-  if (highFreq.length > 0) {
+  var highCPL = ydByCampaign
+    .filter(function (c) { return c.convs >= CPL_FLAG_MIN_DAILY_LEADS && c.spend / c.convs > cplCriticalDollars; })
+    .sort(function (a, b) { return (b.spend / b.convs) - (a.spend / a.convs); });
+  var highFreq = ydByCampaign.filter(function (c) { return c.freq > FREQ_HIGH_THRESHOLD; })
+    .sort(function (a, b) { return b.freq - a.freq; });
+  if (zeroConv.length > 0) {
+    watchLine = '⚠️ ' + zeroConv[0].name + ': $' + zeroConv[0].spend.toFixed(0) + ' spend, 0 leads';
+  } else if (highCPL.length > 0) {
+    watchLine = '⚠️ ' + highCPL[0].name + ': CPL $' + (highCPL[0].spend / highCPL[0].convs).toFixed(2) +
+      ' on ' + highCPL[0].convs + ' leads (>' + CPL_CRITICAL_MULTIPLE + 'x the $' + TARGET_CPL_DOLLARS + ' target)';
+  } else if (highFreq.length > 0) {
     watchLine = '⚠️ ' + highFreq[0].name + ': freq ' + Math.round(highFreq[0].freq * 100) / 100;
-  } else if (zeroConv.length > 0) {
-    watchLine = '⚠️ ' + zeroConv[0].name + ': $' + zeroConv[0].spend.toFixed(0) + ' spend, 0 conversions';
   }
 
   var commentary = '';
   try {
     var ctx = [
       'Yesterday (' + ydStr + '): spend $' + ydSpend.toFixed(0) +
-      ', conversions ' + ydConvs + ', ICPs ' + ydICPs +
-      ', CPICP ' + ydCPICP + ', CPL ' + ydCPL + ', avg freq ' + ydFreq,
+      ', leads ' + ydConvs + ', CPL ' + ydCPL + ', avg freq ' + ydFreq,
+      ydRanked.length >= 2
+        ? 'Best CPL yesterday: ' + ydRanked[0].name + ' $' + ydRanked[0].cpl.toFixed(2) +
+          '; worst: ' + ydRanked[ydRanked.length - 1].name + ' $' + ydRanked[ydRanked.length - 1].cpl.toFixed(2)
+        : '',
       'WTD (week of ' + currentWeek + '): spend $' + wtdSpend.toFixed(0) +
-      ', est. ICPs ' + Math.round(wtdICPs * 10) / 10 +
-      ', CPICP ' + wtdCPICP + (wtdWoWStr ? ', ' + wtdWoWStr.trim() : ''),
+      ' (pacing $' + pacedSpend + ' vs $' + weeklyTarget + ' weekly target)' +
+      ', leads ' + wtdConvs + ', CPL ' + wtdCPL +
+      (wtdWoWStr ? ', ' + wtdWoWStr.replace(/^\s*\|\s*/, '') : ''),
       'Last 30 days: spend $' + d30Spend.toFixed(0) +
-      ', est. ICPs ' + Math.round(d30ICPs * 10) / 10 +
-      ', CPICP ' + d30CPICP,
+      ', leads ' + d30Convs + ', CPL ' + d30CPL,
+      'CPL target: $' + TARGET_CPL_DOLLARS,
       watchLine ? 'Watch: ' + watchLine.replace('⚠️ ', '') : ''
     ].filter(Boolean).join('\n');
 
@@ -2252,6 +2343,8 @@ function postDailyDigest() {
           'Write exactly 2 sentences assessing yesterday\'s ad performance. ' +
           'First sentence: verdict on yesterday (good/bad/neutral) and the key reason. ' +
           'Second sentence: one specific implication or action. ' +
+          'Leads and CPL (cost per lead) are the metrics; judge CPL against the stated target. ' +
+          'Do not mention ICPs or CPICP. ' +
           'No fluff. Numbers only from the data provided. Plain text, no markdown.',
         messages: [{ role: 'user', content: ctx }]
       }),
@@ -2265,29 +2358,34 @@ function postDailyDigest() {
     Logger.log('Daily commentary LLM exception: ' + e.message);
   }
 
-  var text = '*Honeycomb Ads — ' + ydLabel + '*\n\n';
+  var text = '*Honeycomb Leads — ' + ydLabel + '*\n\n';
 
   text += '*Yesterday*\n';
   text += 'Spend: $' + ydSpend.toFixed(0) +
-    '  |  ICPs: ' + ydICPs +
-    '  |  CPICP: ' + ydCPICP +
+    '  |  Leads: ' + ydConvs +
     '  |  CPL: ' + ydCPL +
-    '  |  Freq: ' + ydFreq + '\n\n';
+    '  |  Freq: ' + ydFreq + '\n';
+  if (ydRankLine) text += '_' + ydRankLine + '_\n';
+  text += '\n';
 
   text += '*WTD (week of ' + currentWeek + ')*\n';
   text += 'Spend: $' + wtdSpend.toFixed(0) +
-    '  |  ICPs: ' + Math.round(wtdICPs * 10) / 10 +
-    '  |  CPICP: ' + wtdCPICP +
+    '  |  Leads: ' + wtdConvs +
     '  |  CPL: ' + wtdCPL +
     wtdWoWStr + '\n';
   text += '_' + wtdPaceLine + '_\n\n';
 
   text += '*30-day*\n';
   text += 'Spend: $' + d30Spend.toFixed(0) +
-    '  |  ICPs: ' + Math.round(d30ICPs * 10) / 10 +
-    '  |  CPICP: ' + d30CPICP +
-    '  |  CPL: ' + d30CPL + '\n';
+    '  |  Leads: ' + d30Convs +
+    '  |  CPL: ' + d30CPL +
+    '  (target $' + TARGET_CPL_DOLLARS + ')\n';
   text += '_' + d30PaceLine + '_\n';
+
+  // IC prequal decisions are a subtype of leads (Meta custom conversion) —
+  // one secondary line, never a headline.
+  text += '_of which reached an IC decision: yesterday ' + ydIC +
+    ' · WTD ' + wtdIC + ' · 30-day ' + d30IC + '_\n';
 
   if (watchLine) text += '\n' + watchLine + '\n';
   if (commentary) text += '\n' + commentary;
@@ -2783,8 +2881,22 @@ function runBudgetAnalysis() {
   //
   // To re-enable: convert the ranking in computeRecommendations_ to CPL
   // first (see tech-debt index in docs/TECHNICAL_REFERENCE.md §10.4), then
-  // remove this guard. The original logic below is untouched.
+  // remove this guard.
+  //
+  // 2026-09-10: the ranking below now keys on leads / CPL (computeBudgetSignals_,
+  // computeRecommendations_, postBudgetProposalToSlack_). The guard stays
+  // until Tyler signs off on re-enabling; when it comes out, also flip
+  // BUDGET_OPTIMIZER_PAUSED so the Monday footer and the dashboard stop
+  // reporting the optimizer as paused.
   Logger.log('runBudgetAnalysis: PAUSED — IC-based ranking retired 2026-09-09.');
+  // Clear any optimizer token left behind by the last pre-pause run so a
+  // stale Slack approve link can't post a confirmation nothing will honour,
+  // and drop the tier history computed under CPICP so hysteresis starts
+  // clean on re-enable.
+  PROPS.deleteProperty('BUDGET_PENDING_TOKEN');
+  PROPS.deleteProperty('BUDGET_APPROVED_TOKEN');
+  PROPS.deleteProperty('BUDGET_REJECTED_TOKEN');
+  PROPS.deleteProperty('BUDGET_RANK_TIERS');
   return;
 
   // Record timestamp so the dashboard can show "last run".
@@ -2803,36 +2915,39 @@ function runBudgetAnalysis() {
   }
 
   var signals = computeBudgetSignals_();
-  var icpPace = computeWeeklyICPPace_();
+  var leadPace = computeLeadPace_(signals);
 
   var recommendations = computeRecommendations_(currentBudgets, signals);
 
   if (recommendations.length === 0) {
     postToSlack_('*Honeycomb Budget Check — ' +
       Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'EEE MMM d') +
-      '*\nAll campaigns within normal range. No changes recommended this cycle.');
+      '*\nLeads (' + ROLLING_DAYS + 'd): ' + leadPace.label +
+      '\nAll campaigns within normal CPL range — no changes recommended this cycle.' +
+      (leadPace.icConversions > 0
+        ? '\n_of which ' + leadPace.icConversions + ' reached an IC decision_'
+        : ''));
     Logger.log('No changes recommended.');
     return;
   }
 
   var token = writeToQueue_(recommendations);
-  postBudgetProposalToSlack_(recommendations, token, icpPace, currentBudgets, priorTokenExists);
+  postBudgetProposalToSlack_(recommendations, token, leadPace, priorTokenExists);
   Logger.log('=== runBudgetAnalysis complete. Token: ' + token + ' ===');
 }
 
 
 // ============================================================
-// SIGNAL COMPUTATION — HYBRID ATTRIBUTION (v3)
-// Rolling 14-day window from rolling_data. Uses IC conversions
-// as the attribution foundation + share of unattributed pool.
-// Same model as buildWeeklyRollup (v3).
+// SIGNAL COMPUTATION — LEADS (lead pivot, 2026-09-09)
+// Rolling 14-day window from rolling_data. Leads (col 9) and
+// CPL drive the ranking; IC conversions (col 12) are carried
+// as a reported-only subtype and never enter a sort or threshold.
 // ============================================================
 
 function computeBudgetSignals_() {
   Logger.log('--- computeBudgetSignals_ ---');
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var metaSheet = ss.getSheetByName(META_SHEET);
-  var hsSheet = ss.getSheetByName(HS_SHEET);
   if (!metaSheet) { Logger.log('ERROR: rolling_data not found.'); return {}; }
 
   var tz = Session.getScriptTimeZone();
@@ -2847,37 +2962,15 @@ function computeBudgetSignals_() {
 
   var metaData = metaSheet.getDataRange().getValues();
 
-  // Daily ICP totals (ground truth)
-  var totalIcpsByDate = {};
-  if (hsSheet) {
-    var hsData = hsSheet.getDataRange().getValues();
-    for (var hi = 1; hi < hsData.length; hi++) {
-      var sub = dateToYMD_(hsData[hi][1]);
-      if (sub) totalIcpsByDate[sub] = (totalIcpsByDate[sub] || 0) + 1;
-    }
-  }
-
-  // Daily Meta conversion totals + lifetime conversions per campaign
-  var totalConvByDate = {};
+  // Lifetime leads per campaign (eligibility gate)
   var lifetimeConvByCampaign = {};
   for (var ri0 = 1; ri0 < metaData.length; ri0++) {
     var dStr0 = dateToYMD_(metaData[ri0][0]);
     if (!dStr0) continue;
     var cid0 = String(metaData[ri0][4]).trim();
     var conv0 = parseInt(metaData[ri0][9]) || 0;
-    totalConvByDate[dStr0] = (totalConvByDate[dStr0] || 0) + conv0;
     lifetimeConvByCampaign[cid0] = (lifetimeConvByCampaign[cid0] || 0) + conv0;
   }
-
-  // ── IC-based attribution: daily IC conversion totals ────────
-  var totalICConvByDate = {};
-  for (var icPass = 1; icPass < metaData.length; icPass++) {
-    var icDate = dateToYMD_(metaData[icPass][0]);
-    if (!icDate) continue;
-    var icConvBudget = parseInt(metaData[icPass][12]) || 0;
-    totalICConvByDate[icDate] = (totalICConvByDate[icDate] || 0) + icConvBudget;
-  }
-  // ───────────────────────────────────────────────────────────
 
   // Aggregate within rolling window only
   var signals = {};
@@ -2890,36 +2983,26 @@ function computeBudgetSignals_() {
     var spend = parseFloat(metaData[ri][7]) || 0;
     var convs = parseInt(metaData[ri][9]) || 0;
     var freq = parseFloat(metaData[ri][10]) || 0;
-
-    var totalConvDay = totalConvByDate[dStr] || 0;
-    var totalIcpDay = totalIcpsByDate[dStr] || 0;
+    var icConv = parseInt(metaData[ri][12]) || 0;
 
     if (!signals[cid]) {
       signals[cid] = {
         campaignId: cid, name: cname,
-        spend: 0, estimatedIcps: 0,
-        recentIcps: 0, priorIcps: 0,
+        spend: 0, leads: 0,
+        recentLeads: 0, priorLeads: 0,
+        icConversions: 0,
         freqImpressions: 0, freqReach: 0,
         lifetimeConversions: lifetimeConvByCampaign[cid] || 0
       };
     }
     signals[cid].spend += spend;
-
-    // ── Hybrid attribution v3 (same logic as buildWeeklyRollup) ──
-    var sigDailyICConv = parseInt(metaData[ri][12]) || 0;
-    var sigTotalICConvDay = totalICConvByDate[dStr] || 0;
-    var sigUnattributed = Math.max(0, totalIcpDay - sigTotalICConvDay);
-    var sigShareUnattrib = totalConvDay > 0
-      ? convs / totalConvDay * sigUnattributed : 0;
-    var sigHybridCredit = sigDailyICConv + sigShareUnattrib;
-
-    signals[cid].estimatedIcps += sigHybridCredit;
+    signals[cid].leads += convs;
+    signals[cid].icConversions += icConv;
     if (dStr > midpointStr) {
-      signals[cid].recentIcps += sigHybridCredit;
+      signals[cid].recentLeads += convs;
     } else {
-      signals[cid].priorIcps += sigHybridCredit;
+      signals[cid].priorLeads += convs;
     }
-    // ──────────────────────────────────────────────────────────
 
     var sigImpr = parseInt(metaData[ri][5]) || 0;
     if (freq > 0 && sigImpr > 0) {
@@ -2929,9 +3012,12 @@ function computeBudgetSignals_() {
   }
 
   Object.values(signals).forEach(function (s) {
-    s.cpicp = s.estimatedIcps > 0 ? s.spend / s.estimatedIcps : null;
+    s.cpl = s.leads > 0 ? s.spend / s.leads : null;
     s.avgFreq = s.freqReach > 0 ? Math.round((s.freqImpressions / s.freqReach) * 100) / 100 : 0;
-    s.icpTrend = s.priorIcps > 0 ? Math.round((s.recentIcps - s.priorIcps) * 10) / 10 : null;
+    // Recent-half minus prior-half lead count. Null when the prior half
+    // had no leads so a campaign that just launched isn't ranked as a
+    // runaway improver.
+    s.leadTrend = s.priorLeads > 0 ? s.recentLeads - s.priorLeads : null;
   });
 
   Logger.log('Signals computed for ' + Object.keys(signals).length + ' campaigns.');
@@ -2940,30 +3026,24 @@ function computeBudgetSignals_() {
 
 
 // ============================================================
-// ICP PACE CHECK
+// LEAD PACE — portfolio totals over the same rolling window
 // ============================================================
+// Sums the per-campaign signals so the proposal headline and the
+// no-change notice quote the same numbers the ranking used.
 
-function computeWeeklyICPPace_() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var hsSheet = ss.getSheetByName(HS_SHEET);
-  if (!hsSheet) return { rolling7dICPs: 0, label: '0 ICPs in last 7 days' };
-
-  var tz = Session.getScriptTimeZone();
-  var today = new Date();
-  var cutoff = new Date(today);
-  cutoff.setDate(cutoff.getDate() - 7);
-  var cutoffStr = Utilities.formatDate(cutoff, tz, 'yyyy-MM-dd');
-
-  var hsData = hsSheet.getDataRange().getValues();
-  var rolling7dICPs = 0;
-  for (var hi = 1; hi < hsData.length; hi++) {
-    var sub = dateToYMD_(hsData[hi][1]);
-    if (sub && sub > cutoffStr) rolling7dICPs++;
-  }
-
-  var label = rolling7dICPs + ' ICPs in last 7 days';
-  Logger.log('ICP pace: ' + label);
-  return { rolling7dICPs: rolling7dICPs, label: label };
+function computeLeadPace_(signals) {
+  var leads = 0, spend = 0, icConversions = 0;
+  Object.values(signals || {}).forEach(function (s) {
+    leads += s.leads || 0;
+    spend += s.spend || 0;
+    icConversions += s.icConversions || 0;
+  });
+  var cpl = leads > 0 ? spend / leads : null;
+  var label = leads + ' leads | CPL ' + (cpl !== null ? '$' + cpl.toFixed(2) : 'n/a') +
+    ' | $' + spend.toFixed(0) + ' spend';
+  Logger.log('Lead pace (' + ROLLING_DAYS + 'd): ' + label +
+    ' | IC decisions ' + icConversions);
+  return { leads: leads, spend: spend, cpl: cpl, icConversions: icConversions, label: label };
 }
 
 
@@ -3210,12 +3290,13 @@ function computeRecommendations_(currentBudgets, signals) {
       campaignId: cid,
       name: budget.name,
       currentDailyBudgetCents: budget.dailyBudgetCents,
-      cpicp: signal.cpicp,
+      cpl: signal.cpl,
+      leads: signal.leads,
+      leadTrend: signal.leadTrend,
+      icConversions: signal.icConversions,
       avgFreq: signal.avgFreq,
-      estimatedIcps: signal.estimatedIcps,
-      icpTrend: signal.icpTrend,
       lifetimeConversions: signal.lifetimeConversions,
-      spend7d: signal.spend
+      spend14d: signal.spend
     });
   });
 
@@ -3234,15 +3315,16 @@ function computeRecommendations_(currentBudgets, signals) {
       return;
     }
 
-    if (c.cpicp === null) {
+    if (c.cpl === null) {
       c.direction = -1;
-      c.reasons.push('0 est. ICPs in 7-day window ($' + c.spend7d.toFixed(0) + ' spend)');
+      c.reasons.push('0 leads in ' + ROLLING_DAYS + '-day window ($' +
+        c.spend14d.toFixed(0) + ' spend)');
       return;
     }
   });
 
   var rankable = eligible.filter(function (c) {
-    return c.direction === null && c.cpicp !== null;
+    return c.direction === null && c.cpl !== null;
   });
 
   var n = rankable.length;
@@ -3254,20 +3336,20 @@ function computeRecommendations_(currentBudgets, signals) {
 
     var medianTrendRank = Math.ceil(n / 2);
 
-    var byCPICP = rankable.slice().sort(function (a, b) { return a.cpicp - b.cpicp; });
-    byCPICP.forEach(function (c, idx) { c._cpicpRank = idx + 1; });
+    var byCPL = rankable.slice().sort(function (a, b) { return a.cpl - b.cpl; });
+    byCPL.forEach(function (c, idx) { c._cplRank = idx + 1; });
 
     var byTrend = rankable.slice().sort(function (a, b) {
-      var ta = a.icpTrend !== null ? a.icpTrend : 0;
-      var tb = b.icpTrend !== null ? b.icpTrend : 0;
+      var ta = a.leadTrend !== null ? a.leadTrend : 0;
+      var tb = b.leadTrend !== null ? b.leadTrend : 0;
       return tb - ta;
     });
     byTrend.forEach(function (c, idx) {
-      c._trendRank = c.icpTrend !== null ? idx + 1 : medianTrendRank;
+      c._trendRank = c.leadTrend !== null ? idx + 1 : medianTrendRank;
     });
 
     rankable.forEach(function (c) {
-      c._compositeScore = (0.70 * c._cpicpRank) + (0.30 * c._trendRank);
+      c._compositeScore = (0.70 * c._cplRank) + (0.30 * c._trendRank);
     });
 
     rankable.sort(function (a, b) { return a._compositeScore - b._compositeScore; });
@@ -3289,8 +3371,8 @@ function computeRecommendations_(currentBudgets, signals) {
     var currentTiers = {};
 
     rankable.forEach(function (c, idx) {
-      var trendLabel = c.icpTrend !== null
-        ? (c.icpTrend >= 0 ? '+' + c.icpTrend.toFixed(1) : c.icpTrend.toFixed(1)) + ' ICP trend'
+      var trendLabel = c.leadTrend !== null
+        ? (c.leadTrend >= 0 ? '+' : '') + c.leadTrend + ' lead trend'
         : 'no trend data';
 
       var tier = idx < quartileCut ? 'top'
@@ -3299,7 +3381,8 @@ function computeRecommendations_(currentBudgets, signals) {
       currentTiers[c.campaignId] = tier;
       var priorTier = priorTiers[c.campaignId] || null;
       var rankStr = 'Composite rank ' + (idx + 1) + '/' + n;
-      var metricStr = ': CPICP $' + c.cpicp.toFixed(0) + ' | ' + trendLabel;
+      var metricStr = ': CPL $' + c.cpl.toFixed(2) + ' | ' + c.leads + ' leads (' +
+        ROLLING_DAYS + 'd) | ' + trendLabel;
 
       if (tier === 'top') {
         if (c.avgFreq >= FREQ_WATCH_THRESHOLD) {
@@ -3385,24 +3468,24 @@ function computeRecommendations_(currentBudgets, signals) {
     // cuts to bottom-rank campaigns — so cycles with few/small cuts
     // produced proposals that never closed an underspend gap.
     //
-    // Guardrail: pump-up SKIPS campaigns with CPICP > PUMP_CPICP_CEILING
-    // (or null CPICP, which means 0 ICPs in the 7-day window — worse
-    // than any finite CPICP). We don't ramp bad performers toward the
+    // Guardrail: pump-up SKIPS campaigns with CPL > PUMP_CPL_CEILING
+    // (or null CPL, which means 0 leads in the 14-day window — worse
+    // than any finite CPL). We don't ramp bad performers toward the
     // target even if it delays closing the gap. They can still receive
     // reductions on the same cycle; the pump only affects the baseline.
     //
     // The 12% weekly cap downstream is the upper guardrail; no
     // per-campaign max clamp is needed here (no CAMPAIGN_DAILY_MAX_CENTS).
     Logger.log('Portfolio under by $' + (-portfolioExcess * 7 / 100).toFixed(0) +
-      '/week. Applying 1% pump-up to eligible campaigns with CPICP ≤ $' +
-      PUMP_CPICP_CEILING + '.');
+      '/week. Applying 1% pump-up to eligible campaigns with CPL ≤ $' +
+      PUMP_CPL_CEILING + '.');
     var pumpedCount = 0;
-    var skippedHighCpicp = [];
+    var skippedHighCpl = [];
     eligible.forEach(function (c) {
-      if (c.cpicp === null || c.cpicp > PUMP_CPICP_CEILING) {
+      if (c.cpl === null || c.cpl > PUMP_CPL_CEILING) {
         c.knockdownBudgetCents = c.currentDailyBudgetCents;
-        skippedHighCpicp.push(c.name + ' (CPICP ' +
-          (c.cpicp === null ? 'null' : '$' + c.cpicp.toFixed(0)) + ')');
+        skippedHighCpl.push(c.name + ' (CPL ' +
+          (c.cpl === null ? 'no leads' : '$' + c.cpl.toFixed(2)) + ')');
         return;
       }
       var bump = Math.round(c.currentDailyBudgetCents * 0.01);
@@ -3410,8 +3493,8 @@ function computeRecommendations_(currentBudgets, signals) {
       pumpedCount++;
     });
     Logger.log('Pump-up: ' + pumpedCount + ' campaigns pumped, ' +
-      skippedHighCpicp.length + ' skipped over ceiling: ' +
-      (skippedHighCpicp.join('; ') || 'none'));
+      skippedHighCpl.length + ' skipped over ceiling: ' +
+      (skippedHighCpl.join('; ') || 'none'));
     pumpApplied = true;
   } else {
     eligible.forEach(function (c) {
@@ -3652,7 +3735,16 @@ function writeToQueue_(recommendations, source) {
 // BUDGET PROPOSAL WITH AI COMMENTARY
 // ============================================================
 
-function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPrior) {
+// Per-campaign CPL snippet shared by the proposal's Slack lines and the
+// LLM context block. Null CPL means 0 leads in the window.
+function budgetCplLabel_(r) {
+  if (r.cpl === null || r.cpl === undefined) {
+    return 'no leads (' + ROLLING_DAYS + 'd)';
+  }
+  return 'CPL $' + r.cpl.toFixed(2) + ' on ' + r.leads + ' leads (' + ROLLING_DAYS + 'd)';
+}
+
+function postBudgetProposalToSlack_(recs, token, leadPace, replacedPrior) {
   if (!WEB_APP_URL) {
     Logger.log('ERROR: WEB_APP_URL not set in Script Properties.');
     postToSlack_('⚠️ *Honeycomb Budget* — WEB_APP_URL not set in Script Properties. ' +
@@ -3667,8 +3759,21 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
   var execDay = Utilities.formatDate(
     new Date(new Date().getTime() + 86400000), tz, 'EEE MMM d');
 
-  var reductions = recs.filter(function (r) { return r.changeCents < 0; });
-  var increases = recs.filter(function (r) { return r.changeCents > 0; });
+  // Reductions list worst CPL first (null CPL = 0 leads sorts to the top);
+  // increases list best CPL first. recs itself arrives in Meta's campaign
+  // order, so this is the only ordering the reader sees.
+  var cplForSort = function (r) {
+    return r.cpl === null || r.cpl === undefined ? Infinity : r.cpl;
+  };
+  var byCplDesc = function (a, b) {
+    var ca = cplForSort(a), cb = cplForSort(b);
+    if (ca === cb) return 0;          // two zero-lead rows: Infinity - Infinity is NaN
+    return cb - ca;
+  };
+  var reductions = recs.filter(function (r) { return r.changeCents < 0; }).sort(byCplDesc);
+  var increases = recs.filter(function (r) { return r.changeCents > 0; })
+    .sort(function (a, b) { return byCplDesc(b, a); });
+  var recsForContext = reductions.concat(increases);
 
   var currentTotalStr = '$' + (recs._currentTotal / 100).toFixed(0);
   var proposedTotalStr = '$' + (recs._proposedTotal / 100).toFixed(0);
@@ -3682,7 +3787,9 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
     'PORTFOLIO',
     'Daily budget pool: ' + currentTotalStr + ' → ' + proposedTotalStr +
     ' | Weekly: ' + weeklyCurrentStr + ' → ' + weeklyProposedStr,
-    'ICP pace (rolling 7 days): ' + icpPace.label + ' (reference only — no kill switch)',
+    'Lead pace (rolling ' + ROLLING_DAYS + ' days): ' + leadPace.label +
+      ' (reference only — no kill switch)',
+    'IC decisions in window: ' + leadPace.icConversions + ' (reported only, not a ranking input)',
     recs._poolWarning
       ? 'WARNING: Proposed pool is outside ±$' + (recs._effectiveTolerance || WEEKLY_SPEND_TOLERANCE) + '/week tolerance.'
       : 'Pool within tolerance.',
@@ -3690,7 +3797,7 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
     'PROPOSED CHANGES (' + recs.length + ' campaigns):'
   ];
 
-  recs.forEach(function (r) {
+  recsForContext.forEach(function (r) {
     var dir = r.changeCents > 0 ? 'INCREASE' : 'DECREASE';
     var pct = Math.abs(Math.round((r.changeCents / r.currentDailyBudgetCents) * 1000) / 10);
     contextLines.push(
@@ -3698,6 +3805,7 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
       ' | $' + (r.currentDailyBudgetCents / 100).toFixed(0) + '/day → ' +
       '$' + (r.proposedDailyBudgetCents / 100).toFixed(0) + '/day (' +
       (r.changeCents > 0 ? '+' : '-') + pct + '%)' +
+      ' | ' + budgetCplLabel_(r) +
       ' | Signals: ' + r.reasons.join(' | ')
     );
   });
@@ -3715,14 +3823,14 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
       'You are reviewing a proposed budget reallocation across Meta ad campaigns.',
       'The recommendations were generated by a deterministic rules engine — your job is to explain them clearly, not re-derive them.',
       '',
-      'ICP = contact decisioned as investment_crowdfunding in HubSpot. CPICP = cost per ICP. Lower is better.',
-      'ICP estimates use hybrid attribution (v3): IC conversions (deduplicated) + proportional share of unattributed pool.',
+      'Leads are the primary metric. CPL = Meta spend ÷ leads. Lower is better; ~$' + TARGET_CPL_DOLLARS + ' is the target.',
+      'IC decisions (a lead that reached an investment-crowdfunding prequal decision) are a reported subtype only — never a ranking input.',
       'Budget changes are capped at ±2% per cycle. Portfolio total must stay within $' +
         (recs._effectiveTolerance || WEEKLY_SPEND_TOLERANCE).toLocaleString('en-US') +
         '/week of $' +
         (recs._effectiveTarget || TARGET_WEEKLY_SPEND).toLocaleString('en-US') +
         ' target.',
-      'Optimization runs every cycle. ICP pace is shown as context only.',
+      'Optimization runs every cycle. Lead pace is shown as context only.',
       '',
       'Write a SHORT plain-text commentary for a Slack message. 3 sections, total 120-160 words maximum.',
       'Plain text only. No markdown headers, no bold (**), no bullet symbols (use - if needed).',
@@ -3775,8 +3883,12 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
   var text = '*Honeycomb Budget Proposal — ' + today + '*\n';
   text += 'If approved, executes *' + execDay + ' at 3:00 AM*\n\n';
 
-  text += '*Rolling 7-Day ICP Pace*\n';
-  text += icpPace.label + '\n\n';
+  text += '*Leads — rolling ' + ROLLING_DAYS + ' days*\n';
+  text += leadPace.label + '\n';
+  if (leadPace.icConversions > 0) {
+    text += '_of which ' + leadPace.icConversions + ' reached an IC decision_\n';
+  }
+  text += '\n';
 
   text += '*Budget Pool*\n';
   text += 'Daily: ' + currentTotalStr + ' → ' + proposedTotalStr +
@@ -3799,7 +3911,8 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
       var pct = Math.abs(Math.round((r.changeCents / r.currentDailyBudgetCents) * 1000) / 10);
       text += (displayFlat ? '→ ' : '↓ ') + '*' + r.name + '*\n';
       text += '   $' + displayCurrent + '/day → $' + displayProposed + '/day ' +
-        (displayFlat ? '(held flat)' : '(-' + pct + '%)') + '\n';
+        (displayFlat ? '(held flat)' : '(-' + pct + '%)') +
+        ' | ' + budgetCplLabel_(r) + '\n';
       text += '   _' + r.reasons.join(' | ') + '_\n';
     });
     text += '\n';
@@ -3814,7 +3927,8 @@ function postBudgetProposalToSlack_(recs, token, icpPace, allBudgets, replacedPr
       var pct = Math.round((r.changeCents / r.currentDailyBudgetCents) * 1000) / 10;
       text += (displayFlat ? '→ ' : '↑ ') + '*' + r.name + '*\n';
       text += '   $' + displayCurrent + '/day → $' + displayProposed + '/day ' +
-        (displayFlat ? '(held flat)' : '(+' + pct + '%)') + '\n';
+        (displayFlat ? '(held flat)' : '(+' + pct + '%)') +
+        ' | ' + budgetCplLabel_(r) + '\n';
       text += '   _' + r.reasons.join(' | ') + '_\n';
     });
     text += '\n';
@@ -3854,6 +3968,12 @@ function executeBudgetChanges() {
   // portfolio-scaling path uses the separate SCALING_* tokens and remains
   // active.
   Logger.log('executeBudgetChanges: PAUSED — optimizer retired 2026-09-09.');
+  // Same token cleanup as the runBudgetAnalysis guard: nothing below runs,
+  // so a leftover BUDGET_PENDING_TOKEN would otherwise keep the last
+  // pre-pause approve link alive indefinitely.
+  PROPS.deleteProperty('BUDGET_PENDING_TOKEN');
+  PROPS.deleteProperty('BUDGET_APPROVED_TOKEN');
+  PROPS.deleteProperty('BUDGET_REJECTED_TOKEN');
   return;
 
   validateTokens_();
@@ -3887,12 +4007,16 @@ function executeBudgetChanges() {
     var reason = (rejectedToken === pendingToken) ? 'rejected' : 'no approval received';
     Logger.log('Token ' + pendingToken + ' was ' + reason + '. Skipping execution.');
 
+    var expiredCount = 0;
+    var expiredNetCents = 0;
     if (qSheet) {
       var qData0 = qSheet.getDataRange().getValues();
       var termStatus = (rejectedToken === pendingToken) ? 'rejected' : 'expired';
       for (var qi1 = 1; qi1 < qData0.length; qi1++) {
         if (String(qData0[qi1][0]) === pendingToken && String(qData0[qi1][11]) === 'pending') {
           qSheet.getRange(qi1 + 1, 12).setValue(termStatus);
+          expiredCount++;
+          expiredNetCents += parseInt(qData0[qi1][8]) || 0;
         }
       }
     }
@@ -3925,7 +4049,12 @@ function executeBudgetChanges() {
     postToSlack_('*Honeycomb Budget — ' + headerLabel + '*\n' +
       (rejectedToken === pendingToken
         ? '❌ Changes rejected. No updates applied.'
-        : '⏰ No approval received by ' + executorDateLabel + ' 3:00 AM. Changes not applied this cycle.'));
+        : '⏰ No approval received by ' + executorDateLabel + ' 3:00 AM. Changes not applied this cycle.') +
+      (expiredCount > 0
+        ? '\n_' + expiredCount + ' CPL-ranked change' + (expiredCount === 1 ? '' : 's') +
+          ', net ' + (expiredNetCents >= 0 ? '+' : '-') + '$' +
+          (Math.abs(expiredNetCents) / 100).toFixed(0) + '/day_'
+        : ''));
     PROPS.deleteProperty('BUDGET_PENDING_TOKEN');
     PROPS.deleteProperty('BUDGET_REJECTED_TOKEN');
     return;
@@ -3971,10 +4100,14 @@ function applyBudgetQueueRows_(qSheet, filterFn) {
     // Status is column 12 (1-indexed). The new `source` column is 13;
     // we don't touch it here — it was set at write time.
     qSheet.getRange(qi + 1, 12).setValue(newStatus);
+    // signal_reasons (col 11) rides along so the execution summaries can
+    // show what the proposal said — CPL rank for optimizer rows,
+    // '<vertical>: <classification> | <reason>' for strategic rows.
     results.push({
       name: campaignName,
       current: currentCents,
       proposed: proposedCents,
+      reasons: String(qData[qi][10] || ''),
       success: success
     });
 
@@ -4030,6 +4163,7 @@ function postExecutionSummaryToSlack_(results) {
     var arrow = r.proposed > r.current ? '↑' : '↓';
     text += arrow + ' ' + r.name + ':  $' + (r.current / 100).toFixed(0) +
       ' → $' + (r.proposed / 100).toFixed(0) + '/day\n';
+    if (r.reasons) text += '   _' + r.reasons + '_\n';
   });
 
   if (failures.length > 0) {
@@ -4045,7 +4179,9 @@ function postExecutionSummaryToSlack_(results) {
 // WEEKLY BUDGET SUMMARY
 // ============================================================
 
-function buildBudgetWeeklySummary_() {
+// `leads` / `cpl` are the reporting week's totals from the caller so the
+// budget block ties back to the lead result it was meant to move.
+function buildBudgetWeeklySummary_(leads, cpl) {
   Logger.log('--- buildBudgetWeeklySummary_ ---');
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var qSheet = ss.getSheetByName(BUDGET_SHEET);
@@ -4071,14 +4207,18 @@ function buildBudgetWeeklySummary_() {
     var execDate = String(row[3]).substring(0, 10);
     var status = String(row[11]);
     var token = String(row[0]);
+    // Column 13 (`source`) is 'strategic' for portfolio-scaling rows;
+    // pre-Session-2 rows have no value and read as optimizer rows.
+    var source = String(row[12] || '').toLowerCase() === 'strategic' ? 'strategic' : 'optimizer';
 
     if (execDate <= cutoffStr) continue;
-    if (!tokenOutcomes[token]) tokenOutcomes[token] = status;
+    if (!tokenOutcomes[token]) tokenOutcomes[token] = { status: status, source: source };
 
     if (status === 'executed') {
       executed.push({
         campaignId: String(row[4]).trim(),
         name: String(row[5]),
+        source: source,
         currentCents: parseInt(row[6]) || 0,
         proposedCents: parseInt(row[7]) || 0,
         changeCents: parseInt(row[8]) || 0,
@@ -4087,10 +4227,20 @@ function buildBudgetWeeklySummary_() {
     }
   }
 
-  var rejected = 0, expired = 0;
-  Object.values(tokenOutcomes).forEach(function (s) {
-    if (s === 'failed' || s === 'pending') expired++;
-    if (s === 'rejected') rejected++;
+  // Outcome counts per source. A batch still 'pending' past its execution
+  // date never ran, so it lands in the expired bucket alongside rows the
+  // execution step marked 'expired' or 'failed'.
+  var bySource = { optimizer: null, strategic: null };
+  Object.keys(bySource).forEach(function (s) {
+    bySource[s] = { batches: 0, executed: 0, rejected: 0, expired: 0 };
+  });
+  Object.keys(tokenOutcomes).forEach(function (t) {
+    var o = tokenOutcomes[t];
+    var b = bySource[o.source];
+    b.batches++;
+    if (o.status === 'executed') b.executed++;
+    if (o.status === 'rejected') b.rejected++;
+    if (o.status === 'expired' || o.status === 'failed' || o.status === 'pending') b.expired++;
   });
 
   var netDailyChangeCents = 0;
@@ -4117,17 +4267,31 @@ function buildBudgetWeeklySummary_() {
     Utilities.formatDate(cutoff, tz, 'MMM d') + ' to ' +
     Utilities.formatDate(today, tz, 'MMM d') + '*');
 
+  if (leads !== undefined && leads !== null) {
+    lines.push('Outcome this week: ' + leads + ' lead' + (leads !== 1 ? 's' : '') +
+      ' at ' + (cpl !== undefined && cpl !== null && cpl !== 'N/A' ? '$' + cpl : 'N/A') +
+      ' CPL  (target $' + TARGET_CPL_DOLLARS + ')');
+  }
+
   var batchCount = Object.keys(tokenOutcomes).length;
   if (batchCount === 0) {
     lines.push('No budget proposals were scheduled this week.');
   } else {
-    var executedBatches = Object.values(tokenOutcomes)
-      .filter(function (s) { return s === 'executed'; }).length;
-    var outcomeStr = executedBatches + ' of ' + batchCount +
-      ' proposal' + (batchCount !== 1 ? 's' : '') + ' executed';
-    if (rejected > 0) outcomeStr += ', ' + rejected + ' rejected';
-    if (expired > 0) outcomeStr += ', ' + expired + ' expired';
-    lines.push(outcomeStr);
+    // One outcome line per source that had activity, so strategic
+    // reallocations are never counted as optimizer proposals.
+    var sourceLabels = {
+      optimizer: 'Daily optimizer',
+      strategic: 'Strategic reallocation (portfolio-scaling)'
+    };
+    ['optimizer', 'strategic'].forEach(function (s) {
+      var b = bySource[s];
+      if (b.batches === 0) return;
+      var outcomeStr = sourceLabels[s] + ': ' + b.executed + ' of ' + b.batches +
+        ' proposal' + (b.batches !== 1 ? 's' : '') + ' executed';
+      if (b.rejected > 0) outcomeStr += ', ' + b.rejected + ' rejected';
+      if (b.expired > 0) outcomeStr += ', ' + b.expired + ' expired';
+      lines.push(outcomeStr);
+    });
   }
 
   if (executed.length > 0) {
@@ -4142,12 +4306,14 @@ function buildBudgetWeeklySummary_() {
           name: r.name,
           firstCents: r.currentCents,
           lastCents: r.proposedCents,
-          netChangeCents: 0
+          netChangeCents: 0,
+          sources: {}
         };
       }
       byCampaign[key].name = r.name;
       byCampaign[key].lastCents = r.proposedCents;
       byCampaign[key].netChangeCents += r.changeCents;
+      byCampaign[key].sources[r.source] = true;
     });
 
     var collapsed = Object.values(byCampaign)
@@ -4160,14 +4326,16 @@ function buildBudgetWeeklySummary_() {
 
     lines.push('');
     lines.push('Net changes across ' + uniqueCount + ' campaigns (' +
-      Object.keys(tokenOutcomes).filter(function (t) { return tokenOutcomes[t] === 'executed'; }).length +
+      Object.keys(tokenOutcomes).filter(function (t) { return tokenOutcomes[t].status === 'executed'; }).length +
       ' cycles):');
     shown.forEach(function (c) {
       var arrow = c.netChangeCents > 0 ? '↑' : '↓';
       var weekly = Math.abs(c.netChangeCents * 7 / 100).toFixed(0);
+      var srcTag = Object.keys(c.sources).sort().join('+');
       lines.push(arrow + ' ' + c.name + ':  $' +
         (c.firstCents / 100).toFixed(0) + ' → $' +
-        (c.lastCents / 100).toFixed(0) + '/day  ($' + weekly + '/week)');
+        (c.lastCents / 100).toFixed(0) + '/day  ($' + weekly + '/week)' +
+        '  _' + srcTag + '_');
     });
     if (uniqueCount > maxShow) {
       lines.push('  _...and ' + (uniqueCount - maxShow) + ' more with smaller changes_');
@@ -4185,7 +4353,12 @@ function buildBudgetWeeklySummary_() {
   lines.push('');
   lines.push('*Anticipated spend this week:*  $' + anticipatedWeeklySpend +
     '/week  ($' + (currentTotalDailyCents / 100).toFixed(0) + '/day current)');
-  lines.push('_Next proposal: tomorrow morning (daily cadence)_');
+  if (BUDGET_OPTIMIZER_PAUSED) {
+    lines.push('_Daily optimizer paused 2026-09-09 (IC ranking retired); ' +
+      'strategic reallocation via portfolio-scaling remains active (Tuesdays)._');
+  } else {
+    lines.push('_Next CPL-ranked proposal: tomorrow morning (daily cadence)_');
+  }
 
   return lines.join('\n');
 }
@@ -4311,27 +4484,13 @@ function doGet(e) {
       '<h2>Invalid link.</h2><p>Missing action or token parameter.</p>');
   }
 
-  var pendingToken = PROPS.getProperty('BUDGET_PENDING_TOKEN');
-
-  if (!pendingToken) {
-    return HtmlService.createHtmlOutput(
-      '<h2>No pending budget proposal.</h2>' +
-      '<p>This proposal may have already been actioned or expired.</p>');
-  }
-
-  if (token !== pendingToken) {
-    return HtmlService.createHtmlOutput(
-      '<h2>Token mismatch.</h2>' +
-      '<p>This link is invalid or has already been used.</p>');
-  }
-
-  if (action === 'approve' || action === 'reject') {
-    return showBudgetConfirmationPage_(e, action);
-  }
-
   // Strategic reallocation approval (Session 2). Parallel to the
-  // optimizer flow above but operates on SCALING_PENDING_TOKEN; the
+  // optimizer flow below but operates on SCALING_PENDING_TOKEN; the
   // approved-token property and execution trigger are also separate.
+  // These branches sit ABOVE the BUDGET_PENDING_TOKEN gate: the scaling
+  // token is minted independently by handleScalingQueueWrite_ and never
+  // equals the optimizer token, so behind that gate the Tuesday brief's
+  // approve/reject links could never reach them.
   if (action === 'approve_scaling' || action === 'reject_scaling') {
     return showScalingConfirmationPage_(e, action.replace('_scaling', ''));
   }
@@ -4350,22 +4509,45 @@ function doGet(e) {
       PROPS.setProperty('SCALING_APPROVED_TOKEN', token);
       PROPS.setProperty('SCALING_LAST_APPROVED_BY', sUser);
       PROPS.setProperty('SCALING_LAST_APPROVED_AT', new Date().toISOString());
+      var pendingScalingRows = countPendingQueueRows_(token, 'strategic');
+      var pendingLockout = PROPS.getProperty('SCALING_PENDING_LOCKOUT_UNTIL');
       postToSlack_('*Honeycomb Scaling* ✅ Strategic reallocation approved by ' +
-        sUser + '. Changes will execute Wednesday at 3:00 AM. ' +
-        'Optimizer locked out on affected campaigns until Tuesday.');
+        sUser + '. Executes at the next 3:00 AM run (' + pendingScalingRows +
+        ' campaign' + (pendingScalingRows === 1 ? '' : 's') + '). ' +
+        scalingLockoutStatusLine_(pendingLockout));
       return HtmlService.createHtmlOutput(
         '<h2>✅ Strategic reallocation approved.</h2>' +
-        '<p>Changes will execute Wednesday at 3:00 AM. Optimizer is now ' +
-        'paused on affected campaigns through end-of-Monday.</p>');
+        '<p>Executes at the next 3:00 AM run (' + pendingScalingRows +
+        ' campaign' + (pendingScalingRows === 1 ? '' : 's') + '). ' +
+        scalingLockoutStatusLine_(pendingLockout) + '</p>');
     }
 
     PROPS.setProperty('SCALING_REJECTED_TOKEN', token);
     postToSlack_('*Honeycomb Scaling* ❌ Strategic reallocation rejected by ' +
-      sUser + '. Optimizer continues normal cadence.');
+      sUser + '. No reallocation this week.');
     return HtmlService.createHtmlOutput(
       '<h2>❌ Strategic reallocation rejected.</h2>' +
-      '<p>No strategic changes will be applied this week. Daily optimizer ' +
-      'continues normally.</p>');
+      '<p>No reallocation this week. ' + scalingRejectStatusLine_() + '</p>');
+  }
+
+  // Daily-optimizer approval flow. Everything below is keyed on
+  // BUDGET_PENDING_TOKEN, which runBudgetAnalysis writes.
+  var pendingToken = PROPS.getProperty('BUDGET_PENDING_TOKEN');
+
+  if (!pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>No pending budget proposal.</h2>' +
+      '<p>This proposal may have already been actioned or expired.</p>');
+  }
+
+  if (token !== pendingToken) {
+    return HtmlService.createHtmlOutput(
+      '<h2>Token mismatch.</h2>' +
+      '<p>This link is invalid or has already been used.</p>');
+  }
+
+  if (action === 'approve' || action === 'reject') {
+    return showBudgetConfirmationPage_(e, action);
   }
 
   if (action === 'confirm_approve' || action === 'confirm_reject') {
@@ -4474,6 +4656,41 @@ function showBudgetConfirmationPage_(e, action) {
 }
 
 
+// Status-aware lockout copy for the strategic approve/execute messages.
+// While the daily optimizer is paused the lockout is still recorded
+// (SCALING_LOCKOUT_UNTIL) but nothing is being held back by it.
+function scalingLockoutStatusLine_(lockoutUntil) {
+  var untilStr = lockoutUntil
+    ? String(lockoutUntil).substring(0, 10)
+    : 'next Tuesday';
+  if (BUDGET_OPTIMIZER_PAUSED) {
+    return 'Daily optimizer is paused (2026-09-09); lockout through ' + untilStr +
+      ' is recorded for when it resumes.';
+  }
+  return 'Daily optimizer locked out on affected campaigns until ' + untilStr + '.';
+}
+
+function scalingRejectStatusLine_() {
+  return BUDGET_OPTIMIZER_PAUSED
+    ? 'Daily optimizer remains paused (2026-09-09).'
+    : 'Daily optimizer continues its normal cadence.';
+}
+
+// Count budget_queue rows still pending for a token (optionally limited
+// to one `source`), so confirmations can say how many campaigns move.
+function countPendingQueueRows_(token, source) {
+  var qSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(BUDGET_SHEET);
+  if (!qSheet) return 0;
+  var rows = qSheet.getDataRange().getValues();
+  var n = 0;
+  for (var i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]) !== token || String(rows[i][11]) !== 'pending') continue;
+    if (source && String(rows[i][12] || 'optimizer').toLowerCase() !== source) continue;
+    n++;
+  }
+  return n;
+}
+
 // Confirmation page for the strategic-reallocation flow (Session 2).
 // Mirror of showBudgetConfirmationPage_ but on SCALING_PENDING_TOKEN.
 function showScalingConfirmationPage_(e, action) {
@@ -4497,11 +4714,11 @@ function showScalingConfirmationPage_(e, action) {
   var color = isApprove ? '#10b981' : '#ef4444';
   var label = isApprove ? 'APPROVE STRATEGIC REALLOCATION' : 'REJECT STRATEGIC REALLOCATION';
   var description = isApprove
-    ? 'This will approve the pending strategic reallocation. Changes will ' +
-      'execute Wednesday at 3:00 AM. The optimizer will be paused on ' +
-      'affected campaigns through end-of-Monday.'
+    ? 'This will approve the pending strategic reallocation. Changes ' +
+      'execute at the next 3:00 AM run. ' +
+      scalingLockoutStatusLine_(PROPS.getProperty('SCALING_PENDING_LOCKOUT_UNTIL'))
     : 'This will reject the pending strategic reallocation. No reallocation ' +
-      'will be applied. The daily optimizer continues normal cadence.';
+      'will be applied. ' + scalingRejectStatusLine_();
 
   var baseUrl = WEB_APP_URL || ScriptApp.getService().getUrl();
   var confirmUrl = baseUrl + '?action=confirm_' + action + '_scaling&token=' + token;
@@ -4631,17 +4848,27 @@ function executeStrategicChanges() {
     // Mark all pending strategic rows for this token as rejected/expired.
     var qData0 = qSheet.getDataRange().getValues();
     var termStatus = (rejectedToken === pendingToken) ? 'rejected' : 'expired';
+    var termCount = 0;
+    var termNetCents = 0;
     for (var qi1 = 1; qi1 < qData0.length; qi1++) {
       if (String(qData0[qi1][0]) === pendingToken && String(qData0[qi1][11]) === 'pending') {
         qSheet.getRange(qi1 + 1, 12).setValue(termStatus);
+        termCount++;
+        termNetCents += parseInt(qData0[qi1][8]) || 0;
       }
     }
 
+    // The trigger is daily, so name the run rather than a weekday.
     postToSlack_('*Honeycomb Scaling — ' +
       Utilities.formatDate(new Date(), Session.getScriptTimeZone(), 'EEE MMM d') + '*\n' +
       (rejectedToken === pendingToken
         ? '❌ Strategic reallocation rejected. No reallocation applied.'
-        : '⏰ No approval received by 3:00 AM Wednesday. Reallocation expired.'));
+        : '⏰ No approval received by the 3:00 AM run. Reallocation expired.') +
+      (termCount > 0
+        ? '\n_' + termCount + ' campaign' + (termCount === 1 ? '' : 's') + ', net ' +
+          (termNetCents >= 0 ? '+' : '-') + '$' +
+          (Math.abs(termNetCents) / 100).toFixed(0) + '/day_'
+        : ''));
     PROPS.deleteProperty('SCALING_PENDING_TOKEN');
     PROPS.deleteProperty('SCALING_REJECTED_TOKEN');
     PROPS.deleteProperty('SCALING_PENDING_LOCKOUT_UNTIL');
@@ -4688,7 +4915,8 @@ function postStrategicExecutionSummaryToSlack_(results, lockoutUntil) {
   successes.forEach(function (r) {
     var arrow = r.proposed > r.current ? '↑' : '↓';
     text += arrow + ' ' + r.name + ':  $' + (r.current / 100).toFixed(0) +
-      ' → $' + (r.proposed / 100).toFixed(0) + '/day\n';
+      ' → $' + (r.proposed / 100).toFixed(0) + '/day' +
+      (r.reasons ? ' — ' + r.reasons : '') + '\n';
   });
 
   if (failures.length > 0) {
@@ -4697,8 +4925,7 @@ function postStrategicExecutionSummaryToSlack_(results, lockoutUntil) {
   }
 
   if (lockoutUntil) {
-    text += '\nOptimizer locked out on these campaigns until ' +
-      String(lockoutUntil).substring(0, 10) + '.';
+    text += '\n' + scalingLockoutStatusLine_(lockoutUntil);
   }
   postToSlack_(text);
 }
@@ -4725,10 +4952,11 @@ function testBudgetSystem() {
 
   Logger.log('--- Testing signal computation ---');
   var signals = computeBudgetSignals_();
-  Logger.log('Signals: ' + Object.keys(signals).length + ' campaigns in 7-day window.');
+  Logger.log('Signals: ' + Object.keys(signals).length + ' campaigns in ' +
+    ROLLING_DAYS + '-day window.');
 
-  Logger.log('--- Testing ICP pace ---');
-  var pace = computeWeeklyICPPace_();
+  Logger.log('--- Testing lead pace ---');
+  var pace = computeLeadPace_(signals);
 
   Logger.log('--- Web App URL ---');
   var url = WEB_APP_URL;
@@ -4801,6 +5029,15 @@ function handleDashboardApi_(e) {
   // trigger calls; we're just letting the dashboard
   // invoke it on demand.
   if (action === 'run_budget_analysis') {
+    // While the pause guard is in runBudgetAnalysis the call returns
+    // without posting anything, so don't send the dashboard user to
+    // Slack for a proposal that never arrives.
+    if (BUDGET_OPTIMIZER_PAUSED) {
+      return jsonResponse_({
+        ok: false,
+        message: 'Daily optimizer paused 2026-09-09 — ranking must be converted to CPL before re-enable'
+      });
+    }
     try {
       runBudgetAnalysis();
       return jsonResponse_({
@@ -4922,8 +5159,9 @@ function handleDashboardApi_(e) {
     } else {
       slackText += '*Tolerance:* \u00b1$' + currentTolerance + '/week (unchanged)\n';
     }
-    slackText += '\nThis changes the weekly spend target the budget optimizer aims at. ';
-    slackText += 'Takes effect on the next optimization run after approval.\n\n';
+    slackText += '\nThis is the weekly spend target used by pacing and the Tuesday ';
+    slackText += 'strategic reallocation (and by the daily optimizer when it is re-enabled). ';
+    slackText += 'Takes effect on the next pacing check after approval.\n\n';
     slackText += '\u2705  Approve: ' + approveUrl + '\n';
     slackText += '\u274c  Reject:  ' + rejectUrl;
 
@@ -5873,8 +6111,8 @@ function getCampaignList_() {
 //   2. doPost routes to handleChatRequest_
 //   3. handleChatRequest_ builds a compact "data context"
 //      block from the live sheet and prepends it to a
-//      system prompt that establishes CPICP as the primary
-//      KPI and defines its formula
+//      system prompt that establishes leads and CPL as the
+//      primary metrics (IC decisions as a reported subtype)
 //   4. Calls Claude (ANTHROPIC_MODEL) with system + history + user
 //   5. Returns { reply: '...' } as JSON
 
@@ -5998,40 +6236,33 @@ function handleChatRequest_(e) {
       'The user is looking at their Meta ads dashboard and wants help interpreting the underlying data.',
       '',
       'ABOUT HONEYCOMB CREDIT:',
-      'Honeycomb Credit is a regulated investment crowdfunding platform (Reg CF). Small food and beverage businesses raise capital from their own customers via revenue-sharing notes. The marketing team runs Meta (Facebook/Instagram) ad campaigns to generate qualified applicants (ICPs) who want to raise money on the platform.',
+      'Honeycomb Credit is a community investment platform (Reg CF). Small businesses — restaurants, breweries, gyms, salons and the like — raise capital from their own customers and communities via revenue-sharing notes. The marketing team runs Meta (Facebook/Instagram) ad campaigns to generate leads: business owners who want to raise money on the platform.',
       '',
-      'PRIMARY METRIC — CPICP (this is the most important thing to know):',
-      'CPICP stands for "Cost Per ICP." It is the primary efficiency metric for the marketing team. Every decision about budgets, creatives, and campaign allocation is made through the lens of CPICP.',
+      'PRIMARY METRICS — LEADS and CPL (this is the most important thing to know):',
+      'Leads are the primary result. CPL (cost per lead) = Meta spend ÷ leads. Every decision about budgets, creatives, and campaign allocation is made on leads and CPL.',
       '',
       'Definition:',
-      '  ICP = HubSpot contact decisioned as "investment_crowdfunding" (a small business that qualifies to raise capital on Honeycomb).',
-      '  CPICP = Total Meta spend ÷ Estimated ICPs, where "Estimated ICPs" uses a hybrid attribution model (v3):',
-      '    Estimated ICPs per campaign = (Meta IC conversions for that campaign, deduplicated)',
-      "                                  + (that campaign's proportional share of the unattributed ICP pool,",
-      '                                     weighted by its share of Meta conversion volume)',
+      '  Lead = a Meta-reported lead conversion for the campaign (the "conversions" column in the daily and weekly data).',
+      '  CPL = Total Meta spend ÷ leads. The account pivoted to lead-optimized campaigns on 2026-08-19.',
       '',
-      'Why hybrid attribution: IC conversions from Meta are the foundation — each ICP decision is attributed to exactly one campaign (last-click, deduplicated). The unattributed pool (HubSpot ICPs not traceable to any Meta campaign) is distributed proportionally by Meta conversion volume, capturing ICPs from organic, email, or lost-UTM paths.',
-      '',
-      'Lower CPICP is better. The team has a rough sense that CPICP under $120 is healthy and CPICP above $200 warrants investigation.',
+      'Lower CPL is better; ~$' + TARGET_CPL_DOLLARS + ' is the target, and ' + CPL_CRITICAL_MULTIPLE + 'x the target ($' + (TARGET_CPL_DOLLARS * CPL_CRITICAL_MULTIPLE) + ') is critical. Only trust a CPL backed by a reasonable lead count. Rank campaigns by CPL, never by IC figures.',
       '',
       'SECONDARY METRICS (know what they mean, use them as supporting evidence, not headline):',
-      '- Blended CPICP: same as CPICP above — "blended" just emphasizes the hybrid attribution model',
-      '- Attributed CPICP: spend ÷ hard UTM-matched ICPs only. Less inclusive.',
-      '- Attribution Rate: share of estimated ICPs backed by direct IC conversions from Meta.',
-      '- CPL: Cost per Lead using Meta-reported conversions (spend ÷ Meta conversions). Less accurate than CPICP.',
+      '- IC conversions / ICPs: leads that reached an investment-crowdfunding prequal decision. A reported subtype of leads — most of the current broad audience converts to rewards crowdfunding instead, so IC counts are tiny and noisy. Mention them as "of which N reached an IC decision"; never rank or recommend on them.',
+      '- CPICP, blended CPICP, attribution rate, estimated_icps: legacy IC-cost columns still present in the weekly rollup. Historical context only.',
       '- CTR: click-through rate. Creative quality signal.',
-      '- Frequency: avg ad exposures per unique reach. Above 3.5 = audience saturation risk.',
+      '- Frequency: avg ad exposures per unique reach. Above ' + FREQ_HIGH_THRESHOLD + ' = audience saturation risk.',
       '',
       'DAILY DATA (available in the context block below):',
-      'The context includes the last 30 days of daily per-campaign performance data (spend, impressions, clicks, conversions, IC conversions) plus a daily portfolio summary. Use this data to answer questions about recent daily trends, yesterday\'s performance, day-over-day changes, and intra-week patterns. For longer-term analysis (multi-week trends, CPICP, attribution), prefer the weekly rollup data which includes estimated_icps and attribution metrics that daily data does not have.',
+      'The context includes the last 30 days of daily per-campaign performance data (spend, impressions, clicks, conversions = leads, IC conversions) plus a daily portfolio summary. Use this data to answer questions about recent daily trends, yesterday\'s performance, day-over-day changes, and intra-week patterns. For longer-term analysis (multi-week CPL trends), prefer the weekly rollup data.',
       '',
       'PORTFOLIO SCALING DATA (conditionally appended below):',
-      'When the user asks about scaling classifications (scalable / stable / saturating / over-invested), elasticity, vertical capacity / headroom, or structural questions about which verticals can absorb more spend, the SCALING LOG section will appear below the routine dashboard data. It carries per-vertical classification, confidence, elasticity_r, CPICP, and the new_audience_needed modifier across the last ~30 weekly rows (newest first). Use it to answer structural questions; do not infer scaling state from CPICP / spend trends alone when the SCALING LOG is present. If the section is absent, the question wasn\'t flagged as structural — answer using the routine data.',
+      'When the user asks about scaling classifications (scalable / stable / saturating / over-invested), elasticity, vertical capacity / headroom, or structural questions about which verticals can absorb more spend, the SCALING LOG section will appear below the routine dashboard data. It carries per-vertical classification, confidence, elasticity_r and the new_audience_needed modifier across the last ~30 weekly rows (newest first); the legacy cpicp column there is context only. Use it to answer structural questions; do not infer scaling state from CPL / spend trends alone when the SCALING LOG is present. If the section is absent, the question wasn\'t flagged as structural — answer using the routine data.',
       '',
       'HOW TO RESPOND:',
       '- Be concise. Think "quick Slack message," not "long email."',
       '- Cite specific numbers from the data below when possible. Avoid vague language.',
-      '- When asked for recommendations, base them on CPICP first, then trend direction, then attribution quality.',
+      '- When asked for recommendations, base them on CPL first (with enough leads to trust it), then lead-volume trend, then frequency.',
       '- No guaranteed returns, no investment advice, no claims about expected APY — this is a regulated platform.',
       "- If the data doesn't answer the question, say so plainly. Do not invent numbers.",
       '',
@@ -6267,8 +6498,10 @@ function buildDashboardContext_() {
       ? Utilities.formatDate(lastRow[1], Session.getScriptTimeZone(), 'yyyy-MM-dd')
       : String(lastRow[1])));
     lines.push('Total spend: $' + lastRow[2]);
-    lines.push('Estimated ICPs: ' + lastRow[3]);
-    lines.push('Overall CPICP: $' + lastRow[4]);
+    // intelligence_log cols 3-4 are the legacy hybrid-ICP figures; the
+    // week's leads and CPL are in the context block that follows.
+    lines.push('Estimated ICPs (legacy IC column): ' + lastRow[3]);
+    lines.push('Overall CPICP (legacy IC column): $' + lastRow[4]);
     lines.push('---');
     lines.push(String(lastRow[6] || ''));
     lines.push('');
@@ -6536,7 +6769,8 @@ function showTargetApprovalPage_(e, decision) {
   var label     = isApprove ? 'APPROVE' : 'REJECT';
   var description = isApprove
     ? 'This will change the weekly spend target from $' + currentTarget +
-      ' to $' + pendingTarget + '. The optimizer will use the new target on its next run.'
+      ' to $' + pendingTarget + '. Pacing and the Tuesday strategic reallocation ' +
+      'use the new target from their next run.'
     : 'This will cancel the proposed spend target change. The current target ($' +
       currentTarget + '/week) will remain in effect.';
 
@@ -6616,12 +6850,12 @@ function applyTargetDecision_(e, decision) {
 
     postToSlack_('*Honeycomb Spend Target* \u2705 Approved by ' + user +
       '. New target: $' + newTarget + '/week (\u00b1$' + newTolerance +
-      '). Takes effect on the next budget optimization run.');
+      '). Takes effect on the next pacing check and Tuesday reallocation.');
 
     return HtmlService.createHtmlOutput(
       '<h2>\u2705 Spend target updated.</h2>' +
       '<p>New target: <strong>$' + newTarget + '/week</strong> (\u00b1$' + newTolerance + ').</p>' +
-      '<p>The budget optimizer will use this target on its next run.</p>');
+      '<p>Pacing and the Tuesday strategic reallocation use this target from their next run.</p>');
   }
 
   if (decision === 'reject') {

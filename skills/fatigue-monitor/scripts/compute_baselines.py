@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compute per-ad baseline CTR / CPC / CPM for the fatigue-monitor skill.
+"""Compute per-ad baseline CPL / CTR / CPC / CPM for the fatigue-monitor skill.
 
 Reads fetch_fatigue_data.py output from stdin (or --input PATH). For each
 active ad, picks one of three baseline strategies based on age:
@@ -18,9 +18,13 @@ active ad, picks one of three baseline strategies based on age:
     no created_time, OR age > 93 days. Use the oldest 4 days of the
     current 14-day window as a proxy. Tagged baseline_type="estimated".
 
-Outputs JSON to stdout: {"baselines": {ad_id: {ctr_baseline, cpc_baseline,
-cpm_baseline, baseline_type, baseline_since, baseline_until,
-created_time, days_active}}, "stats": {...}}.
+Outputs JSON to stdout: {"baselines": {ad_id: {leads_baseline, cpl_baseline,
+spend_baseline, ctr_baseline, cpc_baseline, cpm_baseline, baseline_type,
+baseline_since, baseline_until, created_time, days_active}}, "stats": {...}}.
+
+cpl_baseline is None when the window bought zero leads. Baseline windows are
+4 days long, so lead counts there are small — classify_fatigue.py only
+compares CPL when both windows have leads.
 """
 
 from __future__ import annotations
@@ -67,13 +71,22 @@ def safe_div(num: float, den: float) -> float | None:
     return (num / den) if den else None
 
 
+def row_leads(r: dict[str, Any]) -> int:
+    """Lead count for one insight row. `leads` is canonical; rows normalized
+    before the lead pivot only carry the deprecated `conversions` alias."""
+    if r.get("leads") is not None:
+        return int(r["leads"] or 0)
+    return int(r.get("conversions") or 0)
+
+
 def aggregate_window(rows: list[dict[str, Any]], window_start: date,
                      window_end: date) -> dict[str, float | None]:
-    """Aggregate impressions/clicks/spend across rows whose date falls in
-    [window_start, window_end] inclusive, then derive CTR/CPC/CPM."""
+    """Aggregate impressions/clicks/spend/leads across rows whose date falls
+    in [window_start, window_end] inclusive, then derive CPL/CTR/CPC/CPM."""
     impressions = 0
     clicks = 0
     spend = 0.0
+    leads = prequal = ic = 0
     days = 0
     for r in rows:
         try:
@@ -85,21 +98,45 @@ def aggregate_window(rows: list[dict[str, Any]], window_start: date,
         impressions += int(r.get("impressions") or 0)
         clicks += int(r.get("clicks") or 0)
         spend += float(r.get("spend") or 0.0)
+        leads += row_leads(r)
+        prequal += int(r.get("prequal_decisions") or 0)
+        ic += int(r.get("ic_conversions") or 0)
         days += 1
     if days == 0:
-        return {"ctr": None, "cpc": None, "cpm": None,
-                "impressions": 0, "clicks": 0, "spend": 0.0, "days": 0}
+        return {"ctr": None, "cpc": None, "cpm": None, "cpl": None,
+                "impressions": 0, "clicks": 0, "spend": 0.0,
+                "leads": 0, "prequal_decisions": 0, "ic_conversions": 0,
+                "days": 0}
     ctr = safe_div(clicks, impressions)
     cpc = safe_div(spend, clicks)
     cpm = safe_div(spend, impressions)
+    cpl = safe_div(spend, leads)
     return {
         "ctr": round(ctr * 100, 4) if ctr is not None else None,
         "cpc": round(cpc, 4) if cpc is not None else None,
         "cpm": round(cpm * 1000, 4) if cpm is not None else None,
+        "cpl": round(cpl, 2) if cpl is not None else None,
         "impressions": impressions,
         "clicks": clicks,
         "spend": round(spend, 2),
+        "leads": leads,
+        "prequal_decisions": prequal,
+        "ic_conversions": ic,
         "days": days,
+    }
+
+
+def baseline_fields(agg: dict[str, Any]) -> dict[str, Any]:
+    """The per-ad baseline keys every path emits, from one aggregate_window()
+    result. Leads/CPL lead; CTR/CPC/CPM are the diagnostic baselines."""
+    return {
+        "leads_baseline": agg["leads"],
+        "cpl_baseline": agg["cpl"],
+        "spend_baseline": agg["spend"],
+        "ctr_baseline": agg["ctr"],
+        "cpc_baseline": agg["cpc"],
+        "cpm_baseline": agg["cpm"],
+        "baseline_days_observed": agg["days"],
     }
 
 
@@ -194,13 +231,8 @@ def main(argv: list[str] | None = None) -> int:
         bs = parse_date(info["baseline_since"])
         be = parse_date(info["baseline_until"])
         agg = aggregate_window(rows_by_ad.get(ad_id, []), bs, be)
-        info.update({
-            "ctr_baseline": agg["ctr"],
-            "cpc_baseline": agg["cpc"],
-            "cpm_baseline": agg["cpm"],
-            "baseline_type": "peak_window",
-            "baseline_days_observed": agg["days"],
-        })
+        info.update(baseline_fields(agg))
+        info["baseline_type"] = "peak_window"
 
     # Path B: ONE consolidated Meta query covering the union of needed
     # baseline windows, filtered to just the Path-B ad_ids.
@@ -250,13 +282,8 @@ def main(argv: list[str] | None = None) -> int:
             be = parse_date(info["baseline_until"])
             agg = aggregate_window(hist_by_ad.get(ad_id, []), bs, be)
             if agg["days"] > 0:
-                info.update({
-                    "ctr_baseline": agg["ctr"],
-                    "cpc_baseline": agg["cpc"],
-                    "cpm_baseline": agg["cpm"],
-                    "baseline_type": "peak_window",
-                    "baseline_days_observed": agg["days"],
-                })
+                info.update(baseline_fields(agg))
+                info["baseline_type"] = "peak_window"
             else:
                 # Fall through to estimated below.
                 info["path"] = "C"
@@ -275,14 +302,11 @@ def main(argv: list[str] | None = None) -> int:
         if info["path"] != "C":
             continue
         agg = aggregate_window(rows_by_ad.get(ad_id, []), proxy_start, proxy_end)
+        info.update(baseline_fields(agg))
         info.update({
-            "ctr_baseline": agg["ctr"],
-            "cpc_baseline": agg["cpc"],
-            "cpm_baseline": agg["cpm"],
             "baseline_type": "estimated",
             "baseline_since": proxy_start.isoformat(),
             "baseline_until": proxy_end.isoformat(),
-            "baseline_days_observed": agg["days"],
         })
 
     # Stats

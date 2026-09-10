@@ -158,6 +158,11 @@ jobs:
         id: claude
         uses: anthropics/claude-code-action@v1
         env:
+          # Required for the Sheet write. `creative-intelligence-write`
+          # is a protected /exec action and the gate fails closed, so
+          # without this the per-vertical rows come back
+          # {"error":"unauthorized"} while the Slack post still ships.
+          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
           # Optional. If unset, Claude skips Slack posting and only
           # surfaces results in this workflow's logs.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -189,9 +194,18 @@ jobs:
             3. POST the per-vertical Sheet rows to
                `?action=creative-intelligence-write`. The endpoint URL
                is in data/config/benchmarks.json under exec_endpoint.
+               The action is gated: include "key": "$EXEC_SHARED_SECRET"
+               (the env var) in the JSON body alongside "rows", or the
+               write is refused with {"error":"unauthorized"}. Use the
+               payload shape in SKILL.md "Output — Sheet": keep the
+               legacy median_cpicp / ic_total / top_body_cpicp keys
+               (the Sheet handler reads them by name) carrying lead
+               values, and also send median_cpl / lead_total /
+               top_body_cpl with the same values.
             4. If `SLACK_WEBHOOK_URL` env var is set and non-empty,
-               POST a condensed brief to that webhook via curl. Skip
-               Slack silently if unset.
+               POST a condensed brief to that webhook via curl, using
+               the headline line + section order from SKILL.md
+               "Output — Slack". Skip Slack silently if unset.
             5. Write the status one-liner to /tmp/agent_status.txt.
 
             Output rules — MUST follow:
@@ -199,19 +213,36 @@ jobs:
               recommend a category. A finding that says "lead with
               owner_story angle" is a failure; the right shape is
               "lead with bodies like 'Sarah's been brewing for 12
-              years' (4 ads, 18 IC, $42 CPICP)."
-            - Always cite real numbers from /tmp/creative_dataset.json.
-              Do not invent numbers. If a variant has cpicp=null
-              (no IC conversions yet), say so explicitly.
-            - Honor confidence labels: confident (≥10 ads + ≥25 IC),
-              directional (≥5 + ≥10), insufficient (below). Don't
-              recommend acting on insufficient findings; frame them
-              as hypotheses to test.
+              years' (4 ads, 142 leads, $11.80 CPL)."
+            - Always cite real numbers from /tmp/creative_dataset.json
+              (ad_count, total_leads, cpl per variant; leads, cpl per
+              ad). Do not invent numbers. If a variant has cpl=null
+              (no leads yet), say "no leads yet" explicitly.
+            - Honor confidence labels from data/config/benchmarks.json
+              `creative_intelligence`: confident (≥10 ads + ≥100
+              leads), directional (≥5 ads + ≥40 leads), insufficient
+              (below). Don't recommend acting on insufficient
+              findings; frame them as hypotheses to test. Only
+              `confident` findings go to Slack.
+            - Slack headline: the first line of the Slack post MUST be
+              "🎯 Creative Intelligence — <until> — <N> leads at
+              $<median CPL> median CPL across <M> ads (<since>–<until>)"
+              where N = sum of ads[].leads, median CPL = median of
+              non-null ads[].cpl, M = ad_count. Per-vertical lines
+              follow, ranked by CPL ascending (best first).
             - Group findings by vertical, lead each section with
               the actionable insight, and back it with 2-3 quoted
               copy examples + their numbers.
             - Include side-by-side findings prominently — these are
-              the cleanest causal signal in the dataset.
+              the cleanest causal signal in the dataset. Compare on
+              ad_a_cpl vs ad_b_cpl.
+            - IC and rewards are reported-only subtypes. You may
+              append at most one secondary line per finding — "of
+              which N reached an IC decision" from
+              ads[].ic_conversions / variants[].total_ic_conversions
+              — but never use ic_conversions or cpicp as a headline
+              number, sort key, threshold, or reason to flag or
+              retire a variant.
 
             Constraints:
             - Read-only on the repo (except writing

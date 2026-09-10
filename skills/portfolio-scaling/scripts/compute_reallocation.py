@@ -14,7 +14,10 @@ Pool mechanics:
     the $26/day effective floor (the $25 hard floor + 4% buffer protects
     one worst-case optimizer reduction cycle from breaching it).
   - Scalable verticals (primary) and stable verticals (secondary, 0.5x
-    weight) absorb the pool, weighted by inverse CPICP.
+    weight) absorb the pool, weighted by inverse CPL.
+  - Every proposal row carries the vertical's 12-week CPL and lead count
+    so the brief can state each move in lead terms without a second
+    lookup. IC is not carried on proposal rows.
   - The pool is bounded by [target - tolerance, target + tolerance] in
     weekly portfolio spend, biased toward target itself.
   - Net-positive pools above target raise knockdown_risk so the brief
@@ -176,6 +179,9 @@ def compute_decreases(profiles: dict[str, Any],
                 "post_change_cents": current_cents - actual_cents,
                 "classification": cls,
                 "elasticity_r": m.get("elasticity_r"),
+                "cpl": m.get("cpl"),
+                "total_leads": m.get("total_conversions"),
+                "vertical_spend": m.get("total_spend"),
                 "remaining_headroom_pct": round(remaining, 4),
                 "reason": (
                     f"{cls} (r={m.get('elasticity_r')}); "
@@ -258,8 +264,8 @@ def compute_increases(profiles: dict[str, Any],
                 "post_change_cents": current + actual_cents,
                 "classification": m.get("classification"),
                 "cpl": m.get("cpl"),
-                "cpl": m.get("cpl"),
-            "cpicp": m.get("cpicp"),
+                "total_leads": m.get("total_conversions"),
+                "vertical_spend": m.get("total_spend"),
                 "remaining_headroom_pct": round(remaining, 4),
                 "allocation_weight_reason": (
                     f"inverse-CPL weight {w:.4f} of {total_w:.4f}"
@@ -285,6 +291,48 @@ def absorption_capacity(profiles: dict[str, Any]) -> int:
             cap += int(round(cinfo["daily_budget_cents"]
                              * cinfo["weekly_remaining_pct"]))
     return cap
+
+
+def pool_skip_reasons(profiles: dict[str, Any],
+                      increases: list[dict[str, Any]],
+                      pool_cents: int) -> dict[str, Any]:
+    """Explain an empty side of the pool so the brief can say why instead
+    of a bare "no actionable reallocation".
+
+    `paused_saturating_verticals`: saturating / over-invested verticals
+    with no ACTIVE campaign — nothing to cut, per the ACTIVE guard.
+    `increase_skip_reason`: None when increases exist; otherwise the first
+    structural reason nothing absorbed the pool.
+    """
+    campaigns = profiles["campaigns"]
+    paused_saturating = sorted(
+        v for v, m in profiles["verticals"].items()
+        if m.get("classification") in ("saturating", "over-invested")
+        and not any(is_actionable_campaign(campaigns.get(cid))
+                    for cid in m.get("campaign_ids", []))
+    )
+    reason = None
+    if not increases:
+        receivers = [
+            (v, m) for v, m in profiles["verticals"].items()
+            if m.get("classification") in ("scalable", "stable")
+        ]
+        if pool_cents <= 0:
+            reason = "no freed pool and no headroom under target + tolerance"
+        elif not receivers:
+            reason = "no vertical classified scalable or stable"
+        elif not any(m.get("cpl") for _, m in receivers):
+            reason = "no scalable/stable vertical has a CPL (zero leads in window)"
+        elif not any(is_actionable_campaign(campaigns.get(cid))
+                     for _, m in receivers
+                     for cid in m.get("campaign_ids", [])):
+            reason = "no scalable/stable vertical has an ACTIVE campaign"
+        else:
+            reason = "every receiving campaign is out of weekly headroom"
+    return {
+        "paused_saturating_verticals": paused_saturating,
+        "increase_skip_reason": reason,
+    }
 
 
 # ─── Tolerance band enforcement ───────────────────────────────────────
@@ -429,7 +477,12 @@ def compose_audience_actions(profiles: dict[str, Any],
                         prescription = ". ".join(parts)
                         creative_source = "creative_intelligence_cache"
                         break
+        # Lead the diagnosis with the absolute cost so the Slack block reads
+        # "<vertical> — CPL $X on N leads; ..." before the trend detail.
+        cpl = m.get("cpl")
+        cpl_text = f"${cpl:,.2f}" if cpl is not None else "—"
         diagnosis_parts = [
+            f"CPL {cpl_text} on {m.get('total_conversions') or 0} leads (12w)",
             f"frequency={m.get('avg_frequency')} ({m.get('frequency_trend')})",
             f"CPM trend={m.get('cpm_trend')}",
             f"r={m.get('elasticity_r')}",
@@ -509,6 +562,7 @@ def main() -> int:
         "zero_sum" if net_change == 0 else
         ("net_positive" if net_change > 0 else "net_negative")
     )
+    skip_reasons = pool_skip_reasons(profiles, increases, initial_pool)
 
     # ─── Audience actions ─────────────────────────────────────────────
     creative_cache = load_creative_cache_safely()
@@ -532,12 +586,15 @@ def main() -> int:
             "allocated_daily_cents": allocated,
             "net_change_daily_cents": net_change,
             "net_change_type": net_type,
+            # ACTIVE campaigns only (see compute_scaling_profiles.py).
             "portfolio_current_daily_cents": current,
+            "portfolio_active_campaign_count": portfolio.get("active_campaign_count"),
             "portfolio_post_change_daily_cents": proposed,
             "portfolio_post_change_weekly_dollars": round(proposed / 100 * 7, 2),
             "target_weekly_dollars": portfolio["target_weekly_spend"],
             "tolerance_weekly_dollars": portfolio["weekly_spend_tolerance"],
             "knockdown_risk": knockdown_risk,
+            **skip_reasons,
         },
         "decreases": decreases,
         "increases": increases,
@@ -575,6 +632,7 @@ def main() -> int:
         "lockout_until": lockout_until.isoformat(),
         "audience_actions": [a["vertical"] for a in audience_actions],
         "affected_campaign_ids": affected_campaigns,
+        **skip_reasons,
     }
     print(json.dumps(summary, indent=2, default=str))
     return 0
@@ -605,6 +663,10 @@ def compose_scaling_log_rows(profiles: dict[str, Any],
             "cpm_trend": m.get("cpm_trend"),
             "new_audience_needed": m.get("new_audience_needed"),
             "weeks_with_conversions": m.get("weeks_with_conversions"),
+            # Additive: handleScalingWrite_ has no column for it yet and
+            # writes unknown keys as blanks. Sent now so the Sheet picks it
+            # up the moment the header gains the column.
+            "total_leads": m.get("total_conversions"),
             "contributed_to_pool": vertical in contributed,
             "received_from_pool": vertical in received,
         })

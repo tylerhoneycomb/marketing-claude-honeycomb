@@ -77,27 +77,62 @@ jobs:
             4. Parse classify_fatigue.py's stdout JSON.
             5. Compose output per the rules below.
 
-            Output rules:
-            - Print non-healthy ads to terminal grouped by severity:
-                FATIGUED first, then EARLY FATIGUE, then SATURATED,
-                then UNDERPERFORMING. Skip `healthy` entirely.
-              For each ad: name (campaign), CTR baseline → current
-              with decline %, frequency, CPC change, days_active,
-              headline preview if available. If `baseline_type ==
-              "estimated"`, append `(estimated baseline)` to the
-              metrics line. If `budget_conflict` is non-null, render
-              it as a separate warning line under that ad — that's
-              the most actionable signal in the report.
-              If `classifications` is empty, say so in one line:
-                "No fatigue signals — all evaluated ads healthy or
-                 below thresholds."
-              End with: "Sheet log: N rows written to fatigue_log"
-              and a one-liner of stats.by_classification counts.
-            - If `SLACK_WEBHOOK_URL` env var is set and non-empty,
-              POST the non-healthy section to that webhook via curl.
-              If unset or empty, skip Slack silently.
+            Output rules (leads and CPL are the headline; CTR / freq /
+            CPC are diagnostics that explain why leads got expensive):
+            - Headline line first:
+                "🔥 Fatigue Monitor — <date> — <stats.non_healthy> ads
+                 at risk · $<stats.spend_7d> spend / <stats.leads_7d>
+                 leads (CPL $<stats.cpl_7d>) last 7d"
+              plus " · <N> budget conflicts" when
+              stats.pending_increases_with_conflict > 0.
+            - Then non-healthy ads grouped by severity, in the order
+              `classifications` already has them (it is pre-sorted:
+              FATIGUED, EARLY FATIGUE, SATURATED, UNDERPERFORMING;
+              within a section conflicts first, then zero-lead
+              spenders, then CPL descending). Do not re-sort. Skip
+              `healthy` entirely.
+              For each ad:
+                1. name (campaign)
+                2. lead line FIRST: "Leads 7d: <leads_current>
+                   (CPL $<cpl_baseline> → $<cpl_current>,
+                   ↑<cpl_change_pct>%) | spend $<spend_current>".
+                   Use "0 leads on $<spend_current> spend" when
+                   leads_current == 0; drop the arrow/percent when
+                   cpl_change_pct is null. Append
+                   " · vs $<stats.target_cpl_dollars> target" when
+                   cpl_current exceeds stats.target_cpl_dollars.
+                3. diagnostics: CTR baseline → current with decline %,
+                   frequency, CPC change. Append "(estimated
+                   baseline)" if baseline_type == "estimated".
+                4. days_active + headline preview if available.
+                5. ONLY when ic_current > 0, a secondary line:
+                   "of which <ic_current> reached an IC decision".
+                   Never put IC in the headline, a sort, or a title.
+                6. If `budget_conflict` is non-null, render it
+                   verbatim as a ⚠️ line under that ad — that's the
+                   most actionable signal in the report.
+            - All-healthy condition is "no non-healthy classifications"
+              (stats.non_healthy == 0 — `classifications` still lists
+              the healthy ads, so do NOT test for an empty list). In
+              that case replace the non-healthy section with one line:
+                "No fatigue signals — <ads_evaluated> ads evaluated,
+                 $<spend_7d> spend / <leads_7d> leads (CPL $<cpl_7d>)
+                 in the last 7d, all healthy."
+              If stats.ads_evaluated is 0, say "No ads passed the
+              eligibility gates — see stats.skipped." instead.
+            - End the terminal output with: "Sheet log: N rows written
+              to fatigue_log" and a one-liner of
+              stats.by_classification counts.
             - If `sheet_write.posted` is false in the classify output,
-              surface that as a separate WARN line.
+              surface that as a separate WARN line with
+              sheet_write.error (terminal / workflow log only).
+            - If `SLACK_WEBHOOK_URL` env var is set and non-empty,
+              POST to that webhook via curl ONLY the headline line
+              plus the non-healthy section (or the all-healthy
+              one-liner in its place). The "Sheet log" trailer, the
+              by_classification counts and any WARN line are NOT
+              part of the Slack body. If unset or empty, skip Slack
+              silently.
 
             Constraints:
             - Read-only on the repo. Do not modify any files (except

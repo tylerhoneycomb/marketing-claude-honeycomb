@@ -1,6 +1,6 @@
 ---
 name: pipeline-health
-description: Check whether the Honeycomb ads pipeline is working — data freshness, Meta token, IC tracking, dashboard endpoint
+description: Check whether the Honeycomb ads pipeline is working — data freshness, Meta token, funnel conversions (quality tier + reported subtypes), snapshot volume and lead count, dashboard endpoint
 ---
 
 # Pipeline Health
@@ -11,7 +11,7 @@ Answer one question: is the system working right now? Run this before any other 
 
 ## Scripts
 
-`scripts/check_health.py` runs four health checks against the Google Sheet, the Meta API, and the dashboard endpoint. It POSTs one row per check to the `pipeline_health` Sheet tab and prints structured JSON to stdout for Slack composition.
+`scripts/check_health.py` runs five health checks against the Google Sheet, the Meta API, the newest ad-level snapshot, and the dashboard endpoint. It POSTs one row per check to the `pipeline_health` Sheet tab and prints structured JSON to stdout for Slack composition.
 
 ```
 python3 skills/pipeline-health/scripts/check_health.py
@@ -24,11 +24,12 @@ Requires:
 - `EXEC_ENDPOINT` env var (optional — falls back to `exec_endpoint` from `benchmarks.json`)
 - `data/config/benchmarks.json` for thresholds
 
-The four checks:
+The five checks:
 1. **data_freshness** — calls `?action=rolling-latest-date`, compares to expected (yesterday in account timezone, or two days ago if running before 7 AM ET).
 2. **meta_token** — calls Meta `debug_token`, parses `is_valid` and `expires_at`.
-3. **funnel_conversions** — calls Meta `customconversions` and verifies every conversion configured under `conversions` in `benchmarks.json` (the quality tier and each reported subtype) still exists and is not archived. Reports each one's `last_fired_time`, so a conversion that silently stops firing is visible rather than passing on mere existence. A missing/archived quality conversion is FAIL; a subtype is WARN.
-4. **dashboard_endpoint** — calls `?action=leaderboard` with the configured timeout, verifies a JSON response.
+3. **funnel_conversions** — calls Meta `customconversions` and verifies every custom conversion configured under `conversions` in `benchmarks.json` (the quality tier and each reported subtype) still exists and is not archived. Reports each one's `last_fired_time`, so a conversion that silently stops firing is visible rather than passing on mere existence. The detail always leads with the quality tier (`prequal_decisions last fired …`) and trails the subtypes under `subtypes (reported only): …`, most recently fired first. A missing/archived quality conversion is FAIL; a subtype problem is never more than WARN and is phrased as a tracking-config issue (`subtype investment_crowdfunding (reported only) is ARCHIVED (…)`). The primary tier (`leads`) is a standard pixel action, not a custom conversion, so it is not checked here — see snapshot_volume.
+4. **dashboard_endpoint** — calls `?action=rollup` with the configured timeout, verifies a JSON response.
+5. **snapshot_volume** — reads the newest `data/snapshots/<date>/ad_insights.json`. FAILs on 0 insight rows against ad objects, WARNs below `min_expected_insight_rows`, and always reports the lead total and spend (`N leads on $S spend`, summing `leads` with the pre-pivot `conversions` alias as fallback). If `pipeline_health.zero_lead_spend_floor_usd` is set in `benchmarks.json`, spend at or above it with 0 leads is a WARN. This is the only health signal for the primary metric.
 
 The script's stdout JSON looks like:
 
@@ -39,7 +40,7 @@ The script's stdout JSON looks like:
     {"name": "data_freshness", "status": "PASS", "detail": "..."},
     ...
   ],
-  "sheet_write": {"posted": true, "written": 4}
+  "sheet_write": {"posted": true, "written": 5}
 }
 ```
 
@@ -55,13 +56,14 @@ The script's stdout JSON looks like:
 
 **Skip Slack posting entirely if `SLACK_WEBHOOK_URL` env var is unset or empty** — print the summary to terminal only. This is the default in interactive mode; Slack is opt-in via the secret.
 
-When the webhook IS set and there are non-PASS checks: plain text, no markdown headers, FAIL first then WARN, posted to `$SLACK_WEBHOOK_URL` via curl. Example:
+When the webhook IS set and there are non-PASS checks: plain text, no markdown headers, FAIL first then WARN, one line per check shaped `STATUS check_name: detail` (the check name is always the first token after the status), posted to `$SLACK_WEBHOOK_URL` via curl. Example:
 
 ```
-⚠️ Pipeline Health — 2026-05-03
+⚠️ Pipeline Health — 2026-09-09
 
-FAIL: Data freshness — last data from 2026-04-30, expected 2026-05-02
-WARN: Meta token expires in 12 days — regenerate before 2026-05-15
+FAIL dashboard_endpoint: timed out after 10s
+WARN meta_token: expires in 12 days (regenerate before 2026-09-22)
+WARN snapshot_volume: 2026-09-08: 47 insight row(s), 0 leads on $412.10 spend — lead pipeline may have stopped firing
 ```
 
 If a token regeneration deadline is mentioned, include the calendar date so it's actionable without arithmetic.
@@ -75,17 +77,18 @@ Handled by the script. Each run POSTs one row per check to `?action=health-write
 When invoked from an interactive Claude Code session, **always print a human-readable summary to terminal** — don't just dump raw JSON. Format:
 
 ```
-Pipeline Health — 2026-05-03
+Pipeline Health — 2026-09-09
 
-[PASS] data_freshness — latest data: 2026-05-02, expected: 2026-05-02
-[PASS] meta_token — valid, expires in 47 days
-[PASS] funnel_conversions — last fired: prequal_decisions=2026-09-09, investment_crowdfunding=2026-09-03, rewards_crowdfunding=2026-09-09
+[PASS] data_freshness — latest data: 2026-09-08, expected: 2026-09-08
+[PASS] meta_token — valid, no expiry (system user token)
+[PASS] funnel_conversions — prequal_decisions last fired 2026-09-09 | subtypes (reported only): rewards_crowdfunding=2026-09-09, investment_crowdfunding=2026-09-03
 [WARN] dashboard_endpoint — valid JSON in 8.2s (slow cold start)
+[PASS] snapshot_volume — 2026-09-08: 2 insight row(s), 394 ad object(s), 20 leads on $268.05 spend
 
-Sheet log: 4 rows written to pipeline_health
+Sheet log: 5 rows written to pipeline_health
 ```
 
-Always show all four checks (including PASS) so Tyler sees the full state. Then one trailing line confirming the Sheet write outcome.
+Always show all five checks (including PASS) so Tyler sees the full state. Then one trailing line confirming the Sheet write outcome.
 
 ## Constraints
 
@@ -93,3 +96,5 @@ Always show all four checks (including PASS) so Tyler sees the full state. Then 
 - **Silent when healthy in autonomous mode.** A daily "all clear" trains people to ignore the channel. Only post on WARN/FAIL.
 - Never log the Meta token. The `detail` strings should never contain the access token.
 - If `META_ACCESS_TOKEN` is not set, fail loudly with a clear error, not a silent WARN.
+- **Leads are the primary metric.** The only lead-pipeline signal is the `N leads on $S spend` clause in `snapshot_volume`; keep it in every detail shape so the Slack line is lead-first when it fires.
+- **IC (`investment_crowdfunding`) is a reported subtype.** It may appear only inside the trailing `subtypes (reported only): …` clause or as a `subtype … (reported only) …` tracking-config WARN — never as the first token of a line, never as a threshold, and never as a FAIL. Do not reword a subtype WARN to read like an IC performance alert.

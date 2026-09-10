@@ -47,8 +47,12 @@ Requires:
              weekly_target, weekly_target_source,
              spent_this_week, days_remaining, week_start},
   "portfolio": [{campaign, spend, leads, cpl, prequal_decisions, ic_conversions, cpicp, ctr, frequency}, …],
-  "winners":   [{ad_name, campaign, cpc, conversions, ctr}, …],   // up to 3
-  "bleeders":  [{ad_name, campaign, ctr, adset_avg_ctr, spend_share_pct}, …],
+  "winners":   [{ad_name, campaign, cpl, leads, cpc, ctr}, …],   // up to 3, cpl asc
+  "bleeders":  [{ad_name, campaign, reason, leads, cpl, adset_cpl,
+                 ctr, adset_avg_ctr, spend_share_pct}, …],         // up to 3
+                 // reason ∈ spend_without_leads | cpl_above_adset
+                 //          | ctr_below_adset_no_lead_data
+                 // cpl is null on spend_without_leads rows
   "fatigue_flags": [{ad_name, campaign, frequency,
                      ctr_3d, ctr_prior_4d, ctr_decline_pct}, …],
   "learning_phase": [{adset_name, campaign_id, status}, …],
@@ -61,8 +65,9 @@ Requires:
 ## Interpreting output
 
 - **Pacing:** `underspending` / `overspending` / `on_pace`. Informational, not an emergency. Always include in the summary so Tyler can see whether to adjust budget today. The `weekly_target` is fetched live from `/exec?action=get_spend_goal` (the dashboard-managed spend goal), so it reflects the latest deployment — use the number from the JSON, never a hardcoded "$10,000". If `weekly_target_source == "fallback_unreachable"` the `/exec` call failed and `weekly_target` is a static fallback — append `(target from static fallback — /exec unreachable)` to the PACING line so the staleness is visible.
-- **Portfolio:** list every campaign with leads, sorted by best CPL. Call out campaigns with non-trivial spend and zero leads — those are the ones to investigate. Report IC alongside as a subtype, never as the sort key.
-- **Winners / Bleeders:** top 3 of each. These are the specific ads Tyler should look at. If `winners` is empty, that means no ad in the last 7 days hit the floor of ≥5 conversions + ≥1,000 impressions — say so explicitly.
+- **Totals:** headline the brief with `totals` — leads, CPL, spend, prequal decisions. IC (`ic_conversions`) is a subtype: mention it only as a trailing parenthetical, and omit it when 0. Never lead with CPICP.
+- **Portfolio:** list every campaign in JSON order (already sorted best CPL first, no-lead campaigns last) with CPL, leads, spend, frequency. Call out campaigns with non-trivial spend and zero leads explicitly (`0 leads`) — those are the ones to investigate. Report IC alongside as a subtype (`· IC n`, only when > 0), never as the sort key.
+- **Winners / Bleeders:** top 3 of each. These are the specific ads Tyler should look at. Winners are ranked by CPL (best first) and must clear the floor of ≥5 leads + ≥1,000 impressions; if `winners` is empty, no ad in the last 7 days hit that floor — say so explicitly. Bleeders are ordered spend-without-leads first, then most inflated CPL; render each by its `reason` (see the Slack example). The CPL bleeder threshold is `lead_economics.cpl_warning_multiple` (1.5× the ad-set CPL by default), so a reader knows why an ad qualified.
 - **Fatigue flags:** these *preview* the fatigue-monitor skill. Mention them in the briefing but note the full fatigue analysis lives in the separate skill.
 - **Learning phase:** list ad sets currently in learning. State explicitly that no budget changes should be made to these — that's a hard rule.
 - **Stale creatives:** ads active > `fatigue.creative_age_warning_days` (21 by default). Worth a refresh look but not necessarily fatiguing. **If the list has >15 entries, render the top 15 by days_active descending and collapse the long tail into one summary line** (e.g., `+ 55 more ads at ≤30d`). When most of the tail shares a created_time (cohort launch), name the cohort prefix so the summary is scannable (e.g., `+ 55 more BR-* cohort ads at 30d`). Default rendering of 70+ rows makes the message unreadable.
@@ -79,19 +84,24 @@ When invoked from an interactive Claude Code session, **always print a human-rea
 When the webhook IS set: compose a plain-text summary, keep it scannable — one line per item, sections separated by blank lines. No markdown headers. POST to `$SLACK_WEBHOOK_URL` via curl. Example shape:
 
 ```
-📊 Daily Check — 2026-05-03
+📊 Daily Lead Check — 2026-05-03
+7d: 412 leads · $14.20 CPL · $5,850 spend · 371 prequal decisions (of which 2 reached an IC decision)
 
 PACING: underspending — $1,500 yesterday, $8,050/day needed for the $<weekly_target> target
 
 PORTFOLIO (7d, best CPL first):
-  Breweries: $12.40 CPL, 157 leads, $1,950, freq 1.6
+  Breweries: $12.40 CPL, 157 leads, $1,950, freq 1.6 · IC 1
+  Gyms: $18.90 CPL, 64 leads, $1,210, freq 1.9
+  Salons: 0 leads, $340, freq 1.2
   …
 
-WINNERS:
-  WinnerAd (Breweries): $1.07 CPC, 10 convs
+WINNERS (best CPL first):
+  WinnerAd (Breweries): $9.80 CPL, 22 leads (CTR 1.8%)
 
 BLEEDERS:
-  BleederAd (Breweries): 0.5% vs 1.5% adset avg, 25% spend share
+  BleederAd (Breweries): 0 leads on 25% of ad-set spend
+  BleederAd2 (Gyms): $48 CPL vs $16 ad-set CPL, 31% spend share
+  BleederAd3 (Salons): 0.5% CTR vs 1.5% ad-set avg, 22% spend share (no lead data in ad set yet)
 
 FATIGUE WATCH:
   FatigueAd (Breweries): freq 2.3, CTR ↓43% (3d vs prior 4d)
@@ -102,6 +112,8 @@ LEARNING:
 STALE:
   WinnerAd: 48 days active
 ```
+
+The headline line under the title comes from `totals`; drop the IC parenthetical when `ic_conversions` is 0. Portfolio lines append `· IC n` only when the campaign's `ic_conversions` > 0. Bleeder lines render by `reason`: `spend_without_leads` → 0 leads / spend share (bleeder rows carry no ad spend figure, so don't invent one); `cpl_above_adset` → ad CPL vs `adset_cpl` / spend share; `ctr_below_adset_no_lead_data` → the CTR comparison with the `(no lead data in ad set yet)` suffix. Never print a CPC or a CTR as a winner's headline number.
 
 Skip empty sections rather than printing "(none)". If everything is empty (no winners, no bleeders, no fatigue), say so in one line: "All ads under signal floors today."
 
@@ -114,9 +126,10 @@ Handled by `analyze_daily.py`. One summary row per run via `?action=daily-check-
 > **Wire contract is still IC-named.** The `handleDailyCheckWrite_` handler in
 > `apps-script/Code.js` reads its payload keys by name, so the legacy
 > `total_icps` and `portfolio_cpicp` keys must keep being sent even though every metric above is
-> lead-based. Unrecognised keys are written as blanks. Renaming them needs
-> the matching `Code.js` edit plus a redeploy, tracked separately — the
-> Apps Script deploy pipeline has not run since 2026-06-23.
+> lead-based. The handler appends only its seven fixed columns, so the
+> `total_leads` / `portfolio_cpl` keys the script also sends are silently
+> dropped (not blanked) until `Code.js` is edited and redeployed — tracked
+> separately; no Code.js change from the lead pivot has been deployed yet.
 
 
 ## Constraints

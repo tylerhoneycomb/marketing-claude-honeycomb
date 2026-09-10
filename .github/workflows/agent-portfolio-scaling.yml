@@ -115,9 +115,10 @@ jobs:
           echo "data_commit=push_failed" > /tmp/data_commit_status.txt
           exit 1
 
-      # Step 4: Claude composes the four-section Slack brief from the
-      # committed JSON, registers the proposal via /exec, and Slack-
-      # posts the brief with approve/reject URLs returned by the
+      # Step 4: Claude composes the four-section, leads-first Slack
+      # brief from the committed JSON, registers the proposal via
+      # /exec (authenticated with EXEC_SHARED_SECRET), and Slack-posts
+      # the brief with approve/reject URLs returned by the
       # registration call.
       - name: Compose brief via Claude Code
         id: claude
@@ -126,6 +127,11 @@ jobs:
           # Optional. Without it, Claude logs the composed brief and
           # the registration call but skips the Slack POST.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+          # Required for the scaling-queue-write registration in step 3:
+          # the action is in PROTECTED_EXEC_ACTIONS and fails closed
+          # without the shared secret in the request body. Same value the
+          # two Python steps above receive.
+          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           show_full_output: "true"
@@ -148,41 +154,65 @@ jobs:
             2. If reallocation.decreases AND reallocation.increases are
                both empty, there's nothing to propose this week. Skip
                the registration step (step 3); compose a short
-               diagnostic-only brief noting "no actionable
-               reallocation this week" plus the scaling labels and any
-               audience actions; Slack-post it; write the status
-               one-liner; exit. Do NOT POST to scaling-queue-write
-               with empty rows.
+               diagnostic-only brief: the title, the portfolio
+               12-week leads / spend / CPL headline, the scaling
+               labels (including ACTIVE-but-insufficient verticals),
+               then "no actionable reallocation this week —
+               <pool.increase_skip_reason>" and any
+               pool.paused_saturating_verticals ("<vertical>
+               saturating but every campaign PAUSED — no move
+               proposed"), plus any audience actions; Slack-post it;
+               write the status one-liner; exit. Do NOT POST to
+               scaling-queue-write with empty rows.
             3. Otherwise, register the proposal: POST the rows from
                reallocation.decreases + reallocation.increases (one
                row per affected campaign) to
                <exec_endpoint>?action=scaling-queue-write with this
                JSON body:
                  {
+                   "key": "$EXEC_SHARED_SECRET",
                    "rows": [
                      { "campaign_id", "campaign_name",
                        "current_daily_cents", "proposed_daily_cents",
                        "change_cents", "change_pct",
                        "signal_reasons": "<vertical>: <classification>
-                                          | <reason from JSON>" },
+                                          | CPL $<cpl> on <total_leads>
+                                          leads | <reason or
+                                          allocation_weight_reason>" },
                      ...
                    ],
                    "lockout_until": "<reallocation.lockout_until>",
                    "affected_campaign_ids":
                      <reallocation.affected_campaign_ids>
                  }
-               The endpoint URL is in
-               data/config/benchmarks.json under exec_endpoint. The
-               response carries `token`, `approve_url`, `reject_url`
-               which you'll embed in the Slack message.
+               "key" is the EXEC_SHARED_SECRET env var — read it from
+               the environment, never print it in the brief or the
+               log. The endpoint URL is in data/config/benchmarks.json
+               under exec_endpoint. The response carries `token`,
+               `approve_url`, `reject_url` which you'll embed in the
+               Slack message. If the response is
+               {"error":"unauthorized"}, do NOT retry and do NOT
+               invent URLs: post the brief without approval links and
+               prefix section 2 with "⚠️ registration refused
+               (EXEC_SHARED_SECRET missing) — no approval links this
+               week". signal_reasons must never contain the substring
+               "portfolio knockdown" — the headroom math attributes
+               knockdowns by matching it.
             4. Compose the four-section Slack brief per SKILL.md
-               §"Slack output rules": (a) Scaling labels per vertical,
-               (b) Strategic reallocation summary with headroom
-               consumed per affected campaign, (c) Audience actions
-               for any new_audience_needed verticals, (d) Last week's
-               evaluation IF the prior Tuesday's reallocation was
-               approved (pull historical context via
-               ?action=scaling-log-read&since=<14_days_ago>).
+               §"Slack output rules": (a) the portfolio 12-week
+               headline then scaling labels per vertical, CPL
+               ascending within class, (b) Strategic reallocation
+               framed in lead terms with headroom consumed per
+               affected campaign, (c) Audience actions for any
+               new_audience_needed verticals, (d) Last week's
+               evaluation IF ?action=scaling-queue-read&since=<last
+               Tuesday> returns source=strategic rows with
+               status=executed. For (d) compute CPL and lead counts
+               from ?action=rollup (spend / meta_conversions per
+               vertical for the two most recent week_start values) —
+               scaling_log carries no CPL column, so use
+               ?action=scaling-log-read&since=<14_days_ago> only for
+               classification, frequency and pool flags.
             5. POST the brief to SLACK_WEBHOOK_URL via curl. Include
                the approve_url and reject_url from step 3 inline so
                Tyler can click directly. Skip Slack silently if
@@ -190,21 +220,50 @@ jobs:
             6. Write the status one-liner to /tmp/agent_status.txt.
 
             Output rules — MUST follow:
+            - Title the message "*Honeycomb Scaling — <date>*" and
+              open with the portfolio 12-week line from
+              scaling_profiles.json portfolio.total_leads /
+              total_spend / cpl / median_cpl:
+              "Portfolio (12w): N leads · $S spend · CPL $X · median
+              vertical CPL $Y".
+            - Leads and CPL are the headline of every line. Each
+              vertical or campaign line leads with CPL and lead count
+              (verticals[v].cpl, .total_conversions, .total_spend;
+              proposal rows carry cpl / total_leads / vertical_spend).
+              Sort scaling labels by CPL ascending within class.
+            - IC may appear exactly once, as a trailing
+              "_of which N reached an IC decision_" line built from
+              portfolio.total_ic_conversions (omit when 0). NEVER
+              print ic_rate, cpicp, median_cpicp, median_ic_rate or
+              per-vertical IC counts, and never use them for ordering
+              or emphasis.
+            - If cpl is null for a vertical, print "CPL —" and list
+              it last within its group; do not substitute cpicp.
             - Cite real numbers from the JSON. Don't invent or round
               imprecisely. Strategic reallocation amounts are integer
               cents in the JSON; convert to dollars at the
               presentation layer (cents / 100).
             - Honor confidence labels in the scaling labels section:
-              tag `directional` verticals explicitly, skip
-              `insufficient` ones from the labels section entirely.
+              tag `directional` verticals explicitly. Skip
+              `insufficient` verticals UNLESS active_campaign_count
+              > 0 — print those as a "too new to classify — CPL $X on
+              N leads (k weeks, j active campaigns)" one-liner after
+              the classified list, so the campaigns Meta is actually
+              delivering never drop out of the brief.
+            - pool.portfolio_current_daily_cents and
+              portfolio.current_total_daily_cents count ACTIVE
+              campaigns only; label them "active portfolio" and do
+              not add portfolio.paused_total_daily_cents to them.
             - When reallocation.pool.knockdown_risk is true, add a
               one-line "may trigger 1% knockdown next cycle" note
               after the reallocation summary.
             - For new_audience_needed verticals, the action is "duplicate
-              ad set with broader targeting"; include the
-              creative_prescription line from the JSON if present
-              (creative_source: creative_intelligence_cache means it
-              came from Monday's brief).
+              ad set with broader targeting"; the diagnosis string
+              already opens with "CPL $X on N leads (12w)" — keep it
+              first; include the creative_prescription line from the
+              JSON if present (creative_source:
+              creative_intelligence_cache means it came from Monday's
+              brief).
 
             Constraints:
             - Read-only on the repo. Do not modify any source files.
@@ -217,8 +276,10 @@ jobs:
             Status reporter:
             - Before exiting, write a single-line status to
               /tmp/agent_status.txt, e.g.:
-                "verticals=15 scalable=4 saturating=2 over_invested=1 new_audience_needed=1 freed=$12/day allocated=$10/day net=net_negative knockdown_risk=false"
-                "verticals=12 scalable=3 saturating=0 over_invested=0 new_audience_needed=0 no_actionable_reallocation"
+                "leads=1240 cpl=$14.19 verticals=15 scalable=4 saturating=2 over_invested=1 new_audience_needed=1 freed=$12/day allocated=$10/day net=net_negative knockdown_risk=false"
+                "leads=1240 cpl=$14.19 verticals=12 scalable=3 saturating=0 over_invested=0 new_audience_needed=0 no_actionable_reallocation"
+              leads / cpl are portfolio.total_leads / portfolio.cpl
+              from scaling_profiles.json (12-week).
               The workflow's status reporter step picks this up and
               posts it to issue #48 alongside the data_commit marker.
 

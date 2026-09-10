@@ -37,13 +37,16 @@ Requires:
 - `META_ACCESS_TOKEN` env var (for the dataset builder's Meta calls)
 - `ANTHROPIC_API_KEY` env var (for the categorizer's Anthropic calls)
 - `EXEC_ENDPOINT` env var (optional — falls back to `exec_endpoint` in `data/config/benchmarks.json`)
+- `EXEC_SHARED_SECRET` env var (required for the Sheet write — `creative-intelligence-write` is a protected `/exec` action and the gate fails closed; see "Output — Sheet")
 - `SLACK_WEBHOOK_URL` env var (optional — Slack post is gated on this)
 
-Scheduled via `.github/workflows/agent-creative-intelligence.yml` for Monday 14:00 UTC. The first run is the slowest: ~$5 of Anthropic calls to categorize 200-400 unique variants and 50-150 unique images, plus the Meta-side cache refresh + image downloads. Subsequent runs hit cache for everything except new variants and process in seconds.
+Scheduled via `.github/workflows/agent-creative-intelligence.yml` for Monday 14:00 UTC (cron paused since 2026-06-08 — `workflow_dispatch` only until unpaused). The first run is the slowest: ~$5 of Anthropic calls to categorize 200-400 unique variants and 50-150 unique images, plus the Meta-side cache refresh + image downloads. Subsequent runs hit cache for everything except new variants and process in seconds.
 
 ## Architecture (in one paragraph)
 
 Per [docs/CREATIVE_INTELLIGENCE_DESIGN.md](../../docs/CREATIVE_INTELLIGENCE_DESIGN.md): the attribution spine is **corpus-level text aggregation**, not per-ad asset_id breakdown. Meta's optimizer converges on a single winning variant within days, so per-ad per-variant attribution would be dominated by Meta's choice. Instead, when the same body text appears across N different ads, we sum spend and leads across all N to produce a per-variant CPL that's meaningful at the corpus level. Side-by-side comparisons come from ads sharing an image_hash but differing on bodies — audience and image held constant by selection.
+
+The design doc predates the 2026-09-09 lead pivot and still says CPICP / IC throughout; read every CPICP reference there as CPL and every IC count as leads. The architecture is unchanged — only the metric moved.
 
 ## Dataset shape (`/tmp/creative_dataset.json`)
 
@@ -54,6 +57,7 @@ Per [docs/CREATIVE_INTELLIGENCE_DESIGN.md](../../docs/CREATIVE_INTELLIGENCE_DESI
   "ads": [
     {ad_id, ad_name, vertical, campaign_name,
      impressions, spend, leads, cpl, prequal_decisions, days_active,
+     ic_conversions, cpicp (reported only — never a sort key or threshold),
      bodies (count), titles (count), descriptions (count),
      image_hashes, local_image_paths,
      visual_styles: [{image_hash, visual_style, rationale}],
@@ -71,6 +75,7 @@ Per [docs/CREATIVE_INTELLIGENCE_DESIGN.md](../../docs/CREATIVE_INTELLIGENCE_DESI
                   avg_word_length, avg_words_per_sentence},
      ad_count, total_spend, total_impressions,
      total_leads, cpl,
+     total_ic_conversions, cpicp (reported only),
      llm_copy_angle, llm_copy_rationale,
      appears_in_ads: [...]}
   ],
@@ -146,7 +151,7 @@ PORTFOLIO WINNERS (confident, 47 ads):
   Bottom variant: "Get Funding for Your Brewery"
     $29.80 CPL across 3 ads, 24 leads
   Side-by-side under image 7babd2e: body "Banks decline restaurants…"
-  ($42) outperformed "Restaurant owners: prequalify…" ($98).
+  ($42 CPL) outperformed "Restaurant owners: prequalify…" ($98 CPL).
 
 [BAKERIES] (directional, 5 ads): ...
 
@@ -163,23 +168,37 @@ End with: `Sheet log: N rows written to creative_intelligence_log` and one line 
 
 Skip Slack posting entirely if `SLACK_WEBHOOK_URL` is unset or empty — print to terminal only. When the webhook IS set, POST a condensed version of the terminal brief: portfolio-wide top finding (one quoted body + numbers), top finding per vertical with `confident` label, plus any verticals where the bottom decile suggests a specific angle to retire. Skip `directional` and `insufficient` findings on Slack — they go to terminal/log only.
 
+The first line of the Slack post is always the headline, in exactly this shape:
+
+```
+🎯 Creative Intelligence — <until> — <N> leads at $<median CPL> median CPL across <M> ads (<since>–<until>)
+```
+
+where `N` = sum of `ads[].leads`, median CPL = median of the non-null `ads[].cpl` values, and `M` = top-level `ad_count`. Every finding that follows quotes the copy and its `(ad_count, total_leads, cpl)` numbers, e.g. `"Sarah's been brewing for 12 years" (4 ads, 142 leads, $11.80 CPL)`. Per-vertical findings are ordered by CPL ascending (best first); the retire-this-angle lines are ordered by CPL descending (worst first).
+
+IC (`ic_conversions` / `total_ic_conversions`) and rewards are reported-only subtypes. A finding may carry at most one secondary line — `of which N reached an IC decision` — and IC / CPICP is never the headline number, a sort key, a threshold, or the reason to flag or retire a variant.
+
 ## Output — Sheet
 
-POST one row per vertical to `?action=creative-intelligence-write` with this payload (the script does NOT issue this POST itself; the SKILL prompt orchestrates it via the `/exec` endpoint):
+POST one row per vertical to `?action=creative-intelligence-write` with this payload (the script does NOT issue this POST itself; the SKILL prompt orchestrates it via the `/exec` endpoint). The action is protected, so the body carries the shared secret as `key` — read it from `EXEC_SHARED_SECRET`, never hardcode it:
 
 ```
 {
+  "key": "<EXEC_SHARED_SECRET>",
   "rows": [
     {
-      "date": "2026-05-05",
+      "date": "2026-09-14",
       "vertical": "breweries",
       "ad_count": 14,
-      "median_cpicp": 52.30,
+      "median_cpl": 14.20,
+      "median_cpicp": 14.20,
       "spend_total": 1422.50,
-      "ic_total": 27,
+      "lead_total": 188,
+      "ic_total": 188,
       "top_body_variant_id": "08cb19e3d818bfc7",
       "top_body_text": "Banks Pass on Your Brewery. We Don't.",
-      "top_body_cpicp": 44.0,
+      "top_body_cpl": 12.10,
+      "top_body_cpicp": 12.10,
       "top_visual_hash": "7babd2e837eb42b4167c1e37d6be7b9e",
       "top_visual_style": "real_person",
       "bottom_decile_count": 2
@@ -189,17 +208,24 @@ POST one row per vertical to `?action=creative-intelligence-write` with this pay
 }
 ```
 
+Field rules:
+- `median_cpl` — median of the vertical's non-null `ads[].cpl`; `lead_total` — sum of the vertical's `ads[].leads`.
+- `top_body_text` / `top_body_variant_id` / `top_body_cpl` — the lowest-CPL body variant in the vertical that meets the `confident` floor (fall back to the lowest-CPL `directional` body if none is confident; leave the three fields blank if neither exists). Never pick by CPICP. This row is what the Tuesday portfolio-scaling brief quotes as its creative prescription, so the selection rule matters.
+- `median_cpicp`, `ic_total`, `top_body_cpicp` — **legacy-named, lead-valued.** Send the same numbers as `median_cpl`, `lead_total`, `top_body_cpl` (see the wire-contract note below).
+
 `creative-intelligence-write` auto-creates the `creative_intelligence_log` tab on first call. Header row: `date, vertical, ad_count, median_cpicp, spend_total, ic_total, top_body_variant_id, top_body_text, top_body_cpicp, top_visual_hash, top_visual_style, bottom_decile_count, recorded_at`.
 
 > **Wire contract is still IC-named.** `handleCreativeIntelligenceWrite_` in
 > `apps-script/Code.js` reads the payload keys `median_cpicp`, `ic_total` and
 > `top_body_cpicp` by name, so the JSON this skill POSTs still uses those key
 > names even though the analysis above is lead-based. Send lead values under
-> the legacy keys OR skip the Sheet write; do not rename the keys on this side
-> alone, because unrecognised keys are written as blanks. Renaming them to
-> `median_cpl` / `lead_total` / `top_body_cpl` requires the matching edit in
-> `Code.js` and a redeploy, which is tracked separately — the Apps Script
-> deploy pipeline has not run since 2026-06-23 and should be verified first.
+> the legacy keys, and send the same values additively under `median_cpl` /
+> `lead_total` / `top_body_cpl` so the payload is ready for the rename; do
+> not drop the legacy keys on this side alone, because unrecognised keys are
+> written as blanks and the handler would then blank three columns. Switching
+> the handler to the lead-named keys requires the matching edit in `Code.js`
+> and a redeploy, which is tracked separately — the Apps Script deploy
+> pipeline has not run since 2026-06-23 and should be verified first.
 
 ## Status reporter
 

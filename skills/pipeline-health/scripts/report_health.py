@@ -1,19 +1,20 @@
 #!/usr/bin/env python3
 """Deterministic reporter for pipeline-health check output.
 
-`check_health.py` runs the four checks, writes the `pipeline_health` Sheet
+`check_health.py` runs the five checks, writes the `pipeline_health` Sheet
 rows, and prints structured JSON. This script consumes that JSON and does the
 non-reasoning presentation work that used to be handled by an LLM
 (`claude-code-action`) in the retired `agent-pipeline-health.yml` workflow:
 
-  1. Print a human-readable terminal summary (all four checks + Sheet line).
+  1. Print a human-readable terminal summary (all five checks + Sheet line).
   2. On any WARN/FAIL, compose the plain-text Slack alert (FAIL lines first,
-     then WARN, `detail` strings verbatim) and POST it to SLACK_WEBHOOK_URL —
-     but only if that env var is set and non-empty (silent on full PASS).
+     then WARN, each line labelled with the check name, `detail` strings
+     verbatim) and POST it to SLACK_WEBHOOK_URL — but only if that env var
+     is set and non-empty (silent on full PASS).
   3. Write a one-line status to --status-file for the issue-#48 comment, e.g.
-       "PASS 4/0/0"
-       "WARN 3/1/0  meta_token: expires in 12 days (regenerate before ...)"
-       "FAIL 2/0/2  dashboard_endpoint: timed out after 25s"
+       "PASS 5/0/0"
+       "WARN 4/1/0  snapshot_volume: 2026-09-08: 47 insight row(s), 0 leads on $412.10 spend ..."
+       "FAIL 3/0/2  dashboard_endpoint: timed out after 25s"
 
 None of this requires a model — the output shape is fully specified by
 SKILL.md. Reporting is best-effort: a Slack/format hiccup never changes the
@@ -71,15 +72,18 @@ def print_terminal_summary(payload: dict[str, Any]) -> None:
 
 
 def slack_lines(payload: dict[str, Any]) -> list[str]:
-    """Non-PASS checks as 'STATUS: detail' lines, FAIL before WARN. Adds a
-    WARN line when the historical Sheet log write failed."""
+    """Non-PASS checks as 'STATUS name: detail' lines, FAIL before WARN.
+    The check name is always the first token after the status so a
+    subtype note in a funnel_conversions detail can never read as the
+    subject of the line. Adds a WARN line when the historical Sheet log
+    write failed."""
     checks = sorted(payload.get("checks", []),
                     key=lambda c: SEVERITY_ORDER.get(c.get("status"), 9))
-    lines = [f"{c['status']}: {c['detail']}"
+    lines = [f"{c['status']} {c.get('name', '?')}: {c['detail']}"
              for c in checks if c.get("status") in ("WARN", "FAIL")]
     sw = payload.get("sheet_write", {})
     if not sw.get("posted") and not sw.get("skipped"):
-        lines.append(f"WARN: pipeline_health Sheet log not written — "
+        lines.append(f"WARN sheet_write: pipeline_health Sheet log not written — "
                      f"{sw.get('error', 'unknown error')}")
     return lines
 

@@ -135,8 +135,9 @@ jobs:
       # Folded in 2026-06-23 from the retired agent-pipeline-health.yml
       # workflow, which fired claude-code-action (an Anthropic-billed
       # LLM agent) daily just to reformat deterministic JSON. check_health.py
-      # is fully self-contained: it runs the four checks (data freshness,
-      # Meta token, IC conversion event, dashboard endpoint), writes the
+      # is fully self-contained: it runs the five checks (data freshness,
+      # Meta token, funnel conversions — quality tier + reported subtypes,
+      # dashboard endpoint, snapshot volume + lead count), writes the
       # pipeline_health Sheet rows itself, and prints JSON. report_health.py
       # then composes the terminal summary, POSTs the Slack alert on
       # WARN/FAIL (silent on full PASS, skipped if no webhook), and writes
@@ -144,9 +145,13 @@ jobs:
       #
       # `if: always()` so health is reported even when the fetch above
       # failed — a stale/broken pull is exactly when you want the check.
-      # The health check targets the campaign-level rolling_data + Meta +
-      # dashboard endpoint, independent of this job's ad-level snapshot,
-      # so it's valid regardless of the fetch outcome.
+      # data_freshness / meta_token / dashboard_endpoint target the
+      # campaign-level rolling_data + Meta + dashboard endpoint, independent
+      # of this job's ad-level snapshot, so they're valid regardless of the
+      # fetch outcome. snapshot_volume deliberately inspects the snapshot
+      # this job just committed (leads + spend from ad_insights.json), so a
+      # failed or empty fetch surfaces as a snapshot_volume FAIL/WARN in
+      # Slack rather than passing silently.
       - name: Run pipeline-health checks
         if: always()
         env:
@@ -207,6 +212,14 @@ jobs:
             MANIFEST="data/snapshots/${DATE_LABEL}/_manifest.json"
             if [ -f "$MANIFEST" ]; then
               DETAIL="$(jq -r '"campaigns=\(.counts.campaigns // 0) adsets=\(.counts.adsets // 0) ads=\(.counts.ads // 0) ad_insights=\(.counts.ad_insights // 0)"' "$MANIFEST")"
+              # Lead heartbeat next to the row counts. `.leads` is the
+              # canonical field; `.conversions` is the pre-pivot alias on
+              # snapshots written before 2026-09-09. Tolerates a missing or
+              # malformed file so the comment still posts.
+              INSIGHTS="data/snapshots/${DATE_LABEL}/ad_insights.json"
+              LEADS="$(jq -r '[.[] | (.leads // .conversions // 0 | tonumber? // 0)] | add // 0' "$INSIGHTS" 2>/dev/null || echo 0)"
+              SPEND="$(jq -r '([.[] | (.spend // 0 | tonumber? // 0)] | add // 0) * 100 | round / 100' "$INSIGHTS" 2>/dev/null || echo 0)"
+              DETAIL="${DETAIL} leads=${LEADS:-0} spend=\$${SPEND:-0}"
             fi
             HEADER="**daily-data** (${DATE_LABEL}) — ${STATUS}"
           fi

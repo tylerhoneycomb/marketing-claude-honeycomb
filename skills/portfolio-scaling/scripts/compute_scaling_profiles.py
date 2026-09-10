@@ -17,11 +17,18 @@ Writes: data/derived/scaling_profiles.json
 
 Per-vertical: classification (scalable | stable | saturating | over-invested),
 new_audience_needed modifier, confidence (confident | directional | insufficient),
-elasticity_r, cpl, ic_rate, cpicp, frequency + CPM trends, spend_share.
+elasticity_r, cpl, leads, spend, frequency + CPM trends, spend_share. IC
+(ic_rate, cpicp, total_ic_conversions) is carried as a secondary stat only.
 
 Per-campaign: weekly_consumed_pct (absolute sum of |change_pct| across all
 sources since previous Tuesday — optimizer + knockdown + any prior strategic),
-weekly_remaining_pct, knockdown_applied_this_week, lifetime_ic_conversions.
+weekly_remaining_pct, knockdown_applied_this_week, lifetime_leads.
+
+Portfolio: 12-week leads / spend / CPL headline for the brief, plus the
+current daily budget total. The budget total and the tolerance headroom
+count ACTIVE campaigns only — a paused campaign's daily_budget is not
+spend, and including it made the tolerance band read as permanently
+breached (26 of 29 campaigns were paused on 2026-09-08).
 
 Headroom is empirical, not theoretical: it counts what actually executed in
 budget_queue, because the optimizer runs daily but doesn't always produce
@@ -58,8 +65,15 @@ DEFAULT_OUTPUT = DERIVED_DIR / "scaling_profiles.json"
 # campaign-name pattern handled in one file but not the other will
 # produce silently divergent classifications. Follow-up: extract to
 # scripts/lib/verticals.py.
+#
+# The prefix is the campaign objective, not the audience: AD-, ICD- and
+# LEADS- campaigns for the same vertical share one bucket (the 2026-08-19
+# LEADS-Broad-Q3-2026 continues ICD-Broad-Q2-2026 under `broad`). Before
+# LEADS was added here the two campaigns actually delivering fell through
+# to `name.lower()` as one-campaign verticals with too little history to
+# classify, so the brief listed only paused legacy verticals.
 VERTICAL_RE = re.compile(
-    r"^(?:PAUSED\s*-\s*)?(?:AD|ICD|Rev\d*)-(.+?)-Q\d+-\d{4}$",
+    r"^(?:PAUSED\s*-\s*)?(?:AD|ICD|LEADS|Rev\d*)-(.+?)-Q\d+-\d{4}$",
     re.IGNORECASE)
 LEGACY_VERTICAL_PATTERNS: list[tuple[re.Pattern[str], str]] = [
     (re.compile(r"\bwiner", re.IGNORECASE), "wineries"),
@@ -70,6 +84,20 @@ EXCLUDED_VERTICALS = {"template", "unknown"}
 # series mean reads as "rising" / "falling"; otherwise "flat". Tuned for
 # 4-week windows where week-to-week noise is meaningful but not classifiable.
 TREND_FLAT_BAND = 0.05
+
+# Mirrors LIFETIME_MIN_CONVERSIONS in apps-script/Code.js — the optimizer's
+# eligibility gate, counted in leads (rolling_data.conversions is the lead
+# priority chain). Kept as a named constant here because the gate lives in
+# Code.js rather than benchmarks.json; change both together.
+OPTIMIZER_LIFETIME_MIN_LEADS = 10
+
+
+def is_active(cinfo: dict[str, Any] | None) -> bool:
+    """True for campaigns Meta is delivering. Same test as
+    compute_reallocation.is_actionable_campaign."""
+    if not cinfo:
+        return False
+    return (cinfo.get("effective_status") or "").upper() == "ACTIVE"
 
 
 def extract_vertical(campaign_name: str | None) -> str:
@@ -426,14 +454,19 @@ def fetch_current_campaign_budgets(client: MetaClient) -> dict[str, dict[str, An
     return out
 
 
-def lifetime_ic_per_campaign(rollup_rows: list[dict[str, Any]],
-                             campaign_id_by_name: dict[str, str]) -> dict[str, int]:
+def lifetime_leads_per_campaign(rollup_rows: list[dict[str, Any]],
+                                campaign_id_by_name: dict[str, str]) -> dict[str, int]:
+    """Sum meta_conversions (= leads) per campaign over the whole rollup.
+    Used to mirror the optimizer's lifetime eligibility gate. This used to
+    sum ic_conversions, which left the two live LEADS campaigns ineligible
+    while paused legacy campaigns with old IC history stayed eligible.
+    """
     out: dict[str, int] = defaultdict(int)
     for r in rollup_rows:
         cid = campaign_id_by_name.get(r.get("campaign_name") or "")
         if not cid:
             continue
-        out[cid] += int(r.get("ic_conversions") or 0)
+        out[cid] += int(r.get("meta_conversions") or 0)
     return out
 
 
@@ -510,7 +543,7 @@ def main() -> int:
     adset_rows = load_snapshot_adset_rows(snapshot_since, snapshot_until)
     logging.info("Got %d adset-day rows", len(adset_rows))
 
-    # ─── Per-campaign headroom + lifetime IC ───────────────────────────
+    # ─── Per-campaign headroom + lifetime leads ────────────────────────
     headroom_by_campaign = compute_per_campaign_headroom(
         executed_rows, benchmarks["max_weekly_total_change_pct"]
     )
@@ -520,7 +553,7 @@ def main() -> int:
         cname = str(m.get("campaign_name") or "").strip()
         if cid and cname:
             campaign_id_by_name[cname] = cid
-    lifetime_ic = lifetime_ic_per_campaign(rollup, campaign_id_by_name)
+    lifetime_leads = lifetime_leads_per_campaign(rollup, campaign_id_by_name)
 
     # ─── Per-vertical aggregation ──────────────────────────────────────
     rollup_by_vw = aggregate_rollup_by_vertical_week(rollup)
@@ -610,7 +643,7 @@ def main() -> int:
         portfolio_total_conv += total_conv
 
         # Optimizer eligibility: at least one campaign in this vertical clears
-        # the LIFETIME_MIN_CONVERSIONS gate (10).
+        # the lifetime gate, counted in leads.
         all_camp_names: set[str] = set()
         for ws in sorted({k[1] for k in rollup_by_vw.keys()}):
             r = rollup_by_vw.get((vertical, ws))
@@ -619,7 +652,14 @@ def main() -> int:
         camp_ids = [campaign_id_by_name.get(n) for n in all_camp_names]
         camp_ids = [c for c in camp_ids if c]
         optimizer_eligible = any(
-            lifetime_ic.get(cid, 0) >= 10 for cid in camp_ids
+            lifetime_leads.get(cid, 0) >= OPTIMIZER_LIFETIME_MIN_LEADS
+            for cid in camp_ids
+        )
+        # How many of the vertical's campaigns Meta is delivering right now.
+        # The brief uses this to surface an `insufficient` vertical that is
+        # nonetheless live, instead of skipping the only campaigns spending.
+        active_campaign_count = sum(
+            1 for cid in camp_ids if is_active(current_budgets.get(cid))
         )
 
         vertical_metrics[vertical] = {
@@ -645,6 +685,7 @@ def main() -> int:
             "cpm_series": [round(v, 2) for v in recent_weeks_cpm],
             "campaign_ids": camp_ids,
             "campaign_names": sorted(all_camp_names),
+            "active_campaign_count": active_campaign_count,
             "optimizer_eligible": optimizer_eligible,
         }
 
@@ -676,6 +717,13 @@ def main() -> int:
         if m["confidence"] == "insufficient":
             m["classification"] = "insufficient"
 
+    # Emit verticals in CPL-ascending order (no-lead verticals last) so the
+    # brief's default reading order is the ranking, not the alphabet.
+    vertical_metrics = dict(sorted(
+        vertical_metrics.items(),
+        key=lambda kv: (kv[1]["cpl"] is None, kv[1]["cpl"] or 0.0, kv[0]),
+    ))
+
     # ─── Per-campaign block ────────────────────────────────────────────
     per_campaign: dict[str, dict[str, Any]] = {}
     for cid, budget_info in current_budgets.items():
@@ -689,7 +737,7 @@ def main() -> int:
             "campaign_name": budget_info["name"],
             "effective_status": budget_info["effective_status"],
             "daily_budget_cents": budget_info["daily_budget_cents"],
-            "lifetime_ic_conversions": int(lifetime_ic.get(cid, 0)),
+            "lifetime_leads": int(lifetime_leads.get(cid, 0)),
             "vertical": extract_vertical(budget_info["name"]),
             "weekly_consumed_pct": head["weekly_consumed_pct"],
             "weekly_remaining_pct": head["weekly_remaining_pct"],
@@ -697,9 +745,19 @@ def main() -> int:
         }
 
     # ─── Portfolio block ───────────────────────────────────────────────
+    # ACTIVE campaigns only. A paused campaign's daily_budget is not spend,
+    # so counting it against the weekly target made the tolerance band read
+    # as permanently breached and scaled every increase to zero. The paused
+    # total is kept alongside for transparency, never for math.
+    active_budgets = {
+        cid: b for cid, b in current_budgets.items() if is_active(b)
+    }
     current_total_daily_cents = sum(
-        b["daily_budget_cents"] for b in current_budgets.values()
+        b["daily_budget_cents"] for b in active_budgets.values()
     )
+    paused_total_daily_cents = sum(
+        b["daily_budget_cents"] for b in current_budgets.values()
+    ) - current_total_daily_cents
     target_weekly_dollars = target_weekly
     target_daily_dollars = target_weekly_dollars / 7
     tolerance_daily_dollars = tolerance_weekly / 7
@@ -708,19 +766,38 @@ def main() -> int:
         - max(0, current_total_daily_cents - target_daily_dollars * 100), 0,
     )
 
+    # Optimizer cycles that moved live budget this week. A cycle whose only
+    # executed rows touched campaigns that are now paused did not change
+    # delivering spend, so it does not count against the tolerance story.
     optimizer_cycles = len({
         r.get("token") for r in executed_rows
-        if r.get("token") and str(r.get("status", "")).lower() == "executed"
+        if r.get("token")
+        and str(r.get("status", "")).lower() == "executed"
+        and str(r.get("campaign_id") or "") in active_budgets
     })
+
+    portfolio_cpl = (
+        portfolio_total_spend / portfolio_total_conv
+        if portfolio_total_conv > 0 else None
+    )
 
     portfolio = {
         "current_total_daily_cents": int(current_total_daily_cents),
         "current_total_weekly_dollars": round(current_total_daily_cents / 100 * 7, 2),
+        "active_campaign_count": len(active_budgets),
+        "paused_total_daily_cents": int(paused_total_daily_cents),
         "target_weekly_spend": target_weekly_dollars,
         "weekly_spend_tolerance": tolerance_weekly,
         "tolerance_headroom_daily_cents": int(tolerance_headroom_daily),
+        # 12-week trailing headline for the brief (sum of every vertical).
+        "total_leads": int(portfolio_total_conv),
+        "total_spend": round(portfolio_total_spend, 2),
+        "cpl": round(portfolio_cpl, 2) if portfolio_cpl is not None else None,
         "median_cpl": (round(portfolio_median_cpl, 2)
                        if portfolio_median_cpl is not None else None),
+        # Secondary: leads that reached an IC decision. Reported, never
+        # a sort key or threshold.
+        "total_ic_conversions": int(portfolio_total_ic),
         "median_cpicp": (round(portfolio_median_cpicp, 2)
                          if portfolio_median_cpicp is not None else None),
         "median_ic_rate": (round(portfolio_median_ic_rate, 4)
