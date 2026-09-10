@@ -1,5 +1,5 @@
 {
-  "computed_at": "2026-09-09T16:52:31.678456+00:00",
+  "computed_at": "2026-09-09T18:01:37.590186+00:00",
   "window_days": 7,
   "snapshot_dates": [
     "2026-09-02",
@@ -21,10 +21,7 @@
   },
   "actionable_critical": [],
   "actionable_warning": [],
-  "winners": [
-    "120252841680990631",
-    "120252962579530631"
-  ],
+  "winners": [],
   "bleeders": [],
   "learning_phase_adsets_skipped": 0
 }

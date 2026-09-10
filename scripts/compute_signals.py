@@ -96,6 +96,25 @@ def load_ad_to_creative(dates: list[str]) -> dict[str, str]:
     return {}
 
 
+def row_leads(row: dict[str, Any]) -> int:
+    """Leads for a row, tolerating pre-pivot snapshots.
+
+    Snapshots written before the 2026-09-09 lead pivot carry only
+    `conversions`; newer ones carry canonical `leads` plus `conversions` as a
+    deprecated alias. Reading both keeps the 250-day history usable while the
+    backfill lands.
+    """
+    value = row.get("leads")
+    if value is None:
+        value = row.get("conversions")
+    return int(value or 0)
+
+
+def safe_cpl(spend: float, leads: int) -> float | None:
+    """Cost per lead, or None when there are no leads to divide by."""
+    return round(spend / leads, 2) if leads else None
+
+
 def linear_trend_slope(values: list[float]) -> float:
     """Slope of best-fit line through `values` indexed by their position.
 
@@ -140,6 +159,9 @@ def compute_ad_metrics(history: list[dict[str, Any]]) -> dict[str, Any]:
     freqs = [r["frequency"] for r in history]
     spend = sum(r["spend"] for r in history)
 
+    leads = [row_leads(r) for r in history]
+    total_leads = sum(leads)
+
     ctr_7d = statistics.mean(ctrs) if ctrs else 0.0
     freq_7d = statistics.mean(freqs) if freqs else 0.0
     ctr_slope = linear_trend_slope(ctrs)
@@ -151,11 +173,31 @@ def compute_ad_metrics(history: list[dict[str, Any]]) -> dict[str, Any]:
     else:
         ctr_decline_pct = None
 
+    # CPL inflation: split the window in half and compare cost per lead.
+    # Positive means the ad got MORE expensive per lead in the recent half.
+    cpl_inflation_pct = None
+    if len(history) >= 4:
+        mid = len(history) // 2
+        early_spend = sum(r["spend"] for r in history[:mid])
+        late_spend = sum(r["spend"] for r in history[mid:])
+        early_leads = sum(leads[:mid])
+        late_leads = sum(leads[mid:])
+        if early_leads and late_leads:
+            early_cpl = early_spend / early_leads
+            late_cpl = late_spend / late_leads
+            cpl_inflation_pct = pct_change(late_cpl, early_cpl)
+
     return {
         "days_active": len(history),
         "total_impressions": sum(impressions),
         "total_clicks": sum(clicks),
         "total_spend": round(spend, 2),
+        "total_leads": total_leads,
+        "total_prequal_decisions": sum(int(r.get("prequal_decisions") or 0) for r in history),
+        "total_ic_conversions": sum(int(r.get("ic_conversions") or 0) for r in history),
+        "cpl": safe_cpl(spend, total_leads),
+        "cpl_inflation_pct": (round(cpl_inflation_pct, 2)
+                              if cpl_inflation_pct is not None else None),
         "ctr_7d_rolling": round(ctr_7d, 4),
         "frequency_7d": round(freq_7d, 3),
         "ctr_slope": round(ctr_slope, 6),
@@ -186,16 +228,30 @@ def evaluate_fatigue(metrics: dict[str, Any], thresholds: dict[str, Any]) -> dic
     elif freq >= thresholds["frequency_warning"]:
         flags.append("frequency_warning")
 
+    # CPL inflation is the outcome-level fatigue signal: an ad can hold its
+    # CTR while the leads it buys get steadily more expensive, which CTR
+    # decline alone never catches.
+    cpl_inflation = metrics.get("cpl_inflation_pct")
+    if cpl_inflation is not None:
+        if cpl_inflation >= thresholds["cpl_inflation_critical_pct"]:
+            flags.append("cpl_inflation_critical")
+        elif cpl_inflation >= thresholds["cpl_inflation_warning_pct"]:
+            flags.append("cpl_inflation_warning")
+
     # Determine the underlying severity from flags regardless of
     # whether the row passes the actionability floor — so downstream
     # consumers can distinguish "below floor with flags" from
     # "below floor with no signals at all" (both used to land in the
     # "ok" bucket).
     raw_severity = "ok"
-    if "frequency_critical" in flags or (
-            "ctr_declining" in flags and "frequency_warning" in flags):
+    if ("frequency_critical" in flags
+            or "cpl_inflation_critical" in flags
+            or ("ctr_declining" in flags and "frequency_warning" in flags)
+            or ("cpl_inflation_warning" in flags and "ctr_declining" in flags)):
         raw_severity = "critical"
-    elif "ctr_declining" in flags or "frequency_warning" in flags:
+    elif ("ctr_declining" in flags
+            or "frequency_warning" in flags
+            or "cpl_inflation_warning" in flags):
         raw_severity = "warning"
 
     if actionable:
@@ -213,7 +269,24 @@ def evaluate_fatigue(metrics: dict[str, Any], thresholds: dict[str, Any]) -> dic
 
 def compute_winner_bleeder(rows_by_ad: dict[str, list[dict[str, Any]]],
                            thresholds: dict[str, Any]) -> list[dict[str, Any]]:
-    """Rank ads within their ad set by CTR and spend share."""
+    """Rank ads within their ad set by COST PER LEAD.
+
+    Pre-pivot this ranked on CTR and spend share, which meant a lone ad in an
+    ad set scored spend_share 1.0 and ctr_vs_avg 1.0 and was always labelled a
+    "winner" regardless of whether it produced a single lead. Two changes fix
+    that:
+
+      1. Leads, not clicks, decide the label. CTR is retained as a reported
+         diagnostic and as the tiebreaker when no ad in the set has leads yet.
+      2. Comparative labels require at least two delivering peers. A lone ad
+         has nothing to be better or worse than, so it is labelled None with
+         `label_reason` explaining why, and is judged only against the
+         absolute CPL target.
+    """
+    min_peers = thresholds["min_peers_for_comparison"]
+    target_cpl = thresholds["target_cpl"]
+    warn_mult = thresholds["cpl_warning_multiple"]
+
     by_adset: dict[str, list[tuple[str, list[dict[str, Any]]]]] = defaultdict(list)
     for ad_id, history in rows_by_ad.items():
         adset_id = history[-1].get("adset_id")
@@ -227,36 +300,75 @@ def compute_winner_bleeder(rows_by_ad: dict[str, list[dict[str, Any]]],
             spend = sum(r["spend"] for r in history)
             impr = sum(r["impressions"] for r in history)
             clicks = sum(r["clicks"] for r in history)
-            ctr = (clicks / impr) if impr else 0.0
+            leads = sum(row_leads(r) for r in history)
             ads_summary.append({
                 "ad_id": ad_id,
                 "ad_name": history[-1].get("ad_name"),
                 "spend": spend,
                 "impressions": impr,
-                "ctr": ctr,
+                "leads": leads,
+                "ctr": (clicks / impr) if impr else 0.0,
+                "cpl": safe_cpl(spend, leads),
             })
+
         adset_spend = sum(a["spend"] for a in ads_summary)
-        ctrs = [a["ctr"] for a in ads_summary if a["impressions"] > 0]
+        delivering = [a for a in ads_summary
+                      if a["impressions"] >= thresholds["min_impressions_for_signal"]]
+        # Ad-set CPL is pooled (total spend / total leads), not a mean of
+        # per-ad CPLs, so a low-spend outlier can't drag the benchmark.
+        pooled_spend = sum(a["spend"] for a in delivering)
+        pooled_leads = sum(a["leads"] for a in delivering)
+        adset_cpl = safe_cpl(pooled_spend, pooled_leads)
+        ctrs = [a["ctr"] for a in delivering]
         adset_avg_ctr = statistics.mean(ctrs) if ctrs else 0.0
+        peers_with_leads = sum(1 for a in delivering if a["leads"] > 0)
 
         for a in ads_summary:
             spend_share = (a["spend"] / adset_spend) if adset_spend else 0.0
             ctr_vs_avg = (a["ctr"] / adset_avg_ctr) if adset_avg_ctr else 0.0
-            label = None
-            if a["impressions"] >= thresholds["min_impressions_for_signal"]:
-                if spend_share >= thresholds["winner_spend_share_min"] and ctr_vs_avg >= 1.0:
-                    label = "winner"
-                elif ctr_vs_avg <= thresholds["bleeder_ctr_vs_adset_avg"]:
+            cpl_vs_adset = (round(a["cpl"] / adset_cpl, 3)
+                            if a["cpl"] is not None and adset_cpl else None)
+            cpl_vs_target = (round(a["cpl"] / target_cpl, 3)
+                             if a["cpl"] is not None and target_cpl else None)
+
+            label: str | None = None
+            reason: str | None = None
+
+            if a["impressions"] < thresholds["min_impressions_for_signal"]:
+                reason = "below_impression_floor"
+            elif a["leads"] == 0 and a["spend"] > 0:
+                # Spending with nothing to show is decidable without peers.
+                label = "bleeder"
+                reason = "spend_without_leads"
+            elif len(delivering) < min_peers or peers_with_leads < min_peers:
+                # Not comparable — fall back to the absolute target.
+                reason = "insufficient_peers"
+                if cpl_vs_target is not None and cpl_vs_target >= warn_mult:
                     label = "bleeder"
+                    reason = "cpl_above_target"
+            elif cpl_vs_adset is not None:
+                if cpl_vs_adset <= 1.0:
+                    label = "winner"
+                    reason = "cpl_at_or_below_adset"
+                elif cpl_vs_adset >= thresholds["bleeder_cpl_vs_adset"]:
+                    label = "bleeder"
+                    reason = "cpl_above_adset"
+
             results.append({
                 "adset_id": adset_id,
                 "ad_id": a["ad_id"],
                 "ad_name": a["ad_name"],
                 "spend": round(a["spend"], 2),
                 "spend_share": round(spend_share, 4),
+                "leads": a["leads"],
+                "cpl": a["cpl"],
+                "cpl_vs_adset_avg": cpl_vs_adset,
+                "cpl_vs_target": cpl_vs_target,
                 "ctr": round(a["ctr"], 4),
                 "ctr_vs_adset_avg": round(ctr_vs_avg, 3),
+                "peers_delivering": len(delivering),
                 "label": label,
+                "label_reason": reason,
             })
     return results
 
@@ -282,11 +394,19 @@ def run(window_days: int) -> int:
         "ctr_decline_pct_7d": fatigue_cfg["ctr_early_decline_pct"],
         "frequency_warning": fatigue_cfg["frequency_warning"],
         "frequency_critical": fatigue_cfg["frequency_critical"],
+        "cpl_inflation_warning_pct": fatigue_cfg["cpl_inflation_warning_pct"],
+        "cpl_inflation_critical_pct": fatigue_cfg["cpl_inflation_critical_pct"],
     }
+    econ_cfg = config["lead_economics"]
     perf_thresholds = {
-        "bleeder_ctr_vs_adset_avg": daily_cfg["bleeder_ctr_vs_adset_avg_pct"] / 100.0,
-        "winner_spend_share_min": daily_cfg["bleeder_min_spend_share_pct"] / 100.0,
         "min_impressions_for_signal": fatigue_cfg["min_impressions"],
+        # An ad set needs at least this many delivering, lead-producing ads
+        # before winner/bleeder is a meaningful comparison.
+        "min_peers_for_comparison": 2,
+        # A bleeder costs at least this multiple of its ad set's pooled CPL.
+        "bleeder_cpl_vs_adset": econ_cfg["cpl_warning_multiple"],
+        "target_cpl": econ_cfg["target_cpl_dollars"],
+        "cpl_warning_multiple": econ_cfg["cpl_warning_multiple"],
     }
 
     dates = load_snapshot_dates(window_days)
@@ -324,6 +444,7 @@ def run(window_days: int) -> int:
             "ad_name": history[-1].get("ad_name"),
             "adset_id": adset_id,
             "adset_name": history[-1].get("adset_name"),
+            "adset_effective_status": adset.get("effective_status"),
             "campaign_id": history[-1].get("campaign_id"),
             "campaign_name": history[-1].get("campaign_name"),
             "creative_id": creative_id,

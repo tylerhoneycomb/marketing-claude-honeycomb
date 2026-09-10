@@ -7,13 +7,51 @@
   },
   "exec_endpoint": "https://script.google.com/macros/s/AKfycbxx8ejN4CH3i7f2sTlXQZNCWVti4n4pD78K0Llvb0dG-HrsDfTOtmjOf0yWlq47F0mhsw/exec",
   "slack_webhook_secret_name": "SLACK_WEBHOOK_URL",
-  "ic_tracking": {
-    "custom_conversion_id": "2330338620810873",
-    "event_name": "Investment Crowdfunding Prequal Decision",
-    "pattern": "investment crowdfunding"
+  "conversions": {
+    "_doc": "Lead-first funnel. `primary` drives every ranking, budget and pacing decision. `quality` is a reported mid-funnel signal. `subtypes` are reported only, never inputs to automated decisions.",
+    "primary": {
+      "metric": "leads",
+      "field": "leads",
+      "_doc": "Priority chain, not a sum. Verified 2026-09-09 against both live Q3 campaigns: `lead`, `offsite_conversion.fb_pixel_lead` and `onsite_web_lead` return IDENTICAL values (215/215/215 and 180/180/180), so summing would multiply-count. First present action_type wins.",
+      "action_type_priority": [
+        "lead",
+        "offsite_conversion.fb_pixel_lead",
+        "onsite_web_lead",
+        "onsite_conversion.lead_grouped"
+      ]
+    },
+    "quality": {
+      "metric": "prequal_decisions",
+      "field": "prequal_decisions",
+      "custom_conversion_id": "1153878920152279",
+      "event_name": "All Decisions Prequal conversion v1 - Q1 2026",
+      "_doc": "A lead that reached a prequal decision. Fires on ~90% of leads (355/395 over the 30d to 2026-09-08), which makes it dense enough to be statistically actionable."
+    },
+    "subtypes": {
+      "_doc": "Decision outcomes. Reported in the dashboard's subtype tab; deliberately excluded from ranking and budget logic because volume is too low to support inference.",
+      "investment_crowdfunding": {
+        "field": "ic_conversions",
+        "custom_conversion_id": "2330338620810873",
+        "event_name": "Investment Crowdfunding Prequal Decision",
+        "_doc": "Historically the sole optimization target. Collapsed to n=1 over the 30d to 2026-09-08 \u2014 the conversion is live and correctly configured (last fired 2026-09-03); the Q3 broad audience simply does not qualify for IC."
+      },
+      "rewards_crowdfunding": {
+        "field": "rewards_conversions",
+        "custom_conversion_id": "1527298745037132",
+        "event_name": "Rewards Crowdfunding Prequal Decision (v2)"
+      }
+    }
+  },
+  "lead_economics": {
+    "_doc": "Derived from 250 days of snapshot history: $234,336 spend / 15,206 leads = $15.41 blended CPL; $15.94 over the trailing 30d.",
+    "target_cpl_dollars": 16.0,
+    "cpl_warning_multiple": 1.5,
+    "cpl_critical_multiple": 2.0
   },
   "pacing": {
-    "weekly_spend_target_dollars": 10000,
+    "_doc": "Set 2026-09-09 to $300/day = $2,100/week, matching the account's actual run rate. The live value comes from /exec?action=get_spend_goal (dashboard-managed); this is the fallback used only when /exec is unreachable. Keep the two in step.",
+    "weekly_spend_target_dollars": 2100,
+    "weekly_spend_tolerance_dollars": 315,
     "pacing_tolerance_pct": 15
   },
   "fatigue": {
@@ -25,6 +63,8 @@
     "cpc_inflation_warning_pct": 25,
     "cpc_inflation_critical_pct": 50,
     "cpm_flag_increase_pct": 50,
+    "cpl_inflation_warning_pct": 25,
+    "cpl_inflation_critical_pct": 50,
     "min_impressions": 1000,
     "min_days_active": 7,
     "baseline_window_start_day": 4,
@@ -36,13 +76,16 @@
     "bleeder_ctr_vs_adset_avg_pct": 50,
     "bleeder_min_spend_share_pct": 10,
     "winner_min_conversions": 5,
+    "winner_rank_metric": "cpl",
     "early_fatigue_ctr_decline_pct": 15,
     "early_fatigue_min_frequency": 2.0
   },
   "pipeline_health": {
     "token_warning_days": 14,
     "endpoint_timeout_seconds": 10,
-    "data_freshness_max_gap_weekdays": 1
+    "data_freshness_max_gap_weekdays": 1,
+    "min_expected_insight_rows": 1,
+    "_doc": "min_expected_insight_rows guards the 2026-08-15 failure mode, where the pipeline committed an empty ad_insights.json and every check still passed."
   },
   "scaling": {
     "max_weekly_total_change_pct": 0.12,
@@ -55,9 +98,17 @@
     "elasticity_window_weeks": 12,
     "min_weeks_confident": 10,
     "min_weeks_directional": 6,
-    "min_weekly_conversions": 3,
-    "high_spend_cpl_degradation_threshold": 0.30,
-    "campaign_floor_buffer_pct": 0.04
+    "min_weekly_conversions": 10,
+    "high_spend_cpl_degradation_threshold": 0.3,
+    "campaign_floor_buffer_pct": 0.04,
+    "_doc": "min_weekly_conversions raised 3 -> 10 leads on 2026-09-09. Across 331 campaign-weeks of history the median is 33 leads; a floor of 3 admitted 98% of weeks including pure-noise ones, while 10 retains 88% and sits below the p25 of 17."
+  },
+  "creative_intelligence": {
+    "_doc": "Confidence floors restated in leads. The prior IC-denominated floors (>=25 IC confident, >=10 IC directional) were unreachable once IC collapsed; leads run ~14x denser (15,206 vs 1,074 lifetime), so these are scaled to preserve the original statistical intent.",
+    "confident_min_ads": 10,
+    "confident_min_leads": 100,
+    "directional_min_ads": 5,
+    "directional_min_leads": 40
   },
   "campaign_defaults": {
     "type": "prospecting"

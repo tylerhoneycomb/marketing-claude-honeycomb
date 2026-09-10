@@ -1,16 +1,23 @@
 #!/usr/bin/env python3
 """Pipeline health checks for the Honeycomb ads system.
 
-Runs four checks, posts the results to the `pipeline_health` Sheet tab, and
+Runs five checks, posts the results to the `pipeline_health` Sheet tab, and
 prints structured JSON to stdout. The skill (SKILL.md) reads the JSON and
 composes the Slack message — but the Sheet write is the script's job, so it
 happens deterministically every run.
 
 Checks:
-  1. data_freshness    — most recent date in rolling_data vs expected
-  2. meta_token        — debug_token: validity + expiry
-  3. ic_conversion_event — IC custom conversion exists in the account
+  1. data_freshness     — most recent date in rolling_data vs expected
+  2. meta_token         — debug_token: validity + expiry
+  3. funnel_conversions — quality + subtype custom conversions exist, are
+                          unarchived, and report last_fired_time
   4. dashboard_endpoint — /exec?action=rollup returns valid JSON
+  5. snapshot_volume    — newest ad-level snapshot has insight rows, and
+                          reports its lead total + spend (the primary tier)
+
+The primary tier (`leads`) is a standard pixel action, not a custom
+conversion, so it never appears in `customconversions` — its health signal
+is the lead count in snapshot_volume, not funnel_conversions.
 
 Environment:
   META_ACCESS_TOKEN  required
@@ -37,6 +44,18 @@ import requests
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 CONFIG_PATH = REPO_ROOT / "data" / "config" / "benchmarks.json"
+
+# This script is deliberately standalone — it is the checker that runs when
+# other things are broken, so it imports nothing from scripts/lib. That is
+# why the shared secret is read here rather than via
+# scripts/lib/exec_api.exec_key(), which is the canonical definition for
+# every other caller. Keep the env var name in step with it.
+EXEC_SECRET_ENV_VAR = "EXEC_SHARED_SECRET"
+
+
+def exec_key() -> str:
+    """Shared secret for side-effecting /exec actions (e.g. health-write)."""
+    return os.environ.get(EXEC_SECRET_ENV_VAR, "")
 
 
 def load_config() -> dict[str, Any]:
@@ -160,13 +179,47 @@ def check_meta_token(token: str, api_version: str, tz: ZoneInfo,
             "detail": f"valid, expires in {days_left} days"}
 
 
-def check_ic_conversion_event(token: str, account_id: str, api_version: str,
-                              expected_id: str) -> dict[str, Any]:
-    name = "ic_conversion_event"
+def check_funnel_conversions(token: str, account_id: str, api_version: str,
+                             config: dict[str, Any]) -> dict[str, Any]:
+    """Verify every configured custom conversion still exists and is live.
+
+    Checks the quality tier and each subtype. A missing or archived QUALITY
+    conversion is a FAIL (it feeds reported metrics); a missing or archived
+    SUBTYPE is at most a WARN, since subtypes are reported-only and may
+    legitimately retire. Also surfaces `last_fired_time` so a conversion
+    that silently stopped firing is visible instead of passing on mere
+    existence — the failure mode that let IC drop to n=1 through August
+    2026 without any alert.
+
+    The detail string always leads with the quality tier and trails the
+    subtypes under an explicit "(reported only)" label, so a subtype problem
+    never reads as a performance alert for that subtype. The primary tier
+    (leads) is a pixel action, not a custom conversion — see
+    check_snapshot_volume for its signal.
+    """
+    name = "funnel_conversions"
+    conv = config.get("conversions") or {}
+    expected: list[tuple[str, str, bool]] = []  # (id, label, is_required)
+
+    quality = conv.get("quality") or {}
+    if quality.get("custom_conversion_id"):
+        expected.append((str(quality["custom_conversion_id"]),
+                         quality.get("metric") or "quality", True))
+    for key, spec in (conv.get("subtypes") or {}).items():
+        if isinstance(spec, dict) and spec.get("custom_conversion_id"):
+            expected.append((str(spec["custom_conversion_id"]), key, False))
+
+    if not expected:
+        return {"name": name, "status": "WARN",
+                "detail": "no custom conversions configured in benchmarks.json"}
+
     url = f"https://graph.facebook.com/{api_version}/{account_id}/customconversions"
     try:
-        resp = requests.get(url, params={"fields": "id,name",
-                                          "access_token": token}, timeout=15)
+        resp = requests.get(url, params={
+            "fields": "id,name,is_archived,last_fired_time",
+            "limit": 100,
+            "access_token": token,
+        }, timeout=15)
     except requests.RequestException as exc:
         return {"name": name, "status": "FAIL",
                 "detail": f"could not reach Meta: {exc}"}
@@ -175,15 +228,130 @@ def check_ic_conversion_event(token: str, account_id: str, api_version: str,
         return {"name": name, "status": "FAIL",
                 "detail": f"HTTP {resp.status_code}: {resp.text[:200]}"}
 
-    items = resp.json().get("data", [])
-    for c in items:
-        if str(c.get("id")) == str(expected_id):
-            return {"name": name, "status": "PASS",
-                    "detail": f"custom conversion {expected_id} ('{c.get('name')}') exists"}
+    by_id = {str(c.get("id")): c for c in resp.json().get("data", [])}
+    quality_parts: list[str] = []            # always first in the detail
+    subtype_problems: list[str] = []
+    subtype_notes: list[tuple[str, str]] = []  # (last_fired, label)
+    status = "PASS"
 
-    return {"name": name, "status": "FAIL",
-            "detail": f"custom conversion {expected_id} not found "
-                      f"in account {account_id} ({len(items)} conversions checked)"}
+    for cid, label, required in expected:
+        found = by_id.get(cid)
+        if not found:
+            problem = "not found in account"
+        elif found.get("is_archived"):
+            problem = "is ARCHIVED"
+        else:
+            problem = ""
+
+        if required:
+            if problem:
+                quality_parts.append(f"{label}: {cid} {problem}")
+                status = "FAIL"
+            else:
+                last_fired = (found.get("last_fired_time") or "never")[:10]
+                quality_parts.append(f"{label} last fired {last_fired}")
+            continue
+
+        # Subtypes are reported-only: a problem is a tracking-config issue,
+        # never more than WARN, and never allowed to lead the line.
+        if problem:
+            subtype_problems.append(f"subtype {label} (reported only) {problem} ({cid})")
+            if status == "PASS":
+                status = "WARN"
+        else:
+            last_fired = (found.get("last_fired_time") or "never")[:10]
+            subtype_notes.append((last_fired, label))
+
+    parts = list(quality_parts) + subtype_problems
+    if subtype_notes:
+        # Most recently fired first, so the subtype the audience actually
+        # converts to leads the note rather than alphabetical order.
+        ordered = sorted(subtype_notes, key=lambda n: (n[0] != "never", n[0]), reverse=True)
+        parts.append("subtypes (reported only): "
+                     + ", ".join(f"{label}={fired}" for fired, label in ordered))
+    return {"name": name, "status": status, "detail": " | ".join(parts)}
+
+
+def check_snapshot_volume(config: dict[str, Any]) -> dict[str, Any]:
+    """Guard the empty-snapshot failure mode and report the primary tier.
+
+    On 2026-08-15 the pipeline committed `ad_insights.json` as `[]` while
+    `ads.json` held hundreds of objects, and every check still passed. This
+    fails when the newest snapshot has ad objects but no insight rows, and
+    warns when insight rows fall under the configured floor.
+
+    It is also the only health signal for leads: the primary tier is a pixel
+    action that `customconversions` cannot report on, so the lead total and
+    spend from the snapshot rows are carried in every detail string. If
+    `pipeline_health.zero_lead_spend_floor_usd` is configured, spend at or
+    above it with zero leads is a WARN — the lead-side mirror of the
+    empty-snapshot case. Without that key the lead total is reported only.
+    """
+    name = "snapshot_volume"
+    snapshots = REPO_ROOT / "data" / "snapshots"
+    if not snapshots.is_dir():
+        return {"name": name, "status": "WARN", "detail": "no data/snapshots directory"}
+
+    dated = sorted(d for d in snapshots.iterdir()
+                   if d.is_dir() and len(d.name) == 10 and d.name[4] == "-")
+    if not dated:
+        return {"name": name, "status": "WARN", "detail": "no snapshots on disk"}
+
+    latest = dated[-1]
+    health_cfg = config.get("pipeline_health") or {}
+    floor = int(health_cfg.get("min_expected_insight_rows", 1))
+    zero_lead_floor = health_cfg.get("zero_lead_spend_floor_usd")
+    # Field name comes from the funnel config; `conversions` is the
+    # pre-pivot alias still present on snapshots written before 2026-09-09
+    # (scripts/lib/meta.py keeps it as a deprecated alias — stay in step).
+    lead_field = ((config.get("conversions") or {}).get("primary") or {}).get("field") or "leads"
+
+    def _load(filename: str) -> list[Any] | None:
+        path = latest / filename
+        if not path.exists():
+            return None
+        try:
+            rows = json.loads(path.read_text())
+        except (json.JSONDecodeError, OSError):
+            return None
+        return rows if isinstance(rows, list) else None
+
+    insight_rows = _load("ad_insights.json")
+    ad_rows = _load("ads.json")
+
+    if insight_rows is None:
+        return {"name": name, "status": "FAIL",
+                "detail": f"{latest.name}: ad_insights.json missing or unreadable"}
+    insights = len(insight_rows)
+    ads = len(ad_rows) if ad_rows is not None else None
+
+    leads = 0
+    spend = 0.0
+    for row in insight_rows:
+        if not isinstance(row, dict):
+            continue
+        try:
+            leads += int(row.get(lead_field, row.get("conversions", 0)) or 0)
+            spend += float(row.get("spend", 0) or 0)
+        except (TypeError, ValueError):
+            continue
+    lead_note = f"{leads} leads on ${spend:,.2f} spend"
+
+    if ads and insights == 0:
+        return {"name": name, "status": "FAIL",
+                "detail": f"{latest.name}: 0 insight rows against {ads} ad objects "
+                          f"— pull returned no delivery data"}
+    if insights < floor:
+        return {"name": name, "status": "WARN",
+                "detail": f"{latest.name}: {insights} insight row(s), below floor of {floor}, "
+                          f"{lead_note}"}
+    if zero_lead_floor is not None and leads == 0 and spend >= float(zero_lead_floor):
+        return {"name": name, "status": "WARN",
+                "detail": f"{latest.name}: {insights} insight row(s), {lead_note} "
+                          f"— lead pipeline may have stopped firing"}
+    return {"name": name, "status": "PASS",
+            "detail": f"{latest.name}: {insights} insight row(s), {ads} ad object(s), "
+                      f"{lead_note}"}
 
 
 def check_dashboard_endpoint(exec_endpoint: str, timeout_s: int) -> dict[str, Any]:
@@ -239,7 +407,7 @@ def write_to_sheet(exec_endpoint: str, today_local: str,
         resp = requests.post(
             exec_endpoint,
             params={"action": "health-write"},
-            json={"rows": rows},
+            json={"rows": rows, "key": exec_key()},
             timeout=20,
         )
     except requests.RequestException as exc:
@@ -271,7 +439,6 @@ def main(argv: list[str] | None = None) -> int:
     api_version = config["account"]["meta_api_version"]
     tz = ZoneInfo(config["account"]["timezone"])
     exec_endpoint = os.environ.get("EXEC_ENDPOINT") or config["exec_endpoint"]
-    ic_id = config["ic_tracking"]["custom_conversion_id"]
     health_cfg = config["pipeline_health"]
 
     token = os.environ.get("META_ACCESS_TOKEN")
@@ -285,9 +452,10 @@ def main(argv: list[str] | None = None) -> int:
                              health_cfg["data_freshness_max_gap_weekdays"]),
         check_meta_token(token, api_version, tz,
                          health_cfg["token_warning_days"]),
-        check_ic_conversion_event(token, account_id, api_version, ic_id),
+        check_funnel_conversions(token, account_id, api_version, config),
         check_dashboard_endpoint(exec_endpoint,
                                  health_cfg["endpoint_timeout_seconds"]),
+        check_snapshot_volume(config),
     ]
 
     payload: dict[str, Any] = {"date": today_local, "checks": checks}

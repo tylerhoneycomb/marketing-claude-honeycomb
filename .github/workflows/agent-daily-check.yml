@@ -49,6 +49,7 @@ jobs:
           # Same secret the daily-data + other agent workflows use.
           # The skill scripts read it directly via os.environ.
           META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
           # Optional. If unset, Claude skips Slack posting and only
           # surfaces results in this workflow's logs.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -80,10 +81,24 @@ jobs:
             Output rules:
             - Print a sectioned terminal summary (matches the SKILL.md
               "Output — Interactive" example shape):
-                PACING:    one line — status + numbers
-                PORTFOLIO: one line per campaign with IC conversions
-                WINNERS:   up to 3 lines (skip section if empty)
-                BLEEDERS:  up to 3 lines (skip section if empty)
+                Title:     "📊 Daily Lead Check — <date>"
+                TOTALS:    one line under the title — N leads · $X CPL ·
+                           $Y spend · P prequal decisions (of which M
+                           reached an IC decision); drop the parenthetical
+                           when totals.ic_conversions is 0
+                PACING:    one line — status + numbers ("insufficient
+                           history for pacing read" if
+                           remaining_daily_target is null)
+                PORTFOLIO: one line per campaign in JSON order (best CPL
+                           first): CPL, leads, spend, freq; suffix
+                           "· IC n" only when ic_conversions > 0; say
+                           "0 leads" explicitly on no-lead campaigns
+                WINNERS:   up to 3 lines, ranked by CPL — "$CPL, N leads"
+                           (skip section if empty)
+                BLEEDERS:  up to 3 lines, rendered by reason —
+                           spend-without-leads first, then CPL vs ad-set
+                           CPL; CTR only for the no-lead-data fallback
+                           (skip section if empty)
                 FATIGUE WATCH: up to N lines (skip section if empty)
                 LEARNING:  one line per learning-phase ad set
                 STALE:     one line per stale creative
@@ -109,12 +124,14 @@ jobs:
             Status reporter:
             - Before exiting, write a single-line status to
               /tmp/agent_status.txt, e.g.:
-                "pacing=on_pace spend=$1523 icps=12 winners=3 bleeders=1 fatigue_flags=2"
-                "pacing=overspending spend=$3200 icps=8 winners=2 bleeders=0 fatigue_flags=0"
+                "pacing=on_pace spend=$1523 leads=98 cpl=$15.54 winners=3 bleeders=1 fatigue_flags=2"
+                "pacing=overspending spend=$3200 leads=61 cpl=$52.46 winners=2 bleeders=0 fatigue_flags=0"
               Pull the values from the analyze_daily.py JSON: pacing.status,
-              totals.spend, totals.ic_conversions, len(winners), len(bleeders),
-              len(fatigue_flags). The workflow's status reporter step will
-              pick this up and post it to the agent-loop tracking issue.
+              totals.spend, totals.leads, totals.cpl, len(winners),
+              len(bleeders), len(fatigue_flags). Optionally append a
+              trailing "ic=<totals.ic_conversions>" token — never first.
+              The workflow's status reporter step will pick this up and
+              post it to the agent-loop tracking issue.
 
       # Belt-and-suspenders: dump the action's saved transcript even
       # if show_full_output / display_report don't render cleanly.
