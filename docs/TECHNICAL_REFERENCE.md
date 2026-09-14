@@ -349,8 +349,8 @@ Six tabs in a single Google Spreadsheet. Constants in `Code.js:26-30` reference 
 | `ROLLUP_SHEET` | `'weekly_rollup'` | |
 | `INTEL_SHEET` | `'intelligence_log'` | |
 | `BUDGET_SHEET` | `'budget_queue'` | |
-| `TARGET_WEEKLY_SPEND` | `10000` (USD) | Weekly budget target |
-| `WEEKLY_SPEND_TOLERANCE` | `500` (USD) | ± tolerance band |
+| `TARGET_WEEKLY_SPEND` | `2100` (USD) | Weekly budget target — fallback only; mirrors `benchmarks.json:pacing.weekly_spend_target_dollars` (was `10000` until 2026-09-14) |
+| `WEEKLY_SPEND_TOLERANCE` | `315` (USD) | ± tolerance band — fallback only; mirrors `pacing.weekly_spend_tolerance_dollars` (was `500` until 2026-09-14) |
 | `CAMPAIGN_DAILY_MIN_CENTS` | `2500` | Minimum $25/day floor |
 | `MAX_CHANGE_PCT` | `0.02` | ±2% per optimization cycle |
 | `MAX_REDUCTION_PCT` | `0.04` | Hard cap: max 4% cut |
@@ -739,7 +739,9 @@ Consumers and how they read it:
 | `daily-check/analyze_daily.py` | `lib.exec_api.get_spend_goal()` → `/exec?action=get_spend_goal` |
 | Webapp dashboard | `fetchAction(apiUrl, 'get_spend_goal')` |
 
-The Apps Script constants `TARGET_WEEKLY_SPEND` (10000) / `WEEKLY_SPEND_TOLERANCE` (500) and `data/config/benchmarks.json:pacing.weekly_spend_target_dollars` are **fallback-only defaults** — the constants back the `get_spend_goal` handler when no override exists; the `benchmarks.json` value is used by `daily-check` only when `/exec` is unreachable (`get_spend_goal` returns `source: "fallback_unreachable"` in that case). `daily-check`'s `pacing_tolerance_pct` is a separate pacing-status sensitivity band, not the optimizer's dollar tolerance, and stays static config.
+The Apps Script constants `TARGET_WEEKLY_SPEND` (2100) / `WEEKLY_SPEND_TOLERANCE` (315) — aligned with `data/config/benchmarks.json:pacing.*` on 2026-09-14 under the dual-source rule — and the `benchmarks.json` values themselves are **fallback-only defaults** — the constants back the `get_spend_goal` handler when no override exists; the `benchmarks.json` value is used by `daily-check` only when `/exec` is unreachable (`get_spend_goal` returns `source: "fallback_unreachable"` in that case). `daily-check`'s `pacing_tolerance_pct` is a separate pacing-status sensitivity band, not the optimizer's dollar tolerance, and stays static config.
+
+**Live override as of 2026-09-14: `DASHBOARD_TARGET_WEEKLY_SPEND = 9000`, `DASHBOARD_WEEKLY_SPEND_TOLERANCE = 50`** (`get_spend_goal` on the deployed script returned `target_weekly_spend: 9000, weekly_spend_tolerance: 50, source: script_property_override`). Because the override wins, the $2,100 / $315 target in `benchmarks.json` and the constants is **not in effect** until the two Script Properties are set to `2100` / `315` (Apps Script → Project Settings → Script Properties) or deleted so the constants apply, or a new target is approved through the dashboard's `propose_spend_target` flow. Until then `daily-check` pacing, the Tuesday `portfolio-scaling` pool bound and the (paused) optimizer all measure against $9,000 ± $50. No code path resets the override on deploy — it is a deliberate dashboard-managed setting.
 
 ### 8.7 Portfolio scaling integration _(added 2026-05-08)_
 

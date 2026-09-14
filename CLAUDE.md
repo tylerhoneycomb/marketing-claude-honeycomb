@@ -484,6 +484,13 @@ mirrored as named constants (`TARGET_CPL_DOLLARS`, `CPL_CRITICAL_MULTIPLE`,
 `CPL_SPIKE_WARNING_PCT`, `CPL_FLAG_MIN_WEEKLY_LEADS`,
 `CPL_FLAG_MIN_DAILY_LEADS`, `ZERO_LEAD_SPEND_WATCH_DOLLARS`) under the same
 dual-source rule as `SCALING_MAX_WEEKLY_PCT` — change both places together.
+The same rule covers `TARGET_WEEKLY_SPEND` / `WEEKLY_SPEND_TOLERANCE`
+(mirroring `pacing.weekly_spend_target_dollars` /
+`weekly_spend_tolerance_dollars`, both $2,100 / $315 since 2026-09-14) —
+with the caveat that those two are fallback-only: at runtime the
+dashboard-managed Script Properties `DASHBOARD_TARGET_WEEKLY_SPEND` /
+`DASHBOARD_WEEKLY_SPEND_TOLERANCE` win whenever they are set, and as of
+2026-09-14 they still read $9,000 / $50 (see TECHNICAL_REFERENCE §8.6).
 Skill briefs take their targets from the script JSON (e.g.
 `stats.target_cpl_dollars`), never from a literal in a prompt.
 

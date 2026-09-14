@@ -183,9 +183,16 @@ changes state now needs a password that only this repo's automation and your
 browser hold. Reading charts still needs nothing, so the dashboard works as
 before.
 
-**The spend target matches reality.** It said $10,000/week; the account runs
-about $300/day. Pacing was measuring against a number that had not been true
-for months.
+**The spend target matches reality — in the code and config.** It said
+$10,000/week; the account runs about $300/day, so the config and the script's
+built-in default now say $2,100/week with a $315 band. **But the number the
+system actually uses is a dashboard-managed setting stored inside the Apps
+Script project, and on 2026-09-14 that setting still reads $9,000/week with a
+$50 band.** Until it is changed to $2,100 / $315 (a one-minute edit in Apps
+Script → Project Settings → Script Properties, or a proposal through the
+dashboard once the API key is set), pacing and the Tuesday scaling brief keep
+measuring against $9,000 — which is why the daily check reads "underspending"
+every day.
 
 ## What changed on 2026-09-14, in plain terms
 

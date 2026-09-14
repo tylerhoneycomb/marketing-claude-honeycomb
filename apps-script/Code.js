@@ -31,8 +31,16 @@ const INTEL_SHEET = 'intelligence_log';
 const BUDGET_SHEET = 'budget_queue';
 
 // Budget automation constants
-const TARGET_WEEKLY_SPEND = 10000;   // dollars
-const WEEKLY_SPEND_TOLERANCE = 500;     // dollars ±
+// Fallback-only defaults for the weekly spend goal. They mirror
+// data/config/benchmarks.json → pacing.weekly_spend_target_dollars /
+// weekly_spend_tolerance_dollars ($300/day, set 2026-09-09) under the same
+// dual-source rule as SCALING_MAX_WEEKLY_PCT — change both places together.
+// At runtime the dashboard-managed Script Properties
+// DASHBOARD_TARGET_WEEKLY_SPEND / DASHBOARD_WEEKLY_SPEND_TOLERANCE win
+// whenever they are set (see getTargetWeeklySpend_ / getWeeklySpendTolerance_
+// and the get_spend_goal handler); these constants apply only when they are not.
+const TARGET_WEEKLY_SPEND = 2100;    // dollars (was 10000 until 2026-09-14)
+const WEEKLY_SPEND_TOLERANCE = 315;  // dollars ± (was 500 until 2026-09-14)
 const CAMPAIGN_DAILY_MIN_CENTS = 2500;    // $25.00/day floor
 const MAX_CHANGE_PCT = 0.02;    // ±2% per cycle
 const MAX_REDUCTION_PCT = 0.04;    // hard cap: dramatic underperformers only, max 4% reduction per cycle
