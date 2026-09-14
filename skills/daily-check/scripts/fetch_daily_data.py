@@ -37,7 +37,7 @@ from lib.meta import (  # noqa: E402
     INSIGHTS_FIELDS_ADSET,
     INSIGHTS_FIELDS_CAMPAIGN,
     MetaClient,
-    ic_action_type_from_config,
+    funnel_from_config,
     load_config,
     normalize_ad,
     normalize_adset,
@@ -69,7 +69,7 @@ def main(argv: list[str] | None = None) -> int:
     account_id = os.environ.get("META_AD_ACCOUNT_ID") or config["account"]["id"]
     api_version = config["account"]["meta_api_version"]
     tz = ZoneInfo(config["account"]["timezone"])
-    ic_action_type = ic_action_type_from_config(config)
+    funnel = funnel_from_config(config)
 
     token = os.environ.get("META_ACCESS_TOKEN")
     if not token:
@@ -86,15 +86,15 @@ def main(argv: list[str] | None = None) -> int:
 
     logging.warning("fetching campaign insights %s → %s", since, until)
     raw_campaigns = client.insights("campaign", INSIGHTS_FIELDS_CAMPAIGN, since, until)
-    campaigns = [normalize_insights_row(r, ic_action_type) for r in raw_campaigns]
+    campaigns = [normalize_insights_row(r, funnel) for r in raw_campaigns]
 
     logging.warning("fetching adset insights %s → %s", since, until)
     raw_adsets = client.insights("adset", INSIGHTS_FIELDS_ADSET, since, until)
-    adsets_insights = [normalize_insights_row(r, ic_action_type) for r in raw_adsets]
+    adsets_insights = [normalize_insights_row(r, funnel) for r in raw_adsets]
 
     logging.warning("fetching ad insights %s → %s", since, until)
     raw_ads = client.insights("ad", INSIGHTS_FIELDS_AD, since, until)
-    ads_insights = [normalize_insights_row(r, ic_action_type) for r in raw_ads]
+    ads_insights = [normalize_insights_row(r, funnel) for r in raw_ads]
 
     # Filter on active/paused for object queries (per CLAUDE.md convention).
     active_filter = [{"field": "effective_status",

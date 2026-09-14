@@ -9,7 +9,7 @@ Meta places every ad set into a **learning phase** when:
 - It's edited in a way Meta classifies as "significant"
 - It returns from being paused
 
-During learning, Meta's bid algorithm is exploring the audience and hasn't converged on stable delivery. CPL/CPICP fluctuates more, and the algorithm prioritizes data collection over efficiency. Once the ad set accumulates ~50 optimization events in a 7-day rolling window, Meta exits the ad set from learning and delivery stabilizes.
+During learning, Meta's bid algorithm is exploring the audience and hasn't converged on stable delivery. CPL fluctuates more, and the algorithm prioritizes data collection over efficiency. Once the ad set accumulates ~50 optimization events in a 7-day rolling window, Meta exits the ad set from learning and delivery stabilizes.
 
 **Optimization events** are conversions for the ad set's optimization goal. For Honeycomb's IC-conversion ads, that's the IC custom conversion. For lead-gen ads, it's leads.
 
@@ -40,7 +40,7 @@ In practice the optimizer's daily ±2% increases / ±4% decreases can compound 7
 
 ## The 50-conversion / 7-day rule
 
-Ad sets need ~50 optimization events in 7 days to exit learning. At Honeycomb's spend levels, low-volume verticals (distillers, sustainable main street, etc.) may produce fewer than 50 IC conversions per week even at full budget. **Those ad sets may never fully exit learning**, and that's expected — not a problem the optimizer should try to solve.
+Ad sets need ~50 optimization events in 7 days to exit learning. At Honeycomb's spend levels, low-volume verticals (distillers, sustainable main street, etc.) may produce fewer than 50 optimization events per week even at full budget. **Those ad sets may never fully exit learning**, and that's expected — not a problem the optimizer should try to solve.
 
 This is why the scaling skill's `confidence` floors require ≥3 conversions/week minimum (well below the 50/week needed to exit learning, but enough to make the elasticity correlation meaningful). A vertical can be `confident` for scaling purposes while its ad sets are perpetually in Meta's learning phase.
 

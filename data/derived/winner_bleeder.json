@@ -1,5 +1,5 @@
 {
-  "computed_at": "2026-09-14T18:09:51.312097+00:00",
+  "computed_at": "2026-09-14T18:30:06.329308+00:00",
   "window_days": 7,
   "rows": [
     {
@@ -8,9 +8,15 @@
       "ad_name": "broad_ad_adpc_819",
       "spend": 327.46,
       "spend_share": 1.0,
+      "leads": 23,
+      "cpl": 14.24,
+      "cpl_vs_adset_avg": 1.0,
+      "cpl_vs_target": 0.89,
       "ctr": 0.0384,
       "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
+      "peers_delivering": 1,
+      "label": null,
+      "label_reason": "insufficient_peers"
     },
     {
       "adset_id": "120252962579540631",
@@ -18,9 +24,15 @@
       "ad_name": "ifw_broad_ad_adpc_819",
       "spend": 1562.98,
       "spend_share": 1.0,
+      "leads": 127,
+      "cpl": 12.31,
+      "cpl_vs_adset_avg": 1.0,
+      "cpl_vs_target": 0.769,
       "ctr": 0.0466,
       "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
+      "peers_delivering": 1,
+      "label": null,
+      "label_reason": "insufficient_peers"
     },
     {
       "adset_id": "120253265643260631",
@@ -28,9 +40,15 @@
       "ad_name": "ifw_broad_ad_adpc_910_applp",
       "spend": 292.24,
       "spend_share": 1.0,
+      "leads": 31,
+      "cpl": 9.43,
+      "cpl_vs_adset_avg": 1.0,
+      "cpl_vs_target": 0.589,
       "ctr": 0.035,
       "ctr_vs_adset_avg": 1.0,
-      "label": "winner"
+      "peers_delivering": 1,
+      "label": null,
+      "label_reason": "insufficient_peers"
     }
   ]
 }

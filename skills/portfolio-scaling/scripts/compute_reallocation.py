@@ -14,7 +14,10 @@ Pool mechanics:
     the $26/day effective floor (the $25 hard floor + 4% buffer protects
     one worst-case optimizer reduction cycle from breaching it).
   - Scalable verticals (primary) and stable verticals (secondary, 0.5x
-    weight) absorb the pool, weighted by inverse CPICP.
+    weight) absorb the pool, weighted by inverse CPL.
+  - Every proposal row carries the vertical's 12-week CPL and lead count
+    so the brief can state each move in lead terms without a second
+    lookup. IC is not carried on proposal rows.
   - The pool is bounded by [target - tolerance, target + tolerance] in
     weekly portfolio spend, biased toward target itself.
   - Net-positive pools above target raise knockdown_risk so the brief
@@ -40,6 +43,7 @@ import requests
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
+from lib.exec_api import exec_key  # noqa: E402
 from lib.meta import load_config  # noqa: E402
 from lib.io import atomic_write_json  # noqa: E402
 
@@ -51,6 +55,20 @@ CREATIVE_CACHE_PATH = REPO_ROOT / "data" / "creatives" / "categorizations.json"
 # $25 hard floor + 4% buffer. The buffer ensures one worst-case optimizer
 # reduction cycle (4% reduction) won't push a campaign below the $25 floor.
 CAMPAIGN_DAILY_MIN_CENTS = 2500
+
+
+def is_actionable_campaign(cinfo: dict[str, Any] | None) -> bool:
+    """True only for campaigns Meta is actually delivering.
+
+    Budget moves against a PAUSED or ARCHIVED campaign are inert at best and
+    misleading at worst: before this guard the weekly brief proposed a
+    -397 cents/day cut to ICD-Health, Fitness & Personal Care-Q2-2026, a
+    campaign with every ad set paused and no delivery since 2026-08-17, and
+    86% of the "portfolio" total was paused-campaign budget.
+    """
+    if not cinfo:
+        return False
+    return (cinfo.get("effective_status") or "").upper() == "ACTIVE"
 
 
 def floor_cents(buffer_pct: float) -> int:
@@ -103,7 +121,13 @@ def fetch_json(url: str, params: dict[str, Any] | None = None,
 
 
 def post_json(url: str, payload: dict[str, Any], timeout: int = 30) -> Any:
-    r = requests.post(url, json=payload, timeout=timeout)
+    """POST to /exec, carrying the shared secret.
+
+    scaling-write and scaling-queue-write are side-effecting and gated by
+    EXEC_SHARED_SECRET on the Apps Script side; without the key they return
+    {"error": "unauthorized"}.
+    """
+    r = requests.post(url, json={**payload, "key": exec_key()}, timeout=timeout)
     r.raise_for_status()
     return r.json()
 
@@ -131,7 +155,7 @@ def compute_decreases(profiles: dict[str, Any],
 
         for cid in m.get("campaign_ids", []):
             cinfo = profiles["campaigns"].get(cid)
-            if not cinfo:
+            if not is_actionable_campaign(cinfo):
                 continue
             current_cents = cinfo["daily_budget_cents"]
             remaining = cinfo["weekly_remaining_pct"]
@@ -155,6 +179,9 @@ def compute_decreases(profiles: dict[str, Any],
                 "post_change_cents": current_cents - actual_cents,
                 "classification": cls,
                 "elasticity_r": m.get("elasticity_r"),
+                "cpl": m.get("cpl"),
+                "total_leads": m.get("total_conversions"),
+                "vertical_spend": m.get("total_spend"),
                 "remaining_headroom_pct": round(remaining, 4),
                 "reason": (
                     f"{cls} (r={m.get('elasticity_r')}); "
@@ -171,7 +198,12 @@ def compute_increases(profiles: dict[str, Any],
                       benchmarks: dict[str, Any],
                       pool_cents: int) -> list[dict[str, Any]]:
     """Allocate pool_cents across scalable + stable verticals weighted
-    by inverse CPICP. Stable gets 0.5x weight (secondary priority).
+    by inverse CPL. Stable gets 0.5x weight (secondary priority).
+
+    Weighting used to key on CPICP. Because IC now fires on well under 1% of
+    leads, `cpicp` was None for nearly every vertical, every weight was
+    skipped, total_w came to 0 and this function returned [] — which is why
+    recent briefs carried decreases but never a single increase.
     """
     if pool_cents <= 0:
         return []
@@ -179,11 +211,11 @@ def compute_increases(profiles: dict[str, Any],
     weights: dict[str, float] = {}
     for vertical, m in profiles["verticals"].items():
         cls = m.get("classification")
-        cpicp = m.get("cpicp")
-        if cls == "scalable" and cpicp:
-            weights[vertical] = safe_inv(cpicp)
-        elif cls == "stable" and cpicp:
-            weights[vertical] = safe_inv(cpicp) * 0.5
+        cpl = m.get("cpl")
+        if cls == "scalable" and cpl:
+            weights[vertical] = safe_inv(cpl)
+        elif cls == "stable" and cpl:
+            weights[vertical] = safe_inv(cpl) * 0.5
     total_w = sum(weights.values())
     if total_w <= 0:
         return []
@@ -198,7 +230,8 @@ def compute_increases(profiles: dict[str, Any],
         # Distribute vertical_pool across the vertical's campaigns,
         # proportionally by current daily budget, capped per-campaign by
         # weekly_remaining_pct.
-        cids = m.get("campaign_ids", [])
+        cids = [cid for cid in m.get("campaign_ids", [])
+                if is_actionable_campaign(profiles["campaigns"].get(cid))]
         total_budget = sum(
             profiles["campaigns"].get(cid, {}).get("daily_budget_cents", 0)
             for cid in cids
@@ -208,7 +241,7 @@ def compute_increases(profiles: dict[str, Any],
 
         for cid in cids:
             cinfo = profiles["campaigns"].get(cid)
-            if not cinfo:
+            if not is_actionable_campaign(cinfo):
                 continue
             current = cinfo["daily_budget_cents"]
             remaining = cinfo["weekly_remaining_pct"]
@@ -230,10 +263,12 @@ def compute_increases(profiles: dict[str, Any],
                 "change_pct": round(actual_pct, 4),
                 "post_change_cents": current + actual_cents,
                 "classification": m.get("classification"),
-                "cpicp": m.get("cpicp"),
+                "cpl": m.get("cpl"),
+                "total_leads": m.get("total_conversions"),
+                "vertical_spend": m.get("total_spend"),
                 "remaining_headroom_pct": round(remaining, 4),
                 "allocation_weight_reason": (
-                    f"inverse-CPICP weight {w:.4f} of {total_w:.4f}"
+                    f"inverse-CPL weight {w:.4f} of {total_w:.4f}"
                     + (" (secondary, 0.5x for stable)"
                        if m.get("classification") == "stable" else "")
                 ),
@@ -251,11 +286,53 @@ def absorption_capacity(profiles: dict[str, Any]) -> int:
             continue
         for cid in m.get("campaign_ids", []):
             cinfo = profiles["campaigns"].get(cid)
-            if not cinfo:
+            if not is_actionable_campaign(cinfo):
                 continue
             cap += int(round(cinfo["daily_budget_cents"]
                              * cinfo["weekly_remaining_pct"]))
     return cap
+
+
+def pool_skip_reasons(profiles: dict[str, Any],
+                      increases: list[dict[str, Any]],
+                      pool_cents: int) -> dict[str, Any]:
+    """Explain an empty side of the pool so the brief can say why instead
+    of a bare "no actionable reallocation".
+
+    `paused_saturating_verticals`: saturating / over-invested verticals
+    with no ACTIVE campaign — nothing to cut, per the ACTIVE guard.
+    `increase_skip_reason`: None when increases exist; otherwise the first
+    structural reason nothing absorbed the pool.
+    """
+    campaigns = profiles["campaigns"]
+    paused_saturating = sorted(
+        v for v, m in profiles["verticals"].items()
+        if m.get("classification") in ("saturating", "over-invested")
+        and not any(is_actionable_campaign(campaigns.get(cid))
+                    for cid in m.get("campaign_ids", []))
+    )
+    reason = None
+    if not increases:
+        receivers = [
+            (v, m) for v, m in profiles["verticals"].items()
+            if m.get("classification") in ("scalable", "stable")
+        ]
+        if pool_cents <= 0:
+            reason = "no freed pool and no headroom under target + tolerance"
+        elif not receivers:
+            reason = "no vertical classified scalable or stable"
+        elif not any(m.get("cpl") for _, m in receivers):
+            reason = "no scalable/stable vertical has a CPL (zero leads in window)"
+        elif not any(is_actionable_campaign(campaigns.get(cid))
+                     for _, m in receivers
+                     for cid in m.get("campaign_ids", [])):
+            reason = "no scalable/stable vertical has an ACTIVE campaign"
+        else:
+            reason = "every receiving campaign is out of weekly headroom"
+    return {
+        "paused_saturating_verticals": paused_saturating,
+        "increase_skip_reason": reason,
+    }
 
 
 # ─── Tolerance band enforcement ───────────────────────────────────────
@@ -400,7 +477,12 @@ def compose_audience_actions(profiles: dict[str, Any],
                         prescription = ". ".join(parts)
                         creative_source = "creative_intelligence_cache"
                         break
+        # Lead the diagnosis with the absolute cost so the Slack block reads
+        # "<vertical> — CPL $X on N leads; ..." before the trend detail.
+        cpl = m.get("cpl")
+        cpl_text = f"${cpl:,.2f}" if cpl is not None else "—"
         diagnosis_parts = [
+            f"CPL {cpl_text} on {m.get('total_conversions') or 0} leads (12w)",
             f"frequency={m.get('avg_frequency')} ({m.get('frequency_trend')})",
             f"CPM trend={m.get('cpm_trend')}",
             f"r={m.get('elasticity_r')}",
@@ -480,6 +562,7 @@ def main() -> int:
         "zero_sum" if net_change == 0 else
         ("net_positive" if net_change > 0 else "net_negative")
     )
+    skip_reasons = pool_skip_reasons(profiles, increases, initial_pool)
 
     # ─── Audience actions ─────────────────────────────────────────────
     creative_cache = load_creative_cache_safely()
@@ -503,12 +586,15 @@ def main() -> int:
             "allocated_daily_cents": allocated,
             "net_change_daily_cents": net_change,
             "net_change_type": net_type,
+            # ACTIVE campaigns only (see compute_scaling_profiles.py).
             "portfolio_current_daily_cents": current,
+            "portfolio_active_campaign_count": portfolio.get("active_campaign_count"),
             "portfolio_post_change_daily_cents": proposed,
             "portfolio_post_change_weekly_dollars": round(proposed / 100 * 7, 2),
             "target_weekly_dollars": portfolio["target_weekly_spend"],
             "tolerance_weekly_dollars": portfolio["weekly_spend_tolerance"],
             "knockdown_risk": knockdown_risk,
+            **skip_reasons,
         },
         "decreases": decreases,
         "increases": increases,
@@ -546,6 +632,7 @@ def main() -> int:
         "lockout_until": lockout_until.isoformat(),
         "audience_actions": [a["vertical"] for a in audience_actions],
         "affected_campaign_ids": affected_campaigns,
+        **skip_reasons,
     }
     print(json.dumps(summary, indent=2, default=str))
     return 0
@@ -568,6 +655,7 @@ def compose_scaling_log_rows(profiles: dict[str, Any],
             "confidence": m.get("confidence"),
             "elasticity_r": m.get("elasticity_r"),
             "ic_rate": m.get("ic_rate"),
+            "cpl": m.get("cpl"),
             "cpicp": m.get("cpicp"),
             "spend_share_pct": m.get("spend_share_pct"),
             "avg_frequency": m.get("avg_frequency"),
@@ -575,6 +663,10 @@ def compose_scaling_log_rows(profiles: dict[str, Any],
             "cpm_trend": m.get("cpm_trend"),
             "new_audience_needed": m.get("new_audience_needed"),
             "weeks_with_conversions": m.get("weeks_with_conversions"),
+            # Additive: handleScalingWrite_ has no column for it yet and
+            # writes unknown keys as blanks. Sent now so the Sheet picks it
+            # up the moment the header gains the column.
+            "total_leads": m.get("total_conversions"),
             "contributed_to_pool": vertical in contributed,
             "received_from_pool": vertical in received,
         })

@@ -6,7 +6,7 @@ Used by:
   - skills/fatigue-monitor/scripts/...  (fatigue-monitor skill)
 
 Single source for: HTTP retries, Meta error-code handling, paging,
-field lists, IC conversion extraction, and row normalization. New
+field lists, funnel-conversion extraction, and row normalization. New
 skills should import from here rather than duplicating the client.
 """
 
@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -24,11 +25,16 @@ import requests
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = REPO_ROOT / "data" / "config" / "benchmarks.json"
 
-# Standard Meta lead action types. These mirror collectMetaRows_ in
-# apps-script/Code.js so ad-level totals reconcile with the campaign rollup.
-LEAD_ACTION_TYPES = [
+# Fallback lead priority chain, used only when benchmarks.json carries no
+# `conversions.primary.action_type_priority`. These action types are
+# ALTERNATIVE COUNTS OF THE SAME EVENT, not addends: verified 2026-09-09
+# against both live Q3 campaigns, `lead` / `offsite_conversion.fb_pixel_lead`
+# / `onsite_web_lead` each returned identical values (215 and 180). Summing
+# them would multiply-count leads. First present type wins.
+LEAD_ACTION_PRIORITY = [
     "lead",
     "offsite_conversion.fb_pixel_lead",
+    "onsite_web_lead",
     "onsite_conversion.lead_grouped",
 ]
 
@@ -153,10 +159,57 @@ def yesterday_utc() -> str:
     return (datetime.now(timezone.utc) - timedelta(days=1)).strftime("%Y-%m-%d")
 
 
-def ic_action_type_from_config(config: dict[str, Any]) -> str:
-    """Reconstruct the Meta `actions[]` action_type for the IC custom conversion."""
-    cid = config["ic_tracking"]["custom_conversion_id"]
-    return f"offsite_conversion.custom.{cid}"
+def _custom_action_type(conversion_id: str) -> str:
+    return f"offsite_conversion.custom.{conversion_id}"
+
+
+@dataclass(frozen=True)
+class FunnelSpec:
+    """Which Meta action types map to each tier of the Honeycomb funnel.
+
+    Built from `conversions` in benchmarks.json so the funnel is defined in
+    exactly one place. `lead_priority` is an ordered preference list, NOT a
+    set to sum (see LEAD_ACTION_PRIORITY). `subtypes` maps an output field
+    name onto the custom-conversion action type that populates it.
+    """
+
+    lead_priority: tuple[str, ...]
+    quality_action_type: str | None
+    quality_field: str
+    subtypes: tuple[tuple[str, str], ...]
+
+    @property
+    def count_fields(self) -> tuple[str, ...]:
+        """Every numeric conversion field this spec emits, in row order."""
+        return ("leads", self.quality_field) + tuple(f for f, _ in self.subtypes)
+
+
+def funnel_from_config(config: dict[str, Any]) -> FunnelSpec:
+    """Build a FunnelSpec from benchmarks.json."""
+    conv = config.get("conversions") or {}
+
+    primary = conv.get("primary") or {}
+    lead_priority = tuple(primary.get("action_type_priority") or LEAD_ACTION_PRIORITY)
+
+    quality = conv.get("quality") or {}
+    quality_id = quality.get("custom_conversion_id")
+    quality_field = quality.get("field") or "prequal_decisions"
+
+    subtypes: list[tuple[str, str]] = []
+    for name, spec in sorted((conv.get("subtypes") or {}).items()):
+        if not isinstance(spec, dict):
+            continue  # skip the "_doc" string key
+        cid = spec.get("custom_conversion_id")
+        if cid:
+            subtypes.append((spec.get("field") or f"{name}_conversions",
+                             _custom_action_type(cid)))
+
+    return FunnelSpec(
+        lead_priority=lead_priority,
+        quality_action_type=_custom_action_type(quality_id) if quality_id else None,
+        quality_field=quality_field,
+        subtypes=tuple(subtypes),
+    )
 
 
 class MetaClient:
@@ -354,40 +407,49 @@ class MetaClient:
 
 # ─── Action / row extraction ───────────────────────────────────────────────
 
-def extract_conversions(actions: list[dict[str, Any]] | None, ic_action_type: str,
-                        lead_action_types: list[str] | None = None
-                        ) -> tuple[int, int]:
-    """Return (conversions, ic_conversions) from Meta `actions[]`.
+def extract_conversions(actions: list[dict[str, Any]] | None,
+                        funnel: FunnelSpec) -> dict[str, int]:
+    """Return one count per funnel tier from Meta `actions[]`.
 
-    `conversions`: first matching lead action_type wins (mirrors Apps Script).
-    `ic_conversions`: sum of all entries with the IC action type.
+    Leads resolve by PRIORITY, not by summing: the first action type present
+    in `funnel.lead_priority` wins outright, because those types are
+    alternative counts of the same event (see LEAD_ACTION_PRIORITY). Quality
+    and subtype tiers are distinct custom conversions and are read directly.
     """
-    leads = lead_action_types or LEAD_ACTION_TYPES
+    counts = {field: 0 for field in funnel.count_fields}
     if not actions:
-        return 0, 0
-    conversions = 0
-    ic_conversions = 0
-    for a in actions:
-        atype = a.get("action_type")
+        return counts
+
+    by_type: dict[str, int] = {}
+    for entry in actions:
+        atype = entry.get("action_type")
+        if not atype:
+            continue
         try:
-            value = int(float(a.get("value", 0)))
+            value = int(float(entry.get("value", 0)))
         except (TypeError, ValueError):
             value = 0
-        if atype in leads and conversions == 0:
-            conversions = value
-        if atype == ic_action_type:
-            ic_conversions += value
-    return conversions, ic_conversions
+        by_type[atype] = by_type.get(atype, 0) + value
+
+    for atype in funnel.lead_priority:
+        if atype in by_type:
+            counts["leads"] = by_type[atype]
+            break
+
+    if funnel.quality_action_type:
+        counts[funnel.quality_field] = by_type.get(funnel.quality_action_type, 0)
+
+    for field, atype in funnel.subtypes:
+        counts[field] = by_type.get(atype, 0)
+
+    return counts
 
 
-def normalize_insights_row(row: dict[str, Any], ic_action_type: str,
-                           lead_action_types: list[str] | None = None,
+def normalize_insights_row(row: dict[str, Any], funnel: FunnelSpec,
                            date: str | None = None) -> dict[str, Any]:
     """Flatten a Meta insights row. Use `date_start` if `date` not supplied."""
-    conversions, ic_conversions = extract_conversions(
-        row.get("actions"), ic_action_type, lead_action_types
-    )
-    return {
+    counts = extract_conversions(row.get("actions"), funnel)
+    normalized = {
         "date": date or row.get("date_start"),
         "campaign_id": row.get("campaign_id"),
         "campaign_name": row.get("campaign_name"),
@@ -403,9 +465,14 @@ def normalize_insights_row(row: dict[str, Any], ic_action_type: str,
         "ctr": float(row.get("ctr") or 0.0),
         "cpc": float(row.get("cpc") or 0.0),
         "cpm": float(row.get("cpm") or 0.0),
-        "conversions": conversions,
-        "ic_conversions": ic_conversions,
     }
+    normalized.update(counts)
+    # Deprecated alias: pre-pivot snapshots and the Apps Script campaign
+    # rollup both key on `conversions`. Kept so old and new snapshots stay
+    # mutually readable; `leads` is canonical. Remove once the 250-day
+    # backfill has landed and no reader references `conversions`.
+    normalized["conversions"] = counts["leads"]
+    return normalized
 
 
 def normalize_adset(row: dict[str, Any]) -> dict[str, Any]:

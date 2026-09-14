@@ -12,9 +12,35 @@ through `get_spend_goal()` here rather than reading the static
 from __future__ import annotations
 
 import logging
+import os
 from typing import Any
 
 import requests
+
+SECRET_ENV_VAR = "EXEC_SHARED_SECRET"
+
+
+def exec_key() -> str:
+    """The shared secret for side-effecting `/exec` actions.
+
+    Read from the EXEC_SHARED_SECRET environment variable, which must match
+    the Script Property of the same name in the Apps Script project. Empty
+    when unset — callers should still send it, because Apps Script simply
+    rejects the request rather than failing in some confusing way, and an
+    explicit `unauthorized` response is the clearest possible signal that
+    the secret has not been configured on one side or the other.
+
+    Read-only actions (rollup, daily, mappings, get_spend_goal, the
+    *-read endpoints) do not require it.
+    """
+    return os.environ.get(SECRET_ENV_VAR, "")
+
+
+def with_key(params: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Add the shared secret to an `/exec` query-parameter dict."""
+    out = dict(params or {})
+    out["key"] = exec_key()
+    return out
 
 
 def fetch_json(url: str, params: dict[str, Any] | None = None,
@@ -34,6 +60,24 @@ def fetch_json(url: str, params: dict[str, Any] | None = None,
             logging.warning("fetch_json attempt %d/%d failed: %s",
                             attempt + 1, retries, exc)
     raise RuntimeError(f"fetch_json exhausted retries: {last}")
+
+
+def post_json(url: str, payload: dict[str, Any], *, params: dict[str, Any] | None = None,
+              timeout: int = 30) -> Any:
+    """POST a JSON body to `/exec`, carrying the shared secret.
+
+    The secret goes in the body as well as the query string: Apps Script
+    reads either, and keeping it out of the URL where possible avoids
+    leaking it into request logs.
+    """
+    body = dict(payload or {})
+    body["key"] = exec_key()
+    r = requests.post(url, json=body, params=params, timeout=timeout)
+    r.raise_for_status()
+    try:
+        return r.json()
+    except ValueError:
+        return None
 
 
 def get_spend_goal(exec_url: str, *, fallback_target: float,

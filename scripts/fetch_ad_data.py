@@ -41,10 +41,8 @@ from lib.meta import (  # noqa: E402
     DEFAULT_SLEEP_BETWEEN_CALLS,
     INSIGHTS_FIELDS_AD,
     INSIGHTS_FIELDS_ADSET,
-    LEAD_ACTION_TYPES,
     MetaClient,
-    extract_conversions,
-    ic_action_type_from_config,
+    funnel_from_config,
     load_config,
     normalize_ad,
     normalize_adset,
@@ -52,16 +50,17 @@ from lib.meta import (  # noqa: E402
     normalize_insights_row as _normalize_insights_row,
     yesterday_utc,
 )
+from lib.meta import FunnelSpec  # noqa: E402  (annotation only)
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SNAPSHOTS_DIR = REPO_ROOT / "data" / "snapshots"
 CREATIVES_PATH = REPO_ROOT / "data" / "creatives" / "creatives.json"
 
 
-def normalize_insights_row(row: dict[str, Any], date: str, ic_action_type: str,
-                           lead_action_types: list[str]) -> dict[str, Any]:
-    """Backwards-compat shim — older call sites supply `date` positionally."""
-    return _normalize_insights_row(row, ic_action_type, lead_action_types, date=date)
+def normalize_insights_row(row: dict[str, Any], date: str,
+                           funnel: "FunnelSpec") -> dict[str, Any]:
+    """Shim so local call sites can supply `date` positionally."""
+    return _normalize_insights_row(row, funnel, date=date)
 
 
 def write_json(path: Path, payload: Any) -> None:
@@ -150,17 +149,17 @@ def has_snapshot(date: str) -> bool:
     return (SNAPSHOTS_DIR / date / "_manifest.json").exists()
 
 
-def fetch_insights_for_day(client: "MetaClient", date: str, ic_action_type: str,
-                           lead_action_types: list[str]) -> tuple[list[dict[str, Any]],
-                                                                   list[dict[str, Any]]]:
+def fetch_insights_for_day(client: "MetaClient", date: str,
+                           funnel: "FunnelSpec") -> tuple[list[dict[str, Any]],
+                                                          list[dict[str, Any]]]:
     raw_adset_insights = client.insights("adset", INSIGHTS_FIELDS_ADSET, date)
     adset_insights = [
-        normalize_insights_row(r, date, ic_action_type, lead_action_types)
+        normalize_insights_row(r, date, funnel)
         for r in raw_adset_insights
     ]
     raw_ad_insights = client.insights("ad", INSIGHTS_FIELDS_AD, date)
     ad_insights = [
-        normalize_insights_row(r, date, ic_action_type, lead_action_types)
+        normalize_insights_row(r, date, funnel)
         for r in raw_ad_insights
     ]
     return adset_insights, ad_insights
@@ -208,8 +207,7 @@ def run(date: str, dry_run: bool = False,
     config = load_config()
     account_id = resolve_account_id(config)
     api_version = config["account"]["meta_api_version"]
-    ic_action_type = "offsite_conversion.custom." + config["ic_tracking"]["custom_conversion_id"]
-    lead_action_types = LEAD_ACTION_TYPES
+    funnel = funnel_from_config(config)
 
     out_dir = SNAPSHOTS_DIR / date
 
@@ -249,14 +247,14 @@ def run(date: str, dry_run: bool = False,
     logging.info("fetching adset-level insights for %s", date)
     raw_adset_insights = client.insights("adset", INSIGHTS_FIELDS_ADSET, date)
     adset_insights = [
-        normalize_insights_row(r, date, ic_action_type, lead_action_types)
+        normalize_insights_row(r, date, funnel)
         for r in raw_adset_insights
     ]
 
     logging.info("fetching ad-level insights for %s", date)
     raw_ad_insights = client.insights("ad", INSIGHTS_FIELDS_AD, date)
     ad_insights = [
-        normalize_insights_row(r, date, ic_action_type, lead_action_types)
+        normalize_insights_row(r, date, funnel)
         for r in raw_ad_insights
     ]
 
@@ -322,19 +320,31 @@ def run(date: str, dry_run: bool = False,
 
 
 def run_range(start: str, end: str, dry_run: bool = False,
-              sleep_between_calls: float = DEFAULT_SLEEP_BETWEEN_CALLS) -> int:
-    """Backfill a date range. Idempotent — skips dates that already have a manifest."""
+              sleep_between_calls: float = DEFAULT_SLEEP_BETWEEN_CALLS,
+              force: bool = False) -> int:
+    """Backfill a date range.
+
+    Idempotent by default — skips dates that already have a manifest. Pass
+    `force` to re-pull and overwrite them, which is what a restatement needs:
+    when the meaning of a stored field changes, every existing snapshot is
+    stale even though its manifest is present. Without this the 2026-09-09
+    lead pivot could not restate its own history, because all 250 days
+    already had manifests and the range would no-op entirely.
+    """
     config = load_config()
     account_id = resolve_account_id(config)
     api_version = config["account"]["meta_api_version"]
-    ic_action_type = "offsite_conversion.custom." + config["ic_tracking"]["custom_conversion_id"]
-    lead_action_types = LEAD_ACTION_TYPES
+    funnel = funnel_from_config(config)
 
     all_dates = enumerate_dates(start, end)
-    pending = [d for d in all_dates if not has_snapshot(d)]
-    skipped = [d for d in all_dates if has_snapshot(d)]
-    logging.info("range: %s → %s (%d days), pending=%d, already-snapshot=%d",
-                 start, end, len(all_dates), len(pending), len(skipped))
+    if force:
+        pending, skipped = all_dates, []
+    else:
+        pending = [d for d in all_dates if not has_snapshot(d)]
+        skipped = [d for d in all_dates if has_snapshot(d)]
+    logging.info("range: %s → %s (%d days), pending=%d, already-snapshot=%d%s",
+                 start, end, len(all_dates), len(pending), len(skipped),
+                 " (force: overwriting existing snapshots)" if force else "")
 
     if dry_run:
         logging.info("dry-run: would backfill %d date(s) from %s through %s",
@@ -405,7 +415,7 @@ def run_range(start: str, end: str, dry_run: bool = False,
         logging.info("[%d/%d] fetching insights for %s", i, len(pending), date)
         try:
             adset_insights, ad_insights = fetch_insights_for_day(
-                client, date, ic_action_type, lead_action_types
+                client, date, funnel
             )
             attach_meta = (date == latest_date)
             write_day_snapshot(
@@ -462,13 +472,15 @@ def main(argv: list[str] | None = None) -> int:
     if bool(args.start) != bool(args.end):
         parser.error("--start and --end must be provided together")
 
+    force = args.force or os.environ.get("FORCE") == "1"
+
     if args.start and args.end:
         return run_range(args.start, args.end,
                          dry_run=args.dry_run,
-                         sleep_between_calls=args.sleep)
+                         sleep_between_calls=args.sleep,
+                         force=force)
 
     date = args.date or os.environ.get("SNAPSHOT_DATE") or yesterday_utc()
-    force = args.force or os.environ.get("FORCE") == "1"
     return run(date, dry_run=args.dry_run,
                sleep_between_calls=args.sleep, force=force)
 
