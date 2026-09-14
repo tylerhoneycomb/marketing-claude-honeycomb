@@ -7,10 +7,13 @@ non-reasoning presentation work that used to be handled by an LLM
 (`claude-code-action`) in the retired `agent-pipeline-health.yml` workflow:
 
   1. Print a human-readable terminal summary (all five checks + Sheet line).
-  2. On any WARN/FAIL, compose the plain-text Slack alert (FAIL lines first,
-     then WARN, each line labelled with the check name, `detail` strings
-     verbatim) and POST it to SLACK_WEBHOOK_URL — but only if that env var
-     is set and non-empty (silent on full PASS).
+  2. On any Slack-facing WARN/FAIL, compose the plain-text Slack alert
+     (FAIL lines first, then WARN, each line labelled with the check name)
+     and POST it to SLACK_WEBHOOK_URL — but only if that env var is set and
+     non-empty (silent on full PASS). A check may carry `slack_status` /
+     `slack_detail` (funnel_conversions does — quality tier only); those
+     are used verbatim for Slack in place of `status` / `detail`, which
+     still feed the terminal summary, the Sheet and the status one-liner.
   3. Write a one-line status to --status-file for the issue-#48 comment, e.g.
        "PASS 5/0/0"
        "WARN 4/1/0  snapshot_volume: 2026-09-08: 47 insight row(s), 0 leads on $412.10 spend ..."
@@ -71,16 +74,29 @@ def print_terminal_summary(payload: dict[str, Any]) -> None:
         print(f"\nSheet log: NOT WRITTEN — {sw.get('error', 'unknown error')}")
 
 
+def slack_status(check: dict[str, Any]) -> str | None:
+    """Slack-facing status: `slack_status` when the check provides one,
+    otherwise its ordinary `status`."""
+    return check["slack_status"] if "slack_status" in check else check.get("status")
+
+
+def slack_detail(check: dict[str, Any]) -> str | None:
+    """Slack-facing detail: `slack_detail` when the check provides one,
+    otherwise its ordinary `detail`."""
+    return check["slack_detail"] if "slack_detail" in check else check.get("detail")
+
+
 def slack_lines(payload: dict[str, Any]) -> list[str]:
-    """Non-PASS checks as 'STATUS name: detail' lines, FAIL before WARN.
-    The check name is always the first token after the status so a
-    subtype note in a funnel_conversions detail can never read as the
-    subject of the line. Adds a WARN line when the historical Sheet log
-    write failed."""
+    """Slack-facing non-PASS checks as 'STATUS name: detail' lines, FAIL
+    before WARN. Uses each check's `slack_status` / `slack_detail` when
+    present (funnel_conversions: quality tier only, so a subtype problem
+    never fires a line), else `status` / `detail`. The check name is always
+    the first token after the status. Adds a WARN line when the historical
+    Sheet log write failed."""
     checks = sorted(payload.get("checks", []),
-                    key=lambda c: SEVERITY_ORDER.get(c.get("status"), 9))
-    lines = [f"{c['status']} {c.get('name', '?')}: {c['detail']}"
-             for c in checks if c.get("status") in ("WARN", "FAIL")]
+                    key=lambda c: SEVERITY_ORDER.get(slack_status(c), 9))
+    lines = [f"{slack_status(c)} {c.get('name', '?')}: {slack_detail(c)}"
+             for c in checks if slack_status(c) in ("WARN", "FAIL")]
     sw = payload.get("sheet_write", {})
     if not sw.get("posted") and not sw.get("skipped"):
         lines.append(f"WARN sheet_write: pipeline_health Sheet log not written — "

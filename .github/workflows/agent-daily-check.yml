@@ -83,15 +83,12 @@ jobs:
               "Output — Interactive" example shape):
                 Title:     "📊 Daily Lead Check — <date>"
                 TOTALS:    one line under the title — N leads · $X CPL ·
-                           $Y spend · P prequal decisions (of which M
-                           reached an IC decision); drop the parenthetical
-                           when totals.ic_conversions is 0
+                           $Y spend · P prequal decisions
                 PACING:    one line — status + numbers ("insufficient
                            history for pacing read" if
                            remaining_daily_target is null)
                 PORTFOLIO: one line per campaign in JSON order (best CPL
-                           first): CPL, leads, spend, freq; suffix
-                           "· IC n" only when ic_conversions > 0; say
+                           first): CPL, leads, spend, freq; say
                            "0 leads" explicitly on no-lead campaigns
                 WINNERS:   up to 3 lines, ranked by CPL — "$CPL, N leads"
                            (skip section if empty)
@@ -104,6 +101,13 @@ jobs:
                 STALE:     one line per stale creative
               End with: "Sheet log: 1 row written to daily_check_log"
               (or surface sheet_write.error if posted is false).
+            - The brief is leads-only: render nothing beyond the fields
+              named in the format above (leads, CPL, spend, the totals
+              line's prequal decisions, pacing, frequency, and CTR only
+              where the format allows it). Every other field in the
+              JSON exists for the daily_check_log row and is never
+              rendered — not as a headline, a secondary line, a
+              parenthetical, or a trailing token.
             - If `SLACK_WEBHOOK_URL` env var is set and non-empty, POST
               the same plain-text summary to that webhook via curl.
               If unset or empty, skip Slack silently.

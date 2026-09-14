@@ -44,7 +44,7 @@ Per vertical, computed over the last 12 weeks:
 | `frequency_trend` | Linear-regression slope of spend-weighted weekly frequency over the last `frequency_trend_saturation_weeks` (4). Labelled rising / flat / falling at ±5% of mean. |
 | `cpm_trend` | Same, on CPM, over `cpm_trend_weeks` (4). |
 | `cpl` | Total spend / total leads, last 12 weeks. Compared to portfolio median. This is the cost axis for classification, for every sort order, and for every number the brief headlines. |
-| `total_ic_conversions` | Leads that reached an IC decision, last 12 weeks. Secondary only — IC is too sparse to classify on, and it never appears in the brief as a headline, sort key, or threshold. `cpicp` / `ic_rate` are still emitted for the `scaling_log` wire contract but are not printed. |
+| `total_ic_conversions` | Secondary JSON field only — too sparse to classify on, and never rendered in the brief. `cpicp` / `ic_rate` are still emitted for the `scaling_log` wire contract but are not printed. |
 
 Vertical assignment: campaign names of the form `<AD|ICD|LEADS|RevN>-<vertical>-Q<N>-<YYYY>` (optional `PAUSED - ` prefix) bucket by `<vertical>` — the prefix is the objective, not the audience, so `LEADS-Broad-Q3-2026` continues `ICD-Broad-Q2-2026` under `broad`, and `LEADS-IFW-Broad-Q3-2026` is `ifw-broad`. The regex is duplicated in `skills/creative-intelligence/scripts/build_creative_dataset.py`; keep the two in sync.
 
@@ -234,8 +234,9 @@ Written to via `?action=scaling-write` on `--write-log`. Auto-creates the `scali
 ## Slack output rules
 
 The skill prompt (NOT the script) composes the Slack message. Leads and
-cost-per-lead are the headline of every section; IC appears once, as a
-trailing secondary line. Title the message `*Honeycomb Scaling — <date>*`.
+cost-per-lead are the headline of every section; the brief carries leads,
+CPL, spend and delivery diagnostics (frequency, CPM, elasticity) and
+nothing else. Title the message `*Honeycomb Scaling — <date>*`.
 It has four sections, in order:
 
 1. **Scaling labels** — open with ONE portfolio line built from
@@ -260,12 +261,11 @@ It has four sections, in order:
    Meta is delivering right now, so print them as a one-liner after the
    classified list: `🆕 ifw-broad — too new to classify · CPL $15.10 on 180
    leads (3 weeks, 1 active campaign)`. If `cpl` is null print `CPL —`
-   and place the vertical last in its group; never substitute `cpicp`.
-   Close the section with a single secondary line built from
-   `portfolio.total_ic_conversions`: `_of which N reached an IC decision_`
-   (omit when 0). Never print `ic_rate`, `cpicp`, `median_cpicp`,
-   `median_ic_rate` or per-vertical IC counts, and never use them to order
-   or emphasise anything.
+   and place the vertical last in its group; never substitute another cost
+   figure. Every JSON field the schema above marks `secondary, not printed`
+   exists only for the `scaling_log` wire contract and is never rendered in
+   the brief — not as a headline, sort key, secondary line, parenthetical or
+   trailing token.
 
 2. **Strategic reallocation** — frame the pool in lead terms before the
    dollar mechanics: `Moving $F/day out of <saturating verticals, CPL $A on
@@ -310,14 +310,14 @@ It has four sections, in order:
    ```
 
    **CPL and lead counts do not come from `scaling-log-read`** — the
-   `scaling_log` Sheet only stores `ic_rate` / `cpicp` today (see the wire
+   `scaling_log` Sheet stores no CPL and no lead column today (see the wire
    contract note above). Compute them from `?action=rollup` (read-only,
    ungated): sum `spend` and `meta_conversions` per vertical for the two
    most recent `week_start` values, and CPL = spend / meta_conversions.
    Use `scaling-log-read` only for classification, `frequency_trend`,
    `avg_frequency` and the pool flags. If the rollup rows are unavailable,
-   write `prior-week CPL unavailable` — never cite `cpicp` or `ic_rate` as
-   the movement metric. End with `Verdict: reallocation helped / hurt /
+   write `prior-week CPL unavailable` — CPL is the only movement metric;
+   never substitute a `scaling_log` cost column. End with `Verdict: reallocation helped / hurt /
    inconclusive on CPL`. Skip the section entirely if no strategic rows
    executed.
 

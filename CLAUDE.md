@@ -116,7 +116,7 @@ The pipeline supports exporting sheet data as JSON to a dedicated `audit-snapsho
 
 ## Agent Data Constraints
 
-The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent loop. The legacy campaign-level Apps Script pipeline keeps running alongside it; since 2026-09-10 its Slack output (daily digest, weekly narrative, budget and scaling notices) follows the same lead-first standard as the skills — see "Slack messages are lead-first" below.
+The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent loop. The legacy campaign-level Apps Script pipeline keeps running alongside it; since 2026-09-10 its Slack output (daily digest, weekly narrative, budget and scaling notices) follows the same lead-first standard as the skills, tightened to leads-only on 2026-09-14 — see "Slack messages are leads-only" below.
 
 - **Snapshots are read-only.** Files under `data/snapshots/` are committed by the `daily-data.yml` GitHub Action and represent ground truth from Meta. Do NOT manually edit them. To *restate* history after a field's meaning changes, re-pull it: dispatch `daily-data.yml` with `start_date` + `end_date` and `force: true`. Without `force` a backfill over dates that already have a manifest is a silent no-op.
 - **Derived signals are regenerable.** Files under `data/derived/` are computed artifacts. Re-running `python3 scripts/compute_signals.py` rebuilds them from the snapshots. They can be deleted and regenerated at any time.
@@ -439,12 +439,15 @@ lead-optimized campaigns on 2026-08-19 (`ICD-Broad-Q2-2026` →
   — counting paused budgets made the $2,100/week tolerance band read as
   permanently breached and scaled every increase to zero.
 
-### Slack messages are lead-first _(standard applied 2026-09-10)_
+### Slack messages are leads-only _(lead-first standard applied 2026-09-10; tightened to leads-only 2026-09-14)_
 
 Every Slack-bound message — the Apps Script daily digest and weekly
-narrative, the budget proposal / execution / expiry notices, the strategic
-approve / reject / execution notices, the pipeline-health alert, and every
-skill brief composed by `claude-code-action` — follows one standard:
+narrative, the budget proposal / check / execution / expiry notices, the
+strategic approve / reject / execution notices, the campaign-mapping sync
+alert, the pipeline-health alert, and every skill brief composed by
+`claude-code-action` — follows one standard. A Slack message may mention
+leads, cost per lead (CPL), spend and delivery diagnostics (CTR, frequency,
+CPM, pacing). Nothing else.
 
 - **Headline = leads and cost-per-lead.** The first numbers a reader sees
   are lead count, CPL (and usually spend). Titles say Leads
@@ -456,10 +459,20 @@ skill brief composed by `claude-code-action` — follows one standard:
 - **Thresholds and alerts key on CPL** (`lead_economics.target_cpl_dollars`
   × `cpl_critical_multiple`, `fatigue.cpl_inflation_*_pct`) gated on a
   minimum lead count so a one-lead swing cannot fire an alert.
-- **IC / ICP / CPICP may appear only as a clearly-secondary line** — e.g.
-  `_of which N reached an IC decision_` — never as headline, sort key,
-  threshold, title, or the reason to flag or retire anything. Skills omit
-  the line when the count is 0.
+- **IC / ICP / CPICP, investment or rewards crowdfunding, and any subtype
+  of leads never appear in a Slack message** _(2026-09-14; until then one
+  secondary `_of which N reached an IC decision_` line was allowed)_ — not
+  as a headline, a secondary line, a parenthetical, a trailing token, a
+  "reported only" clause, a title, or the reason to flag or retire
+  anything, and not as an instruction inside the prompt that composes the
+  message (the `Code.js` prompts say "never split leads into categories
+  and never name any other conversion metric" rather than naming the
+  terms). The quality tier `prequal_decisions` — a lead that reached any
+  prequal decision, i.e. the leads funnel, not IC — may stay where it
+  already appears; do not add it anywhere new. The issue-#48 status
+  one-liners (trailing `ic=N` token), the dashboard's IC tab and the Hive
+  Mind chat prompt that serves it, Sheet columns, `intelligence_log` rows
+  and the `/exec` wire contracts are not Slack and are unchanged.
 - **Stale-state copy is banned.** Messages must not describe the daily
   optimizer as running while `BUDGET_OPTIMIZER_PAUSED` is true; the
   lockout / cadence sentences are built by `scalingLockoutStatusLine_` /
@@ -486,24 +499,33 @@ the Tuesday brief computes week-over-week CPL from `?action=rollup`.
 
 - **pipeline-health** — five checks: data freshness, Meta token validity,
   every configured funnel custom conversion (existence, archived state and
-  `last_fired_time` — quality tier first, subtypes trailing under
-  `subtypes (reported only)`, a subtype problem is never more than WARN),
-  dashboard endpoint health, and snapshot volume, which also reports the
-  newest snapshot's lead total and spend (`N leads on $S spend`) — the only
-  health signal for the primary tier, since `leads` is a pixel action that
-  `customconversions` cannot see. Slack lines are shaped
-  `STATUS check_name: detail` so an IC token can never be the first word.
+  `last_fired_time`), dashboard endpoint health, and snapshot volume, which
+  also reports the newest snapshot's lead total and spend (`N leads on $S
+  spend`) — the only health signal for the primary tier, since `leads` is
+  a pixel action that `customconversions` cannot see. The funnel check
+  returns two views _(2026-09-14)_: `status` / `detail` is the full
+  picture (quality tier first, subtypes trailing under `subtypes (reported
+  only)`, a subtype problem never more than WARN) and feeds the Sheet row,
+  the terminal summary and the issue-#48 one-liner; `slack_status` /
+  `slack_detail` covers the quality tier only and is what Slack sees, so a
+  subtype problem never produces a Slack line. `report_health.py` uses a
+  check's `slack_*` pair when present, else `status` / `detail`. Slack
+  lines are shaped `STATUS check_name: detail` and carry only leads,
+  spend and the quality tier.
   Run before any other skill so a downstream "all clear" reading isn't
   masking a broken pipeline. Autonomously it runs as two deterministic
   steps inside `daily-data.yml` (`check_health.py` → `report_health.py`);
   there is no separate scheduled workflow and no LLM in the autonomous path.
 - **daily-check** — morning briefing titled `📊 Daily Lead Check`: a totals
-  headline (leads · CPL · spend · prequal decisions, IC only as a trailing
-  parenthetical), pacing vs weekly target, campaign portfolio sorted by
-  CPL, top 3 winners (`$CPL, N leads`) + bleeders rendered by `reason`
-  (spend-without-leads first, then CPL vs ad-set CPL, CTR only as the
-  no-lead-data fallback), early fatigue flags, learning-phase ad sets, and
-  stale creatives (>21 days active).
+  headline (leads · CPL · spend · prequal decisions), pacing vs weekly
+  target, campaign portfolio sorted by CPL, top 3 winners (`$CPL, N
+  leads`) + bleeders rendered by `reason` (spend-without-leads first, then
+  CPL vs ad-set CPL, CTR only as the no-lead-data fallback), early fatigue
+  flags, learning-phase ad sets, and stale creatives (>21 days active).
+  The brief never mentions IC / ICP / CPICP or lead subtypes anywhere
+  _(2026-09-14 — the trailing IC parenthetical and the per-campaign
+  `· IC n` suffix are gone)_; the `ic_conversions` fields in the script
+  JSON feed the Sheet row only.
 - **fatigue-monitor** — per-ad fatigue classification (saturated / fatigued /
   early_fatigue / underperforming / healthy). CPL inflation vs the ad's
   peak-window baseline (`fatigue.cpl_inflation_warning/critical_pct`) is a
@@ -515,7 +537,10 @@ the Tuesday brief computes week-over-week CPL from `?action=rollup`.
   consolidated query for all Path-B ads), or estimated. Cross-references
   pending budget proposals via `?action=budget-queue-read` (newest pending
   increase per campaign) and composes a lead-first conflict line in Python
-  (e.g. fatiguing ad in a campaign with a pending budget INCREASE).
+  (e.g. fatiguing ad in a campaign with a pending budget INCREASE). The
+  Slack body carries leads, CPL, spend and the CTR / frequency / CPC
+  diagnostics only _(2026-09-14)_; the `prequal_*` / `ic_*` fields in the
+  script JSON exist for the `fatigue_log` row and are never rendered.
 - **creative-intelligence** — weekly Monday brief on what creative copy and
   visual patterns are winning across the portfolio. Per [docs/CREATIVE_INTELLIGENCE_DESIGN.md](./docs/CREATIVE_INTELLIGENCE_DESIGN.md)
   the attribution spine is corpus-level text aggregation, not per-ad asset_id
@@ -531,7 +556,9 @@ the Tuesday brief computes week-over-week CPL from `?action=rollup`.
   `benchmarks.json:creative_intelligence` (≥10 ads + ≥100 leads =
   confident; ≥5 + ≥40 = directional; below = insufficient
   hypothesis-only). The Slack post opens with `🎯 Creative Intelligence —
-  <until> — N leads at $X median CPL across M ads`; the Sheet row's
+  <until> — N leads at $X median CPL across M ads` and carries leads, CPL,
+  spend and delivery diagnostics only _(2026-09-14)_ — every other dataset
+  field stays in the dataset and the Sheet payload; the Sheet row's
   `top_body_*` is the lowest-CPL confident body (never chosen by CPICP).
 - **ad-copy-generator** — drafts new ad-copy variants for a target vertical
   from the Creative Intelligence dataset. Splits each dimension at median
@@ -572,8 +599,11 @@ the Tuesday brief computes week-over-week CPL from `?action=rollup`.
   (`portfolio.total_leads / total_spend / cpl / median_cpl`), lists
   verticals CPL-ascending within class, prints ACTIVE-but-`insufficient`
   verticals as a "too new to classify" one-liner so the campaigns Meta is
-  delivering never drop out, frames the pool move in lead terms, and
-  closes with a single `of which N reached an IC decision` line.
+  delivering never drop out, and frames the pool move in lead terms. It
+  renders nothing beyond leads, CPL, spend and delivery diagnostics
+  (frequency, CPM, elasticity) _(2026-09-14)_; the `total_ic_conversions`
+  / `ic_rate` / `cpicp` JSON fields exist only for the `scaling_log` wire
+  contract.
   `LEADS-*` campaign names bucket into their vertical (`LEADS-Broad-Q3-2026`
   → `broad`) and the optimizer-eligibility gate counts lifetime leads.
 

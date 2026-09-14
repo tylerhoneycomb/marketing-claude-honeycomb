@@ -105,12 +105,15 @@ jobs:
                    frequency, CPC change. Append "(estimated
                    baseline)" if baseline_type == "estimated".
                 4. days_active + headline preview if available.
-                5. ONLY when ic_current > 0, a secondary line:
-                   "of which <ic_current> reached an IC decision".
-                   Never put IC in the headline, a sort, or a title.
-                6. If `budget_conflict` is non-null, render it
+                5. If `budget_conflict` is non-null, render it
                    verbatim as a ⚠️ line under that ad — that's the
                    most actionable signal in the report.
+              Slack is leads only: render leads, CPL, spend and the
+              delivery diagnostics named in items 1-5, nothing else.
+              Every other numeric field in the JSON exists for the
+              fatigue_log row and is never rendered — not as a
+              headline, a secondary line, a parenthetical, or a
+              trailing token.
             - All-healthy condition is "no non-healthy classifications"
               (stats.non_healthy == 0 — `classifications` still lists
               the healthy ads, so do NOT test for an empty list). In

@@ -176,7 +176,7 @@ The first line of the Slack post is always the headline, in exactly this shape:
 
 where `N` = sum of `ads[].leads`, median CPL = median of the non-null `ads[].cpl` values, and `M` = top-level `ad_count`. Every finding that follows quotes the copy and its `(ad_count, total_leads, cpl)` numbers, e.g. `"Sarah's been brewing for 12 years" (4 ads, 142 leads, $11.80 CPL)`. Per-vertical findings are ordered by CPL ascending (best first); the retire-this-angle lines are ordered by CPL descending (worst first).
 
-IC (`ic_conversions` / `total_ic_conversions`) and rewards are reported-only subtypes. A finding may carry at most one secondary line — `of which N reached an IC decision` — and IC / CPICP is never the headline number, a sort key, a threshold, or the reason to flag or retire a variant.
+The Slack post is leads-only. It may mention leads, CPL, spend, and delivery diagnostics (CTR, frequency, CPM) — nothing else. Every other dataset field stays in the dataset and the Sheet payload: none of them appears in the post in any form — not as a headline, not as a secondary line, not as a parenthetical, not as a trailing token — and none is ever a sort key, a threshold, or the reason to flag or retire a variant.
 
 ## Output — Sheet
 

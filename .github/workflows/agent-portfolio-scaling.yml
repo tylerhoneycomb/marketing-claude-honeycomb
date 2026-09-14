@@ -231,14 +231,15 @@ jobs:
               (verticals[v].cpl, .total_conversions, .total_spend;
               proposal rows carry cpl / total_leads / vertical_spend).
               Sort scaling labels by CPL ascending within class.
-            - IC may appear exactly once, as a trailing
-              "_of which N reached an IC decision_" line built from
-              portfolio.total_ic_conversions (omit when 0). NEVER
-              print ic_rate, cpicp, median_cpicp, median_ic_rate or
-              per-vertical IC counts, and never use them for ordering
-              or emphasis.
+            - The brief carries leads, CPL, spend and delivery
+              diagnostics (frequency, CPM, elasticity) only. Any
+              other JSON field (SKILL.md's schema marks them
+              "secondary, not printed") is NEVER rendered — not as a
+              headline, secondary line, parenthetical or trailing
+              token — and never used for ordering or emphasis.
             - If cpl is null for a vertical, print "CPL —" and list
-              it last within its group; do not substitute cpicp.
+              it last within its group; never substitute another
+              cost figure.
             - Cite real numbers from the JSON. Don't invent or round
               imprecisely. Strategic reallocation amounts are integer
               cents in the JSON; convert to dollars at the

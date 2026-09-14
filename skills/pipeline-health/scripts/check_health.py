@@ -10,7 +10,9 @@ Checks:
   1. data_freshness     — most recent date in rolling_data vs expected
   2. meta_token         — debug_token: validity + expiry
   3. funnel_conversions — quality + subtype custom conversions exist, are
-                          unarchived, and report last_fired_time
+                          unarchived, and report last_fired_time. Also emits
+                          a Slack-facing `slack_status` / `slack_detail`
+                          pair covering the quality tier only.
   4. dashboard_endpoint — /exec?action=rollup returns valid JSON
   5. snapshot_volume    — newest ad-level snapshot has insight rows, and
                           reports its lead total + spend (the primary tier)
@@ -188,14 +190,19 @@ def check_funnel_conversions(token: str, account_id: str, api_version: str,
     SUBTYPE is at most a WARN, since subtypes are reported-only and may
     legitimately retire. Also surfaces `last_fired_time` so a conversion
     that silently stopped firing is visible instead of passing on mere
-    existence — the failure mode that let IC drop to n=1 through August
-    2026 without any alert.
+    existence.
 
-    The detail string always leads with the quality tier and trails the
-    subtypes under an explicit "(reported only)" label, so a subtype problem
-    never reads as a performance alert for that subtype. The primary tier
-    (leads) is a pixel action, not a custom conversion — see
-    check_snapshot_volume for its signal.
+    The result carries two views:
+      - `status` / `detail` — the full picture. The detail leads with the
+        quality tier and trails the subtypes under an explicit
+        "(reported only)" label. Written to the Sheet, the terminal and
+        the issue-#48 one-liner.
+      - `slack_status` / `slack_detail` — the quality tier only. Slack is
+        lead-first and never mentions subtypes, so a subtype problem leaves
+        `slack_status` at PASS and no Slack line fires for this check.
+
+    The primary tier (leads) is a pixel action, not a custom conversion —
+    see check_snapshot_volume for its signal.
     """
     name = "funnel_conversions"
     conv = config.get("conversions") or {}
@@ -233,6 +240,7 @@ def check_funnel_conversions(token: str, account_id: str, api_version: str,
     subtype_problems: list[str] = []
     subtype_notes: list[tuple[str, str]] = []  # (last_fired, label)
     status = "PASS"
+    slack_status = "PASS"  # only the quality tier can move this
 
     for cid, label, required in expected:
         found = by_id.get(cid)
@@ -247,13 +255,15 @@ def check_funnel_conversions(token: str, account_id: str, api_version: str,
             if problem:
                 quality_parts.append(f"{label}: {cid} {problem}")
                 status = "FAIL"
+                slack_status = "FAIL"
             else:
                 last_fired = (found.get("last_fired_time") or "never")[:10]
                 quality_parts.append(f"{label} last fired {last_fired}")
             continue
 
         # Subtypes are reported-only: a problem is a tracking-config issue,
-        # never more than WARN, and never allowed to lead the line.
+        # never more than WARN, never allowed to lead the line, and never
+        # surfaced in Slack (it does not touch slack_status / slack_detail).
         if problem:
             subtype_problems.append(f"subtype {label} (reported only) {problem} ({cid})")
             if status == "PASS":
@@ -269,7 +279,10 @@ def check_funnel_conversions(token: str, account_id: str, api_version: str,
         ordered = sorted(subtype_notes, key=lambda n: (n[0] != "never", n[0]), reverse=True)
         parts.append("subtypes (reported only): "
                      + ", ".join(f"{label}={fired}" for fired, label in ordered))
-    return {"name": name, "status": status, "detail": " | ".join(parts)}
+    slack_detail = (" | ".join(quality_parts)
+                    or "no quality-tier conversion configured in benchmarks.json")
+    return {"name": name, "status": status, "detail": " | ".join(parts),
+            "slack_status": slack_status, "slack_detail": slack_detail}
 
 
 def check_snapshot_volume(config: dict[str, Any]) -> dict[str, Any]:

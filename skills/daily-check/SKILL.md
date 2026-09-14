@@ -65,8 +65,8 @@ Requires:
 ## Interpreting output
 
 - **Pacing:** `underspending` / `overspending` / `on_pace`. Informational, not an emergency. Always include in the summary so Tyler can see whether to adjust budget today. The `weekly_target` is fetched live from `/exec?action=get_spend_goal` (the dashboard-managed spend goal), so it reflects the latest deployment — use the number from the JSON, never a hardcoded "$10,000". If `weekly_target_source == "fallback_unreachable"` the `/exec` call failed and `weekly_target` is a static fallback — append `(target from static fallback — /exec unreachable)` to the PACING line so the staleness is visible.
-- **Totals:** headline the brief with `totals` — leads, CPL, spend, prequal decisions. IC (`ic_conversions`) is a subtype: mention it only as a trailing parenthetical, and omit it when 0. Never lead with CPICP.
-- **Portfolio:** list every campaign in JSON order (already sorted best CPL first, no-lead campaigns last) with CPL, leads, spend, frequency. Call out campaigns with non-trivial spend and zero leads explicitly (`0 leads`) — those are the ones to investigate. Report IC alongside as a subtype (`· IC n`, only when > 0), never as the sort key.
+- **Totals:** headline the brief with `totals` — leads, CPL, spend, prequal decisions.
+- **Portfolio:** list every campaign in JSON order (already sorted best CPL first, no-lead campaigns last) with CPL, leads, spend, frequency. Call out campaigns with non-trivial spend and zero leads explicitly (`0 leads`) — those are the ones to investigate.
 - **Winners / Bleeders:** top 3 of each. These are the specific ads Tyler should look at. Winners are ranked by CPL (best first) and must clear the floor of ≥5 leads + ≥1,000 impressions; if `winners` is empty, no ad in the last 7 days hit that floor — say so explicitly. Bleeders are ordered spend-without-leads first, then most inflated CPL; render each by its `reason` (see the Slack example). The CPL bleeder threshold is `lead_economics.cpl_warning_multiple` (1.5× the ad-set CPL by default), so a reader knows why an ad qualified.
 - **Fatigue flags:** these *preview* the fatigue-monitor skill. Mention them in the briefing but note the full fatigue analysis lives in the separate skill.
 - **Learning phase:** list ad sets currently in learning. State explicitly that no budget changes should be made to these — that's a hard rule.
@@ -85,12 +85,12 @@ When the webhook IS set: compose a plain-text summary, keep it scannable — one
 
 ```
 📊 Daily Lead Check — 2026-05-03
-7d: 412 leads · $14.20 CPL · $5,850 spend · 371 prequal decisions (of which 2 reached an IC decision)
+7d: 412 leads · $14.20 CPL · $5,850 spend · 371 prequal decisions
 
 PACING: underspending — $1,500 yesterday, $8,050/day needed for the $<weekly_target> target
 
 PORTFOLIO (7d, best CPL first):
-  Breweries: $12.40 CPL, 157 leads, $1,950, freq 1.6 · IC 1
+  Breweries: $12.40 CPL, 157 leads, $1,950, freq 1.6
   Gyms: $18.90 CPL, 64 leads, $1,210, freq 1.9
   Salons: 0 leads, $340, freq 1.2
   …
@@ -113,7 +113,7 @@ STALE:
   WinnerAd: 48 days active
 ```
 
-The headline line under the title comes from `totals`; drop the IC parenthetical when `ic_conversions` is 0. Portfolio lines append `· IC n` only when the campaign's `ic_conversions` > 0. Bleeder lines render by `reason`: `spend_without_leads` → 0 leads / spend share (bleeder rows carry no ad spend figure, so don't invent one); `cpl_above_adset` → ad CPL vs `adset_cpl` / spend share; `ctr_below_adset_no_lead_data` → the CTR comparison with the `(no lead data in ad set yet)` suffix. Never print a CPC or a CTR as a winner's headline number.
+The headline line under the title comes from `totals`. The brief is leads-only: render nothing beyond the fields shown in the example above (leads, CPL, spend, the totals line's prequal decisions, pacing, frequency, and CTR only where a bleeder's `reason` calls for it); every other field in the JSON exists for the `daily_check_log` row and is never rendered — not as a headline, a secondary line, a parenthetical, or a trailing token. Bleeder lines render by `reason`: `spend_without_leads` → 0 leads / spend share (bleeder rows carry no ad spend figure, so don't invent one); `cpl_above_adset` → ad CPL vs `adset_cpl` / spend share; `ctr_below_adset_no_lead_data` → the CTR comparison with the `(no lead data in ad set yet)` suffix. Never print a CPC or a CTR as a winner's headline number.
 
 Skip empty sections rather than printing "(none)". If everything is empty (no winners, no bleeders, no fatigue), say so in one line: "All ads under signal floors today."
 

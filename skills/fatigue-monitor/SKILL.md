@@ -82,7 +82,7 @@ Zero-lead variant:
 
 > "Pending budget INCREASE on LEADS-Broad-Q3-2026 (+2.0%, +$12.50/day, strategic) — this ad spent $61.20 with 0 leads in the last 7 days; consider pausing before approval"
 
-Render it verbatim. Surface it prominently in Slack — it's the main "act today" signal. The proposal's `signal_reasons` field is deliberately never rendered: rows queued before the lead pivot carry IC-era wording.
+Render it verbatim. Surface it prominently in Slack — it's the main "act today" signal. The proposal's `signal_reasons` field is deliberately never rendered: rows queued before the lead pivot carry pre-pivot wording.
 
 ## Output schema (classify_fatigue.py stdout)
 
@@ -112,7 +112,7 @@ Render it verbatim. Surface it prominently in Slack — it's the main "act today
 }
 ```
 
-`prequal_current` / `ic_current` / `prequal_7d` / `ic_7d` are reported only — never a sort key, threshold, or headline.
+`prequal_current` / `ic_current` / `prequal_7d` / `ic_7d` are carried in the JSON for the log only — they are never rendered in Slack, and never a sort key, threshold, or headline.
 
 ## Output — Interactive (terminal)
 
@@ -132,8 +132,9 @@ Non-healthy section: plain text, sectioned by severity (FATIGUED first, then EAR
 2. **Lead line (first):** `Leads 7d: N (CPL $a → $b, ↑x%) | spend $s`. Use `0 leads on $s spend` when `leads_current == 0`. Omit the arrow/percent when `cpl_change_pct` is `null` (baseline had no leads) and show just `CPL $b`. When `cpl_current` is above `stats.target_cpl_dollars` (from `lead_economics.target_cpl_dollars`, currently $16), append ` · vs $<target> target`.
 3. Diagnostics line: `CTR: a% → b% (↓x%) | Freq f | CPC: $a → $b (↑x%)`. Append `(estimated baseline)` if `baseline_type == "estimated"`.
 4. `Active N days | "<headline>"` (headline only if available)
-5. Secondary, only when `ic_current > 0`: `of which N reached an IC decision`
-6. If `budget_conflict` is non-null, render it verbatim as a `⚠️` line under that ad.
+5. If `budget_conflict` is non-null, render it verbatim as a `⚠️` line under that ad.
+
+Slack is leads only: render leads, CPL, spend and the delivery diagnostics named in items 1-5, nothing else. Every other numeric field in the JSON exists for the `fatigue_log` row and is never rendered — not as a headline, a secondary line, a parenthetical, or a trailing token.
 
 ```
 🔥 Fatigue Monitor — 2026-09-10 — 4 ads at risk · $630 spend / 35 leads (CPL $18.00) last 7d · 1 budget conflict
@@ -143,7 +144,6 @@ FATIGUED:
   Leads 7d: 5 (CPL $15.45 → $22.40, ↑45%) | spend $112 · vs $16 target
   CTR: 1.8% → 0.9% (↓50%) | Freq 3.2 | CPC: $1.50 → $2.40 (↑60%)
   Active 25 days | "Invest in what you love"
-  of which 1 reached an IC decision
   ⚠️ Pending budget INCREASE on LEADS-Broad-Q3-2026 (+2.0%, +$12.50/day, strategic) — this ad bought 5 leads at CPL $22.40 (baseline $15.45, +45%) in the last 7 days; consider pausing before approval
 
   Brewery hero v3 (LEADS-Broad-Q3-2026)
@@ -178,7 +178,7 @@ Handled by `classify_fatigue.py`. ALL evaluated ads (including healthy) write to
 
 - This skill **does not** pause ads or change budgets. It surfaces signals and conflicts.
 - Ads under `min_impressions` (1,000) or `min_days_active` (7) are skipped — don't manually override.
-- Leads and CPL are the headline and the sort key. IC / prequal counts are reported on a secondary line only — never promote them to the headline, a threshold, or a sort key.
+- Leads and CPL are the headline and the sort key. Slack output is leads only — nothing beyond leads, CPL, spend and the per-ad delivery diagnostics reaches the Slack body, in any position.
 - `baseline_type: "estimated"` carries lower confidence than `"peak_window"` — for CPL even more so than CTR, because a 4-day proxy holds few leads. Mention it in Slack if it drove a fatigued/early_fatigue verdict so Tyler can weight the recommendation accordingly.
 - The Path-B Meta query is the most expensive call this skill makes. If `--no-historical-query` is passed to `compute_baselines.py`, all Path-B ads degrade to `estimated` baselines — fine for testing, but the production output should run the query.
 - Retargeting threshold (`frequency_retargeting_critical: 5.0`) is set in `benchmarks.json` but not currently exercised — all Honeycomb campaigns are prospecting. If retargeting campaigns are added, set `campaign_defaults.type` accordingly or extend the script to look up campaign type per-ad.

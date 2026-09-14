@@ -236,13 +236,13 @@ jobs:
             - Include side-by-side findings prominently — these are
               the cleanest causal signal in the dataset. Compare on
               ad_a_cpl vs ad_b_cpl.
-            - IC and rewards are reported-only subtypes. You may
-              append at most one secondary line per finding — "of
-              which N reached an IC decision" from
-              ads[].ic_conversions / variants[].total_ic_conversions
-              — but never use ic_conversions or cpicp as a headline
-              number, sort key, threshold, or reason to flag or
-              retire a variant.
+            - The Slack post is leads-only: leads, CPL, spend and
+              delivery diagnostics, nothing else. Every other dataset
+              field stays in the dataset and the Sheet payload — none
+              appears in the Slack post in any form (no headline,
+              secondary line, parenthetical or trailing token), and
+              none is ever a sort key, threshold, or reason to flag
+              or retire a variant.
 
             Constraints:
             - Read-only on the repo (except writing
