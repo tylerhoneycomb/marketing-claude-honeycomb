@@ -15,7 +15,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.03
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.165138,
     "ic_conversions": 0,
     "impressions": 127,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 109,
+    "rewards_conversions": 0,
     "spend": 6.08
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.171811,
     "ic_conversions": 0,
     "impressions": 1139,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 972,
+    "rewards_conversions": 0,
     "spend": 45.84
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.158964,
     "ic_conversions": 0,
     "impressions": 1655,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 1428,
+    "rewards_conversions": 0,
     "spend": 64.95
   },
   {
@@ -81,7 +93,7 @@
     "adset_id": "120241605050910631",
     "adset_name": "Creameries - Audience 1 - List + page admins - Lead generation - Q4 2025",
     "campaign_id": "120241605050900631",
-    "campaign_name": "PAUSED - AD-Creameries-Q1-2026",
+    "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 0,
     "conversions": 0,
     "cpc": 0.0,
@@ -91,7 +103,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.01
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.10564,
     "ic_conversions": 0,
     "impressions": 1235,
+    "leads": 8,
+    "prequal_decisions": 4,
     "reach": 1117,
+    "rewards_conversions": 0,
     "spend": 76.9
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.255515,
     "ic_conversions": 2,
     "impressions": 1366,
+    "leads": 7,
+    "prequal_decisions": 3,
     "reach": 1088,
+    "rewards_conversions": 0,
     "spend": 60.33
   },
   {
@@ -138,7 +159,7 @@
     "adset_id": "120242950044520631",
     "adset_name": "Creameries - Audience 2 - Pure lookalike - Lead generation - Q1 2026",
     "campaign_id": "120241605050900631",
-    "campaign_name": "PAUSED - AD-Creameries-Q1-2026",
+    "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 41,
     "conversions": 2,
     "cpc": 1.852439,
@@ -148,7 +169,10 @@
     "frequency": 1.098155,
     "ic_conversions": 0,
     "impressions": 1667,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 1518,
+    "rewards_conversions": 0,
     "spend": 75.95
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.042899,
     "ic_conversions": 0,
     "impressions": 1799,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 1725,
+    "rewards_conversions": 0,
     "spend": 79.81
   },
   {
@@ -186,7 +213,10 @@
     "frequency": 1.131691,
     "ic_conversions": 0,
     "impressions": 1332,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 1177,
+    "rewards_conversions": 0,
     "spend": 51.69
   },
   {
@@ -205,7 +235,10 @@
     "frequency": 1.220865,
     "ic_conversions": 0,
     "impressions": 3698,
+    "leads": 22,
+    "prequal_decisions": 11,
     "reach": 3029,
+    "rewards_conversions": 0,
     "spend": 205.43
   },
   {
@@ -224,7 +257,10 @@
     "frequency": 1.07914,
     "ic_conversions": 0,
     "impressions": 2209,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 2047,
+    "rewards_conversions": 0,
     "spend": 90.77
   },
   {
@@ -243,7 +279,10 @@
     "frequency": 1.12559,
     "ic_conversions": 1,
     "impressions": 3576,
+    "leads": 9,
+    "prequal_decisions": 4,
     "reach": 3177,
+    "rewards_conversions": 0,
     "spend": 142.2
   },
   {
@@ -262,7 +301,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.04
   },
   {
@@ -281,7 +323,10 @@
     "frequency": 1.096386,
     "ic_conversions": 0,
     "impressions": 182,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 166,
+    "rewards_conversions": 0,
     "spend": 8.39
   },
   {
@@ -300,7 +345,10 @@
     "frequency": 1.112648,
     "ic_conversions": 0,
     "impressions": 563,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 506,
+    "rewards_conversions": 0,
     "spend": 24.12
   },
   {
@@ -319,7 +367,10 @@
     "frequency": 1.233026,
     "ic_conversions": 0,
     "impressions": 1471,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1193,
+    "rewards_conversions": 0,
     "spend": 54.84
   },
   {
@@ -328,7 +379,7 @@
     "adset_id": "120245893421060631",
     "adset_name": "BR-Independent Coffee Shops-Cohort3-LAL1-20260414-Coffee_Beer_and_Wine",
     "campaign_id": "120245893173820631",
-    "campaign_name": "ICD-Coffee, Beer & Wine Retail-Q2-2026",
+    "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
     "clicks": 0,
     "conversions": 0,
     "cpc": 0.0,
@@ -338,7 +389,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 6,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 6,
+    "rewards_conversions": 0,
     "spend": 0.12
   },
   {
@@ -347,7 +401,7 @@
     "adset_id": "120245893421380631",
     "adset_name": "BR-Sports Bars-Cohort11-LAL1-20260414-Coffee_Beer_and_Wine",
     "campaign_id": "120245893173820631",
-    "campaign_name": "ICD-Coffee, Beer & Wine Retail-Q2-2026",
+    "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
     "clicks": 2,
     "conversions": 0,
     "cpc": 5.35,
@@ -357,7 +411,10 @@
     "frequency": 1.115108,
     "ic_conversions": 0,
     "impressions": 155,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 139,
+    "rewards_conversions": 0,
     "spend": 10.7
   },
   {
@@ -366,7 +423,7 @@
     "adset_id": "120245893421370631",
     "adset_name": "BR-Sports Bars-Cohort1-LAL1-20260414-Coffee_Beer_and_Wine",
     "campaign_id": "120245893173820631",
-    "campaign_name": "ICD-Coffee, Beer & Wine Retail-Q2-2026",
+    "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
     "clicks": 3,
     "conversions": 0,
     "cpc": 4.366667,
@@ -376,7 +433,10 @@
     "frequency": 1.073171,
     "ic_conversions": 0,
     "impressions": 264,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 246,
+    "rewards_conversions": 0,
     "spend": 13.1
   },
   {
@@ -385,7 +445,7 @@
     "adset_id": "120245893421070631",
     "adset_name": "BR-Independent Coffee Shops-Cohort5-LAL1-20260414-Coffee_Beer_and_Wine",
     "campaign_id": "120245893173820631",
-    "campaign_name": "ICD-Coffee, Beer & Wine Retail-Q2-2026",
+    "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
     "clicks": 7,
     "conversions": 2,
     "cpc": 1.547143,
@@ -395,7 +455,10 @@
     "frequency": 1.269608,
     "ic_conversions": 0,
     "impressions": 259,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 204,
+    "rewards_conversions": 0,
     "spend": 10.83
   },
   {
@@ -414,7 +477,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 9,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 9,
+    "rewards_conversions": 0,
     "spend": 0.5
   },
   {
@@ -433,7 +499,10 @@
     "frequency": 1.26083,
     "ic_conversions": 0,
     "impressions": 1397,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1108,
+    "rewards_conversions": 0,
     "spend": 57.45
   },
   {
@@ -452,7 +521,10 @@
     "frequency": 1.284768,
     "ic_conversions": 0,
     "impressions": 194,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 151,
+    "rewards_conversions": 0,
     "spend": 7.84
   },
   {
@@ -471,7 +543,10 @@
     "frequency": 1.327434,
     "ic_conversions": 0,
     "impressions": 150,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 113,
+    "rewards_conversions": 0,
     "spend": 6.54
   },
   {
@@ -490,7 +565,10 @@
     "frequency": 1.130435,
     "ic_conversions": 0,
     "impressions": 26,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 23,
+    "rewards_conversions": 0,
     "spend": 1.92
   },
   {
@@ -509,7 +587,10 @@
     "frequency": 1.25,
     "ic_conversions": 0,
     "impressions": 10,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 8,
+    "rewards_conversions": 0,
     "spend": 0.34
   },
   {
@@ -528,7 +609,10 @@
     "frequency": 1.130435,
     "ic_conversions": 0,
     "impressions": 182,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 161,
+    "rewards_conversions": 0,
     "spend": 9.05
   },
   {
@@ -547,7 +631,10 @@
     "frequency": 1.108696,
     "ic_conversions": 0,
     "impressions": 102,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 92,
+    "rewards_conversions": 0,
     "spend": 6.17
   },
   {
@@ -556,7 +643,7 @@
     "adset_id": "120246482969620631",
     "adset_name": "Creameries - 1% LAL - HubSpot refresh - 2026-04-18",
     "campaign_id": "120241605050900631",
-    "campaign_name": "PAUSED - AD-Creameries-Q1-2026",
+    "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 0,
     "conversions": 0,
     "cpc": 0.0,
@@ -566,7 +653,10 @@
     "frequency": 1.070796,
     "ic_conversions": 0,
     "impressions": 121,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 113,
+    "rewards_conversions": 0,
     "spend": 7.29
   },
   {
@@ -575,7 +665,7 @@
     "adset_id": "120246482969610631",
     "adset_name": "Creameries - 1-2% LAL - HubSpot refresh - 2026-04-18",
     "campaign_id": "120241605050900631",
-    "campaign_name": "PAUSED - AD-Creameries-Q1-2026",
+    "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 13,
     "conversions": 4,
     "cpc": 2.287692,
@@ -585,7 +675,10 @@
     "frequency": 1.263456,
     "ic_conversions": 0,
     "impressions": 446,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 353,
+    "rewards_conversions": 0,
     "spend": 29.74
   },
   {
@@ -604,7 +697,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.01
   },
   {
@@ -623,7 +719,10 @@
     "frequency": 1.167516,
     "ic_conversions": 0,
     "impressions": 3436,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 2943,
+    "rewards_conversions": 0,
     "spend": 96.8
   }
 ]

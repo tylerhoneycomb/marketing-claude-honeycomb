@@ -15,7 +15,10 @@
     "frequency": 1.3,
     "ic_conversions": 0,
     "impressions": 26,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 20,
+    "rewards_conversions": 0,
     "spend": 0.95
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.181429,
     "ic_conversions": 0,
     "impressions": 827,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 700,
+    "rewards_conversions": 0,
     "spend": 28.24
   },
   {
@@ -46,15 +52,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 35,
     "conversions": 4,
-    "cpc": 1.928286,
-    "cpm": 48.976778,
-    "ctr": 2.539913,
+    "cpc": 1.928571,
+    "cpm": 48.948513,
+    "ctr": 2.538071,
     "date": "2026-07-23",
-    "frequency": 1.121237,
+    "frequency": 1.120227,
     "ic_conversions": 0,
-    "impressions": 1378,
-    "reach": 1229,
-    "spend": 67.49
+    "impressions": 1379,
+    "leads": 4,
+    "prequal_decisions": 2,
+    "reach": 1231,
+    "rewards_conversions": 0,
+    "spend": 67.5
   },
   {
     "ad_id": "120245893441770631",
@@ -65,15 +74,18 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 91,
     "conversions": 6,
-    "cpc": 1.060989,
-    "cpm": 44.761242,
-    "ctr": 4.218822,
+    "cpc": 1.062088,
+    "cpm": 44.766095,
+    "ctr": 4.214914,
     "date": "2026-07-23",
-    "frequency": 1.111856,
+    "frequency": 1.110026,
     "ic_conversions": 0,
-    "impressions": 2157,
-    "reach": 1940,
-    "spend": 96.55
+    "impressions": 2159,
+    "leads": 6,
+    "prequal_decisions": 2,
+    "reach": 1945,
+    "rewards_conversions": 0,
+    "spend": 96.65
   },
   {
     "ad_id": "120251814987180631",
@@ -84,14 +96,17 @@
     "campaign_name": "ICD-Broad-Q2-2026",
     "clicks": 35,
     "conversions": 14,
-    "cpc": 3.172,
-    "cpm": 54.987618,
-    "ctr": 1.733531,
+    "cpc": 3.178,
+    "cpm": 55.03711,
+    "ctr": 1.731816,
     "date": "2026-07-23",
-    "frequency": 1.265831,
+    "frequency": 1.265498,
     "ic_conversions": 2,
-    "impressions": 2019,
-    "reach": 1595,
-    "spend": 111.02
+    "impressions": 2021,
+    "leads": 14,
+    "prequal_decisions": 4,
+    "reach": 1597,
+    "rewards_conversions": 0,
+    "spend": 111.23
   }
 ]

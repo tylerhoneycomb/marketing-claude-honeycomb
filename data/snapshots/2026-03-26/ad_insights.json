@@ -15,7 +15,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.03
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.025,
     "ic_conversions": 0,
     "impressions": 41,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 40,
+    "rewards_conversions": 0,
     "spend": 1.61
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.175218,
     "ic_conversions": 1,
     "impressions": 1214,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 1033,
+    "rewards_conversions": 0,
     "spend": 44.44
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.240575,
     "ic_conversions": 0,
     "impressions": 691,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 557,
+    "rewards_conversions": 0,
     "spend": 29.25
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.108722,
     "ic_conversions": 1,
     "impressions": 1805,
+    "leads": 7,
+    "prequal_decisions": 5,
     "reach": 1628,
+    "rewards_conversions": 0,
     "spend": 73.96
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.137771,
     "ic_conversions": 0,
     "impressions": 1470,
+    "leads": 2,
+    "prequal_decisions": 2,
     "reach": 1292,
+    "rewards_conversions": 0,
     "spend": 74.15
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.223851,
     "ic_conversions": 2,
     "impressions": 1252,
+    "leads": 8,
+    "prequal_decisions": 4,
     "reach": 1023,
+    "rewards_conversions": 0,
     "spend": 72.82
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.111111,
     "ic_conversions": 0,
     "impressions": 70,
+    "leads": 1,
+    "prequal_decisions": 1,
     "reach": 63,
+    "rewards_conversions": 0,
     "spend": 3.19
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.311523,
     "ic_conversions": 0,
     "impressions": 1343,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1024,
+    "rewards_conversions": 0,
     "spend": 50.95
   },
   {
@@ -176,7 +203,7 @@
     "adset_id": "120242950044520631",
     "adset_name": "Creameries - Audience 2 - Pure lookalike - Lead generation - Q1 2026",
     "campaign_id": "120241605050900631",
-    "campaign_name": "PAUSED - AD-Creameries-Q1-2026",
+    "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 80,
     "conversions": 6,
     "cpc": 1.35575,
@@ -186,7 +213,10 @@
     "frequency": 1.14494,
     "ic_conversions": 1,
     "impressions": 2749,
+    "leads": 6,
+    "prequal_decisions": 4,
     "reach": 2401,
+    "rewards_conversions": 0,
     "spend": 108.46
   },
   {
@@ -205,7 +235,10 @@
     "frequency": 1.039366,
     "ic_conversions": 0,
     "impressions": 2033,
+    "leads": 1,
+    "prequal_decisions": 1,
     "reach": 1956,
+    "rewards_conversions": 0,
     "spend": 75.3
   },
   {
@@ -224,7 +257,10 @@
     "frequency": 1.161421,
     "ic_conversions": 1,
     "impressions": 1144,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 985,
+    "rewards_conversions": 0,
     "spend": 50.0
   },
   {
@@ -243,7 +279,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.08
   },
   {
@@ -262,7 +301,10 @@
     "frequency": 1.27285,
     "ic_conversions": 1,
     "impressions": 3774,
+    "leads": 7,
+    "prequal_decisions": 5,
     "reach": 2965,
+    "rewards_conversions": 0,
     "spend": 208.66
   },
   {
@@ -281,7 +323,10 @@
     "frequency": 1.121668,
     "ic_conversions": 0,
     "impressions": 4250,
+    "leads": 3,
+    "prequal_decisions": 3,
     "reach": 3789,
+    "rewards_conversions": 0,
     "spend": 162.23
   },
   {
@@ -300,7 +345,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.08
   },
   {
@@ -319,7 +367,10 @@
     "frequency": 1.085811,
     "ic_conversions": 1,
     "impressions": 3543,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 3263,
+    "rewards_conversions": 0,
     "spend": 126.57
   },
   {
@@ -338,7 +389,10 @@
     "frequency": 1.039387,
     "ic_conversions": 0,
     "impressions": 475,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 457,
+    "rewards_conversions": 0,
     "spend": 16.84
   },
   {
@@ -357,7 +411,10 @@
     "frequency": 1.127592,
     "ic_conversions": 0,
     "impressions": 707,
+    "leads": 2,
+    "prequal_decisions": 2,
     "reach": 627,
+    "rewards_conversions": 0,
     "spend": 30.8
   },
   {
@@ -376,7 +433,10 @@
     "frequency": 1.148649,
     "ic_conversions": 0,
     "impressions": 85,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 74,
+    "rewards_conversions": 0,
     "spend": 3.45
   },
   {
@@ -395,7 +455,10 @@
     "frequency": 1.191136,
     "ic_conversions": 0,
     "impressions": 1290,
+    "leads": 1,
+    "prequal_decisions": 1,
     "reach": 1083,
+    "rewards_conversions": 0,
     "spend": 47.76
   },
   {
@@ -414,7 +477,10 @@
     "frequency": 1.28379,
     "ic_conversions": 0,
     "impressions": 5243,
+    "leads": 1,
+    "prequal_decisions": 1,
     "reach": 4084,
+    "rewards_conversions": 0,
     "spend": 191.16
   }
 ]

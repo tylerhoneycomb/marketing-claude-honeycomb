@@ -8,15 +8,18 @@
     "campaign_name": "AD-Juice & Smoothie-Q1-2026",
     "clicks": 36,
     "conversions": 0,
-    "cpc": 1.447222,
-    "cpm": 47.754354,
-    "ctr": 3.299725,
+    "cpc": 1.4475,
+    "cpm": 47.71978,
+    "ctr": 3.296703,
     "date": "2026-07-19",
-    "frequency": 1.141213,
+    "frequency": 1.139875,
     "ic_conversions": 0,
-    "impressions": 1091,
-    "reach": 956,
-    "spend": 52.1
+    "impressions": 1092,
+    "leads": 0,
+    "prequal_decisions": 0,
+    "reach": 958,
+    "rewards_conversions": 0,
+    "spend": 52.11
   },
   {
     "ad_id": null,
@@ -34,7 +37,10 @@
     "frequency": 1.04878,
     "ic_conversions": 0,
     "impressions": 43,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 41,
+    "rewards_conversions": 0,
     "spend": 1.85
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.171815,
     "ic_conversions": 1,
     "impressions": 1821,
+    "leads": 7,
+    "prequal_decisions": 3,
     "reach": 1554,
+    "rewards_conversions": 0,
     "spend": 70.77
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.137886,
     "ic_conversions": 0,
     "impressions": 3499,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 3075,
+    "rewards_conversions": 0,
     "spend": 162.99
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.064516,
     "ic_conversions": 0,
     "impressions": 33,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 31,
+    "rewards_conversions": 0,
     "spend": 1.08
   },
   {
@@ -103,14 +118,17 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 223,
     "conversions": 15,
-    "cpc": 1.275561,
-    "cpm": 49.755116,
-    "ctr": 3.900647,
+    "cpc": 1.276099,
+    "cpm": 49.732611,
+    "ctr": 3.897239,
     "date": "2026-07-19",
-    "frequency": 1.154949,
+    "frequency": 1.15596,
     "ic_conversions": 1,
-    "impressions": 5717,
+    "impressions": 5722,
+    "leads": 15,
+    "prequal_decisions": 5,
     "reach": 4950,
-    "spend": 284.45
+    "rewards_conversions": 0,
+    "spend": 284.57
   }
 ]

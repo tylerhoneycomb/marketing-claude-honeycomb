@@ -15,7 +15,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 6,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 6,
+    "rewards_conversions": 0,
     "spend": 0.22
   },
   {
@@ -27,15 +30,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 17,
     "conversions": 0,
-    "cpc": 1.891765,
-    "cpm": 30.253998,
-    "ctr": 1.599247,
+    "cpc": 1.892353,
+    "cpm": 30.234962,
+    "ctr": 1.597744,
     "date": "2026-07-25",
-    "frequency": 1.093621,
+    "frequency": 1.092402,
     "ic_conversions": 0,
-    "impressions": 1063,
-    "reach": 972,
-    "spend": 32.16
+    "impressions": 1064,
+    "leads": 0,
+    "prequal_decisions": 0,
+    "reach": 974,
+    "rewards_conversions": 0,
+    "spend": 32.17
   },
   {
     "ad_id": null,
@@ -46,15 +52,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 49,
     "conversions": 0,
-    "cpc": 1.227347,
-    "cpm": 39.001297,
-    "ctr": 3.177691,
+    "cpc": 1.227755,
+    "cpm": 38.988983,
+    "ctr": 3.175632,
     "date": "2026-07-25",
-    "frequency": 1.125547,
+    "frequency": 1.126277,
     "ic_conversions": 0,
-    "impressions": 1542,
+    "impressions": 1543,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1370,
-    "spend": 60.14
+    "rewards_conversions": 0,
+    "spend": 60.16
   },
   {
     "ad_id": null,
@@ -72,7 +81,10 @@
     "frequency": 1.13748,
     "ic_conversions": 1,
     "impressions": 2085,
+    "leads": 12,
+    "prequal_decisions": 6,
     "reach": 1833,
+    "rewards_conversions": 0,
     "spend": 88.86
   },
   {
@@ -84,14 +96,17 @@
     "campaign_name": "ICD-Broad-Q2-2026",
     "clicks": 39,
     "conversions": 11,
-    "cpc": 3.251026,
-    "cpm": 57.579473,
-    "ctr": 1.771117,
+    "cpc": 3.253077,
+    "cpm": 57.58965,
+    "ctr": 1.770313,
     "date": "2026-07-25",
-    "frequency": 1.244068,
+    "frequency": 1.244633,
     "ic_conversions": 3,
-    "impressions": 2202,
+    "impressions": 2203,
+    "leads": 11,
+    "prequal_decisions": 3,
     "reach": 1770,
-    "spend": 126.79
+    "rewards_conversions": 0,
+    "spend": 126.87
   }
 ]

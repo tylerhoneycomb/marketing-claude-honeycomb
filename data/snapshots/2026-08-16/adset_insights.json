@@ -8,14 +8,17 @@
     "campaign_name": "ICD-Broad-Q2-2026",
     "clicks": 87,
     "conversions": 22,
-    "cpc": 2.44046,
-    "cpm": 71.657104,
-    "ctr": 2.936213,
+    "cpc": 2.445057,
+    "cpm": 71.695315,
+    "ctr": 2.932255,
     "date": "2026-08-16",
-    "frequency": 1.319234,
+    "frequency": 1.320427,
     "ic_conversions": 0,
-    "impressions": 2963,
-    "reach": 2246,
-    "spend": 212.32
+    "impressions": 2967,
+    "leads": 22,
+    "prequal_decisions": 9,
+    "reach": 2247,
+    "rewards_conversions": 0,
+    "spend": 212.72
   }
 ]

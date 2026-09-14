@@ -15,7 +15,10 @@
     "frequency": 1.115854,
     "ic_conversions": 0,
     "impressions": 183,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 164,
+    "rewards_conversions": 0,
     "spend": 8.46
   },
   {
@@ -27,15 +30,18 @@
     "campaign_name": "AD-Sustainable Main Street-Q1-2026",
     "clicks": 54,
     "conversions": 10,
-    "cpc": 1.119444,
-    "cpm": 45.830174,
-    "ctr": 4.094011,
+    "cpc": 1.121111,
+    "cpm": 45.828917,
+    "ctr": 4.087812,
     "date": "2026-06-07",
-    "frequency": 1.105616,
+    "frequency": 1.104515,
     "ic_conversions": 0,
-    "impressions": 1319,
-    "reach": 1193,
-    "spend": 60.45
+    "impressions": 1321,
+    "leads": 10,
+    "prequal_decisions": 5,
+    "reach": 1196,
+    "rewards_conversions": 0,
+    "spend": 60.54
   },
   {
     "ad_id": null,
@@ -46,15 +52,18 @@
     "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 57,
     "conversions": 8,
-    "cpc": 1.620351,
-    "cpm": 67.268755,
-    "ctr": 4.151493,
+    "cpc": 1.640702,
+    "cpm": 68.064047,
+    "ctr": 4.148472,
     "date": "2026-06-07",
-    "frequency": 1.104586,
+    "frequency": 1.10539,
     "ic_conversions": 0,
-    "impressions": 1373,
+    "impressions": 1374,
+    "leads": 8,
+    "prequal_decisions": 4,
     "reach": 1243,
-    "spend": 92.36
+    "rewards_conversions": 0,
+    "spend": 93.52
   },
   {
     "ad_id": null,
@@ -63,17 +72,20 @@
     "adset_name": "BBQ - Audience 1 - Pure lookalike 1% - Lead generation - Q1 2026 - Copy",
     "campaign_id": "120242949904880631",
     "campaign_name": "AD-BBQ-Q1-2026",
-    "clicks": 47,
+    "clicks": 48,
     "conversions": 6,
-    "cpc": 1.449574,
-    "cpm": 45.480641,
-    "ctr": 3.137517,
+    "cpc": 1.423333,
+    "cpm": 45.546667,
+    "ctr": 3.2,
     "date": "2026-06-07",
-    "frequency": 1.074605,
+    "frequency": 1.07604,
     "ic_conversions": 0,
-    "impressions": 1498,
+    "impressions": 1500,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 1394,
-    "spend": 68.13
+    "rewards_conversions": 0,
+    "spend": 68.32
   },
   {
     "ad_id": null,
@@ -91,7 +103,10 @@
     "frequency": 1.070175,
     "ic_conversions": 0,
     "impressions": 61,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 57,
+    "rewards_conversions": 0,
     "spend": 1.67
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.232303,
     "ic_conversions": 0,
     "impressions": 1236,
+    "leads": 10,
+    "prequal_decisions": 5,
     "reach": 1003,
+    "rewards_conversions": 0,
     "spend": 100.12
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.051471,
     "ic_conversions": 0,
     "impressions": 143,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 136,
+    "rewards_conversions": 0,
     "spend": 6.11
   },
   {
@@ -141,15 +162,18 @@
     "campaign_name": "AD-Juice & Smoothie-Q1-2026",
     "clicks": 108,
     "conversions": 4,
-    "cpc": 2.0625,
-    "cpm": 45.385086,
-    "ctr": 2.200489,
+    "cpc": 2.063981,
+    "cpm": 45.3807,
+    "ctr": 2.198697,
     "date": "2026-06-07",
-    "frequency": 1.082488,
+    "frequency": 1.081938,
     "ic_conversions": 0,
-    "impressions": 4908,
-    "reach": 4534,
-    "spend": 222.75
+    "impressions": 4912,
+    "leads": 4,
+    "prequal_decisions": 2,
+    "reach": 4540,
+    "rewards_conversions": 0,
+    "spend": 222.91
   },
   {
     "ad_id": null,
@@ -167,7 +191,10 @@
     "frequency": 1.168831,
     "ic_conversions": 0,
     "impressions": 90,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 77,
+    "rewards_conversions": 0,
     "spend": 4.89
   },
   {
@@ -186,7 +213,10 @@
     "frequency": 1.06383,
     "ic_conversions": 0,
     "impressions": 50,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 47,
+    "rewards_conversions": 0,
     "spend": 2.42
   },
   {
@@ -198,15 +228,18 @@
     "campaign_name": "AD-Bakeries-Q4-2025",
     "clicks": 50,
     "conversions": 2,
-    "cpc": 1.397,
-    "cpm": 47.614179,
-    "ctr": 3.408316,
+    "cpc": 1.399,
+    "cpm": 47.617427,
+    "ctr": 3.403676,
     "date": "2026-06-07",
-    "frequency": 1.17079,
+    "frequency": 1.171451,
     "ic_conversions": 0,
-    "impressions": 1467,
-    "reach": 1253,
-    "spend": 69.85
+    "impressions": 1469,
+    "leads": 2,
+    "prequal_decisions": 1,
+    "reach": 1254,
+    "rewards_conversions": 0,
+    "spend": 69.95
   },
   {
     "ad_id": null,
@@ -217,15 +250,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 104,
     "conversions": 4,
-    "cpc": 2.146923,
-    "cpm": 52.735002,
-    "ctr": 2.456306,
+    "cpc": 2.149327,
+    "cpm": 52.706909,
+    "ctr": 2.452252,
     "date": "2026-06-07",
-    "frequency": 1.214573,
+    "frequency": 1.215535,
     "ic_conversions": 0,
-    "impressions": 4234,
-    "reach": 3486,
-    "spend": 223.28
+    "impressions": 4241,
+    "leads": 4,
+    "prequal_decisions": 2,
+    "reach": 3489,
+    "rewards_conversions": 0,
+    "spend": 223.53
   },
   {
     "ad_id": null,
@@ -243,7 +279,10 @@
     "frequency": 1.098837,
     "ic_conversions": 0,
     "impressions": 378,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 344,
+    "rewards_conversions": 0,
     "spend": 26.42
   },
   {
@@ -262,7 +301,10 @@
     "frequency": 1.2,
     "ic_conversions": 0,
     "impressions": 6,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 5,
+    "rewards_conversions": 0,
     "spend": 0.51
   },
   {
@@ -281,7 +323,10 @@
     "frequency": 1.034483,
     "ic_conversions": 0,
     "impressions": 30,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 29,
+    "rewards_conversions": 0,
     "spend": 1.11
   },
   {
@@ -300,7 +345,10 @@
     "frequency": 1.17757,
     "ic_conversions": 0,
     "impressions": 378,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 321,
+    "rewards_conversions": 0,
     "spend": 27.76
   },
   {
@@ -312,15 +360,18 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 169,
     "conversions": 23,
-    "cpc": 1.330473,
-    "cpm": 73.866623,
-    "ctr": 5.551905,
+    "cpc": 1.331361,
+    "cpm": 73.843124,
+    "ctr": 5.546439,
     "date": "2026-06-07",
-    "frequency": 1.154342,
+    "frequency": 1.15548,
     "ic_conversions": 1,
-    "impressions": 3044,
+    "impressions": 3047,
+    "leads": 23,
+    "prequal_decisions": 10,
     "reach": 2637,
-    "spend": 224.85
+    "rewards_conversions": 0,
+    "spend": 225.0
   },
   {
     "ad_id": null,
@@ -338,7 +389,10 @@
     "frequency": 1.071429,
     "ic_conversions": 0,
     "impressions": 15,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 14,
+    "rewards_conversions": 0,
     "spend": 0.58
   },
   {
@@ -348,17 +402,20 @@
     "adset_name": "Fitness Wellness - 1% LAL - HubSpot refresh - 2026-04-18 - Copy",
     "campaign_id": "120244094020690631",
     "campaign_name": "AD-Fitness & Wellness-Q1-2026",
-    "clicks": 132,
+    "clicks": 133,
     "conversions": 28,
-    "cpc": 0.80303,
-    "cpm": 40.535373,
-    "ctr": 5.047801,
+    "cpc": 0.798571,
+    "cpm": 40.538168,
+    "ctr": 5.076336,
     "date": "2026-06-07",
-    "frequency": 1.093685,
+    "frequency": 1.093946,
     "ic_conversions": 3,
-    "impressions": 2615,
-    "reach": 2391,
-    "spend": 106.0
+    "impressions": 2620,
+    "leads": 28,
+    "prequal_decisions": 10,
+    "reach": 2395,
+    "rewards_conversions": 0,
+    "spend": 106.21
   },
   {
     "ad_id": null,
@@ -369,15 +426,18 @@
     "campaign_name": "AD-BBQ-Q1-2026",
     "clicks": 67,
     "conversions": 8,
-    "cpc": 1.40791,
-    "cpm": 37.006669,
-    "ctr": 2.628482,
+    "cpc": 1.408507,
+    "cpm": 36.993336,
+    "ctr": 2.626421,
     "date": "2026-06-07",
-    "frequency": 1.15183,
+    "frequency": 1.151693,
     "ic_conversions": 1,
-    "impressions": 2549,
-    "reach": 2213,
-    "spend": 94.33
+    "impressions": 2551,
+    "leads": 8,
+    "prequal_decisions": 3,
+    "reach": 2215,
+    "rewards_conversions": 0,
+    "spend": 94.37
   },
   {
     "ad_id": null,
@@ -395,7 +455,10 @@
     "frequency": 1.406661,
     "ic_conversions": 0,
     "impressions": 1605,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1141,
+    "rewards_conversions": 0,
     "spend": 104.77
   }
 ]

@@ -15,7 +15,10 @@
     "frequency": 0.0,
     "ic_conversions": 0,
     "impressions": 0,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 0,
+    "rewards_conversions": 0,
     "spend": 0.0
   },
   {
@@ -27,14 +30,17 @@
     "campaign_name": "ICD-Broad-Q2-2026",
     "clicks": 129,
     "conversions": 17,
-    "cpc": 2.695271,
-    "cpm": 69.845319,
-    "ctr": 2.591402,
+    "cpc": 2.697907,
+    "cpm": 69.815446,
+    "ctr": 2.587763,
     "date": "2026-08-17",
-    "frequency": 1.324641,
+    "frequency": 1.323686,
     "ic_conversions": 0,
-    "impressions": 4978,
-    "reach": 3758,
-    "spend": 347.69
+    "impressions": 4985,
+    "leads": 17,
+    "prequal_decisions": 6,
+    "reach": 3766,
+    "rewards_conversions": 0,
+    "spend": 348.03
   }
 ]

@@ -15,7 +15,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 9,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 9,
+    "rewards_conversions": 0,
     "spend": 0.7
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.057143,
     "ic_conversions": 0,
     "impressions": 111,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 105,
+    "rewards_conversions": 0,
     "spend": 5.68
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.049505,
     "ic_conversions": 0,
     "impressions": 106,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 101,
+    "rewards_conversions": 0,
     "spend": 5.2
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.011111,
     "ic_conversions": 0,
     "impressions": 91,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 90,
+    "rewards_conversions": 0,
     "spend": 4.75
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.096386,
     "ic_conversions": 0,
     "impressions": 91,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 83,
+    "rewards_conversions": 0,
     "spend": 2.66
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.016216,
     "ic_conversions": 0,
     "impressions": 188,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 185,
+    "rewards_conversions": 0,
     "spend": 5.95
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.012931,
     "ic_conversions": 0,
     "impressions": 235,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 232,
+    "rewards_conversions": 0,
     "spend": 6.19
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.056701,
     "ic_conversions": 0,
     "impressions": 205,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 194,
+    "rewards_conversions": 0,
     "spend": 11.54
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 44,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 44,
+    "rewards_conversions": 0,
     "spend": 2.67
   },
   {
@@ -186,7 +213,10 @@
     "frequency": 1.018657,
     "ic_conversions": 0,
     "impressions": 273,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 268,
+    "rewards_conversions": 0,
     "spend": 10.51
   },
   {
@@ -205,7 +235,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 19,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 19,
+    "rewards_conversions": 0,
     "spend": 1.39
   },
   {
@@ -224,7 +257,10 @@
     "frequency": 1.036145,
     "ic_conversions": 0,
     "impressions": 86,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 83,
+    "rewards_conversions": 0,
     "spend": 4.02
   },
   {
@@ -243,7 +279,10 @@
     "frequency": 1.076087,
     "ic_conversions": 0,
     "impressions": 99,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 92,
+    "rewards_conversions": 0,
     "spend": 3.14
   },
   {
@@ -252,7 +291,7 @@
     "adset_id": "120245893421060631",
     "adset_name": "BR-Independent Coffee Shops-Cohort3-LAL1-20260414-Coffee_Beer_and_Wine",
     "campaign_id": "120245893173820631",
-    "campaign_name": "ICD-Coffee, Beer & Wine Retail-Q2-2026",
+    "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
     "clicks": 0,
     "conversions": 0,
     "cpc": 0.0,
@@ -262,7 +301,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.22
   },
   {
@@ -271,7 +313,7 @@
     "adset_id": "120245893421070631",
     "adset_name": "BR-Independent Coffee Shops-Cohort5-LAL1-20260414-Coffee_Beer_and_Wine",
     "campaign_id": "120245893173820631",
-    "campaign_name": "ICD-Coffee, Beer & Wine Retail-Q2-2026",
+    "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
     "clicks": 0,
     "conversions": 0,
     "cpc": 0.0,
@@ -281,7 +323,10 @@
     "frequency": 1.041667,
     "ic_conversions": 0,
     "impressions": 25,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 24,
+    "rewards_conversions": 0,
     "spend": 0.81
   },
   {
@@ -300,7 +345,10 @@
     "frequency": 1.0625,
     "ic_conversions": 0,
     "impressions": 34,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 32,
+    "rewards_conversions": 0,
     "spend": 1.54
   },
   {
@@ -319,7 +367,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 7,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 7,
+    "rewards_conversions": 0,
     "spend": 0.25
   },
   {
@@ -338,7 +389,10 @@
     "frequency": 1.0625,
     "ic_conversions": 0,
     "impressions": 119,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 112,
+    "rewards_conversions": 0,
     "spend": 4.95
   },
   {
@@ -357,7 +411,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 11,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 11,
+    "rewards_conversions": 0,
     "spend": 0.93
   },
   {
@@ -376,7 +433,10 @@
     "frequency": 1.2,
     "ic_conversions": 0,
     "impressions": 6,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 5,
+    "rewards_conversions": 0,
     "spend": 0.12
   },
   {
@@ -395,7 +455,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 4,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 4,
+    "rewards_conversions": 0,
     "spend": 0.28
   },
   {
@@ -414,7 +477,10 @@
     "frequency": 1.025641,
     "ic_conversions": 0,
     "impressions": 40,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 39,
+    "rewards_conversions": 0,
     "spend": 2.09
   },
   {
@@ -433,7 +499,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 21,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 21,
+    "rewards_conversions": 0,
     "spend": 1.22
   },
   {
@@ -452,7 +521,10 @@
     "frequency": 1.081633,
     "ic_conversions": 0,
     "impressions": 53,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 49,
+    "rewards_conversions": 0,
     "spend": 1.98
   },
   {
@@ -471,7 +543,10 @@
     "frequency": 1.010417,
     "ic_conversions": 0,
     "impressions": 194,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 192,
+    "rewards_conversions": 0,
     "spend": 6.24
   }
 ]

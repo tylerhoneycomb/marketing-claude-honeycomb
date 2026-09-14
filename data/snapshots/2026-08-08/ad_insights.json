@@ -15,7 +15,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 12,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 12,
+    "rewards_conversions": 0,
     "spend": 0.55
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.079777,
     "ic_conversions": 0,
     "impressions": 1164,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 1078,
+    "rewards_conversions": 0,
     "spend": 36.76
   },
   {
@@ -46,15 +52,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 19,
     "conversions": 0,
-    "cpc": 1.732632,
-    "cpm": 49.281437,
-    "ctr": 2.844311,
+    "cpc": 1.736316,
+    "cpm": 49.312407,
+    "ctr": 2.84006,
     "date": "2026-08-08",
-    "frequency": 1.136054,
+    "frequency": 1.135823,
     "ic_conversions": 0,
-    "impressions": 668,
-    "reach": 588,
-    "spend": 32.92
+    "impressions": 669,
+    "leads": 0,
+    "prequal_decisions": 0,
+    "reach": 589,
+    "rewards_conversions": 0,
+    "spend": 32.99
   },
   {
     "ad_id": "120245893441770631",
@@ -72,7 +81,10 @@
     "frequency": 1.087591,
     "ic_conversions": 0,
     "impressions": 1639,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 1507,
+    "rewards_conversions": 0,
     "spend": 71.18
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.526316,
     "ic_conversions": 0,
     "impressions": 29,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 19,
+    "rewards_conversions": 0,
     "spend": 1.66
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.190957,
     "ic_conversions": 0,
     "impressions": 2713,
+    "leads": 9,
+    "prequal_decisions": 3,
     "reach": 2278,
+    "rewards_conversions": 0,
     "spend": 150.49
   }
 ]

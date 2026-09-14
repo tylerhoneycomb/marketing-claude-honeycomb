@@ -15,7 +15,10 @@
     "frequency": 1.093715,
     "ic_conversions": 1,
     "impressions": 1949,
+    "leads": 8,
+    "prequal_decisions": 2,
     "reach": 1782,
+    "rewards_conversions": 0,
     "spend": 93.35
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.058824,
     "ic_conversions": 0,
     "impressions": 36,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 34,
+    "rewards_conversions": 0,
     "spend": 2.44
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.288136,
     "ic_conversions": 0,
     "impressions": 684,
+    "leads": 4,
+    "prequal_decisions": 1,
     "reach": 531,
+    "rewards_conversions": 0,
     "spend": 65.17
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.6,
     "ic_conversions": 0,
     "impressions": 8,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 5,
+    "rewards_conversions": 0,
     "spend": 0.23
   },
   {
@@ -84,15 +96,18 @@
     "campaign_name": "AD-Juice & Smoothie-Q1-2026",
     "clicks": 78,
     "conversions": 24,
-    "cpc": 1.172179,
-    "cpm": 50.850945,
-    "ctr": 4.338154,
+    "cpc": 1.172564,
+    "cpm": 50.839355,
+    "ctr": 4.335742,
     "date": "2026-06-28",
-    "frequency": 1.063276,
+    "frequency": 1.063868,
     "ic_conversions": 2,
-    "impressions": 1798,
+    "impressions": 1799,
+    "leads": 24,
+    "prequal_decisions": 10,
     "reach": 1691,
-    "spend": 91.43
+    "rewards_conversions": 0,
+    "spend": 91.46
   },
   {
     "ad_id": null,
@@ -110,7 +125,10 @@
     "frequency": 1.119691,
     "ic_conversions": 0,
     "impressions": 290,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 259,
+    "rewards_conversions": 0,
     "spend": 17.12
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.06434,
     "ic_conversions": 1,
     "impressions": 2531,
+    "leads": 9,
+    "prequal_decisions": 2,
     "reach": 2378,
+    "rewards_conversions": 0,
     "spend": 161.65
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.101942,
     "ic_conversions": 1,
     "impressions": 1589,
+    "leads": 13,
+    "prequal_decisions": 4,
     "reach": 1442,
+    "rewards_conversions": 0,
     "spend": 107.68
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.08,
     "ic_conversions": 0,
     "impressions": 27,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 25,
+    "rewards_conversions": 0,
     "spend": 2.56
   },
   {
@@ -179,15 +206,18 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 182,
     "conversions": 20,
-    "cpc": 1.523462,
-    "cpm": 69.91175,
-    "ctr": 4.589007,
+    "cpc": 1.523516,
+    "cpm": 69.896647,
+    "ctr": 4.58785,
     "date": "2026-06-28",
-    "frequency": 1.104735,
+    "frequency": 1.104706,
     "ic_conversions": 2,
-    "impressions": 3966,
-    "reach": 3590,
-    "spend": 277.27
+    "impressions": 3967,
+    "leads": 20,
+    "prequal_decisions": 8,
+    "reach": 3591,
+    "rewards_conversions": 0,
+    "spend": 277.28
   },
   {
     "ad_id": null,
@@ -198,15 +228,18 @@
     "campaign_name": "AD-Fitness & Wellness-Q1-2026",
     "clicks": 136,
     "conversions": 23,
-    "cpc": 0.836397,
-    "cpm": 47.794118,
-    "ctr": 5.714286,
+    "cpc": 0.837353,
+    "cpm": 47.788502,
+    "ctr": 5.707092,
     "date": "2026-06-28",
-    "frequency": 1.177052,
+    "frequency": 1.178536,
     "ic_conversions": 1,
-    "impressions": 2380,
+    "impressions": 2383,
+    "leads": 23,
+    "prequal_decisions": 8,
     "reach": 2022,
-    "spend": 113.75
+    "rewards_conversions": 0,
+    "spend": 113.88
   },
   {
     "ad_id": null,
@@ -224,7 +257,10 @@
     "frequency": 1.152096,
     "ic_conversions": 0,
     "impressions": 962,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 835,
+    "rewards_conversions": 0,
     "spend": 44.67
   },
   {
@@ -236,15 +272,18 @@
     "campaign_name": "ICD-Breweries-Q2-2026",
     "clicks": 19,
     "conversions": 0,
-    "cpc": 7.218947,
-    "cpm": 78.243012,
-    "ctr": 1.083856,
+    "cpc": 7.220526,
+    "cpm": 78.215507,
+    "ctr": 1.083238,
     "date": "2026-06-28",
-    "frequency": 1.322021,
+    "frequency": 1.322775,
     "ic_conversions": 0,
-    "impressions": 1753,
+    "impressions": 1754,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1326,
-    "spend": 137.16
+    "rewards_conversions": 0,
+    "spend": 137.19
   },
   {
     "ad_id": null,
@@ -255,14 +294,17 @@
     "campaign_name": "ICD-Broad-Q2-2026",
     "clicks": 109,
     "conversions": 14,
-    "cpc": 2.537706,
-    "cpm": 59.422127,
-    "ctr": 2.341568,
+    "cpc": 2.53789,
+    "cpm": 59.41366,
+    "ctr": 2.341065,
     "date": "2026-06-28",
-    "frequency": 1.231481,
+    "frequency": 1.231746,
     "ic_conversions": 2,
-    "impressions": 4655,
+    "impressions": 4656,
+    "leads": 14,
+    "prequal_decisions": 3,
     "reach": 3780,
-    "spend": 276.61
+    "rewards_conversions": 0,
+    "spend": 276.63
   }
 ]

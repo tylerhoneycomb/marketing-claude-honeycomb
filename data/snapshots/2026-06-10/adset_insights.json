@@ -15,7 +15,10 @@
     "frequency": 1.076805,
     "ic_conversions": 0,
     "impressions": 701,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 651,
+    "rewards_conversions": 0,
     "spend": 38.4
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 22,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 22,
+    "rewards_conversions": 0,
     "spend": 0.81
   },
   {
@@ -46,15 +52,18 @@
     "campaign_name": "AD-Delis & Butchers-Q1-2026",
     "clicks": 23,
     "conversions": 2,
-    "cpc": 3.493043,
-    "cpm": 94.40658,
-    "ctr": 2.702703,
+    "cpc": 3.495217,
+    "cpm": 94.35446,
+    "ctr": 2.699531,
     "date": "2026-06-10",
-    "frequency": 1.205382,
+    "frequency": 1.206799,
     "ic_conversions": 0,
-    "impressions": 851,
+    "impressions": 852,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 706,
-    "spend": 80.34
+    "rewards_conversions": 0,
+    "spend": 80.39
   },
   {
     "ad_id": null,
@@ -65,15 +74,18 @@
     "campaign_name": "AD-Fitness & Wellness-Q1-2026",
     "clicks": 3,
     "conversions": 2,
-    "cpc": 0.78,
-    "cpm": 45.0,
-    "ctr": 5.769231,
+    "cpc": 0.783333,
+    "cpm": 44.339623,
+    "ctr": 5.660377,
     "date": "2026-06-10",
-    "frequency": 1.04,
+    "frequency": 1.039216,
     "ic_conversions": 0,
-    "impressions": 52,
-    "reach": 50,
-    "spend": 2.34
+    "impressions": 53,
+    "leads": 2,
+    "prequal_decisions": 1,
+    "reach": 51,
+    "rewards_conversions": 0,
+    "spend": 2.35
   },
   {
     "ad_id": null,
@@ -84,15 +96,18 @@
     "campaign_name": "AD-Juice & Smoothie-Q1-2026",
     "clicks": 104,
     "conversions": 11,
-    "cpc": 1.630673,
-    "cpm": 59.359468,
-    "ctr": 3.640182,
+    "cpc": 1.633462,
+    "cpm": 59.398601,
+    "ctr": 3.636364,
     "date": "2026-06-10",
-    "frequency": 1.190417,
+    "frequency": 1.190179,
     "ic_conversions": 1,
-    "impressions": 2857,
-    "reach": 2400,
-    "spend": 169.59
+    "impressions": 2860,
+    "leads": 11,
+    "prequal_decisions": 5,
+    "reach": 2403,
+    "rewards_conversions": 0,
+    "spend": 169.88
   },
   {
     "ad_id": null,
@@ -103,15 +118,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 92,
     "conversions": 8,
-    "cpc": 2.377283,
-    "cpm": 60.085165,
-    "ctr": 2.527473,
+    "cpc": 2.377935,
+    "cpm": 60.068644,
+    "ctr": 2.526085,
     "date": "2026-06-10",
-    "frequency": 1.200132,
+    "frequency": 1.200791,
     "ic_conversions": 1,
-    "impressions": 3640,
+    "impressions": 3642,
+    "leads": 8,
+    "prequal_decisions": 3,
     "reach": 3033,
-    "spend": 218.71
+    "rewards_conversions": 0,
+    "spend": 218.77
   },
   {
     "ad_id": null,
@@ -129,7 +147,10 @@
     "frequency": 1.059406,
     "ic_conversions": 0,
     "impressions": 214,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 202,
+    "rewards_conversions": 0,
     "spend": 15.6
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.266667,
     "ic_conversions": 0,
     "impressions": 19,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 15,
+    "rewards_conversions": 0,
     "spend": 1.76
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.07037,
     "ic_conversions": 0,
     "impressions": 289,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 270,
+    "rewards_conversions": 0,
     "spend": 15.96
   },
   {
@@ -179,15 +206,18 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 183,
     "conversions": 16,
-    "cpc": 1.407213,
-    "cpm": 56.019143,
-    "ctr": 3.980857,
+    "cpc": 1.407596,
+    "cpm": 56.010002,
+    "ctr": 3.979126,
     "date": "2026-06-10",
-    "frequency": 1.079615,
+    "frequency": 1.080085,
     "ic_conversions": 2,
-    "impressions": 4597,
+    "impressions": 4599,
+    "leads": 16,
+    "prequal_decisions": 5,
     "reach": 4258,
-    "spend": 257.52
+    "rewards_conversions": 0,
+    "spend": 257.59
   },
   {
     "ad_id": null,
@@ -205,7 +235,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 13,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 13,
+    "rewards_conversions": 0,
     "spend": 0.76
   },
   {
@@ -217,15 +250,18 @@
     "campaign_name": "AD-Fitness & Wellness-Q1-2026",
     "clicks": 108,
     "conversions": 18,
-    "cpc": 0.855741,
-    "cpm": 42.787037,
-    "ctr": 5.0,
+    "cpc": 0.855833,
+    "cpm": 42.771865,
+    "ctr": 4.997686,
     "date": "2026-06-10",
-    "frequency": 1.132669,
+    "frequency": 1.133194,
     "ic_conversions": 0,
-    "impressions": 2160,
+    "impressions": 2161,
+    "leads": 18,
+    "prequal_decisions": 8,
     "reach": 1907,
-    "spend": 92.42
+    "rewards_conversions": 0,
+    "spend": 92.43
   },
   {
     "ad_id": null,
@@ -236,15 +272,18 @@
     "campaign_name": "AD-BBQ-Q1-2026",
     "clicks": 43,
     "conversions": 7,
-    "cpc": 1.969535,
-    "cpm": 40.46345,
-    "ctr": 2.054467,
+    "cpc": 1.973023,
+    "cpm": 40.457797,
+    "ctr": 2.050548,
     "date": "2026-06-10",
-    "frequency": 1.158915,
+    "frequency": 1.16113,
     "ic_conversions": 1,
-    "impressions": 2093,
+    "impressions": 2097,
+    "leads": 7,
+    "prequal_decisions": 3,
     "reach": 1806,
-    "spend": 84.69
+    "rewards_conversions": 0,
+    "spend": 84.84
   },
   {
     "ad_id": null,
@@ -262,7 +301,10 @@
     "frequency": 1.445026,
     "ic_conversions": 1,
     "impressions": 1932,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 1337,
+    "rewards_conversions": 0,
     "spend": 119.83
   },
   {
@@ -281,7 +323,10 @@
     "frequency": 1.452284,
     "ic_conversions": 1,
     "impressions": 4261,
+    "leads": 10,
+    "prequal_decisions": 4,
     "reach": 2934,
+    "rewards_conversions": 0,
     "spend": 204.3
   }
 ]

@@ -15,7 +15,10 @@
     "frequency": 1.226013,
     "ic_conversions": 0,
     "impressions": 575,
+    "leads": 1,
+    "prequal_decisions": 0,
     "reach": 469,
+    "rewards_conversions": 0,
     "spend": 28.93
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.162562,
     "ic_conversions": 0,
     "impressions": 236,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 203,
+    "rewards_conversions": 0,
     "spend": 10.46
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.097063,
     "ic_conversions": 0,
     "impressions": 859,
+    "leads": 2,
+    "prequal_decisions": 0,
     "reach": 783,
+    "rewards_conversions": 0,
     "spend": 12.77
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.110667,
     "ic_conversions": 0,
     "impressions": 833,
+    "leads": 2,
+    "prequal_decisions": 0,
     "reach": 750,
+    "rewards_conversions": 0,
     "spend": 19.72
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.083333,
     "ic_conversions": 0,
     "impressions": 312,
+    "leads": 1,
+    "prequal_decisions": 0,
     "reach": 288,
+    "rewards_conversions": 0,
     "spend": 5.83
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.148984,
     "ic_conversions": 0,
     "impressions": 509,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 443,
+    "rewards_conversions": 0,
     "spend": 12.24
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.156757,
     "ic_conversions": 0,
     "impressions": 214,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 185,
+    "rewards_conversions": 0,
     "spend": 5.4
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.092857,
     "ic_conversions": 0,
     "impressions": 153,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 140,
+    "rewards_conversions": 0,
     "spend": 2.71
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.157187,
     "ic_conversions": 0,
     "impressions": 1119,
+    "leads": 1,
+    "prequal_decisions": 0,
     "reach": 967,
+    "rewards_conversions": 0,
     "spend": 23.38
   }
 ]

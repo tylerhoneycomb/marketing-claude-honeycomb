@@ -15,7 +15,10 @@
     "frequency": 1.333333,
     "ic_conversions": 0,
     "impressions": 12,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 9,
+    "rewards_conversions": 0,
     "spend": 0.46
   },
   {
@@ -28,13 +31,16 @@
     "clicks": 19,
     "conversions": 2,
     "cpc": 1.689474,
-    "cpm": 33.402706,
-    "ctr": 1.977107,
+    "cpm": 33.367983,
+    "ctr": 1.975052,
     "date": "2026-08-07",
-    "frequency": 1.116144,
+    "frequency": 1.117305,
     "ic_conversions": 0,
-    "impressions": 961,
+    "impressions": 962,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 861,
+    "rewards_conversions": 0,
     "spend": 32.1
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.147771,
     "ic_conversions": 0,
     "impressions": 901,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 785,
+    "rewards_conversions": 0,
     "spend": 36.79
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.09
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.157254,
     "ic_conversions": 0,
     "impressions": 2090,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 1806,
+    "rewards_conversions": 0,
     "spend": 90.66
   },
   {
@@ -103,14 +118,17 @@
     "campaign_name": "ICD-Broad-Q2-2026",
     "clicks": 56,
     "conversions": 5,
-    "cpc": 2.44625,
-    "cpm": 48.474876,
-    "ctr": 1.981599,
+    "cpc": 2.446786,
+    "cpm": 48.451202,
+    "ctr": 1.980198,
     "date": "2026-08-07",
-    "frequency": 1.205117,
+    "frequency": 1.205456,
     "ic_conversions": 0,
-    "impressions": 2826,
-    "reach": 2345,
-    "spend": 136.99
+    "impressions": 2828,
+    "leads": 5,
+    "prequal_decisions": 1,
+    "reach": 2346,
+    "rewards_conversions": 0,
+    "spend": 137.02
   }
 ]

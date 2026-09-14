@@ -15,7 +15,10 @@
     "frequency": 1.177011,
     "ic_conversions": 0,
     "impressions": 512,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 435,
+    "rewards_conversions": 0,
     "spend": 34.01
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.134969,
     "ic_conversions": 0,
     "impressions": 185,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 163,
+    "rewards_conversions": 0,
     "spend": 5.59
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.207847,
     "ic_conversions": 0,
     "impressions": 1139,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 943,
+    "rewards_conversions": 0,
     "spend": 12.55
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.092199,
     "ic_conversions": 0,
     "impressions": 1386,
+    "leads": 1,
+    "prequal_decisions": 0,
     "reach": 1269,
+    "rewards_conversions": 0,
     "spend": 26.06
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.134375,
     "ic_conversions": 0,
     "impressions": 363,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 320,
+    "rewards_conversions": 0,
     "spend": 4.54
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.178144,
     "ic_conversions": 0,
     "impressions": 787,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 668,
+    "rewards_conversions": 0,
     "spend": 13.99
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.207407,
     "ic_conversions": 0,
     "impressions": 163,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 135,
+    "rewards_conversions": 0,
     "spend": 3.24
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.139013,
     "ic_conversions": 0,
     "impressions": 254,
+    "leads": 1,
+    "prequal_decisions": 0,
     "reach": 223,
+    "rewards_conversions": 0,
     "spend": 3.13
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.178938,
     "ic_conversions": 0,
     "impressions": 1265,
+    "leads": 2,
+    "prequal_decisions": 0,
     "reach": 1073,
+    "rewards_conversions": 0,
     "spend": 19.15
   }
 ]

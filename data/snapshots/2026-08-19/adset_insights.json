@@ -15,7 +15,10 @@
     "frequency": 1.306697,
     "ic_conversions": 0,
     "impressions": 2322,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 1777,
+    "rewards_conversions": 0,
     "spend": 181.18
   },
   {
@@ -25,16 +28,19 @@
     "adset_name": "broad_ADPC_2026_08_19",
     "campaign_id": "120252841681010631",
     "campaign_name": "LEADS-Broad-Q3-2026",
-    "clicks": 61,
+    "clicks": 62,
     "conversions": 0,
-    "cpc": 1.923443,
-    "cpm": 61.141219,
-    "ctr": 3.178739,
+    "cpc": 1.907258,
+    "cpm": 61.364816,
+    "ctr": 3.217436,
     "date": "2026-08-19",
-    "frequency": 1.25589,
+    "frequency": 1.258654,
     "ic_conversions": 0,
-    "impressions": 1919,
-    "reach": 1528,
-    "spend": 117.33
+    "impressions": 1927,
+    "leads": 0,
+    "prequal_decisions": 0,
+    "reach": 1531,
+    "rewards_conversions": 0,
+    "spend": 118.25
   }
 ]

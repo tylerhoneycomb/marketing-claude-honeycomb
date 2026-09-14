@@ -15,7 +15,10 @@
     "frequency": 1.076923,
     "ic_conversions": 0,
     "impressions": 14,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 13,
+    "rewards_conversions": 0,
     "spend": 0.58
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.166431,
     "ic_conversions": 0,
     "impressions": 1647,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1412,
+    "rewards_conversions": 0,
     "spend": 64.22
   },
   {
@@ -46,15 +52,18 @@
     "campaign_name": "AD-Breweries-Q4-2025",
     "clicks": 14,
     "conversions": 1,
-    "cpc": 3.332143,
-    "cpm": 42.102888,
-    "ctr": 1.263538,
+    "cpc": 3.331429,
+    "cpm": 42.131888,
+    "ctr": 1.264679,
     "date": "2026-03-12",
-    "frequency": 1.356181,
+    "frequency": 1.354957,
     "ic_conversions": 0,
-    "impressions": 1108,
+    "impressions": 1107,
+    "leads": 1,
+    "prequal_decisions": 1,
     "reach": 817,
-    "spend": 46.65
+    "rewards_conversions": 0,
+    "spend": 46.64
   },
   {
     "ad_id": "120241361289110631",
@@ -65,15 +74,18 @@
     "campaign_name": "Wineries / vineyards leads campaign - Daily Budget - Q4 2025",
     "clicks": 21,
     "conversions": 0,
-    "cpc": 2.244286,
-    "cpm": 37.081039,
-    "ctr": 1.652242,
+    "cpc": 2.243333,
+    "cpm": 37.094488,
+    "ctr": 1.653543,
     "date": "2026-03-12",
-    "frequency": 1.21163,
+    "frequency": 1.210677,
     "ic_conversions": 0,
-    "impressions": 1271,
+    "impressions": 1270,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1049,
-    "spend": 47.13
+    "rewards_conversions": 0,
+    "spend": 47.11
   },
   {
     "ad_id": "120241361310160631",
@@ -91,7 +103,10 @@
     "frequency": 1.155172,
     "ic_conversions": 0,
     "impressions": 67,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 58,
+    "rewards_conversions": 0,
     "spend": 3.29
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.101176,
     "ic_conversions": 0,
     "impressions": 1872,
+    "leads": 3,
+    "prequal_decisions": 2,
     "reach": 1700,
+    "rewards_conversions": 0,
     "spend": 74.27
   },
   {
@@ -122,15 +140,18 @@
     "campaign_name": "AD-Sustainable Main Street-Q1-2026",
     "clicks": 60,
     "conversions": 3,
-    "cpc": 1.187333,
-    "cpm": 35.024582,
-    "ctr": 2.949853,
+    "cpc": 1.186,
+    "cpm": 35.002459,
+    "ctr": 2.951303,
     "date": "2026-03-12",
-    "frequency": 1.123136,
+    "frequency": 1.122584,
     "ic_conversions": 0,
-    "impressions": 2034,
+    "impressions": 2033,
+    "leads": 3,
+    "prequal_decisions": 3,
     "reach": 1811,
-    "spend": 71.24
+    "rewards_conversions": 0,
+    "spend": 71.16
   },
   {
     "ad_id": "120241959883680631",
@@ -148,7 +169,10 @@
     "frequency": 1.213223,
     "ic_conversions": 0,
     "impressions": 734,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 605,
+    "rewards_conversions": 0,
     "spend": 45.81
   },
   {
@@ -161,13 +185,16 @@
     "clicks": 105,
     "conversions": 4,
     "cpc": 1.722095,
-    "cpm": 42.939919,
-    "ctr": 2.493469,
+    "cpm": 42.950119,
+    "ctr": 2.494062,
     "date": "2026-03-12",
-    "frequency": 1.484314,
+    "frequency": 1.483962,
     "ic_conversions": 0,
-    "impressions": 4211,
+    "impressions": 4210,
+    "leads": 4,
+    "prequal_decisions": 3,
     "reach": 2837,
+    "rewards_conversions": 0,
     "spend": 180.82
   },
   {
@@ -186,7 +213,10 @@
     "frequency": 1.315508,
     "ic_conversions": 0,
     "impressions": 492,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 374,
+    "rewards_conversions": 0,
     "spend": 22.88
   },
   {
@@ -205,7 +235,10 @@
     "frequency": 1.165033,
     "ic_conversions": 0,
     "impressions": 713,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 612,
+    "rewards_conversions": 0,
     "spend": 31.49
   },
   {
@@ -217,15 +250,18 @@
     "campaign_name": "AD-Agriculture-Q1-2026",
     "clicks": 41,
     "conversions": 1,
-    "cpc": 1.290244,
-    "cpm": 30.755814,
-    "ctr": 2.383721,
+    "cpc": 1.284634,
+    "cpm": 30.639907,
+    "ctr": 2.385108,
     "date": "2026-03-12",
-    "frequency": 1.235632,
+    "frequency": 1.234914,
     "ic_conversions": 0,
-    "impressions": 1720,
+    "impressions": 1719,
+    "leads": 1,
+    "prequal_decisions": 1,
     "reach": 1392,
-    "spend": 52.9
+    "rewards_conversions": 0,
+    "spend": 52.67
   },
   {
     "ad_id": "120242950044510631",
@@ -233,17 +269,20 @@
     "adset_id": "120242950044520631",
     "adset_name": "Creameries - Audience 2 - Pure lookalike - Lead generation - Q1 2026",
     "campaign_id": "120241605050900631",
-    "campaign_name": "PAUSED - AD-Creameries-Q1-2026",
+    "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 80,
     "conversions": 1,
     "cpc": 1.3295,
-    "cpm": 35.171958,
-    "ctr": 2.645503,
+    "cpm": 35.183592,
+    "ctr": 2.646378,
     "date": "2026-03-12",
-    "frequency": 1.072721,
+    "frequency": 1.072366,
     "ic_conversions": 0,
-    "impressions": 3024,
+    "impressions": 3023,
+    "leads": 1,
+    "prequal_decisions": 1,
     "reach": 2819,
+    "rewards_conversions": 0,
     "spend": 106.36
   },
   {
@@ -255,15 +294,18 @@
     "campaign_name": "AD-BBQ-Q1-2026",
     "clicks": 47,
     "conversions": 0,
-    "cpc": 1.520213,
-    "cpm": 43.068113,
-    "ctr": 2.833032,
+    "cpc": 1.52,
+    "cpm": 43.088058,
+    "ctr": 2.834741,
     "date": "2026-03-12",
-    "frequency": 1.064827,
+    "frequency": 1.064185,
     "ic_conversions": 0,
-    "impressions": 1659,
+    "impressions": 1658,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1558,
-    "spend": 71.45
+    "rewards_conversions": 0,
+    "spend": 71.44
   },
   {
     "ad_id": "120243070857050631",
@@ -281,7 +323,10 @@
     "frequency": 1.12528,
     "ic_conversions": 0,
     "impressions": 1509,
+    "leads": 3,
+    "prequal_decisions": 3,
     "reach": 1341,
+    "rewards_conversions": 0,
     "spend": 54.89
   },
   {
@@ -300,7 +345,10 @@
     "frequency": 1.116787,
     "ic_conversions": 2,
     "impressions": 5269,
+    "leads": 11,
+    "prequal_decisions": 6,
     "reach": 4718,
+    "rewards_conversions": 0,
     "spend": 203.14
   },
   {
@@ -312,15 +360,18 @@
     "campaign_name": "AD-Fitness & Wellness-Q1-2026",
     "clicks": 236,
     "conversions": 9,
-    "cpc": 0.578263,
-    "cpm": 31.952704,
-    "ctr": 5.525638,
+    "cpc": 0.577881,
+    "cpm": 31.946592,
+    "ctr": 5.528227,
     "date": "2026-03-12",
-    "frequency": 1.321882,
+    "frequency": 1.321263,
     "ic_conversions": 1,
-    "impressions": 4271,
+    "impressions": 4269,
+    "leads": 9,
+    "prequal_decisions": 6,
     "reach": 3231,
-    "spend": 136.47
+    "rewards_conversions": 0,
+    "spend": 136.38
   },
   {
     "ad_id": "120244135874620631",
@@ -338,7 +389,10 @@
     "frequency": 1.111111,
     "ic_conversions": 0,
     "impressions": 20,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 18,
+    "rewards_conversions": 0,
     "spend": 0.56
   },
   {
@@ -357,7 +411,10 @@
     "frequency": 1.152395,
     "ic_conversions": 0,
     "impressions": 1588,
+    "leads": 1,
+    "prequal_decisions": 1,
     "reach": 1378,
+    "rewards_conversions": 0,
     "spend": 54.98
   },
   {
@@ -376,7 +433,10 @@
     "frequency": 1.064667,
     "ic_conversions": 1,
     "impressions": 3869,
+    "leads": 5,
+    "prequal_decisions": 2,
     "reach": 3634,
+    "rewards_conversions": 0,
     "spend": 115.01
   }
 ]

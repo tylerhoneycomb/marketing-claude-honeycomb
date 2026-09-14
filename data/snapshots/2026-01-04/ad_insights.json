@@ -15,7 +15,10 @@
     "frequency": 1.151737,
     "ic_conversions": 0,
     "impressions": 630,
+    "leads": 1,
+    "prequal_decisions": 0,
     "reach": 547,
+    "rewards_conversions": 0,
     "spend": 36.6
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.182836,
     "ic_conversions": 0,
     "impressions": 317,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 268,
+    "rewards_conversions": 0,
     "spend": 12.14
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.12515,
     "ic_conversions": 0,
     "impressions": 935,
+    "leads": 2,
+    "prequal_decisions": 0,
     "reach": 831,
+    "rewards_conversions": 0,
     "spend": 15.58
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.184173,
     "ic_conversions": 0,
     "impressions": 823,
+    "leads": 1,
+    "prequal_decisions": 0,
     "reach": 695,
+    "rewards_conversions": 0,
     "spend": 27.26
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.13355,
     "ic_conversions": 0,
     "impressions": 348,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 307,
+    "rewards_conversions": 0,
     "spend": 6.73
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.139785,
     "ic_conversions": 0,
     "impressions": 742,
+    "leads": 4,
+    "prequal_decisions": 0,
     "reach": 651,
+    "rewards_conversions": 0,
     "spend": 19.27
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.107914,
     "ic_conversions": 0,
     "impressions": 154,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 139,
+    "rewards_conversions": 0,
     "spend": 3.47
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.081481,
     "ic_conversions": 0,
     "impressions": 146,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 135,
+    "rewards_conversions": 0,
     "spend": 3.42
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.230769,
     "ic_conversions": 0,
     "impressions": 1296,
+    "leads": 4,
+    "prequal_decisions": 0,
     "reach": 1053,
+    "rewards_conversions": 0,
     "spend": 28.6
   }
 ]

@@ -15,7 +15,10 @@
     "frequency": 1.131148,
     "ic_conversions": 0,
     "impressions": 69,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 61,
+    "rewards_conversions": 0,
     "spend": 3.09
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.085612,
     "ic_conversions": 0,
     "impressions": 1509,
+    "leads": 2,
+    "prequal_decisions": 0,
     "reach": 1390,
+    "rewards_conversions": 0,
     "spend": 43.49
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.183673,
     "ic_conversions": 0,
     "impressions": 1102,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 931,
+    "rewards_conversions": 0,
     "spend": 46.16
   },
   {
@@ -65,15 +74,18 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 152,
     "conversions": 11,
-    "cpc": 0.798026,
-    "cpm": 40.745717,
-    "ctr": 5.105811,
+    "cpc": 0.798158,
+    "cpm": 40.738751,
+    "ctr": 5.104097,
     "date": "2026-08-02",
-    "frequency": 1.17575,
+    "frequency": 1.175217,
     "ic_conversions": 1,
-    "impressions": 2977,
-    "reach": 2532,
-    "spend": 121.3
+    "impressions": 2978,
+    "leads": 11,
+    "prequal_decisions": 4,
+    "reach": 2534,
+    "rewards_conversions": 0,
+    "spend": 121.32
   },
   {
     "ad_id": "120245893441990631",
@@ -91,7 +103,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 8,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 8,
+    "rewards_conversions": 0,
     "spend": 0.75
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.214444,
     "ic_conversions": 0,
     "impressions": 3279,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 2700,
+    "rewards_conversions": 0,
     "spend": 178.98
   }
 ]

@@ -15,7 +15,10 @@
     "frequency": 1.18882,
     "ic_conversions": 0,
     "impressions": 2871,
+    "leads": 12,
+    "prequal_decisions": 12,
     "reach": 2415,
+    "rewards_conversions": 2,
     "spend": 189.94
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.213548,
     "ic_conversions": 0,
     "impressions": 2938,
+    "leads": 9,
+    "prequal_decisions": 9,
     "reach": 2421,
+    "rewards_conversions": 3,
     "spend": 106.18
   }
 ]

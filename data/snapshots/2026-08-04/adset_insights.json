@@ -15,7 +15,10 @@
     "frequency": 1.055556,
     "ic_conversions": 0,
     "impressions": 19,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 18,
+    "rewards_conversions": 0,
     "spend": 0.91
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.083569,
     "ic_conversions": 1,
     "impressions": 765,
+    "leads": 5,
+    "prequal_decisions": 1,
     "reach": 706,
+    "rewards_conversions": 0,
     "spend": 22.14
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.178186,
     "ic_conversions": 1,
     "impressions": 1091,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 926,
+    "rewards_conversions": 0,
     "spend": 47.86
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.25,
     "ic_conversions": 0,
     "impressions": 5,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 4,
+    "rewards_conversions": 0,
     "spend": 0.19
   },
   {
@@ -84,15 +96,18 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 114,
     "conversions": 17,
-    "cpc": 0.913947,
-    "cpm": 44.506621,
-    "ctr": 4.869714,
+    "cpc": 0.91614,
+    "cpm": 44.575331,
+    "ctr": 4.865557,
     "date": "2026-08-04",
-    "frequency": 1.096487,
+    "frequency": 1.095884,
     "ic_conversions": 5,
-    "impressions": 2341,
-    "reach": 2135,
-    "spend": 104.19
+    "impressions": 2343,
+    "leads": 17,
+    "prequal_decisions": 5,
+    "reach": 2138,
+    "rewards_conversions": 0,
+    "spend": 104.44
   },
   {
     "ad_id": null,
@@ -103,14 +118,17 @@
     "campaign_name": "ICD-Broad-Q2-2026",
     "clicks": 49,
     "conversions": 10,
-    "cpc": 2.688367,
-    "cpm": 60.677107,
-    "ctr": 2.257024,
+    "cpc": 2.69,
+    "cpm": 60.658076,
+    "ctr": 2.254947,
     "date": "2026-08-04",
-    "frequency": 1.258551,
+    "frequency": 1.25971,
     "ic_conversions": 3,
-    "impressions": 2171,
+    "impressions": 2173,
+    "leads": 10,
+    "prequal_decisions": 4,
     "reach": 1725,
-    "spend": 131.73
+    "rewards_conversions": 0,
+    "spend": 131.81
   }
 ]

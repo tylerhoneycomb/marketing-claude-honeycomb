@@ -15,7 +15,10 @@
     "frequency": 0.0,
     "ic_conversions": 0,
     "impressions": 0,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 0,
+    "rewards_conversions": 0,
     "spend": 0.0
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.104235,
     "ic_conversions": 0,
     "impressions": 1017,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 921,
+    "rewards_conversions": 0,
     "spend": 45.19
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.071429,
     "ic_conversions": 0,
     "impressions": 45,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 42,
+    "rewards_conversions": 0,
     "spend": 1.78
   },
   {
@@ -65,15 +74,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 44,
     "conversions": 5,
-    "cpc": 2.007273,
-    "cpm": 38.71986,
-    "ctr": 1.928979,
+    "cpc": 2.014091,
+    "cpm": 38.834356,
+    "ctr": 1.928133,
     "date": "2026-07-18",
-    "frequency": 1.121436,
+    "frequency": 1.120825,
     "ic_conversions": 1,
-    "impressions": 2281,
-    "reach": 2034,
-    "spend": 88.32
+    "impressions": 2282,
+    "leads": 5,
+    "prequal_decisions": 2,
+    "reach": 2036,
+    "rewards_conversions": 0,
+    "spend": 88.62
   },
   {
     "ad_id": null,
@@ -84,15 +96,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 97,
     "conversions": 7,
-    "cpc": 1.629485,
-    "cpm": 44.561601,
-    "ctr": 2.734705,
+    "cpc": 1.629691,
+    "cpm": 44.554679,
+    "ctr": 2.733935,
     "date": "2026-07-18",
-    "frequency": 1.174892,
+    "frequency": 1.175224,
     "ic_conversions": 1,
-    "impressions": 3547,
+    "impressions": 3548,
+    "leads": 7,
+    "prequal_decisions": 2,
     "reach": 3019,
-    "spend": 158.06
+    "rewards_conversions": 0,
+    "spend": 158.08
   },
   {
     "ad_id": null,
@@ -110,7 +125,10 @@
     "frequency": 1.25,
     "ic_conversions": 0,
     "impressions": 5,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 4,
+    "rewards_conversions": 0,
     "spend": 0.21
   },
   {
@@ -122,14 +140,17 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 182,
     "conversions": 9,
-    "cpc": 1.03033,
-    "cpm": 49.386358,
-    "ctr": 4.793258,
+    "cpc": 1.030385,
+    "cpm": 49.31107,
+    "ctr": 4.785696,
     "date": "2026-07-18",
-    "frequency": 1.111859,
+    "frequency": 1.111014,
     "ic_conversions": 1,
-    "impressions": 3797,
-    "reach": 3415,
-    "spend": 187.52
+    "impressions": 3803,
+    "leads": 9,
+    "prequal_decisions": 3,
+    "reach": 3423,
+    "rewards_conversions": 0,
+    "spend": 187.53
   }
 ]

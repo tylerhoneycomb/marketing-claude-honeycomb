@@ -15,7 +15,10 @@
     "frequency": 1.153846,
     "ic_conversions": 0,
     "impressions": 15,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 13,
+    "rewards_conversions": 0,
     "spend": 0.99
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 42,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 42,
+    "rewards_conversions": 0,
     "spend": 2.62
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.134651,
     "ic_conversions": 0,
     "impressions": 2469,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 2176,
+    "rewards_conversions": 0,
     "spend": 72.94
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.250566,
     "ic_conversions": 0,
     "impressions": 2211,
+    "leads": 10,
+    "prequal_decisions": 5,
     "reach": 1768,
+    "rewards_conversions": 0,
     "spend": 95.12
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.333333,
     "ic_conversions": 0,
     "impressions": 12,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 9,
+    "rewards_conversions": 0,
     "spend": 0.7
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.138742,
     "ic_conversions": 0,
     "impressions": 2372,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 2083,
+    "rewards_conversions": 0,
     "spend": 113.72
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.281356,
     "ic_conversions": 0,
     "impressions": 2268,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 1770,
+    "rewards_conversions": 0,
     "spend": 74.01
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.090323,
     "ic_conversions": 0,
     "impressions": 2028,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 1860,
+    "rewards_conversions": 0,
     "spend": 80.6
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.097262,
     "ic_conversions": 0,
     "impressions": 1523,
+    "leads": 8,
+    "prequal_decisions": 4,
     "reach": 1388,
+    "rewards_conversions": 0,
     "spend": 70.74
   },
   {
@@ -186,7 +213,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 5,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 5,
+    "rewards_conversions": 0,
     "spend": 0.16
   },
   {
@@ -205,7 +235,10 @@
     "frequency": 1.220405,
     "ic_conversions": 1,
     "impressions": 5598,
+    "leads": 29,
+    "prequal_decisions": 14,
     "reach": 4587,
+    "rewards_conversions": 0,
     "spend": 292.06
   },
   {
@@ -224,7 +257,10 @@
     "frequency": 1.045085,
     "ic_conversions": 0,
     "impressions": 1414,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 1353,
+    "rewards_conversions": 0,
     "spend": 47.84
   },
   {
@@ -243,7 +279,10 @@
     "frequency": 2.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.08
   },
   {
@@ -262,7 +301,10 @@
     "frequency": 1.153766,
     "ic_conversions": 0,
     "impressions": 6663,
+    "leads": 17,
+    "prequal_decisions": 8,
     "reach": 5775,
+    "rewards_conversions": 0,
     "spend": 238.73
   },
   {
@@ -281,7 +323,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 25,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 25,
+    "rewards_conversions": 0,
     "spend": 0.98
   },
   {
@@ -300,7 +345,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 34,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 34,
+    "rewards_conversions": 0,
     "spend": 1.54
   },
   {
@@ -319,7 +367,10 @@
     "frequency": 1.15864,
     "ic_conversions": 0,
     "impressions": 2045,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 1765,
+    "rewards_conversions": 0,
     "spend": 59.87
   },
   {
@@ -338,7 +389,10 @@
     "frequency": 1.233333,
     "ic_conversions": 0,
     "impressions": 999,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 810,
+    "rewards_conversions": 0,
     "spend": 39.74
   },
   {
@@ -347,7 +401,7 @@
     "adset_id": "120245893421060631",
     "adset_name": "BR-Independent Coffee Shops-Cohort3-LAL1-20260414-Coffee_Beer_and_Wine",
     "campaign_id": "120245893173820631",
-    "campaign_name": "ICD-Coffee, Beer & Wine Retail-Q2-2026",
+    "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
     "clicks": 2,
     "conversions": 0,
     "cpc": 1.095,
@@ -357,7 +411,10 @@
     "frequency": 1.233333,
     "ic_conversions": 0,
     "impressions": 37,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 30,
+    "rewards_conversions": 0,
     "spend": 2.19
   },
   {
@@ -366,7 +423,7 @@
     "adset_id": "120245893421370631",
     "adset_name": "BR-Sports Bars-Cohort1-LAL1-20260414-Coffee_Beer_and_Wine",
     "campaign_id": "120245893173820631",
-    "campaign_name": "ICD-Coffee, Beer & Wine Retail-Q2-2026",
+    "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
     "clicks": 0,
     "conversions": 0,
     "cpc": 0.0,
@@ -376,7 +433,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.08
   },
   {
@@ -385,7 +445,7 @@
     "adset_id": "120245893421070631",
     "adset_name": "BR-Independent Coffee Shops-Cohort5-LAL1-20260414-Coffee_Beer_and_Wine",
     "campaign_id": "120245893173820631",
-    "campaign_name": "ICD-Coffee, Beer & Wine Retail-Q2-2026",
+    "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
     "clicks": 64,
     "conversions": 2,
     "cpc": 1.732344,
@@ -395,7 +455,10 @@
     "frequency": 1.365335,
     "ic_conversions": 0,
     "impressions": 2119,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 1552,
+    "rewards_conversions": 0,
     "spend": 110.87
   },
   {
@@ -414,7 +477,10 @@
     "frequency": 1.2,
     "ic_conversions": 0,
     "impressions": 24,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 20,
+    "rewards_conversions": 0,
     "spend": 1.35
   },
   {
@@ -433,7 +499,10 @@
     "frequency": 1.22973,
     "ic_conversions": 0,
     "impressions": 91,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 74,
+    "rewards_conversions": 0,
     "spend": 3.35
   },
   {
@@ -452,7 +521,10 @@
     "frequency": 1.26133,
     "ic_conversions": 0,
     "impressions": 3451,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 2736,
+    "rewards_conversions": 0,
     "spend": 130.44
   },
   {
@@ -471,7 +543,10 @@
     "frequency": 1.714286,
     "ic_conversions": 0,
     "impressions": 12,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 7,
+    "rewards_conversions": 0,
     "spend": 0.44
   },
   {
@@ -490,7 +565,10 @@
     "frequency": 1.5,
     "ic_conversions": 0,
     "impressions": 9,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 6,
+    "rewards_conversions": 0,
     "spend": 0.3
   },
   {
@@ -509,7 +587,10 @@
     "frequency": 1.071429,
     "ic_conversions": 0,
     "impressions": 15,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 14,
+    "rewards_conversions": 0,
     "spend": 0.55
   },
   {
@@ -528,7 +609,10 @@
     "frequency": 1.243101,
     "ic_conversions": 0,
     "impressions": 1892,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1522,
+    "rewards_conversions": 0,
     "spend": 85.16
   },
   {
@@ -547,7 +631,10 @@
     "frequency": 1.100719,
     "ic_conversions": 0,
     "impressions": 153,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 139,
+    "rewards_conversions": 0,
     "spend": 5.76
   },
   {
@@ -566,7 +653,10 @@
     "frequency": 1.293478,
     "ic_conversions": 0,
     "impressions": 714,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 552,
+    "rewards_conversions": 0,
     "spend": 33.84
   },
   {
@@ -585,7 +675,10 @@
     "frequency": 1.110336,
     "ic_conversions": 1,
     "impressions": 2546,
+    "leads": 19,
+    "prequal_decisions": 9,
     "reach": 2293,
+    "rewards_conversions": 0,
     "spend": 65.44
   }
 ]

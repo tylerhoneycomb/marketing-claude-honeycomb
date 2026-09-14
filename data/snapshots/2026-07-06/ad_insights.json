@@ -15,7 +15,10 @@
     "frequency": 0.0,
     "ic_conversions": 1,
     "impressions": 0,
+    "leads": 3,
+    "prequal_decisions": 1,
     "reach": 0,
+    "rewards_conversions": 0,
     "spend": 0.0
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 0.0,
     "ic_conversions": 0,
     "impressions": 0,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 0,
+    "rewards_conversions": 0,
     "spend": 0.0
   }
 ]

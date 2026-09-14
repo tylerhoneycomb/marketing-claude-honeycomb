@@ -15,7 +15,10 @@
     "frequency": 1.083333,
     "ic_conversions": 0,
     "impressions": 13,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 12,
+    "rewards_conversions": 0,
     "spend": 0.48
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.059016,
     "ic_conversions": 0,
     "impressions": 323,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 305,
+    "rewards_conversions": 0,
     "spend": 12.88
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.080189,
     "ic_conversions": 0,
     "impressions": 229,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 212,
+    "rewards_conversions": 0,
     "spend": 12.89
   },
   {
@@ -65,15 +74,18 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 92,
     "conversions": 9,
-    "cpc": 1.254348,
-    "cpm": 47.063622,
-    "ctr": 3.752039,
+    "cpc": 1.254891,
+    "cpm": 47.04564,
+    "ctr": 3.748981,
     "date": "2026-08-11",
-    "frequency": 1.169289,
+    "frequency": 1.168571,
     "ic_conversions": 0,
-    "impressions": 2452,
-    "reach": 2097,
-    "spend": 115.4
+    "impressions": 2454,
+    "leads": 9,
+    "prequal_decisions": 3,
+    "reach": 2100,
+    "rewards_conversions": 0,
+    "spend": 115.45
   },
   {
     "ad_id": "120245893441990631",
@@ -91,7 +103,10 @@
     "frequency": 1.32,
     "ic_conversions": 0,
     "impressions": 33,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 25,
+    "rewards_conversions": 0,
     "spend": 1.76
   },
   {
@@ -103,14 +118,17 @@
     "campaign_name": "ICD-Broad-Q2-2026",
     "clicks": 60,
     "conversions": 7,
-    "cpc": 2.3345,
-    "cpm": 59.935815,
-    "ctr": 2.567394,
+    "cpc": 2.3375,
+    "cpm": 59.987169,
+    "ctr": 2.566296,
     "date": "2026-08-11",
-    "frequency": 1.217822,
+    "frequency": 1.217074,
     "ic_conversions": 0,
-    "impressions": 2337,
-    "reach": 1919,
-    "spend": 140.07
+    "impressions": 2338,
+    "leads": 7,
+    "prequal_decisions": 4,
+    "reach": 1921,
+    "rewards_conversions": 0,
+    "spend": 140.25
   }
 ]

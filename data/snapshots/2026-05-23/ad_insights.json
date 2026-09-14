@@ -15,7 +15,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.13
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.026316,
     "ic_conversions": 0,
     "impressions": 39,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 38,
+    "rewards_conversions": 0,
     "spend": 2.5
   },
   {
@@ -46,15 +52,18 @@
     "campaign_name": "AD-Breweries-Q4-2025",
     "clicks": 18,
     "conversions": 0,
-    "cpc": 2.341667,
-    "cpm": 51.972873,
-    "ctr": 2.219482,
+    "cpc": 2.35,
+    "cpm": 52.093596,
+    "ctr": 2.216749,
     "date": "2026-05-23",
-    "frequency": 1.120166,
+    "frequency": 1.118457,
     "ic_conversions": 0,
-    "impressions": 811,
-    "reach": 724,
-    "spend": 42.15
+    "impressions": 812,
+    "leads": 0,
+    "prequal_decisions": 0,
+    "reach": 726,
+    "rewards_conversions": 0,
+    "spend": 42.3
   },
   {
     "ad_id": "120241608378000631",
@@ -66,13 +75,16 @@
     "clicks": 81,
     "conversions": 6,
     "cpc": 0.894938,
-    "cpm": 65.720762,
-    "ctr": 7.343608,
+    "cpm": 65.661232,
+    "ctr": 7.336957,
     "date": "2026-05-23",
-    "frequency": 1.154974,
+    "frequency": 1.154812,
     "ic_conversions": 0,
-    "impressions": 1103,
-    "reach": 955,
+    "impressions": 1104,
+    "leads": 6,
+    "prequal_decisions": 2,
+    "reach": 956,
+    "rewards_conversions": 0,
     "spend": 72.49
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.01
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.239163,
     "ic_conversions": 0,
     "impressions": 829,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 669,
+    "rewards_conversions": 0,
     "spend": 36.55
   },
   {
@@ -120,17 +138,20 @@
     "adset_name": "Creameries - Audience 2 - Pure lookalike - Lead generation - Q1 2026",
     "campaign_id": "120241605050900631",
     "campaign_name": "AD-Creameries-Q1-2026",
-    "clicks": 41,
+    "clicks": 42,
     "conversions": 4,
-    "cpc": 2.297805,
-    "cpm": 67.923576,
-    "ctr": 2.95602,
+    "cpc": 2.24381,
+    "cpm": 67.896254,
+    "ctr": 3.025937,
     "date": "2026-05-23",
-    "frequency": 1.140625,
+    "frequency": 1.139573,
     "ic_conversions": 0,
-    "impressions": 1387,
-    "reach": 1216,
-    "spend": 94.21
+    "impressions": 1388,
+    "leads": 4,
+    "prequal_decisions": 2,
+    "reach": 1218,
+    "rewards_conversions": 0,
+    "spend": 94.24
   },
   {
     "ad_id": "120242950140670631",
@@ -142,13 +163,16 @@
     "clicks": 8,
     "conversions": 2,
     "cpc": 2.7175,
-    "cpm": 32.691729,
-    "ctr": 1.203008,
+    "cpm": 32.642643,
+    "ctr": 1.201201,
     "date": "2026-05-23",
-    "frequency": 1.031008,
+    "frequency": 1.032558,
     "ic_conversions": 0,
-    "impressions": 665,
+    "impressions": 666,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 645,
+    "rewards_conversions": 0,
     "spend": 21.74
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.301587,
     "ic_conversions": 0,
     "impressions": 82,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 63,
+    "rewards_conversions": 0,
     "spend": 5.3
   },
   {
@@ -186,7 +213,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.08
   },
   {
@@ -196,17 +226,20 @@
     "adset_name": "Delis / butchers - Audience 2 - Hubspot/RAR extract - Lead generation - Q1 2026",
     "campaign_id": "120243109874830631",
     "campaign_name": "AD-Delis & Butchers-Q1-2026",
-    "clicks": 87,
+    "clicks": 88,
     "conversions": 18,
-    "cpc": 2.047816,
-    "cpm": 88.548708,
-    "ctr": 4.324056,
+    "cpc": 2.027841,
+    "cpm": 88.516865,
+    "ctr": 4.365079,
     "date": "2026-05-23",
-    "frequency": 1.219394,
+    "frequency": 1.221818,
     "ic_conversions": 1,
-    "impressions": 2012,
+    "impressions": 2016,
+    "leads": 18,
+    "prequal_decisions": 7,
     "reach": 1650,
-    "spend": 178.16
+    "rewards_conversions": 0,
+    "spend": 178.45
   },
   {
     "ad_id": "120244094020710631",
@@ -224,7 +257,10 @@
     "frequency": 1.051724,
     "ic_conversions": 0,
     "impressions": 61,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 58,
+    "rewards_conversions": 0,
     "spend": 3.64
   },
   {
@@ -234,17 +270,20 @@
     "adset_name": "Juice / smoothie - Audience 2 - Hubspot+RAR - Lead generation - Q1 2026",
     "campaign_id": "120244137988980631",
     "campaign_name": "AD-Juice & Smoothie-Q1-2026",
-    "clicks": 99,
+    "clicks": 100,
     "conversions": 18,
-    "cpc": 1.467576,
-    "cpm": 40.697479,
-    "ctr": 2.773109,
+    "cpc": 1.4535,
+    "cpm": 40.702884,
+    "ctr": 2.800336,
     "date": "2026-05-23",
-    "frequency": 1.157588,
+    "frequency": 1.157912,
     "ic_conversions": 0,
-    "impressions": 3570,
+    "impressions": 3571,
+    "leads": 18,
+    "prequal_decisions": 6,
     "reach": 3084,
-    "spend": 145.29
+    "rewards_conversions": 0,
+    "spend": 145.35
   },
   {
     "ad_id": "120244138133060631",
@@ -262,7 +301,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 21,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 21,
+    "rewards_conversions": 0,
     "spend": 1.01
   },
   {
@@ -281,7 +323,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 29,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 29,
+    "rewards_conversions": 0,
     "spend": 1.5
   },
   {
@@ -300,7 +345,10 @@
     "frequency": 1.039735,
     "ic_conversions": 0,
     "impressions": 157,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 151,
+    "rewards_conversions": 0,
     "spend": 9.03
   },
   {
@@ -319,7 +367,10 @@
     "frequency": 1.205392,
     "ic_conversions": 0,
     "impressions": 939,
+    "leads": 6,
+    "prequal_decisions": 3,
     "reach": 779,
+    "rewards_conversions": 0,
     "spend": 60.39
   },
   {
@@ -338,7 +389,10 @@
     "frequency": 1.079121,
     "ic_conversions": 1,
     "impressions": 491,
+    "leads": 3,
+    "prequal_decisions": 1,
     "reach": 455,
+    "rewards_conversions": 0,
     "spend": 28.9
   },
   {
@@ -357,7 +411,10 @@
     "frequency": 1.096154,
     "ic_conversions": 0,
     "impressions": 57,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 52,
+    "rewards_conversions": 0,
     "spend": 3.46
   },
   {
@@ -376,7 +433,10 @@
     "frequency": 1.134146,
     "ic_conversions": 0,
     "impressions": 93,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 82,
+    "rewards_conversions": 0,
     "spend": 6.37
   },
   {
@@ -395,7 +455,10 @@
     "frequency": 1.090487,
     "ic_conversions": 0,
     "impressions": 470,
+    "leads": 2,
+    "prequal_decisions": 1,
     "reach": 431,
+    "rewards_conversions": 0,
     "spend": 17.04
   },
   {
@@ -407,15 +470,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 69,
     "conversions": 13,
-    "cpc": 1.816522,
-    "cpm": 52.531433,
-    "ctr": 2.891869,
+    "cpc": 1.819855,
+    "cpm": 52.561741,
+    "ctr": 2.888238,
     "date": "2026-05-23",
-    "frequency": 1.107193,
+    "frequency": 1.106531,
     "ic_conversions": 1,
-    "impressions": 2386,
-    "reach": 2155,
-    "spend": 125.34
+    "impressions": 2389,
+    "leads": 13,
+    "prequal_decisions": 5,
+    "reach": 2159,
+    "rewards_conversions": 0,
+    "spend": 125.57
   },
   {
     "ad_id": "120245893431950631",
@@ -433,7 +499,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.1
   },
   {
@@ -452,7 +521,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.03
   },
   {
@@ -471,7 +543,10 @@
     "frequency": 1.25,
     "ic_conversions": 0,
     "impressions": 5,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 4,
+    "rewards_conversions": 0,
     "spend": 0.05
   },
   {
@@ -490,7 +565,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.03
   },
   {
@@ -509,7 +587,10 @@
     "frequency": 1.166667,
     "ic_conversions": 0,
     "impressions": 7,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 6,
+    "rewards_conversions": 0,
     "spend": 0.29
   },
   {
@@ -528,7 +609,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 16,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 16,
+    "rewards_conversions": 0,
     "spend": 0.34
   },
   {
@@ -547,7 +631,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 4,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 4,
+    "rewards_conversions": 0,
     "spend": 0.09
   },
   {
@@ -559,15 +646,18 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 96,
     "conversions": 19,
-    "cpc": 1.482708,
-    "cpm": 49.303776,
-    "ctr": 3.325251,
+    "cpc": 1.484583,
+    "cpm": 49.246717,
+    "ctr": 3.317208,
     "date": "2026-05-23",
-    "frequency": 1.089434,
+    "frequency": 1.088379,
     "ic_conversions": 1,
-    "impressions": 2887,
-    "reach": 2650,
-    "spend": 142.34
+    "impressions": 2894,
+    "leads": 19,
+    "prequal_decisions": 8,
+    "reach": 2659,
+    "rewards_conversions": 0,
+    "spend": 142.52
   },
   {
     "ad_id": "120245893441780631",
@@ -585,7 +675,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.01
   },
   {
@@ -604,7 +697,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.01
   },
   {
@@ -623,7 +719,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.12
   },
   {
@@ -642,7 +741,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 6,
+    "leads": 2,
+    "prequal_decisions": 0,
     "reach": 6,
+    "rewards_conversions": 0,
     "spend": 0.18
   },
   {
@@ -661,7 +763,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.1
   },
   {
@@ -680,7 +785,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.03
   },
   {
@@ -699,7 +807,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.01
   },
   {
@@ -718,7 +829,10 @@
     "frequency": 1.166667,
     "ic_conversions": 0,
     "impressions": 7,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 6,
+    "rewards_conversions": 0,
     "spend": 0.76
   },
   {
@@ -737,7 +851,10 @@
     "frequency": 1.5,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.11
   },
   {
@@ -756,7 +873,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.0
   },
   {
@@ -775,7 +895,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.01
   },
   {
@@ -794,7 +917,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 6,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 6,
+    "rewards_conversions": 0,
     "spend": 0.15
   },
   {
@@ -813,7 +939,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 12,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 12,
+    "rewards_conversions": 0,
     "spend": 0.65
   },
   {
@@ -832,7 +961,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.03
   },
   {
@@ -851,7 +983,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.07
   },
   {
@@ -870,7 +1005,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.01
   },
   {
@@ -889,7 +1027,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 4,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 4,
+    "rewards_conversions": 0,
     "spend": 0.18
   },
   {
@@ -908,7 +1049,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.35
   },
   {
@@ -927,7 +1071,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 7,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 7,
+    "rewards_conversions": 0,
     "spend": 0.23
   },
   {
@@ -946,7 +1093,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.08
   },
   {
@@ -965,7 +1115,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 6,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 6,
+    "rewards_conversions": 0,
     "spend": 0.27
   },
   {
@@ -984,7 +1137,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.04
   },
   {
@@ -1003,7 +1159,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.02
   },
   {
@@ -1022,7 +1181,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 4,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 4,
+    "rewards_conversions": 0,
     "spend": 0.08
   },
   {
@@ -1041,7 +1203,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.06
   },
   {
@@ -1060,7 +1225,10 @@
     "frequency": 1.333333,
     "ic_conversions": 0,
     "impressions": 4,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.09
   },
   {
@@ -1079,7 +1247,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 5,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 5,
+    "rewards_conversions": 0,
     "spend": 0.31
   },
   {
@@ -1098,7 +1269,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.01
   },
   {
@@ -1117,7 +1291,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.02
   },
   {
@@ -1136,7 +1313,10 @@
     "frequency": 1.191489,
     "ic_conversions": 0,
     "impressions": 56,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 47,
+    "rewards_conversions": 0,
     "spend": 2.87
   },
   {
@@ -1148,15 +1328,18 @@
     "campaign_name": "AD-Fitness & Wellness-Q1-2026",
     "clicks": 175,
     "conversions": 21,
-    "cpc": 0.879314,
-    "cpm": 45.060029,
-    "ctr": 5.124451,
+    "cpc": 0.879943,
+    "cpm": 45.052662,
+    "ctr": 5.119953,
     "date": "2026-05-23",
-    "frequency": 1.094902,
+    "frequency": 1.095162,
     "ic_conversions": 1,
-    "impressions": 3415,
-    "reach": 3119,
-    "spend": 153.88
+    "impressions": 3418,
+    "leads": 21,
+    "prequal_decisions": 6,
+    "reach": 3121,
+    "rewards_conversions": 0,
+    "spend": 153.99
   },
   {
     "ad_id": "120247429696870631",
@@ -1174,7 +1357,10 @@
     "frequency": 2.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.07
   },
   {
@@ -1193,7 +1379,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.02
   },
   {
@@ -1212,7 +1401,10 @@
     "frequency": 1.181818,
     "ic_conversions": 0,
     "impressions": 13,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 11,
+    "rewards_conversions": 0,
     "spend": 0.32
   },
   {
@@ -1231,7 +1423,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 8,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 8,
+    "rewards_conversions": 0,
     "spend": 0.34
   },
   {
@@ -1250,7 +1445,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.11
   },
   {
@@ -1269,7 +1467,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 6,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 6,
+    "rewards_conversions": 0,
     "spend": 0.39
   },
   {
@@ -1288,7 +1489,10 @@
     "frequency": 1.040816,
     "ic_conversions": 0,
     "impressions": 51,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 49,
+    "rewards_conversions": 0,
     "spend": 1.42
   },
   {
@@ -1307,7 +1511,10 @@
     "frequency": 1.333333,
     "ic_conversions": 0,
     "impressions": 20,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 15,
+    "rewards_conversions": 0,
     "spend": 0.52
   },
   {
@@ -1326,7 +1533,10 @@
     "frequency": 1.083333,
     "ic_conversions": 0,
     "impressions": 39,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 36,
+    "rewards_conversions": 0,
     "spend": 1.75
   },
   {
@@ -1345,7 +1555,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.02
   },
   {
@@ -1364,7 +1577,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 2,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 2,
+    "rewards_conversions": 0,
     "spend": 0.02
   },
   {
@@ -1383,7 +1599,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.15
   },
   {
@@ -1402,7 +1621,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.14
   },
   {
@@ -1421,7 +1643,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 7,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 7,
+    "rewards_conversions": 0,
     "spend": 0.27
   },
   {
@@ -1440,7 +1665,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.03
   },
   {
@@ -1459,7 +1687,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 4,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 4,
+    "rewards_conversions": 0,
     "spend": 0.39
   },
   {
@@ -1478,7 +1709,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 1,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1,
+    "rewards_conversions": 0,
     "spend": 0.03
   },
   {
@@ -1497,7 +1731,10 @@
     "frequency": 1.4,
     "ic_conversions": 0,
     "impressions": 7,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 5,
+    "rewards_conversions": 0,
     "spend": 0.34
   },
   {
@@ -1509,14 +1746,17 @@
     "campaign_name": "AD-BBQ-Q1-2026",
     "clicks": 50,
     "conversions": 13,
-    "cpc": 1.4684,
-    "cpm": 35.298077,
-    "ctr": 2.403846,
+    "cpc": 1.476,
+    "cpm": 35.412668,
+    "ctr": 2.399232,
     "date": "2026-05-23",
-    "frequency": 1.120086,
+    "frequency": 1.12224,
     "ic_conversions": 1,
-    "impressions": 2080,
+    "impressions": 2084,
+    "leads": 13,
+    "prequal_decisions": 5,
     "reach": 1857,
-    "spend": 73.42
+    "rewards_conversions": 0,
+    "spend": 73.8
   }
 ]

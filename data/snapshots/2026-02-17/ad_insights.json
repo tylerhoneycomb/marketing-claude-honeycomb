@@ -15,7 +15,10 @@
     "frequency": 1.079545,
     "ic_conversions": 0,
     "impressions": 95,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 88,
+    "rewards_conversions": 0,
     "spend": 2.93
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.11976,
     "ic_conversions": 1,
     "impressions": 1683,
+    "leads": 7,
+    "prequal_decisions": 4,
     "reach": 1503,
+    "rewards_conversions": 0,
     "spend": 57.46
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.181102,
     "ic_conversions": 0,
     "impressions": 900,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 762,
+    "rewards_conversions": 0,
     "spend": 36.01
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.19141,
     "ic_conversions": 0,
     "impressions": 1276,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1071,
+    "rewards_conversions": 0,
     "spend": 35.86
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.114286,
     "ic_conversions": 0,
     "impressions": 78,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 70,
+    "rewards_conversions": 0,
     "spend": 1.95
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.107794,
     "ic_conversions": 0,
     "impressions": 2189,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1976,
+    "rewards_conversions": 0,
     "spend": 52.95
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.069411,
     "ic_conversions": 0,
     "impressions": 2234,
+    "leads": 4,
+    "prequal_decisions": 4,
     "reach": 2089,
+    "rewards_conversions": 0,
     "spend": 55.48
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.217391,
     "ic_conversions": 2,
     "impressions": 1008,
+    "leads": 6,
+    "prequal_decisions": 4,
     "reach": 828,
+    "rewards_conversions": 0,
     "spend": 44.9
   },
   {
@@ -167,7 +191,10 @@
     "frequency": 1.216109,
     "ic_conversions": 0,
     "impressions": 2144,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1763,
+    "rewards_conversions": 0,
     "spend": 72.2
   },
   {
@@ -186,7 +213,10 @@
     "frequency": 1.355244,
     "ic_conversions": 1,
     "impressions": 4536,
+    "leads": 10,
+    "prequal_decisions": 7,
     "reach": 3347,
+    "rewards_conversions": 0,
     "spend": 174.29
   },
   {
@@ -205,7 +235,10 @@
     "frequency": 1.232628,
     "ic_conversions": 0,
     "impressions": 408,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 331,
+    "rewards_conversions": 0,
     "spend": 13.82
   },
   {
@@ -224,7 +257,10 @@
     "frequency": 1.206379,
     "ic_conversions": 0,
     "impressions": 1286,
+    "leads": 2,
+    "prequal_decisions": 2,
     "reach": 1066,
+    "rewards_conversions": 0,
     "spend": 49.74
   },
   {
@@ -233,7 +269,7 @@
     "adset_id": "120242950044520631",
     "adset_name": "Creameries - Audience 2 - Pure lookalike - Lead generation - Q1 2026",
     "campaign_id": "120241605050900631",
-    "campaign_name": "PAUSED - AD-Creameries-Q1-2026",
+    "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 91,
     "conversions": 3,
     "cpc": 0.898352,
@@ -243,7 +279,10 @@
     "frequency": 1.062771,
     "ic_conversions": 0,
     "impressions": 3437,
+    "leads": 3,
+    "prequal_decisions": 2,
     "reach": 3234,
+    "rewards_conversions": 0,
     "spend": 81.75
   },
   {
@@ -262,7 +301,10 @@
     "frequency": 1.087011,
     "ic_conversions": 0,
     "impressions": 1724,
+    "leads": 2,
+    "prequal_decisions": 2,
     "reach": 1586,
+    "rewards_conversions": 0,
     "spend": 38.7
   },
   {
@@ -281,7 +323,10 @@
     "frequency": 1.116788,
     "ic_conversions": 1,
     "impressions": 765,
+    "leads": 3,
+    "prequal_decisions": 1,
     "reach": 685,
+    "rewards_conversions": 0,
     "spend": 16.87
   },
   {
@@ -300,7 +345,10 @@
     "frequency": 1.016074,
     "ic_conversions": 0,
     "impressions": 1201,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1182,
+    "rewards_conversions": 0,
     "spend": 33.73
   },
   {
@@ -319,7 +367,10 @@
     "frequency": 1.044118,
     "ic_conversions": 1,
     "impressions": 852,
+    "leads": 4,
+    "prequal_decisions": 2,
     "reach": 816,
+    "rewards_conversions": 0,
     "spend": 27.94
   }
 ]

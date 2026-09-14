@@ -15,7 +15,10 @@
     "frequency": 1.218835,
     "ic_conversions": 0,
     "impressions": 1799,
+    "leads": 8,
+    "prequal_decisions": 8,
     "reach": 1476,
+    "rewards_conversions": 3,
     "spend": 128.64
   },
   {
@@ -27,14 +30,17 @@
     "campaign_name": "LEADS-IFW-Broad-Q3-2026",
     "clicks": 314,
     "conversions": 19,
-    "cpc": 0.773758,
-    "cpm": 31.108835,
-    "ctr": 4.020487,
+    "cpc": 0.773885,
+    "cpm": 31.109973,
+    "ctr": 4.019972,
     "date": "2026-09-06",
-    "frequency": 1.14718,
+    "frequency": 1.147327,
     "ic_conversions": 0,
-    "impressions": 7810,
+    "impressions": 7811,
+    "leads": 19,
+    "prequal_decisions": 19,
     "reach": 6808,
-    "spend": 242.96
+    "rewards_conversions": 4,
+    "spend": 243.0
   }
 ]

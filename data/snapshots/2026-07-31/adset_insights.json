@@ -15,7 +15,10 @@
     "frequency": 1.12,
     "ic_conversions": 0,
     "impressions": 28,
+    "leads": 2,
+    "prequal_decisions": 2,
     "reach": 25,
+    "rewards_conversions": 0,
     "spend": 1.22
   },
   {
@@ -27,15 +30,18 @@
     "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
     "clicks": 6,
     "conversions": 0,
-    "cpc": 2.445,
-    "cpm": 36.583541,
-    "ctr": 1.496259,
+    "cpc": 2.446667,
+    "cpm": 36.517413,
+    "ctr": 1.492537,
     "date": "2026-07-31",
-    "frequency": 1.089674,
+    "frequency": 1.089431,
     "ic_conversions": 0,
-    "impressions": 401,
-    "reach": 368,
-    "spend": 14.67
+    "impressions": 402,
+    "leads": 0,
+    "prequal_decisions": 0,
+    "reach": 369,
+    "rewards_conversions": 0,
+    "spend": 14.68
   },
   {
     "ad_id": null,
@@ -53,7 +59,10 @@
     "frequency": 1.11332,
     "ic_conversions": 2,
     "impressions": 1120,
+    "leads": 6,
+    "prequal_decisions": 2,
     "reach": 1006,
+    "rewards_conversions": 0,
     "spend": 52.35
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 8,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 8,
+    "rewards_conversions": 0,
     "spend": 0.22
   },
   {
@@ -84,15 +96,18 @@
     "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
     "clicks": 86,
     "conversions": 13,
-    "cpc": 1.051628,
-    "cpm": 42.241943,
-    "ctr": 4.016815,
+    "cpc": 1.051744,
+    "cpm": 42.226891,
+    "ctr": 4.014939,
     "date": "2026-07-31",
-    "frequency": 1.11977,
+    "frequency": 1.120293,
     "ic_conversions": 1,
-    "impressions": 2141,
+    "impressions": 2142,
+    "leads": 13,
+    "prequal_decisions": 5,
     "reach": 1912,
-    "spend": 90.44
+    "rewards_conversions": 0,
+    "spend": 90.45
   },
   {
     "ad_id": null,
@@ -103,14 +118,17 @@
     "campaign_name": "ICD-Broad-Q2-2026",
     "clicks": 58,
     "conversions": 0,
-    "cpc": 2.580517,
-    "cpm": 74.388668,
-    "ctr": 2.882704,
+    "cpc": 2.583621,
+    "cpm": 74.367246,
+    "ctr": 2.878412,
     "date": "2026-07-31",
-    "frequency": 1.187021,
+    "frequency": 1.188791,
     "ic_conversions": 0,
-    "impressions": 2012,
+    "impressions": 2015,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1695,
-    "spend": 149.67
+    "rewards_conversions": 0,
+    "spend": 149.85
   }
 ]

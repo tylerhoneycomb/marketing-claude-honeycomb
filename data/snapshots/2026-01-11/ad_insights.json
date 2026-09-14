@@ -15,7 +15,10 @@
     "frequency": 1.206009,
     "ic_conversions": 0,
     "impressions": 562,
+    "leads": 3,
+    "prequal_decisions": 0,
     "reach": 466,
+    "rewards_conversions": 0,
     "spend": 59.53
   },
   {
@@ -34,7 +37,10 @@
     "frequency": 1.104,
     "ic_conversions": 0,
     "impressions": 138,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 125,
+    "rewards_conversions": 0,
     "spend": 7.96
   },
   {
@@ -53,7 +59,10 @@
     "frequency": 1.137217,
     "ic_conversions": 0,
     "impressions": 1757,
+    "leads": 2,
+    "prequal_decisions": 0,
     "reach": 1545,
+    "rewards_conversions": 0,
     "spend": 32.18
   },
   {
@@ -72,7 +81,10 @@
     "frequency": 1.137425,
     "ic_conversions": 0,
     "impressions": 1705,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 1499,
+    "rewards_conversions": 0,
     "spend": 48.29
   },
   {
@@ -91,7 +103,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 3,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 3,
+    "rewards_conversions": 0,
     "spend": 0.06
   },
   {
@@ -110,7 +125,10 @@
     "frequency": 1.149463,
     "ic_conversions": 0,
     "impressions": 1392,
+    "leads": 2,
+    "prequal_decisions": 0,
     "reach": 1211,
+    "rewards_conversions": 0,
     "spend": 34.36
   },
   {
@@ -129,7 +147,10 @@
     "frequency": 1.144269,
     "ic_conversions": 0,
     "impressions": 579,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 506,
+    "rewards_conversions": 0,
     "spend": 9.39
   },
   {
@@ -148,7 +169,10 @@
     "frequency": 1.065551,
     "ic_conversions": 0,
     "impressions": 1528,
+    "leads": 3,
+    "prequal_decisions": 0,
     "reach": 1434,
+    "rewards_conversions": 0,
     "spend": 38.45
   },
   {
@@ -157,7 +181,7 @@
     "adset_id": "120241605050910631",
     "adset_name": "Creameries - Audience 1 - List + page admins - Lead generation - Q4 2025",
     "campaign_id": "120241605050900631",
-    "campaign_name": "PAUSED - AD-Creameries-Q1-2026",
+    "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 0,
     "conversions": 0,
     "cpc": 0.0,
@@ -167,7 +191,10 @@
     "frequency": 1.0,
     "ic_conversions": 0,
     "impressions": 5,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 5,
+    "rewards_conversions": 0,
     "spend": 0.05
   },
   {
@@ -176,7 +203,7 @@
     "adset_id": "120241606208050631",
     "adset_name": "Creameries - Audience 2 - Pure lookalike - Lead generation - Q1 2026",
     "campaign_id": "120241605050900631",
-    "campaign_name": "PAUSED - AD-Creameries-Q1-2026",
+    "campaign_name": "AD-Creameries-Q1-2026",
     "clicks": 142,
     "conversions": 6,
     "cpc": 0.289859,
@@ -186,7 +213,10 @@
     "frequency": 1.0806,
     "ic_conversions": 0,
     "impressions": 3097,
+    "leads": 6,
+    "prequal_decisions": 0,
     "reach": 2866,
+    "rewards_conversions": 0,
     "spend": 41.16
   },
   {
@@ -205,7 +235,10 @@
     "frequency": 1.227577,
     "ic_conversions": 0,
     "impressions": 917,
+    "leads": 7,
+    "prequal_decisions": 0,
     "reach": 747,
+    "rewards_conversions": 0,
     "spend": 28.12
   },
   {
@@ -224,7 +257,10 @@
     "frequency": 1.05814,
     "ic_conversions": 0,
     "impressions": 91,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 86,
+    "rewards_conversions": 0,
     "spend": 2.48
   },
   {
@@ -243,7 +279,10 @@
     "frequency": 1.170363,
     "ic_conversions": 0,
     "impressions": 1161,
+    "leads": 0,
+    "prequal_decisions": 0,
     "reach": 992,
+    "rewards_conversions": 0,
     "spend": 22.76
   },
   {
@@ -262,7 +301,10 @@
     "frequency": 1.323708,
     "ic_conversions": 0,
     "impressions": 871,
+    "leads": 1,
+    "prequal_decisions": 0,
     "reach": 658,
+    "rewards_conversions": 0,
     "spend": 41.2
   },
   {
@@ -281,7 +323,10 @@
     "frequency": 1.222731,
     "ic_conversions": 0,
     "impressions": 1603,
+    "leads": 1,
+    "prequal_decisions": 0,
     "reach": 1311,
+    "rewards_conversions": 0,
     "spend": 42.55
   }
 ]

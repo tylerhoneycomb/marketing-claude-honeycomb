@@ -8,14 +8,17 @@
     "campaign_name": "LEADS-Broad-Q3-2026",
     "clicks": 165,
     "conversions": 16,
-    "cpc": 1.952,
-    "cpm": 78.098933,
-    "ctr": 4.00097,
+    "cpc": 1.957455,
+    "cpm": 78.20339,
+    "ctr": 3.995157,
     "date": "2026-08-23",
-    "frequency": 1.334196,
+    "frequency": 1.335705,
     "ic_conversions": 0,
-    "impressions": 4124,
-    "reach": 3091,
-    "spend": 322.08
+    "impressions": 4130,
+    "leads": 16,
+    "prequal_decisions": 11,
+    "reach": 3092,
+    "rewards_conversions": 0,
+    "spend": 322.98
   }
 ]
