@@ -9,12 +9,23 @@ description: Weekly structural diagnosis per vertical (scalable / stable / satur
 
 The daily budget optimizer adjusts each campaign by ±2-4% based on 14-day CPL rank and lead trend. That's a short-horizon, campaign-grain signal. This skill adds the missing **structural** layer: 12-week trailing diagnoses per vertical to answer "is this vertical *able* to absorb more spend?" — which short-window scoring can't see.
 
-It produces two deliverables:
+> **Reallocation retired 2026-09-15.** At Tyler's request the skill is now
+> **diagnosis only**: it classifies verticals and reports them, and proposes
+> no budget moves at all. The `Compute reallocation` workflow step, the
+> `scaling-queue-write` registration, the approval links and the Wednesday
+> execution are all gone (`executeStrategicChanges` in `Code.js` is guarded
+> and its stale tokens cleared). `compute_reallocation.py` is kept on disk,
+> unwired, so the pool maths can be revived without rewriting it. Sections
+> below that describe the pool, the lockout and the approval flow are
+> retained as reference for that revival — **they do not run today**.
 
-1. **Scaling labels** that tag each daily optimizer proposal — informational, no logic change to the optimizer.
-2. **A weekly Tuesday reallocation** — a separate Slack brief that proposes shifts from saturating verticals to scalable ones via a pool, sharing a 12% weekly cap with the optimizer.
+It produces one deliverable:
 
-It never modifies the optimizer's logic, scoring, or step sizes. The 12% cap is a hard rail; the lockout window prevents the optimizer from acting on campaigns the strategic reallocation just touched.
+1. **Scaling labels** — a weekly Tuesday Slack brief diagnosing each vertical
+   Meta is currently delivering, plus any audience actions those verticals
+   imply.
+
+It never modifies the optimizer's logic, scoring, or step sizes.
 
 ## Scripts
 
@@ -25,7 +36,9 @@ python3 skills/portfolio-scaling/scripts/compute_scaling_profiles.py
 python3 skills/portfolio-scaling/scripts/compute_reallocation.py [--write-log]
 ```
 
-The first writes `data/derived/scaling_profiles.json` and prints a one-screen JSON summary to stdout. The second reads that file plus `benchmarks.json` (and optionally the creative intelligence cache) and writes `data/derived/reallocation.json`. Pass `--write-log` to POST per-vertical rows to `?action=scaling-write` (the agent workflow does this; manual runs typically skip it).
+The first writes `data/derived/scaling_profiles.json` and prints a one-screen JSON summary to stdout. **That is the only script the workflow runs.**
+
+The second is **retired and unwired (2026-09-15)**: it reads that file plus `benchmarks.json` and would write `data/derived/reallocation.json`, but nothing calls it and that output file has been removed from the repo. Its `--write-log` POST to `?action=scaling-write` stopped with it, so the `scaling_log` Sheet tab no longer accretes rows — the weekly classification record is the git history of `scaling_profiles.json`, committed on every run. Note that `verticals` now holds only verticals with an ACTIVE campaign, so check that is still the input you want before reviving it.
 
 Required env vars:
 - `META_ACCESS_TOKEN` — for current campaign daily_budget lookups
@@ -70,7 +83,7 @@ Modifier (orthogonal to classification): **`new_audience_needed`** when `frequen
 
 A vertical whose campaigns all fall below the optimizer's `LIFETIME_MIN_CONVERSIONS = 10` gate (lifetime leads per campaign, summed from `weekly_rollup.meta_conversions`) is excluded from optimizer-eligible verticals (`optimizer_eligible = false` in the JSON). The gate used to count IC, which marked the live LEADS campaigns ineligible while paused legacy campaigns with old IC history stayed eligible.
 
-## The 12% weekly cap
+## The 12% weekly cap _(optimizer-side only since 2026-09-15 — strategic movement no longer contributes)_
 
 **Total |change_pct| per campaign per week, summed across all sources, is capped at 12%.** That's the single hard rail on the entire pipeline. Sources counted:
 
@@ -94,12 +107,23 @@ all been paused since 2026-08-17. At the time 26 of 29 campaigns were paused
 and 86% of the reported portfolio budget belonged to campaigns Meta was not
 delivering, so the portfolio total and the tolerance band were both meaningless.
 
-If every campaign in a saturating vertical is paused, propose nothing for that
-vertical and say so — do not fall back to the paused budget.
-`reallocation.pool.paused_saturating_verticals` lists them, and
-`pool.increase_skip_reason` says why nothing absorbed the pool when
-`increases` is empty (e.g. "no scalable/stable vertical has an ACTIVE
-campaign").
+**Since 2026-09-15 the guard extends to the brief itself.** A vertical whose
+campaigns are ALL paused is not reported at all:
+`compute_scaling_profiles.py` emits it under `inactive_verticals` instead of
+`verticals`, and the brief renders only `verticals`. The 2026-09-15 brief
+opened with three all-paused verticals — `broad` (stable), `health, fitness &
+personal care` and `craft producers & bars` (both tagged `over-invested`, with
+warning icons) — while the only two campaigns Meta was delivering appeared
+last as "too new to classify" afterthoughts. Diagnosing dead inventory as
+over-invested invites action on something inert.
+
+A vertical rejoins `verticals` on its own the moment one of its campaigns
+goes ACTIVE again; nothing needs re-enabling.
+
+`apps-script/Code.js:getVerticalClassification_` also reads `verticals`, and
+the narrowing is safe there: budget proposals require `effective_status ==
+"ACTIVE"`, so every campaign it can act on belongs to a vertical still
+present, and the lookup already returns null gracefully otherwise.
 
 The same guard applies to the portfolio total. `portfolio.current_total_daily_cents`,
 the tolerance headroom and `optimizer_cycles_this_week` count ACTIVE campaigns
@@ -108,7 +132,7 @@ Before this (through the 2026-09-08 run) the total summed paused budgets too,
 read $24,172/week "current" against a $9,000 target, and scaled every increase
 to zero while flagging `knockdown_risk` every week.
 
-## Reallocation pool
+## Reallocation pool _(retired 2026-09-15 — reference only, does not run)_
 
 Pool, not pairings. Decreases free dollars; the pool is then allocated across receiving verticals.
 
@@ -129,7 +153,7 @@ Pool, not pairings. Decreases free dollars; the pool is then allocated across re
 - Below target−tolerance → scale decreases down proportionally
 - `knockdown_risk: true` in the output when post-change > target (even if still within tolerance) — flags that the optimizer's next cycle may apply a 1% knockdown. Do **not** pre-deduct the knockdown from increases; it would undersize the reallocation, and it'll get counted via the normal headroom path on the next cycle.
 
-## Lockout
+## Lockout _(retired 2026-09-15 — reference only, does not run)_
 
 After the Tuesday brief is approved and Wednesday 3 AM execution applies the changes, the optimizer is locked out of touching the affected campaigns through end-of-Monday (Wed–Mon, 6 calendar days). `SCALING_LOCKOUT_UNTIL` Script Property is set to next Tuesday 00:00 UTC; the optimizer's Tuesday-morning cycle sees lockout already expired and is free to act.
 
@@ -181,7 +205,10 @@ The lockout list (`SCALING_AFFECTED_CAMPAIGN_IDS`) covers every campaign in the 
 
 `total_conversions` is leads (traced `weekly_rollup.meta_conversions` ← `rolling_data.conversions` ← the lead priority chain in `Code.js`).
 
-### reallocation.json
+### reallocation.json _(retired 2026-09-15 — no longer produced)_
+
+Kept as reference for a future revival of the pool maths. Nothing writes this
+file today and the committed copy was deleted.
 
 ```
 {
@@ -237,15 +264,34 @@ The skill prompt (NOT the script) composes the Slack message. Leads and
 cost-per-lead are the headline of every section; the brief carries leads,
 CPL, spend and delivery diagnostics (frequency, CPM, elasticity) and
 nothing else. Title the message `*Honeycomb Scaling — <date>*`.
-It has four sections, in order:
+
+Since 2026-09-15 it has **two** sections and proposes nothing. There is no
+pool section, no approval ask, no approve/reject links, and no last-week
+evaluation — nothing executes any more, so there is nothing to evaluate.
+
+**Only live verticals are ever rendered.** `compute_scaling_profiles.py`
+emits verticals with at least one ACTIVE campaign under `verticals`, and
+everything whose campaigns are all paused under `inactive_verticals`. The
+brief renders every key in `verticals` and never reads `inactive_verticals`.
+It must not name, count or allude to a paused campaign or a retired
+vertical. (The 2026-09-15 brief led with three all-paused verticals tagged
+`over-invested` while the only two campaigns Meta was delivering appeared
+last; that is the failure this rule prevents.)
 
 1. **Scaling labels** — open with ONE portfolio line built from
-   `portfolio.total_leads`, `portfolio.total_spend`, `portfolio.cpl` and
-   `portfolio.median_cpl`:
+   `portfolio.total_leads`, `portfolio.total_spend` and `portfolio.cpl`,
+   then the live-spend line from `portfolio.current_total_daily_cents` and
+   `.active_campaign_count`:
 
    ```
-   Portfolio (12w): 1,240 leads · $17,600 spend · CPL $14.19 · median vertical CPL $16.40
+   Portfolio (12w): 1,240 leads · $17,600 spend · CPL $14.19
+   Active portfolio: $300/day ($2,100/wk) across 2 ACTIVE campaigns.
    ```
+
+   `portfolio.median_cpl` is NOT printed: it spans every vertical the
+   window ever saw, most of them retired, so it compares live performance
+   against dead campaigns. Never add `portfolio.paused_total_daily_cents`
+   to the active figure.
 
    Then one line per vertical, **sorted by CPL ascending** within each class
    group (scalable → stable → saturating / over-invested); the JSON is
@@ -256,80 +302,37 @@ It has four sections, in order:
    ```
 
    Emoji: ✅ scalable, ── stable, ⚠️ saturating / over-invested. Tag
-   `directional` confidence explicitly. Skip `insufficient` verticals
-   **unless** `active_campaign_count > 0` — those are the campaigns
-   Meta is delivering right now, so print them as a one-liner after the
-   classified list: `🆕 ifw-broad — too new to classify · CPL $15.10 on 180
-   leads (3 weeks, 1 active campaign)`. If `cpl` is null print `CPL —`
-   and place the vertical last in its group; never substitute another cost
-   figure. Every JSON field the schema above marks `secondary, not printed`
-   exists only for the `scaling_log` wire contract and is never rendered in
-   the brief — not as a headline, sort key, secondary line, parenthetical or
-   trailing token.
+   `directional` confidence explicitly. A vertical classified
+   `insufficient` prints as a one-liner after the classified list:
+   `🆕 ifw-broad — too new to classify · CPL $15.10 on 180 leads (3 weeks,
+   1 active campaign)`. These are live campaigns with too little history to
+   judge, not a problem to flag. If `cpl` is null print `CPL —` and place
+   the vertical last in its group; never substitute another cost figure.
+   Every JSON field the schema above marks `secondary, not printed` is
+   never rendered — not as a headline, sort key, secondary line,
+   parenthetical or trailing token.
 
-2. **Strategic reallocation** — frame the pool in lead terms before the
-   dollar mechanics: `Moving $F/day out of <saturating verticals, CPL $A on
-   N leads> into <scalable verticals, CPL $B on M leads>` (each proposal
-   row carries `cpl` / `total_leads` / `vertical_spend`). Then pool
-   freed/allocated dollars, net portfolio change, and active-portfolio
-   weekly spend vs target ± tolerance (`pool.portfolio_current_daily_cents`
-   counts ACTIVE campaigns only; say "active portfolio"). Per affected
-   campaign:
+   If `verticals` is empty, say so in one line ("No ACTIVE campaigns to
+   report this week.") and move to section 2.
 
-   ```
-   ↓ ICD-Health…-Q2-2026: $125 → $121/day (−3.2%) · health saturating · vertical CPL $22.40 on 88 leads · headroom used 4% (opt 2% + strat 2%)
-   ```
+2. **Audience action required** — for each vertical in `verticals` with
+   `new_audience_needed` true, show CPL + lead count first
+   (`CPL $X on N leads (12w)`), then the frequency / CPM diagnosis and the
+   duplicate-ad-set recommendation. Skip the whole section when no vertical
+   qualifies.
 
-   When `knockdown_risk: true`, add a one-line "may trigger 1% knockdown
-   next cycle" note. If `pool.paused_saturating_verticals` is non-empty,
-   say `<vertical> saturating but every campaign PAUSED — no move proposed`
-   rather than leaving it out. If `increases` is empty, print
-   `pool.increase_skip_reason` verbatim (e.g. "no scalable/stable vertical
-   has an ACTIVE campaign — nothing to absorb the pool"). End with the
-   lockout window: "Lockout: Wed-Mon. Affected campaigns are locked out of
-   daily-optimizer moves until <next Tuesday>" — the lockout is recorded
-   either way, but do not describe the optimizer as running: `runBudgetAnalysis`
-   has been early-returned since 2026-09-09. Then the approval ask — `Approve to shift $F/day
-   toward lower-CPL verticals` — with the two-step approval link pair. If
-   registration was refused (`{"error":"unauthorized"}`), post without links
-   and prefix the section with `⚠️ registration refused (EXEC_SHARED_SECRET
-   missing) — no approval links this week`; never fabricate URLs.
-
-3. **Audience action required** — for each `new_audience_needed` vertical,
-   show CPL + lead count first (the `diagnosis` string already opens with
-   `CPL $X on N leads (12w)`), then the frequency / CPM diagnosis and the
-   duplicate-ad-set recommendation. Include the creative prescription line
-   if `creative_source` is set.
-
-4. **Last week's evaluation** — if `?action=scaling-queue-read&since=<last
-   Tuesday>` returns rows with `source=strategic` and `status=executed`,
-   report per affected vertical:
-
-   ```
-   broad: CPL $14.20 → $13.10 (395 → 431 leads/wk) · frequency 1.62 → 1.71 · classification stable → scalable
-   ```
-
-   **CPL and lead counts do not come from `scaling-log-read`** — the
-   `scaling_log` Sheet stores no CPL and no lead column today (see the wire
-   contract note above). Compute them from `?action=rollup` (read-only,
-   ungated): sum `spend` and `meta_conversions` per vertical for the two
-   most recent `week_start` values, and CPL = spend / meta_conversions.
-   Use `scaling-log-read` only for classification, `frequency_trend`,
-   `avg_frequency` and the pool flags. If the rollup rows are unavailable,
-   write `prior-week CPL unavailable` — CPL is the only movement metric;
-   never substitute a `scaling_log` cost column. End with `Verdict: reallocation helped / hurt /
-   inconclusive on CPL`. Skip the section entirely if no strategic rows
-   executed.
+**Never** propose, imply or invite a budget change, and never write an
+approve or reject URL. There is no approval flow for this brief.
 
 ## Status comment one-liner
 
 Write to `/tmp/agent_status.txt` before exiting:
 
 ```
-leads=<N> cpl=$<X> verticals=<N> scalable=<N> saturating=<N> over_invested=<N> new_audience_needed=<N> freed=$<X>/day allocated=$<Y>/day net=<zero_sum|net_positive|net_negative> knockdown_risk=<bool>
+leads=<N> cpl=$<X> verticals=<N> scalable=<N> saturating=<N> over_invested=<N> insufficient=<N> new_audience_needed=<N> diagnosis_only
 ```
 
-`leads` and `cpl` are `portfolio.total_leads` / `portfolio.cpl` (12-week) so the issue #48 log is lead-legible at a glance.
+`leads` and `cpl` are `portfolio.total_leads` / `portfolio.cpl` (12-week) so the issue #48 log is lead-legible at a glance. `verticals` counts the ACTIVE verticals rendered, not every vertical in the window. The pool tokens (`freed` / `allocated` / `net` / `knockdown_risk`) were dropped on 2026-09-15 with the reallocation itself.
 
 The workflow's status step posts this to issue #48 alongside the run conclusion.
 
@@ -337,6 +340,6 @@ The workflow's status step posts this to issue #48 alongside the run conclusion.
 
 - Modify the optimizer's daily logic, scoring, or step sizes.
 - Hardcode any threshold; everything tunable lives in `benchmarks.json:scaling`.
-- Execute changes against the Meta API directly. The strategic execution path reuses `executeBudgetChanges`'s helper (Session 2) via the existing approve/reject flow.
-- Operate on campaigns with `learning_stage_info.status == "LEARNING"` (the snapshot pipeline's `compute_signals.py` filter handles that gate; defensive re-check happens at compute_reallocation time via `weekly_remaining_pct == 0` for any campaign Meta is still calibrating).
-- Auto-approve. Tyler approves the Tuesday brief manually, same two-step confirmation as the daily optimizer.
+- Propose, approve or execute any budget change. Since 2026-09-15 the brief is diagnosis-only: no pool, no proposal, no approval links, and `executeStrategicChanges` in `Code.js` is guarded off.
+- Touch the Meta API to write. It only ever reads.
+- Render a vertical whose campaigns are all paused. Those live in `inactive_verticals` and never reach the brief.
