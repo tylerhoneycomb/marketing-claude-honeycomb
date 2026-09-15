@@ -1,7 +1,7 @@
 {
-  "computed_at": "2026-09-08T17:28:13.683776+00:00",
-  "today": "2026-09-08",
-  "previous_tuesday": "2026-09-01",
+  "computed_at": "2026-09-15T17:45:34.125236+00:00",
+  "today": "2026-09-15",
+  "previous_tuesday": "2026-09-08",
   "elasticity_window_weeks": 12,
   "benchmarks": {
     "max_weekly_total_change_pct": 0.12,
@@ -14,159 +14,90 @@
     "elasticity_window_weeks": 12,
     "min_weeks_confident": 10,
     "min_weeks_directional": 6,
-    "min_weekly_conversions": 3,
+    "min_weekly_conversions": 10,
     "high_spend_cpl_degradation_threshold": 0.3,
-    "campaign_floor_buffer_pct": 0.04
+    "campaign_floor_buffer_pct": 0.04,
+    "_doc": "min_weekly_conversions raised 3 -> 10 leads on 2026-09-09. Across 331 campaign-weeks of history the median is 33 leads; a floor of 3 admitted 98% of weeks including pure-noise ones, while 10 retains 88% and sits below the p25 of 17."
   },
   "portfolio": {
-    "current_total_daily_cents": 345324,
-    "current_total_weekly_dollars": 24172.68,
+    "current_total_daily_cents": 30000,
+    "current_total_weekly_dollars": 2100.0,
+    "active_campaign_count": 2,
+    "paused_total_daily_cents": 322824,
     "target_weekly_spend": 9000.0,
     "weekly_spend_tolerance": 50.0,
-    "tolerance_headroom_daily_cents": -216038,
-    "median_cpicp": 176.72,
-    "median_ic_rate": 0.0528,
+    "tolerance_headroom_daily_cents": 714,
+    "total_leads": 2671,
+    "total_spend": 36370.92,
+    "cpl": 13.62,
+    "median_cpl": 12.16,
+    "total_ic_conversions": 225,
+    "median_cpicp": 192.57,
+    "median_ic_rate": 0.0536,
     "optimizer_cycles_this_week": 0
   },
   "verticals": {
-    "bbq": {
-      "weeks_in_window": 4,
-      "weeks_with_conversions": 4,
-      "elasticity_r": -0.5287,
-      "elasticity_n_weeks": 4,
-      "high_spend_cpl_degradation_pct": -0.1264,
-      "ic_rate": 0.0528,
-      "cpicp": 223.41,
-      "total_spend": 2904.37,
-      "total_conversions": 246,
-      "total_ic_conversions": 13,
-      "avg_frequency": 1.121,
+    "fitness & wellness": {
+      "weeks_in_window": 3,
+      "weeks_with_conversions": 3,
+      "elasticity_r": 0.6677,
+      "elasticity_n_weeks": 3,
+      "high_spend_cpl_degradation_pct": null,
+      "cpl": 6.56,
+      "ic_rate": 0.0255,
+      "cpicp": 256.74,
+      "total_spend": 1540.43,
+      "total_conversions": 235,
+      "total_ic_conversions": 6,
+      "avg_frequency": 1.151,
       "frequency_trend": "flat",
-      "cpm_trend": "flat",
+      "cpm_trend": "falling",
       "frequency_series": [
-        1.131,
-        1.111,
-        1.104,
-        1.172
+        1.118,
+        1.187,
+        1.137
       ],
       "cpm_series": [
-        49.71,
-        49.08,
-        45.13,
-        51.17
+        47.06,
+        51.45,
+        41.33
       ],
       "campaign_ids": [
-        "120242949904880631"
+        "120244094020690631"
       ],
       "campaign_names": [
-        "AD-BBQ-Q1-2026"
+        "AD-Fitness & Wellness-Q1-2026"
       ],
+      "active_campaign_count": 0,
       "optimizer_eligible": true,
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 6.82
-    },
-    "broad": {
-      "weeks_in_window": 8,
-      "weeks_with_conversions": 8,
-      "elasticity_r": -0.5763,
-      "elasticity_n_weeks": 8,
-      "high_spend_cpl_degradation_pct": -0.3815,
-      "ic_rate": 0.1267,
-      "cpicp": 143.54,
-      "total_spend": 8038.34,
-      "total_conversions": 442,
-      "total_ic_conversions": 56,
-      "avg_frequency": 1.261,
-      "frequency_trend": "flat",
-      "cpm_trend": "rising",
-      "frequency_series": [
-        1.232,
-        1.231,
-        1.272,
-        1.329
-      ],
-      "cpm_series": [
-        63.91,
-        55.58,
-        62.3,
-        72.66
-      ],
-      "campaign_ids": [
-        "120249802543740631"
-      ],
-      "campaign_names": [
-        "ICD-Broad-Q2-2026"
-      ],
-      "optimizer_eligible": true,
-      "classification": "stable",
-      "new_audience_needed": false,
-      "confidence": "directional",
-      "spend_share_pct": 18.88
-    },
-    "craft producers & bars": {
-      "weeks_in_window": 8,
-      "weeks_with_conversions": 8,
-      "elasticity_r": 0.6099,
-      "elasticity_n_weeks": 8,
-      "high_spend_cpl_degradation_pct": 0.1922,
-      "ic_rate": 0.1622,
-      "cpicp": 109.47,
-      "total_spend": 9852.33,
-      "total_conversions": 555,
-      "total_ic_conversions": 90,
-      "avg_frequency": 1.129,
-      "frequency_trend": "flat",
-      "cpm_trend": "flat",
-      "frequency_series": [
-        1.139,
-        1.118,
-        1.124,
-        1.135
-      ],
-      "cpm_series": [
-        44.09,
-        40.48,
-        38.71,
-        45.71
-      ],
-      "campaign_ids": [
-        "120245893173800631"
-      ],
-      "campaign_names": [
-        "ICD-Craft Producers & Bars-Q2-2026"
-      ],
-      "optimizer_eligible": true,
-      "classification": "stable",
-      "new_audience_needed": false,
-      "confidence": "directional",
-      "spend_share_pct": 23.14
+      "spend_share_pct": 4.24
     },
     "delis & butchers": {
-      "weeks_in_window": 4,
-      "weeks_with_conversions": 4,
-      "elasticity_r": -0.4333,
-      "elasticity_n_weeks": 4,
-      "high_spend_cpl_degradation_pct": -0.0785,
-      "ic_rate": 0.0417,
-      "cpicp": 198.13,
-      "total_spend": 1188.8,
-      "total_conversions": 144,
-      "total_ic_conversions": 6,
-      "avg_frequency": 1.28,
+      "weeks_in_window": 3,
+      "weeks_with_conversions": 2,
+      "elasticity_r": -1.0,
+      "elasticity_n_weeks": 2,
+      "high_spend_cpl_degradation_pct": null,
+      "cpl": 7.94,
+      "ic_rate": 0.0526,
+      "cpicp": 150.93,
+      "total_spend": 754.63,
+      "total_conversions": 95,
+      "total_ic_conversions": 5,
+      "avg_frequency": 1.269,
       "frequency_trend": "flat",
       "cpm_trend": "flat",
       "frequency_series": [
-        1.3,
-        1.281,
+        1.28,
         1.258,
         1.264
       ],
       "cpm_series": [
-        101.37,
-        99.14,
-        92.17,
+        99.11,
+        92.21,
         98.8
       ],
       "campaign_ids": [
@@ -175,61 +106,139 @@
       "campaign_names": [
         "AD-Delis & Butchers-Q1-2026"
       ],
+      "active_campaign_count": 0,
       "optimizer_eligible": true,
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 2.79
+      "spend_share_pct": 2.07
     },
-    "fitness & wellness": {
+    "leads-ifw-broad-q3-2026 - application lp": {
+      "weeks_in_window": 2,
+      "weeks_with_conversions": 2,
+      "elasticity_r": 1.0,
+      "elasticity_n_weeks": 2,
+      "high_spend_cpl_degradation_pct": null,
+      "cpl": 8.96,
+      "ic_rate": 0.0,
+      "cpicp": null,
+      "total_spend": 367.35,
+      "total_conversions": 41,
+      "total_ic_conversions": 0,
+      "avg_frequency": 1.157,
+      "frequency_trend": "flat",
+      "cpm_trend": "rising",
+      "frequency_series": [
+        1.168,
+        1.115
+      ],
+      "cpm_series": [
+        26.82,
+        34.01
+      ],
+      "campaign_ids": [
+        "120253265643270631"
+      ],
+      "campaign_names": [
+        "LEADS-IFW-Broad-Q3-2026 - Application LP"
+      ],
+      "active_campaign_count": 1,
+      "optimizer_eligible": true,
+      "classification": "insufficient",
+      "new_audience_needed": false,
+      "confidence": "insufficient",
+      "spend_share_pct": 1.01
+    },
+    "juice & smoothie": {
       "weeks_in_window": 4,
       "weeks_with_conversions": 4,
-      "elasticity_r": 0.4328,
+      "elasticity_r": 0.6828,
       "elasticity_n_weeks": 4,
-      "high_spend_cpl_degradation_pct": 0.6017,
-      "ic_rate": 0.0265,
-      "cpicp": 225.64,
-      "total_spend": 2256.43,
-      "total_conversions": 377,
-      "total_ic_conversions": 10,
-      "avg_frequency": 1.145,
+      "high_spend_cpl_degradation_pct": 0.0294,
+      "cpl": 10.95,
+      "ic_rate": 0.0692,
+      "cpicp": 158.11,
+      "total_spend": 1422.95,
+      "total_conversions": 130,
+      "total_ic_conversions": 9,
+      "avg_frequency": 1.114,
       "frequency_trend": "flat",
       "cpm_trend": "flat",
       "frequency_series": [
-        1.131,
-        1.118,
-        1.188,
-        1.137
+        1.104,
+        1.115,
+        1.124,
+        1.119
       ],
       "cpm_series": [
-        44.54,
-        47.01,
-        51.44,
-        41.09
+        44.42,
+        43.84,
+        46.2,
+        50.59
       ],
       "campaign_ids": [
-        "120244094020690631"
+        "120244137988980631"
       ],
       "campaign_names": [
-        "AD-Fitness & Wellness-Q1-2026"
+        "AD-Juice & Smoothie-Q1-2026"
       ],
+      "active_campaign_count": 0,
       "optimizer_eligible": true,
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 5.3
+      "spend_share_pct": 3.91
+    },
+    "bbq": {
+      "weeks_in_window": 3,
+      "weeks_with_conversions": 3,
+      "elasticity_r": -0.4423,
+      "elasticity_n_weeks": 3,
+      "high_spend_cpl_degradation_pct": null,
+      "cpl": 12.16,
+      "ic_rate": 0.0536,
+      "cpicp": 227.03,
+      "total_spend": 2043.25,
+      "total_conversions": 168,
+      "total_ic_conversions": 9,
+      "avg_frequency": 1.117,
+      "frequency_trend": "flat",
+      "cpm_trend": "flat",
+      "frequency_series": [
+        1.111,
+        1.104,
+        1.172
+      ],
+      "cpm_series": [
+        49.1,
+        45.12,
+        51.16
+      ],
+      "campaign_ids": [
+        "120242949904880631"
+      ],
+      "campaign_names": [
+        "AD-BBQ-Q1-2026"
+      ],
+      "active_campaign_count": 0,
+      "optimizer_eligible": true,
+      "classification": "insufficient",
+      "new_audience_needed": false,
+      "confidence": "insufficient",
+      "spend_share_pct": 5.62
     },
     "health, fitness & personal care": {
-      "weeks_in_window": 8,
-      "weeks_with_conversions": 8,
-      "elasticity_r": 0.6325,
-      "elasticity_n_weeks": 8,
-      "high_spend_cpl_degradation_pct": 0.4243,
-      "ic_rate": 0.1023,
-      "cpicp": 121.23,
-      "total_spend": 10304.84,
-      "total_conversions": 831,
-      "total_ic_conversions": 85,
+      "weeks_in_window": 7,
+      "weeks_with_conversions": 7,
+      "elasticity_r": 0.6793,
+      "elasticity_n_weeks": 7,
+      "high_spend_cpl_degradation_pct": 0.488,
+      "cpl": 12.3,
+      "ic_rate": 0.1093,
+      "cpicp": 112.58,
+      "total_spend": 8218.59,
+      "total_conversions": 668,
+      "total_ic_conversions": 73,
       "avg_frequency": 1.142,
       "frequency_trend": "flat",
       "cpm_trend": "rising",
@@ -239,9 +248,9 @@
         1.175
       ],
       "cpm_series": [
-        42.75,
-        43.42,
-        47.46
+        42.74,
+        43.43,
+        47.44
       ],
       "campaign_ids": [
         "120245893173810631"
@@ -249,111 +258,39 @@
       "campaign_names": [
         "ICD-Health, Fitness & Personal Care-Q2-2026"
       ],
+      "active_campaign_count": 0,
       "optimizer_eligible": true,
-      "classification": "saturating",
+      "classification": "over-invested",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 24.2
+      "spend_share_pct": 22.6
     },
-    "juice & smoothie": {
-      "weeks_in_window": 5,
-      "weeks_with_conversions": 5,
-      "elasticity_r": 0.4696,
-      "elasticity_n_weeks": 5,
-      "high_spend_cpl_degradation_pct": -0.0498,
-      "ic_rate": 0.0663,
-      "cpicp": 155.3,
-      "total_spend": 2018.9,
-      "total_conversions": 196,
-      "total_ic_conversions": 13,
-      "avg_frequency": 1.114,
-      "frequency_trend": "flat",
-      "cpm_trend": "flat",
-      "frequency_series": [
-        1.104,
-        1.115,
-        1.124,
-        1.12
-      ],
-      "cpm_series": [
-        44.43,
-        43.78,
-        46.19,
-        50.61
-      ],
-      "campaign_ids": [
-        "120244137988980631"
-      ],
-      "campaign_names": [
-        "AD-Juice & Smoothie-Q1-2026"
-      ],
-      "optimizer_eligible": true,
-      "classification": "insufficient",
-      "new_audience_needed": false,
-      "confidence": "insufficient",
-      "spend_share_pct": 4.74
-    },
-    "leads-broad-q3-2026": {
+    "ifw-broad": {
       "weeks_in_window": 4,
       "weeks_with_conversions": 4,
-      "elasticity_r": 0.5864,
+      "elasticity_r": -0.7024,
       "elasticity_n_weeks": 4,
-      "high_spend_cpl_degradation_pct": 0.1073,
-      "ic_rate": 0.0,
-      "cpicp": null,
-      "total_spend": 3929.81,
-      "total_conversions": 211,
-      "total_ic_conversions": 0,
-      "avg_frequency": 1.244,
-      "frequency_trend": "flat",
-      "cpm_trend": "rising",
-      "frequency_series": [
-        1.33,
-        1.189,
-        1.222,
-        1.2
-      ],
-      "cpm_series": [
-        65.56,
-        60.63,
-        67.17,
-        78.29
-      ],
-      "campaign_ids": [
-        "120252841681010631"
-      ],
-      "campaign_names": [
-        "LEADS-Broad-Q3-2026"
-      ],
-      "optimizer_eligible": false,
-      "classification": "insufficient",
-      "new_audience_needed": false,
-      "confidence": "insufficient",
-      "spend_share_pct": 9.23
-    },
-    "leads-ifw-broad-q3-2026": {
-      "weeks_in_window": 3,
-      "weeks_with_conversions": 3,
-      "elasticity_r": -0.1203,
-      "elasticity_n_weeks": 3,
-      "high_spend_cpl_degradation_pct": null,
-      "ic_rate": 0.0061,
-      "cpicp": 2081.17,
-      "total_spend": 2081.17,
-      "total_conversions": 164,
+      "high_spend_cpl_degradation_pct": -0.4909,
+      "cpl": 12.95,
+      "ic_rate": 0.0036,
+      "cpicp": 3626.15,
+      "total_spend": 3626.15,
+      "total_conversions": 280,
       "total_ic_conversions": 1,
-      "avg_frequency": 1.167,
+      "avg_frequency": 1.156,
       "frequency_trend": "flat",
       "cpm_trend": "rising",
       "frequency_series": [
         1.191,
         1.155,
-        1.166
+        1.149,
+        1.103
       ],
       "cpm_series": [
-        33.45,
+        33.46,
         32.42,
-        37.53
+        39.89,
+        44.93
       ],
       "campaign_ids": [
         "120252962579520631"
@@ -361,21 +298,115 @@
       "campaign_names": [
         "LEADS-IFW-Broad-Q3-2026"
       ],
-      "optimizer_eligible": false,
+      "active_campaign_count": 1,
+      "optimizer_eligible": true,
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 4.89
+      "spend_share_pct": 9.97
+    },
+    "craft producers & bars": {
+      "weeks_in_window": 7,
+      "weeks_with_conversions": 7,
+      "elasticity_r": 0.5334,
+      "elasticity_n_weeks": 7,
+      "high_spend_cpl_degradation_pct": 0.305,
+      "cpl": 16.94,
+      "ic_rate": 0.1667,
+      "cpicp": 101.65,
+      "total_spend": 7929.07,
+      "total_conversions": 468,
+      "total_ic_conversions": 78,
+      "avg_frequency": 1.129,
+      "frequency_trend": "flat",
+      "cpm_trend": "flat",
+      "frequency_series": [
+        1.139,
+        1.118,
+        1.125,
+        1.135
+      ],
+      "cpm_series": [
+        44.1,
+        40.47,
+        38.7,
+        45.7
+      ],
+      "campaign_ids": [
+        "120245893173800631"
+      ],
+      "campaign_names": [
+        "ICD-Craft Producers & Bars-Q2-2026"
+      ],
+      "active_campaign_count": 0,
+      "optimizer_eligible": true,
+      "classification": "over-invested",
+      "new_audience_needed": false,
+      "confidence": "directional",
+      "spend_share_pct": 21.8
+    },
+    "broad": {
+      "weeks_in_window": 11,
+      "weeks_with_conversions": 9,
+      "elasticity_r": 0.6301,
+      "elasticity_n_weeks": 9,
+      "high_spend_cpl_degradation_pct": 0.1805,
+      "cpl": 17.86,
+      "ic_rate": 0.0751,
+      "cpicp": 237.92,
+      "total_spend": 10468.5,
+      "total_conversions": 586,
+      "total_ic_conversions": 44,
+      "avg_frequency": 1.198,
+      "frequency_trend": "falling",
+      "cpm_trend": "falling",
+      "frequency_series": [
+        1.19,
+        1.222,
+        1.167,
+        1.0
+      ],
+      "cpm_series": [
+        60.64,
+        67.17,
+        82.73,
+        10.0
+      ],
+      "campaign_ids": [
+        "120249802543740631",
+        "120252841681010631"
+      ],
+      "campaign_names": [
+        "ICD-Broad-Q2-2026",
+        "LEADS-Broad-Q3-2026"
+      ],
+      "active_campaign_count": 0,
+      "optimizer_eligible": true,
+      "classification": "stable",
+      "new_audience_needed": false,
+      "confidence": "directional",
+      "spend_share_pct": 28.78
     }
   },
   "campaigns": {
+    "120253265643270631": {
+      "campaign_id": "120253265643270631",
+      "campaign_name": "LEADS-IFW-Broad-Q3-2026 - Application LP",
+      "effective_status": "ACTIVE",
+      "daily_budget_cents": 7500,
+      "lifetime_leads": 41,
+      "vertical": "leads-ifw-broad-q3-2026 - application lp",
+      "weekly_consumed_pct": 0.0,
+      "weekly_remaining_pct": 0.12,
+      "knockdown_applied_this_week": false
+    },
     "120252962579520631": {
       "campaign_id": "120252962579520631",
       "campaign_name": "LEADS-IFW-Broad-Q3-2026",
       "effective_status": "ACTIVE",
-      "daily_budget_cents": 20000,
-      "lifetime_ic_conversions": 1,
-      "vertical": "leads-ifw-broad-q3-2026",
+      "daily_budget_cents": 22500,
+      "lifetime_leads": 280,
+      "vertical": "ifw-broad",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
       "knockdown_applied_this_week": false
@@ -383,10 +414,10 @@
     "120252841681010631": {
       "campaign_id": "120252841681010631",
       "campaign_name": "LEADS-Broad-Q3-2026",
-      "effective_status": "ACTIVE",
-      "daily_budget_cents": 10000,
-      "lifetime_ic_conversions": 0,
-      "vertical": "leads-broad-q3-2026",
+      "effective_status": "PAUSED",
+      "daily_budget_cents": 7500,
+      "lifetime_leads": 224,
+      "vertical": "broad",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
       "knockdown_applied_this_week": false
@@ -394,10 +425,10 @@
     "120252806172990631": {
       "campaign_id": "120252806172990631",
       "campaign_name": "LEADS-Broad-Q3-2026",
-      "effective_status": "ACTIVE",
+      "effective_status": "PAUSED",
       "daily_budget_cents": 20000,
-      "lifetime_ic_conversions": 0,
-      "vertical": "leads-broad-q3-2026",
+      "lifetime_leads": 0,
+      "vertical": "broad",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
       "knockdown_applied_this_week": false
@@ -407,7 +438,7 @@
       "campaign_name": "ICD-Broad-Q2-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 30000,
-      "lifetime_ic_conversions": 79,
+      "lifetime_leads": 587,
       "vertical": "broad",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -418,7 +449,7 @@
       "campaign_name": "ICD-Breweries-Q2-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 5000,
-      "lifetime_ic_conversions": 0,
+      "lifetime_leads": 0,
       "vertical": "breweries",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -429,7 +460,7 @@
       "campaign_name": "ICD-Beauty, Wellness & Lifestyle-Q2-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 15000,
-      "lifetime_ic_conversions": 0,
+      "lifetime_leads": 0,
       "vertical": "beauty, wellness & lifestyle",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -440,7 +471,7 @@
       "campaign_name": "PAUSED - ICD-Coffee, Beer & Wine Retail-Q2-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 19701,
-      "lifetime_ic_conversions": 1,
+      "lifetime_leads": 25,
       "vertical": "coffee, beer & wine retail",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -451,7 +482,7 @@
       "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 12500,
-      "lifetime_ic_conversions": 158,
+      "lifetime_leads": 1633,
       "vertical": "health, fitness & personal care",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -462,7 +493,7 @@
       "campaign_name": "ICD-Craft Producers & Bars-Q2-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 7500,
-      "lifetime_ic_conversions": 173,
+      "lifetime_leads": 1223,
       "vertical": "craft producers & bars",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -473,7 +504,7 @@
       "campaign_name": "PAUSED-ICD-Restaurants & Eateries-Q2-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 15000,
-      "lifetime_ic_conversions": 0,
+      "lifetime_leads": 0,
       "vertical": "restaurants & eateries",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -484,7 +515,7 @@
       "campaign_name": "PAUSED-ICD-Specialty Food & Catering-Q2-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 15000,
-      "lifetime_ic_conversions": 0,
+      "lifetime_leads": 0,
       "vertical": "specialty food & catering",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -495,7 +526,7 @@
       "campaign_name": "Template-IC Conversion Event-4.8.2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 50000,
-      "lifetime_ic_conversions": 0,
+      "lifetime_leads": 0,
       "vertical": "template",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -506,7 +537,7 @@
       "campaign_name": "BBQ Test campaign for bulk upload",
       "effective_status": "PAUSED",
       "daily_budget_cents": 2500,
-      "lifetime_ic_conversions": 0,
+      "lifetime_leads": 0,
       "vertical": "bbq test campaign for bulk upload",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -517,7 +548,7 @@
       "campaign_name": "AD-Juice & Smoothie-Q1-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 5000,
-      "lifetime_ic_conversions": 89,
+      "lifetime_leads": 1367,
       "vertical": "juice & smoothie",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -528,7 +559,7 @@
       "campaign_name": "AD-Fitness & Wellness-Q1-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 7500,
-      "lifetime_ic_conversions": 77,
+      "lifetime_leads": 2179,
       "vertical": "fitness & wellness",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -539,7 +570,7 @@
       "campaign_name": "AD-Delis & Butchers-Q1-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 4707,
-      "lifetime_ic_conversions": 88,
+      "lifetime_leads": 1758,
       "vertical": "delis & butchers",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -550,7 +581,7 @@
       "campaign_name": "AD-BBQ-Q1-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 10000,
-      "lifetime_ic_conversions": 94,
+      "lifetime_leads": 1225,
       "vertical": "bbq",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -561,7 +592,7 @@
       "campaign_name": "AD-Agriculture-Q1-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 3866,
-      "lifetime_ic_conversions": 20,
+      "lifetime_leads": 235,
       "vertical": "agriculture",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -572,7 +603,7 @@
       "campaign_name": "IC decision experiment rev2 - Daily budget",
       "effective_status": "PAUSED",
       "daily_budget_cents": 19622,
-      "lifetime_ic_conversions": 27,
+      "lifetime_leads": 322,
       "vertical": "ic decision experiment rev2 - daily budget",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -583,7 +614,7 @@
       "campaign_name": "OLD - Non-ICP/IC decision conversion testing  - Daily budget - Q1 2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 15000,
-      "lifetime_ic_conversions": 0,
+      "lifetime_leads": 0,
       "vertical": "old - non-icp/ic decision conversion testing  - daily budget - q1 2026",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -594,7 +625,7 @@
       "campaign_name": "PAUSED - AD-Pizza-Q1-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 7365,
-      "lifetime_ic_conversions": 18,
+      "lifetime_leads": 350,
       "vertical": "pizza",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -605,7 +636,7 @@
       "campaign_name": "LPF partners - Daily budget - Q1 2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 7686,
-      "lifetime_ic_conversions": 0,
+      "lifetime_leads": 72,
       "vertical": "lpf partners - daily budget - q1 2026",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -616,7 +647,7 @@
       "campaign_name": "AD-Sustainable Main Street-Q1-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 5000,
-      "lifetime_ic_conversions": 30,
+      "lifetime_leads": 696,
       "vertical": "sustainable main street",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -627,7 +658,7 @@
       "campaign_name": "AD-Creameries-Q1-2026",
       "effective_status": "PAUSED",
       "daily_budget_cents": 7426,
-      "lifetime_ic_conversions": 40,
+      "lifetime_leads": 924,
       "vertical": "creameries",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -638,7 +669,7 @@
       "campaign_name": "AD-Distillers-Q4-2025",
       "effective_status": "PAUSED",
       "daily_budget_cents": 6339,
-      "lifetime_ic_conversions": 16,
+      "lifetime_leads": 477,
       "vertical": "distillers",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -649,7 +680,7 @@
       "campaign_name": "Wineries / vineyards leads campaign - Daily Budget - Q4 2025",
       "effective_status": "PAUSED",
       "daily_budget_cents": 5264,
-      "lifetime_ic_conversions": 12,
+      "lifetime_leads": 211,
       "vertical": "wineries",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -660,7 +691,7 @@
       "campaign_name": "AD-Breweries-Q4-2025",
       "effective_status": "PAUSED",
       "daily_budget_cents": 5000,
-      "lifetime_ic_conversions": 35,
+      "lifetime_leads": 344,
       "vertical": "breweries",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -671,7 +702,7 @@
       "campaign_name": "Coffee Shop Leads Campaign - Daily Budget - Q4 2205",
       "effective_status": "PAUSED",
       "daily_budget_cents": 5922,
-      "lifetime_ic_conversions": 0,
+      "lifetime_leads": 68,
       "vertical": "coffee shop leads campaign - daily budget - q4 2205",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
@@ -682,7 +713,7 @@
       "campaign_name": "AD-Bakeries-Q4-2025",
       "effective_status": "PAUSED",
       "daily_budget_cents": 7426,
-      "lifetime_ic_conversions": 68,
+      "lifetime_leads": 789,
       "vertical": "bakeries",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,

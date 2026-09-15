@@ -1,37 +1,27 @@
 {
-  "computed_at": "2026-09-08T17:28:15.085454+00:00",
-  "today": "2026-09-08",
-  "lockout_until": "2026-09-15T00:00:00+00:00",
-  "affected_campaign_ids": [
-    "120245893173810631"
-  ],
+  "computed_at": "2026-09-15T17:45:35.751779+00:00",
+  "today": "2026-09-15",
+  "lockout_until": "2026-09-22T00:00:00+00:00",
+  "affected_campaign_ids": [],
   "pool": {
-    "freed_daily_cents": 397,
+    "freed_daily_cents": 0,
     "allocated_daily_cents": 0,
-    "net_change_daily_cents": -397,
-    "net_change_type": "net_negative",
-    "portfolio_current_daily_cents": 345324,
-    "portfolio_post_change_daily_cents": 344927,
-    "portfolio_post_change_weekly_dollars": 24144.89,
+    "net_change_daily_cents": 0,
+    "net_change_type": "zero_sum",
+    "portfolio_current_daily_cents": 30000,
+    "portfolio_active_campaign_count": 2,
+    "portfolio_post_change_daily_cents": 30000,
+    "portfolio_post_change_weekly_dollars": 2100.0,
     "target_weekly_dollars": 9000.0,
     "tolerance_weekly_dollars": 50.0,
-    "knockdown_risk": true
+    "knockdown_risk": false,
+    "paused_saturating_verticals": [
+      "craft producers & bars",
+      "health, fitness & personal care"
+    ],
+    "increase_skip_reason": "no scalable/stable vertical has an ACTIVE campaign"
   },
-  "decreases": [
-    {
-      "vertical": "health, fitness & personal care",
-      "campaign_id": "120245893173810631",
-      "campaign_name": "ICD-Health, Fitness & Personal Care-Q2-2026",
-      "current_daily_cents": 12500,
-      "change_cents": -397,
-      "change_pct": -0.0318,
-      "post_change_cents": 12103,
-      "classification": "saturating",
-      "elasticity_r": 0.6325,
-      "remaining_headroom_pct": 0.12,
-      "reason": "saturating (r=0.6325); severity 0.26 * remaining headroom 12.00% \u2192 -3.18%"
-    }
-  ],
+  "decreases": [],
   "increases": [],
   "audience_actions": []
 }
