@@ -4342,8 +4342,8 @@ function buildBudgetWeeklySummary_(leads, cpl) {
   lines.push('*Anticipated spend this week:*  $' + anticipatedWeeklySpend +
     '/week  ($' + (currentTotalDailyCents / 100).toFixed(0) + '/day current)');
   if (BUDGET_OPTIMIZER_PAUSED) {
-    lines.push('_Daily optimizer paused 2026-09-09; ' +
-      'strategic reallocation via portfolio-scaling remains active (Tuesdays)._');
+    lines.push('_Daily optimizer paused 2026-09-09; strategic reallocation ' +
+      'retired 2026-09-15. No automated budget changes._');
   } else {
     lines.push('_Next CPL-ranked proposal: tomorrow morning (daily cadence)_');
   }
@@ -5196,8 +5196,8 @@ function handleDashboardApi_(e) {
     } else {
       slackText += '*Tolerance:* \u00b1$' + currentTolerance + '/week (unchanged)\n';
     }
-    slackText += '\nThis is the weekly spend target used by pacing and the Tuesday ';
-    slackText += 'strategic reallocation (and by the daily optimizer when it is re-enabled). ';
+    slackText += '\nThis is the weekly spend target used by pacing (and by the ';
+    slackText += 'daily optimizer when it is re-enabled). ';
     slackText += 'Takes effect on the next pacing check after approval.\n\n';
     slackText += '\u2705  Approve: ' + approveUrl + '\n';
     slackText += '\u274c  Reject:  ' + rejectUrl;
@@ -6806,8 +6806,7 @@ function showTargetApprovalPage_(e, decision) {
   var label     = isApprove ? 'APPROVE' : 'REJECT';
   var description = isApprove
     ? 'This will change the weekly spend target from $' + currentTarget +
-      ' to $' + pendingTarget + '. Pacing and the Tuesday strategic reallocation ' +
-      'use the new target from their next run.'
+      ' to $' + pendingTarget + '. Pacing uses the new target from its next run.'
     : 'This will cancel the proposed spend target change. The current target ($' +
       currentTarget + '/week) will remain in effect.';
 
@@ -6887,12 +6886,12 @@ function applyTargetDecision_(e, decision) {
 
     postToSlack_('*Honeycomb Spend Target* \u2705 Approved by ' + user +
       '. New target: $' + newTarget + '/week (\u00b1$' + newTolerance +
-      '). Takes effect on the next pacing check and Tuesday reallocation.');
+      '). Takes effect on the next pacing check.');
 
     return HtmlService.createHtmlOutput(
       '<h2>\u2705 Spend target updated.</h2>' +
       '<p>New target: <strong>$' + newTarget + '/week</strong> (\u00b1$' + newTolerance + ').</p>' +
-      '<p>Pacing and the Tuesday strategic reallocation use this target from their next run.</p>');
+      '<p>Pacing uses this target from its next run.</p>');
   }
 
   if (decision === 'reject') {
