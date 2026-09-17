@@ -89,6 +89,16 @@ const PUMP_CPL_CEILING = TARGET_CPL_DOLLARS * CPL_CRITICAL_MULTIPLE;
 // come out so the Monday post stops saying the optimizer is off.
 const BUDGET_OPTIMIZER_PAUSED = true;
 
+// Strategic (portfolio-scaling) reallocation is retired as of 2026-09-15 at
+// Tyler's request: the Tuesday brief is diagnosis-only and proposes nothing,
+// so executeStrategicChanges() is guarded by an early return. Without the
+// guard the executor would keep running daily at 3 AM with no producer
+// feeding it — and a stale Slack approve link from a pre-retirement week
+// could still push a week-old budget move to Meta. Like
+// BUDGET_OPTIMIZER_PAUSED, this flag drives status copy; the hard stop is
+// the early return in the function itself.
+const STRATEGIC_SCALING_RETIRED = true;
+
 const ANTHROPIC_MODEL = 'claude-opus-4-7';  // used by narrative, chat, budget commentary, daily digest
 
 // IC-specific conversion tracking
@@ -4332,8 +4342,8 @@ function buildBudgetWeeklySummary_(leads, cpl) {
   lines.push('*Anticipated spend this week:*  $' + anticipatedWeeklySpend +
     '/week  ($' + (currentTotalDailyCents / 100).toFixed(0) + '/day current)');
   if (BUDGET_OPTIMIZER_PAUSED) {
-    lines.push('_Daily optimizer paused 2026-09-09; ' +
-      'strategic reallocation via portfolio-scaling remains active (Tuesdays)._');
+    lines.push('_Daily optimizer paused 2026-09-09; strategic reallocation ' +
+      'retired 2026-09-15. No automated budget changes._');
   } else {
     lines.push('_Next CPL-ranked proposal: tomorrow morning (daily cadence)_');
   }
@@ -4469,6 +4479,21 @@ function doGet(e) {
   // token is minted independently by handleScalingQueueWrite_ and never
   // equals the optimizer token, so behind that gate the Tuesday brief's
   // approve/reject links could never reach them.
+  // Retired 2026-09-15: no brief mints a scaling token any more, so every
+  // one of these links is stale by definition. Answer honestly instead of
+  // recording an approval that executeStrategicChanges will discard — the
+  // failure this avoids is a Slack "approved, executes at 3 AM" confirmation
+  // for a move that will never run.
+  if (STRATEGIC_SCALING_RETIRED && (
+      action === 'approve_scaling' || action === 'reject_scaling' ||
+      action === 'confirm_approve_scaling' ||
+      action === 'confirm_reject_scaling')) {
+    return HtmlService.createHtmlOutput(
+      '<h2>Strategic reallocation is retired.</h2>' +
+      '<p>The weekly portfolio-scaling brief is diagnosis-only as of ' +
+      '2026-09-15 and no longer proposes budget changes, so this link has ' +
+      'nothing to approve. No changes were made.</p>');
+  }
   if (action === 'approve_scaling' || action === 'reject_scaling') {
     return showScalingConfirmationPage_(e, action.replace('_scaling', ''));
   }
@@ -4781,6 +4806,40 @@ function createBudgetTriggers() {
 
 function executeStrategicChanges() {
   Logger.log('=== executeStrategicChanges ===');
+
+  // RETIRED 2026-09-15 — turned off at Tyler's request, together with the
+  // reallocation proposals that used to feed it.
+  //
+  // The Tuesday portfolio-scaling brief no longer sizes a budget pool or
+  // registers a proposal: agent-portfolio-scaling.yml dropped the
+  // compute_reallocation.py step and the scaling-queue-write call, so
+  // nothing writes SCALING_PENDING_TOKEN any more. An executor with no
+  // producer is not merely idle — a stale approve link from a week before
+  // the retirement would otherwise still apply a week-old budget move to
+  // live campaigns at the next 3 AM run. Same reasoning as the optimizer
+  // pause above, which guards the proposer AND the executor.
+  //
+  // The tokens are deleted rather than left in place so a stale Slack
+  // approve or reject click cannot post a confirmation for something that
+  // will never execute. The lockout properties are cleared too: they exist
+  // to make the daily optimizer skip recently-moved campaigns, and with
+  // both paths off they would only strand campaigns behind a window that
+  // nothing will ever lift.
+  //
+  // To re-enable: restore the compute_reallocation.py step and the
+  // scaling-queue-write registration in agent-portfolio-scaling.yml, remove
+  // this guard, and flip STRATEGIC_SCALING_RETIRED.
+  if (STRATEGIC_SCALING_RETIRED) {
+    Logger.log('executeStrategicChanges: RETIRED 2026-09-15 — ' +
+      'strategic reallocation proposals are no longer produced.');
+    PROPS.deleteProperty('SCALING_PENDING_TOKEN');
+    PROPS.deleteProperty('SCALING_APPROVED_TOKEN');
+    PROPS.deleteProperty('SCALING_REJECTED_TOKEN');
+    PROPS.deleteProperty('SCALING_LOCKOUT_UNTIL');
+    PROPS.deleteProperty('SCALING_AFFECTED_CAMPAIGN_IDS');
+    return;
+  }
+
   validateTokens_();
 
   var pendingToken = PROPS.getProperty('SCALING_PENDING_TOKEN');
@@ -5137,8 +5196,8 @@ function handleDashboardApi_(e) {
     } else {
       slackText += '*Tolerance:* \u00b1$' + currentTolerance + '/week (unchanged)\n';
     }
-    slackText += '\nThis is the weekly spend target used by pacing and the Tuesday ';
-    slackText += 'strategic reallocation (and by the daily optimizer when it is re-enabled). ';
+    slackText += '\nThis is the weekly spend target used by pacing (and by the ';
+    slackText += 'daily optimizer when it is re-enabled). ';
     slackText += 'Takes effect on the next pacing check after approval.\n\n';
     slackText += '\u2705  Approve: ' + approveUrl + '\n';
     slackText += '\u274c  Reject:  ' + rejectUrl;
@@ -6747,8 +6806,7 @@ function showTargetApprovalPage_(e, decision) {
   var label     = isApprove ? 'APPROVE' : 'REJECT';
   var description = isApprove
     ? 'This will change the weekly spend target from $' + currentTarget +
-      ' to $' + pendingTarget + '. Pacing and the Tuesday strategic reallocation ' +
-      'use the new target from their next run.'
+      ' to $' + pendingTarget + '. Pacing uses the new target from its next run.'
     : 'This will cancel the proposed spend target change. The current target ($' +
       currentTarget + '/week) will remain in effect.';
 
@@ -6828,12 +6886,12 @@ function applyTargetDecision_(e, decision) {
 
     postToSlack_('*Honeycomb Spend Target* \u2705 Approved by ' + user +
       '. New target: $' + newTarget + '/week (\u00b1$' + newTolerance +
-      '). Takes effect on the next pacing check and Tuesday reallocation.');
+      '). Takes effect on the next pacing check.');
 
     return HtmlService.createHtmlOutput(
       '<h2>\u2705 Spend target updated.</h2>' +
       '<p>New target: <strong>$' + newTarget + '/week</strong> (\u00b1$' + newTolerance + ').</p>' +
-      '<p>Pacing and the Tuesday strategic reallocation use this target from their next run.</p>');
+      '<p>Pacing uses this target from its next run.</p>');
   }
 
   if (decision === 'reject') {

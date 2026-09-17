@@ -121,7 +121,7 @@ The `/skills/`, `/scripts/`, and `/data/` directories form the ad-level agent lo
 - **Snapshots are read-only.** Files under `data/snapshots/` are committed by the `daily-data.yml` GitHub Action and represent ground truth from Meta. Do NOT manually edit them. To *restate* history after a field's meaning changes, re-pull it: dispatch `daily-data.yml` with `start_date` + `end_date` and `force: true`. Without `force` a backfill over dates that already have a manifest is a silent no-op.
 - **Derived signals are regenerable.** Files under `data/derived/` are computed artifacts. Re-running `python3 scripts/compute_signals.py` rebuilds them from the snapshots. They can be deleted and regenerated at any time.
 - **Thresholds live in one place.** All fatigue, budget, and performance thresholds live in `data/config/benchmarks.json`. Never hardcode threshold numbers inside scripts or skills — always read from the config.
-- **The agent never writes to Meta directly.** All budget recommendations flow through the existing Slack approval pipeline in `apps-script/Code.js`. The agent's role is to surface signals and propose actions, not to execute changes against the Meta API.
+- **The agent never writes to Meta directly.** The agent's role is to surface signals and propose actions, not to execute changes against the Meta API. Any budget recommendation that is ever acted on must flow through the Slack approval pipeline in `apps-script/Code.js`. As of 2026-09-15 **no automated budget movement remains**: the daily optimizer has been paused since 2026-09-09 (`BUDGET_OPTIMIZER_PAUSED`) and the weekly strategic reallocation is retired (`STRATEGIC_SCALING_RETIRED` — `executeStrategicChanges` early-returns and the four `*_scaling` approval links answer "retired"). Skills surface signals only.
 - **Learning-phase protection.** Never propose budget changes to ad sets where `learning_stage_info.status == "LEARNING"`. The `compute_signals.py` step already filters these and marks them `actionable: false`; defensively re-check in any skill that proposes ad-set actions.
 - **Signal floors.** Fatigue signals require ≥ 3 days of data and ≥ 1,000 impressions before they're considered actionable. Don't promote a row whose `actionable` field is `false`, even if it has a flag set.
 - **Daily-data workflow runs autonomously.** `.github/workflows/daily-data.yml` is on a daily ~8:37 AM ET cron (`37 12 * * *` UTC — minute deliberately off `:00` to dodge GitHub's top-of-hour scheduled-run queue delay, which was pushing the old `0 12` run 2-5 hours late) and commits the snapshot directly to main. Manual `workflow_dispatch` is preserved for backfills via the `start_date` / `end_date` inputs.
@@ -252,20 +252,31 @@ Each skill that needs a scheduled run gets its own workflow file under
 - `agent-portfolio-scaling.yml` — runs `portfolio-scaling` skill.
   Weekly cron Tuesdays at ~9:43 AM ET (UTC 13:43 — minute moved off
   `:30` on 2026-06-23 to dodge GitHub's scheduled-run queue contention).
-  Two Python steps
-  (compute_scaling_profiles → compute_reallocation), commits derived
-  JSON to main, then claude-code-action composes the four-section,
-  leads-first Slack brief and registers the proposal via
-  `scaling-queue-write` (the step receives `EXEC_SHARED_SECRET` and sends
-  it as `key`; on `{"error":"unauthorized"}` it posts without approval
-  links rather than inventing URLs) for Tyler's two-step approval. Until
-  2026-09-10 the brief's approve/reject links could never work — `doGet`
-  checked `BUDGET_PENDING_TOKEN` before reaching the `*_scaling` branches;
-  they now sit above that gate. The execution side runs daily at 3 AM as
-  `executeStrategicChanges` in Code.js — daily-with-cheap-no-op
-  rather than weekly Wed-only because daily is more robust against
-  missed-window risk at the same cost (one Script Property read on
-  no-op days).
+  **Diagnosis-only since 2026-09-15** — it proposes nothing. One Python
+  step (compute_scaling_profiles), commits
+  `data/derived/scaling_profiles.json` to main, then claude-code-action
+  composes the two-section, leads-first Slack brief (scaling labels,
+  audience actions) and posts it. No `scaling-queue-write` registration,
+  no approve/reject links, no last-week evaluation; the
+  claude-code-action step no longer receives `EXEC_SHARED_SECRET`
+  because it makes no side-effecting `/exec` call. The brief renders
+  only verticals with an ACTIVE campaign (`verticals` in the JSON) —
+  all-paused verticals live under `inactive_verticals` and are never
+  named. Status one-liner ends `diagnosis_only`. The
+  `Compute reallocation` step was deleted with the pool;
+  `compute_reallocation.py` stays on disk, unwired. On the Apps Script
+  side `executeStrategicChanges` keeps its daily 3 AM trigger but
+  early-returns under the new `STRATEGIC_SCALING_RETIRED` constant and
+  deletes `SCALING_PENDING_TOKEN` / `SCALING_APPROVED_TOKEN` /
+  `SCALING_REJECTED_TOKEN` / `SCALING_LOCKOUT_UNTIL` /
+  `SCALING_AFFECTED_CAMPAIGN_IDS`, and `doGet`'s four `*_scaling`
+  actions return a "Strategic reallocation is retired" page instead of
+  recording an approval — a stale Slack approve link from a
+  pre-retirement week could otherwise still push a week-old budget move
+  to live campaigns. (History: until 2026-09-10 those links could never
+  work at all — `doGet` checked `BUDGET_PENDING_TOKEN` before reaching
+  the `*_scaling` branches; they were moved above that gate on
+  2026-09-10 and are short-circuited above it now.)
 
 ### New-skill architectural pattern _(established 2026-05-05)_
 
@@ -322,8 +333,8 @@ Each agent workflow needs these GitHub Secrets on the repo:
   project. Without it the `*-write` and `scaling-queue-write` actions
   return `{"error": "unauthorized"}`. Pass it to the Python steps AND to
   the `claude-code-action` step whenever the prompt itself does the POST
-  (creative-intelligence, portfolio-scaling). See "/exec is authenticated"
-  above.
+  (creative-intelligence only — portfolio-scaling stopped POSTing on
+  2026-09-15). See "/exec is authenticated" above.
 
 ### Dual scheduling: GitHub cron + Apps Script fallback
 
@@ -443,7 +454,8 @@ lead-optimized campaigns on 2026-08-19 (`ICD-Broad-Q2-2026` →
 
 Every Slack-bound message — the Apps Script daily digest and weekly
 narrative, the budget proposal / check / execution / expiry notices, the
-strategic approve / reject / execution notices, the campaign-mapping sync
+strategic approve / reject / execution notices _(retired 2026-09-15 — they
+can no longer fire)_, the campaign-mapping sync
 alert, the pipeline-health alert, and every skill brief composed by
 `claude-code-action` — follows one standard. A Slack message may mention
 leads, cost per lead (CPL), spend and delivery diagnostics (CTR, frequency,
@@ -477,7 +489,19 @@ CPM, pacing). Nothing else.
   optimizer as running while `BUDGET_OPTIMIZER_PAUSED` is true; the
   lockout / cadence sentences are built by `scalingLockoutStatusLine_` /
   `scalingRejectStatusLine_` and the Monday budget block's footer reads
-  the flag.
+  the flag. Since 2026-09-15 the same rule covers strategic
+  reallocation: with `STRATEGIC_SCALING_RETIRED` true no message may
+  describe a Tuesday reallocation, an approval ask or a lockout as
+  something that will happen. The strategic approve / reject /
+  execution / expiry notices can no longer fire at all, and the five
+  copy sites that still named the Tuesday reallocation were corrected
+  the same day — the Monday budget block footer now reads
+  `_Daily optimizer paused 2026-09-09; strategic reallocation retired
+  2026-09-15. No automated budget changes._`, and the spend-target
+  proposal, confirmation page, approval notice and approved page all
+  now attribute the target to pacing alone. `grep -n "Tuesday"` on
+  `Code.js` should return no user-facing copy; if it ever does again,
+  that is this rule being broken.
 
 `Code.js` cannot read `benchmarks.json`, so the lead thresholds it needs are
 mirrored as named constants (`TARGET_CPL_DOLLARS`, `CPL_CRITICAL_MULTIPLE`,
@@ -499,8 +523,10 @@ Wire contracts are unchanged by the pass: every Sheet-write handler in
 column for, so skills keep sending the legacy IC-named keys
 (`total_icps`, `portfolio_cpicp`, `cpicp`, `ic_rate`, `median_cpicp`,
 `ic_total`, `top_body_cpicp`) carrying lead values and add the lead-named
-keys additively. `scaling_log` therefore still has no CPL or lead column;
-the Tuesday brief computes week-over-week CPL from `?action=rollup`.
+keys additively. `scaling_log` therefore still has no CPL or lead column —
+and since 2026-09-15 it receives no rows at all: the `scaling-write` POST
+retired with the reallocation, and the Tuesday brief no longer evaluates
+last week, so it makes no `?action=rollup` call either.
 
 ### Current skills
 
@@ -581,36 +607,42 @@ the Tuesday brief computes week-over-week CPL from `?action=rollup`.
   skill is `workflow_dispatch`-only; Tyler runs it after the Monday
   Creative Intelligence brief.
 - **portfolio-scaling** — weekly Tuesday brief that adds a structural
-  diagnosis layer on top of the existing budget optimizer. Classifies
+  diagnosis layer on top of the (paused) budget optimizer. Classifies
   each vertical as scalable / stable / saturating / over-invested over a
   12-week trailing window using elasticity (Pearson r of weekly spend vs
   weekly CPL), median-split CPL degradation, and 4-week
   frequency/CPM trends. Modifier `new_audience_needed` fires when
   frequency + CPM both rise over 4+ weeks (vertical-level early warning,
   before any single campaign hits the optimizer's freq=2.0 threshold).
-  Produces a pool-based budget reallocation: saturating + over-invested
-  verticals contribute decreases sized by elasticity severity, scalable +
-  stable verticals absorb weighted by inverse CPL. The pool is bounded
-  by the spend tolerance band; can be net-positive or net-negative.
-  **Shares a 12% weekly cap with the daily optimizer** (the cap counts
-  optimizer + knockdown + strategic movement summed across the week).
-  Wed-Mon lockout window prevents the optimizer from acting on
-  affected campaigns immediately after the strategic move; lockout
-  expires at next-Tuesday 00:00 UTC so the optimizer's Tuesday cycle
-  is free (while the optimizer is paused the lockout is still recorded,
-  and the Slack copy says so). Strategic execution path reuses
-  `applyBudgetQueueRows_` with a `source: strategic` filter on
-  `budget_queue` (a 13th column added to the schema). Tagging: optimizer
-  Slack proposals show the campaign's vertical classification inline.
+  **Diagnosis-only since 2026-09-15** — the brief proposes no budget
+  moves at all. The reallocation pool, the two-step approval, the
+  Wed-Mon lockout window and the 3 AM execution are retired:
+  `compute_reallocation.py` is unwired (kept on disk with a RETIRED
+  header docstring so the pool maths, elasticity-weighted sizing and
+  lockout logic can be revived), and `executeStrategicChanges` in
+  `Code.js` early-returns under `STRATEGIC_SCALING_RETIRED`, deleting
+  the `SCALING_*` tokens and the lockout properties. Two side effects
+  stopped with it: the `scaling-write` POST — so `scaling_log` no longer
+  accretes rows and the weekly classification record is the git history
+  of `data/derived/scaling_profiles.json` — and `audience_actions`,
+  which the brief now derives from `new_audience_needed` in that same
+  file. The 12% weekly cap survives as a hard rail inside
+  `computeRecommendations_`, but nothing strategic contributes to it any
+  more. Tagging is unchanged: optimizer Slack proposals still show the
+  campaign's vertical classification inline.
   The Tuesday brief opens with the 12-week portfolio line
-  (`portfolio.total_leads / total_spend / cpl / median_cpl`), lists
-  verticals CPL-ascending within class, prints ACTIVE-but-`insufficient`
-  verticals as a "too new to classify" one-liner so the campaigns Meta is
-  delivering never drop out, and frames the pool move in lead terms. It
-  renders nothing beyond leads, CPL, spend and delivery diagnostics
-  (frequency, CPM, elasticity) _(2026-09-14)_; the `total_ic_conversions`
-  / `ic_rate` / `cpicp` JSON fields exist only for the `scaling_log` wire
-  contract.
+  (`portfolio.total_leads / total_spend / cpl`; `median_cpl` is no
+  longer printed — it spans mostly-retired verticals) followed by an
+  ACTIVE-only live-spend line, lists verticals CPL-ascending within
+  class, and prints `insufficient` verticals as a "too new to classify"
+  one-liner so the campaigns Meta is delivering never drop out.
+  **Only live verticals are rendered:** `compute_scaling_profiles.py`
+  keeps verticals with `active_campaign_count > 0` under `verticals` and
+  moves all-paused ones to `inactive_verticals`, which the brief never
+  reads, counts or alludes to. It renders nothing beyond leads, CPL,
+  spend and delivery diagnostics (frequency, CPM, elasticity)
+  _(2026-09-14)_; the `total_ic_conversions` / `ic_rate` / `cpicp` JSON
+  fields survive only for the (now unused) `scaling_log` wire contract.
   `LEADS-*` campaign names bucket into their vertical (`LEADS-Broad-Q3-2026`
   → `broad`) and the optimizer-eligibility gate counts lifetime leads.
 
