@@ -1,39 +1,7 @@
 {
-  "computed_at": "2026-09-20T16:27:37.087195+00:00",
+  "computed_at": "2026-09-21T18:18:12.221319+00:00",
   "window_days": 7,
   "rows": [
-    {
-      "adset_id": "120252962579540631",
-      "ad_id": "120252962579530631",
-      "ad_name": "ifw_broad_ad_adpc_819",
-      "spend": 1512.09,
-      "spend_share": 1.0,
-      "leads": 117,
-      "cpl": 12.92,
-      "cpl_vs_adset_avg": 1.0,
-      "cpl_vs_target": 0.807,
-      "ctr": 0.0488,
-      "ctr_vs_adset_avg": 1.0,
-      "peers_delivering": 1,
-      "label": null,
-      "label_reason": "insufficient_peers"
-    },
-    {
-      "adset_id": "120253265643260631",
-      "ad_id": "120253265643280631",
-      "ad_name": "ifw_broad_ad_adpc_910_applp",
-      "spend": 621.64,
-      "spend_share": 1.0,
-      "leads": 54,
-      "cpl": 11.51,
-      "cpl_vs_adset_avg": 1.0,
-      "cpl_vs_target": 0.719,
-      "ctr": 0.0385,
-      "ctr_vs_adset_avg": 1.0,
-      "peers_delivering": 1,
-      "label": null,
-      "label_reason": "insufficient_peers"
-    },
     {
       "adset_id": "120252841681000631",
       "ad_id": "120252841680990631",
@@ -49,6 +17,38 @@
       "peers_delivering": 0,
       "label": null,
       "label_reason": "below_impression_floor"
+    },
+    {
+      "adset_id": "120252962579540631",
+      "ad_id": "120252962579530631",
+      "ad_name": "ifw_broad_ad_adpc_819",
+      "spend": 1473.74,
+      "spend_share": 1.0,
+      "leads": 116,
+      "cpl": 12.7,
+      "cpl_vs_adset_avg": 1.0,
+      "cpl_vs_target": 0.794,
+      "ctr": 0.0503,
+      "ctr_vs_adset_avg": 1.0,
+      "peers_delivering": 1,
+      "label": null,
+      "label_reason": "insufficient_peers"
+    },
+    {
+      "adset_id": "120253265643260631",
+      "ad_id": "120253265643280631",
+      "ad_name": "ifw_broad_ad_adpc_910_applp",
+      "spend": 638.49,
+      "spend_share": 1.0,
+      "leads": 56,
+      "cpl": 11.4,
+      "cpl_vs_adset_avg": 1.0,
+      "cpl_vs_target": 0.713,
+      "ctr": 0.0394,
+      "ctr_vs_adset_avg": 1.0,
+      "peers_delivering": 1,
+      "label": null,
+      "label_reason": "insufficient_peers"
     }
   ]
 }
