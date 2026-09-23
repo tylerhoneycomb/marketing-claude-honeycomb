@@ -1,6 +1,29 @@
 #!/usr/bin/env python3
 """compute_reallocation.py — turn scaling_profiles.json into a budget proposal.
 
+RETIRED 2026-09-15 — NOT WIRED INTO ANY WORKFLOW.
+
+Tyler retired strategic reallocation: the Tuesday portfolio-scaling brief is
+diagnosis-only now, so `agent-portfolio-scaling.yml` no longer runs this
+script, no proposal is registered via scaling-queue-write, and
+`executeStrategicChanges` in apps-script/Code.js is guarded off. This file is
+kept intact rather than deleted so the pool maths, the elasticity-weighted
+sizing and the lockout logic can be revived without rewriting them.
+
+Two things that ran here also stopped with it:
+  - the `--write-log` POST to ?action=scaling-write, so the `scaling_log`
+    Sheet tab no longer accretes rows. The weekly classification record is
+    now data/derived/scaling_profiles.json, committed on every run — `git
+    log` on that file is the history.
+  - `audience_actions`, which the brief now derives directly from
+    `new_audience_needed` in scaling_profiles.json.
+
+To revive: restore the `Compute reallocation` step and the registration
+instructions in agent-portfolio-scaling.yml, flip STRATEGIC_SCALING_RETIRED
+in Code.js, and re-read the reference sections in SKILL.md. Note that this
+script reads the `verticals` key, which since 2026-09-15 holds only verticals
+with an ACTIVE campaign — check that is still the input you want.
+
 Reads:
   - data/derived/scaling_profiles.json (from compute_scaling_profiles.py)
   - data/config/benchmarks.json

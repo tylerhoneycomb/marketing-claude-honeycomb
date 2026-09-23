@@ -6,14 +6,15 @@ on:
     # Tuesdays, off the top/half of the hour to dodge GitHub's
     # scheduled-run queue contention (worst at :00, also heavy at :30).
     # 13:43 UTC = 9:43 AM ET in EDT (summer, UTC-4) / 8:43 AM ET in EST
-    # (winter, UTC-5). Pairs with executeStrategicChanges in Code.js which
-    # fires Wed 3 AM after Tyler approves the brief Tuesday.
+    # (winter, UTC-5). The brief is diagnosis-only since 2026-09-15 —
+    # nothing to approve, and executeStrategicChanges in Code.js is
+    # guarded off, so no Wednesday execution pairs with this run.
     - cron: '43 13 * * 2'
 
 permissions:
   # `contents: write` lets the "Commit derived data" step push the
-  # newly-computed scaling_profiles.json + reallocation.json back to
-  # main. Same pattern as agent-creative-intelligence.yml.
+  # newly-computed scaling_profiles.json back to main. Same pattern as
+  # agent-creative-intelligence.yml.
   contents: write
   # Required by claude-code-action@v1 for OIDC auth at startup.
   id-token: write
@@ -63,20 +64,19 @@ jobs:
         run: |
           python3 skills/portfolio-scaling/scripts/compute_scaling_profiles.py
 
-      # Step 2: turn the structural read into a budget proposal.
-      # `--write-log` POSTs per-vertical rows to
-      # ?action=scaling-write so the scaling_log Sheet tab carries
-      # the week-over-week structural trend even if Claude's brief
-      # composition fails downstream.
-      - name: Compute reallocation
-        env:
-          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
-          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
-        run: |
-          python3 skills/portfolio-scaling/scripts/compute_reallocation.py \
-            --write-log
-
-      # Step 3: commit BEFORE claude-code-action. The action strips git
+      # Reallocation RETIRED 2026-09-15 at Tyler's request. The
+      # `Compute reallocation` step (compute_reallocation.py --write-log)
+      # used to run here: it sized a budget pool, registered a proposal
+      # via scaling-queue-write, and wrote per-vertical rows to the
+      # scaling_log Sheet tab. The brief is now diagnosis-only, so none
+      # of that runs. compute_reallocation.py is kept on disk, unwired,
+      # so the pool maths can be revived without rewriting it.
+      #
+      # The scaling_log Sheet rows stop with it. The weekly classification
+      # record lives in git instead: data/derived/scaling_profiles.json is
+      # committed on every run, so `git log` on that file is the history.
+      #
+      # Step 2: commit BEFORE claude-code-action. The action strips git
       # auth credentials in some way (the persisted http extraheader
       # from actions/checkout disappears) — pushes after fail with
       # "Password authentication is not supported." Commit while we
@@ -94,7 +94,7 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/derived/scaling_profiles.json data/derived/reallocation.json
+          git add data/derived/scaling_profiles.json
           if git diff --cached --quiet; then
             echo "no derived data changes to commit"
             echo "data_commit=no_changes" > /tmp/data_commit_status.txt
@@ -115,23 +115,18 @@ jobs:
           echo "data_commit=push_failed" > /tmp/data_commit_status.txt
           exit 1
 
-      # Step 4: Claude composes the four-section, leads-first Slack
-      # brief from the committed JSON, registers the proposal via
-      # /exec (authenticated with EXEC_SHARED_SECRET), and Slack-posts
-      # the brief with approve/reject URLs returned by the
-      # registration call.
+      # Step 3: Claude composes the two-section, leads-first Slack
+      # brief from the committed JSON and posts it. Since 2026-09-15
+      # the brief proposes nothing and writes nothing: it needs no
+      # EXEC_SHARED_SECRET because it makes no side-effecting /exec
+      # call, and there are no approve/reject links to embed.
       - name: Compose brief via Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
         env:
-          # Optional. Without it, Claude logs the composed brief and
-          # the registration call but skips the Slack POST.
+          # Optional. Without it, Claude logs the composed brief but
+          # skips the Slack POST.
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-          # Required for the scaling-queue-write registration in step 3:
-          # the action is in PROTECTED_EXEC_ACTIONS and fails closed
-          # without the shared secret in the request body. Same value the
-          # two Python steps above receive.
-          EXEC_SHARED_SECRET: ${{ secrets.EXEC_SHARED_SECRET }}
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           show_full_output: "true"
@@ -141,148 +136,106 @@ jobs:
             Compose the Portfolio Scaling weekly brief per
             skills/portfolio-scaling/SKILL.md.
 
-            The structural-diagnosis and reallocation scripts have
-            already run as previous workflow steps and the resulting
-            JSON has been committed to main.
-            data/derived/scaling_profiles.json and
-            data/derived/reallocation.json are on disk. Do NOT re-run
-            either script — read the JSON directly.
+            The structural-diagnosis script has already run as a
+            previous workflow step and its JSON is committed to main.
+            data/derived/scaling_profiles.json is on disk. Do NOT
+            re-run it — read the JSON directly.
+
+            This brief is DIAGNOSIS ONLY (since 2026-09-15). It
+            proposes no budget moves, registers nothing, and has no
+            approval links. Do not POST to any /exec action. Do not
+            read or mention data/derived/reallocation.json even if an
+            old copy is still on disk.
 
             Steps:
-            1. Read data/derived/scaling_profiles.json and
-               data/derived/reallocation.json.
-            2. If reallocation.decreases AND reallocation.increases are
-               both empty, there's nothing to propose this week. Skip
-               the registration step (step 3); compose a short
-               diagnostic-only brief: the title, the portfolio
-               12-week leads / spend / CPL headline, the scaling
-               labels (including ACTIVE-but-insufficient verticals),
-               then "no actionable reallocation this week —
-               <pool.increase_skip_reason>" and any
-               pool.paused_saturating_verticals ("<vertical>
-               saturating but every campaign PAUSED — no move
-               proposed"), plus any audience actions; Slack-post it;
-               write the status one-liner; exit. Do NOT POST to
-               scaling-queue-write with empty rows.
-            3. Otherwise, register the proposal: POST the rows from
-               reallocation.decreases + reallocation.increases (one
-               row per affected campaign) to
-               <exec_endpoint>?action=scaling-queue-write with this
-               JSON body:
-                 {
-                   "key": "$EXEC_SHARED_SECRET",
-                   "rows": [
-                     { "campaign_id", "campaign_name",
-                       "current_daily_cents", "proposed_daily_cents",
-                       "change_cents", "change_pct",
-                       "signal_reasons": "<vertical>: <classification>
-                                          | CPL $<cpl> on <total_leads>
-                                          leads | <reason or
-                                          allocation_weight_reason>" },
-                     ...
-                   ],
-                   "lockout_until": "<reallocation.lockout_until>",
-                   "affected_campaign_ids":
-                     <reallocation.affected_campaign_ids>
-                 }
-               "key" is the EXEC_SHARED_SECRET env var — read it from
-               the environment, never print it in the brief or the
-               log. The endpoint URL is in data/config/benchmarks.json
-               under exec_endpoint. The response carries `token`,
-               `approve_url`, `reject_url` which you'll embed in the
-               Slack message. If the response is
-               {"error":"unauthorized"}, do NOT retry and do NOT
-               invent URLs: post the brief without approval links and
-               prefix section 2 with "⚠️ registration refused
-               (EXEC_SHARED_SECRET missing) — no approval links this
-               week". signal_reasons must never contain the substring
-               "portfolio knockdown" — the headroom math attributes
-               knockdowns by matching it.
-            4. Compose the four-section Slack brief per SKILL.md
-               §"Slack output rules": (a) the portfolio 12-week
-               headline then scaling labels per vertical, CPL
-               ascending within class, (b) Strategic reallocation
-               framed in lead terms with headroom consumed per
-               affected campaign, (c) Audience actions for any
-               new_audience_needed verticals, (d) Last week's
-               evaluation IF ?action=scaling-queue-read&since=<last
-               Tuesday> returns source=strategic rows with
-               status=executed. For (d) compute CPL and lead counts
-               from ?action=rollup (spend / meta_conversions per
-               vertical for the two most recent week_start values) —
-               scaling_log carries no CPL column, so use
-               ?action=scaling-log-read&since=<14_days_ago> only for
-               classification, frequency and pool flags.
-            5. POST the brief to SLACK_WEBHOOK_URL via curl. Include
-               the approve_url and reject_url from step 3 inline so
-               Tyler can click directly. Skip Slack silently if
-               SLACK_WEBHOOK_URL is unset/empty.
-            6. Write the status one-liner to /tmp/agent_status.txt.
+            1. Read data/derived/scaling_profiles.json.
+            2. Compose the two-section Slack brief described below.
+            3. POST it to SLACK_WEBHOOK_URL via curl. Skip Slack
+               silently if SLACK_WEBHOOK_URL is unset or empty.
+            4. Write the status one-liner to /tmp/agent_status.txt.
 
             Output rules — MUST follow:
             - Title the message "*Honeycomb Scaling — <date>*" and
-              open with the portfolio 12-week line from
-              scaling_profiles.json portfolio.total_leads /
-              total_spend / cpl / median_cpl:
-              "Portfolio (12w): N leads · $S spend · CPL $X · median
-              vertical CPL $Y".
-            - Leads and CPL are the headline of every line. Each
-              vertical or campaign line leads with CPL and lead count
-              (verticals[v].cpl, .total_conversions, .total_spend;
-              proposal rows carry cpl / total_leads / vertical_spend).
-              Sort scaling labels by CPL ascending within class.
+              open with one portfolio line built from
+              portfolio.total_leads / total_spend / cpl:
+              "Portfolio (12w): N leads · $S spend · CPL $X".
+              Follow it with the live-spend line from
+              portfolio.current_total_daily_cents and
+              .active_campaign_count: "Active portfolio: $D/day
+              ($W/wk) across N ACTIVE campaign(s)." Never add
+              portfolio.paused_total_daily_cents to that figure.
+            - EVERY vertical in `verticals` has at least one ACTIVE
+              campaign — the script already filtered it. Render every
+              key in `verticals` and NOTHING else. The
+              `inactive_verticals` key holds retired verticals whose
+              campaigns are all paused: never read it, never render
+              it, never mention that it exists. Do not name, count or
+              allude to a paused campaign or a retired vertical
+              anywhere in the brief.
+            - Belt and braces: independently skip any vertical whose
+              `active_campaign_count` is 0 or missing, even if it
+              appears under `verticals`. A JSON file written before
+              2026-09-15 has the pre-split shape and carries paused
+              verticals there; this rule keeps a stale file from
+              putting them back in the brief.
+            - Leads and CPL lead every line. Each vertical line opens
+              with CPL and lead count (verticals[v].cpl,
+              .total_conversions, .total_spend). Sort by CPL
+              ascending within class.
             - The brief carries leads, CPL, spend and delivery
               diagnostics (frequency, CPM, elasticity) only. Any
-              other JSON field (SKILL.md's schema marks them
-              "secondary, not printed") is NEVER rendered — not as a
-              headline, secondary line, parenthetical or trailing
-              token — and never used for ordering or emphasis.
+              other JSON field is NEVER rendered — not as a headline,
+              secondary line, parenthetical or trailing token — and
+              never used for ordering or emphasis.
             - If cpl is null for a vertical, print "CPL —" and list
               it last within its group; never substitute another
               cost figure.
             - Cite real numbers from the JSON. Don't invent or round
-              imprecisely. Strategic reallocation amounts are integer
-              cents in the JSON; convert to dollars at the
-              presentation layer (cents / 100).
-            - Honor confidence labels in the scaling labels section:
-              tag `directional` verticals explicitly. Skip
-              `insufficient` verticals UNLESS active_campaign_count
-              > 0 — print those as a "too new to classify — CPL $X on
-              N leads (k weeks, j active campaigns)" one-liner after
-              the classified list, so the campaigns Meta is actually
-              delivering never drop out of the brief.
-            - pool.portfolio_current_daily_cents and
-              portfolio.current_total_daily_cents count ACTIVE
-              campaigns only; label them "active portfolio" and do
-              not add portfolio.paused_total_daily_cents to them.
-            - When reallocation.pool.knockdown_risk is true, add a
-              one-line "may trigger 1% knockdown next cycle" note
-              after the reallocation summary.
-            - For new_audience_needed verticals, the action is "duplicate
-              ad set with broader targeting"; the diagnosis string
-              already opens with "CPL $X on N leads (12w)" — keep it
-              first; include the creative_prescription line from the
-              JSON if present (creative_source:
-              creative_intelligence_cache means it came from Monday's
-              brief).
+              imprecisely.
+
+            Section 1 — Scaling labels:
+            - One line per vertical in `verticals`, CPL ascending
+              within class, in the shape the SKILL.md example shows:
+              classification, confidence tag when `directional`, CPL
+              on leads / spend, elasticity r, spend share, frequency
+              and CPM trend.
+            - A vertical whose `classification` is `insufficient`
+              prints as a "too new to classify — CPL $X on N leads
+              (k weeks, j active campaign(s))" one-liner after the
+              classified list. These are live campaigns with too
+              little history to judge, not a problem to flag.
+            - If `verticals` is empty, say so in one line ("No ACTIVE
+              campaigns to report this week.") and skip to section 2.
+
+            Section 2 — Audience actions:
+            - For each vertical in `verticals` with
+              new_audience_needed true, one line: the diagnosis opens
+              "CPL $X on N leads (12w)", then the action "duplicate
+              ad set with broader targeting", then frequency and CPM
+              trend as the evidence.
+            - Skip the whole section when no vertical qualifies.
 
             Constraints:
             - Read-only on the repo. Do not modify any source files.
               Do not push commits — the commit step already ran.
             - Do not run the Python scripts — the workflow has
               already run them.
-            - Do not call Meta directly. The Python scripts already
+            - Do not call Meta directly. The Python script already
               made all needed Meta calls.
+            - Never propose, imply or invite a budget change, and
+              never write an approve/reject URL. There is no approval
+              flow for this brief any more.
 
             Status reporter:
             - Before exiting, write a single-line status to
               /tmp/agent_status.txt, e.g.:
-                "leads=1240 cpl=$14.19 verticals=15 scalable=4 saturating=2 over_invested=1 new_audience_needed=1 freed=$12/day allocated=$10/day net=net_negative knockdown_risk=false"
-                "leads=1240 cpl=$14.19 verticals=12 scalable=3 saturating=0 over_invested=0 new_audience_needed=0 no_actionable_reallocation"
+                "leads=1240 cpl=$14.19 verticals=2 scalable=0 saturating=0 over_invested=0 insufficient=2 new_audience_needed=0 diagnosis_only"
               leads / cpl are portfolio.total_leads / portfolio.cpl
-              from scaling_profiles.json (12-week).
+              from scaling_profiles.json (12-week); `verticals` is the
+              count of ACTIVE verticals rendered.
               The workflow's status reporter step picks this up and
               posts it to issue #48 alongside the data_commit marker.
+
 
       - name: Dump Claude execution log
         if: always()

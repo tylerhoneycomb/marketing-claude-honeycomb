@@ -724,6 +724,24 @@ def main() -> int:
         key=lambda kv: (kv[1]["cpl"] is None, kv[1]["cpl"] or 0.0, kv[0]),
     ))
 
+    # Split live verticals from retired ones (2026-09-15). `verticals` is
+    # what the brief renders, and a vertical whose campaigns are ALL paused
+    # is not something anyone can act on: the 2026-09-15 brief led with
+    # three paused verticals ("over-invested", warning icons) while the only
+    # two campaigns Meta was delivering appeared last as afterthoughts.
+    # Trailing 12-week history for the retired ones is kept under
+    # `inactive_verticals` so the Sheet log and any later analysis still see
+    # it, but nothing renders it. A vertical returns to `verticals` by
+    # itself as soon as one of its campaigns goes ACTIVE again.
+    active_verticals = {
+        v: m for v, m in vertical_metrics.items()
+        if m.get("active_campaign_count", 0) > 0
+    }
+    inactive_verticals = {
+        v: m for v, m in vertical_metrics.items()
+        if m.get("active_campaign_count", 0) <= 0
+    }
+
     # ─── Per-campaign block ────────────────────────────────────────────
     per_campaign: dict[str, dict[str, Any]] = {}
     for cid, budget_info in current_budgets.items():
@@ -812,27 +830,31 @@ def main() -> int:
         "elasticity_window_weeks": elasticity_window_weeks,
         "benchmarks": benchmarks,
         "portfolio": portfolio,
-        "verticals": vertical_metrics,
+        "verticals": active_verticals,
+        # Retired: every campaign paused. Never rendered in the brief.
+        "inactive_verticals": inactive_verticals,
         "campaigns": per_campaign,
     }
 
     out_path = Path(args.output)
     atomic_write_json(out_path, output, default=str)
-    logging.info("Wrote %s (%d verticals, %d campaigns)",
-                 out_path, len(vertical_metrics), len(per_campaign))
+    logging.info("Wrote %s (%d active vertical(s), %d retired, %d campaigns)",
+                 out_path, len(active_verticals), len(inactive_verticals),
+                 len(per_campaign))
 
     # Stdout summary for the workflow.
     summary = {
         "verticals": {v: m["classification"]
-                      for v, m in vertical_metrics.items()},
-        "scalable": [v for v, m in vertical_metrics.items()
+                      for v, m in active_verticals.items()},
+        "scalable": [v for v, m in active_verticals.items()
                      if m["classification"] == "scalable"],
-        "saturating": [v for v, m in vertical_metrics.items()
+        "saturating": [v for v, m in active_verticals.items()
                        if m["classification"] == "saturating"],
-        "over_invested": [v for v, m in vertical_metrics.items()
+        "over_invested": [v for v, m in active_verticals.items()
                           if m["classification"] == "over-invested"],
-        "new_audience_needed": [v for v, m in vertical_metrics.items()
+        "new_audience_needed": [v for v, m in active_verticals.items()
                                 if m.get("new_audience_needed")],
+        "inactive_vertical_count": len(inactive_verticals),
         "portfolio": portfolio,
     }
     print(json.dumps(summary, indent=2, default=str))
