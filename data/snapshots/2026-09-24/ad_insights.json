@@ -1,0 +1,24 @@
+[
+  {
+    "ad_id": "120253265643280631",
+    "ad_name": "ifw_broad_ad_adpc_910_applp",
+    "adset_id": "120253265643260631",
+    "adset_name": "broad_IFW_ADPC_2026_08_26_ApplicationLP",
+    "campaign_id": "120253265643270631",
+    "campaign_name": "LEADS-IFW-Broad-Q3-2026 - Application LP",
+    "clicks": 209,
+    "conversions": 15,
+    "cpc": 0.760239,
+    "cpm": 31.886414,
+    "ctr": 4.19426,
+    "date": "2026-09-24",
+    "frequency": 1.196399,
+    "ic_conversions": 0,
+    "impressions": 4983,
+    "leads": 15,
+    "prequal_decisions": 15,
+    "reach": 4165,
+    "rewards_conversions": 9,
+    "spend": 158.89
+  }
+]
