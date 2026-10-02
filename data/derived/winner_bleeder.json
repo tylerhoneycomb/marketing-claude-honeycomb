@@ -1,23 +1,7 @@
 {
-  "computed_at": "2026-10-01T18:33:28.656971+00:00",
+  "computed_at": "2026-10-02T18:00:31.138457+00:00",
   "window_days": 7,
   "rows": [
-    {
-      "adset_id": "120253265643260631",
-      "ad_id": "120253265643280631",
-      "ad_name": "ifw_broad_ad_adpc_910_applp",
-      "spend": 1639.68,
-      "spend_share": 1.0,
-      "leads": 140,
-      "cpl": 11.71,
-      "cpl_vs_adset_avg": 1.0,
-      "cpl_vs_target": 0.732,
-      "ctr": 0.0411,
-      "ctr_vs_adset_avg": 1.0,
-      "peers_delivering": 1,
-      "label": null,
-      "label_reason": "insufficient_peers"
-    },
     {
       "adset_id": "120252962579540631",
       "ad_id": "120252962579530631",
@@ -33,6 +17,22 @@
       "peers_delivering": 0,
       "label": null,
       "label_reason": "below_impression_floor"
+    },
+    {
+      "adset_id": "120253265643260631",
+      "ad_id": "120253265643280631",
+      "ad_name": "ifw_broad_ad_adpc_910_applp",
+      "spend": 1795.59,
+      "spend_share": 1.0,
+      "leads": 149,
+      "cpl": 12.05,
+      "cpl_vs_adset_avg": 1.0,
+      "cpl_vs_target": 0.753,
+      "ctr": 0.0416,
+      "ctr_vs_adset_avg": 1.0,
+      "peers_delivering": 1,
+      "label": null,
+      "label_reason": "insufficient_peers"
     }
   ]
 }
