@@ -1,24 +1,42 @@
 {
-  "computed_at": "2026-09-29T18:51:27.323838+00:00",
-  "today": "2026-09-29",
-  "lockout_until": "2026-10-06T00:00:00+00:00",
-  "affected_campaign_ids": [],
+  "computed_at": "2026-10-06T19:02:15.717757+00:00",
+  "today": "2026-10-06",
+  "lockout_until": "2026-10-13T00:00:00+00:00",
+  "affected_campaign_ids": [
+    "120253584584130631"
+  ],
   "pool": {
     "freed_daily_cents": 0,
-    "allocated_daily_cents": 0,
-    "net_change_daily_cents": 0,
-    "net_change_type": "zero_sum",
-    "portfolio_current_daily_cents": 25000,
-    "portfolio_active_campaign_count": 1,
-    "portfolio_post_change_daily_cents": 25000,
-    "portfolio_post_change_weekly_dollars": 1750.0,
+    "allocated_daily_cents": 1800,
+    "net_change_daily_cents": 1800,
+    "net_change_type": "net_positive",
+    "portfolio_current_daily_cents": 30000,
+    "portfolio_active_campaign_count": 2,
+    "portfolio_post_change_daily_cents": 31800,
+    "portfolio_post_change_weekly_dollars": 2226.0,
     "target_weekly_dollars": 9000.0,
     "tolerance_weekly_dollars": 50.0,
     "knockdown_risk": false,
     "paused_saturating_verticals": [],
-    "increase_skip_reason": "no scalable/stable vertical has an ACTIVE campaign"
+    "increase_skip_reason": null
   },
   "decreases": [],
-  "increases": [],
+  "increases": [
+    {
+      "vertical": "broad",
+      "campaign_id": "120253584584130631",
+      "campaign_name": "LEADS-Broad-Q4-2026",
+      "current_daily_cents": 15000,
+      "change_cents": 1800,
+      "change_pct": 0.12,
+      "post_change_cents": 16800,
+      "classification": "scalable",
+      "cpl": 17.34,
+      "total_leads": 530,
+      "vertical_spend": 9190.28,
+      "remaining_headroom_pct": 0.12,
+      "allocation_weight_reason": "inverse-CPL weight 0.0577 of 0.0577"
+    }
+  ],
   "audience_actions": []
 }
