@@ -1,14 +1,14 @@
 {
-  "computed_at": "2026-10-05T20:52:59.429540+00:00",
+  "computed_at": "2026-10-06T18:35:00.028717+00:00",
   "window_days": 7,
   "snapshot_dates": [
-    "2026-09-28",
     "2026-09-29",
     "2026-09-30",
     "2026-10-01",
     "2026-10-02",
     "2026-10-03",
-    "2026-10-04"
+    "2026-10-04",
+    "2026-10-05"
   ],
   "ad_count": 2,
   "adset_count": 2,
@@ -22,8 +22,6 @@
   "actionable_critical": [],
   "actionable_warning": [],
   "winners": [],
-  "bleeders": [
-    "120253584584140631"
-  ],
+  "bleeders": [],
   "learning_phase_adsets_skipped": 1
 }
