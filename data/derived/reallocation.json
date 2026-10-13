@@ -1,19 +1,20 @@
 {
-  "computed_at": "2026-10-06T19:02:15.717757+00:00",
-  "today": "2026-10-06",
-  "lockout_until": "2026-10-13T00:00:00+00:00",
+  "computed_at": "2026-10-13T19:57:00.399885+00:00",
+  "today": "2026-10-13",
+  "lockout_until": "2026-10-20T00:00:00+00:00",
   "affected_campaign_ids": [
+    "120253265643270631",
     "120253584584130631"
   ],
   "pool": {
     "freed_daily_cents": 0,
-    "allocated_daily_cents": 1800,
-    "net_change_daily_cents": 1800,
+    "allocated_daily_cents": 3600,
+    "net_change_daily_cents": 3600,
     "net_change_type": "net_positive",
-    "portfolio_current_daily_cents": 30000,
-    "portfolio_active_campaign_count": 2,
-    "portfolio_post_change_daily_cents": 31800,
-    "portfolio_post_change_weekly_dollars": 2226.0,
+    "portfolio_current_daily_cents": 35000,
+    "portfolio_active_campaign_count": 3,
+    "portfolio_post_change_daily_cents": 38600,
+    "portfolio_post_change_weekly_dollars": 2702.0,
     "target_weekly_dollars": 9000.0,
     "tolerance_weekly_dollars": 50.0,
     "knockdown_risk": false,
@@ -23,6 +24,21 @@
   "decreases": [],
   "increases": [
     {
+      "vertical": "leads-ifw-broad-q3-2026 - application lp",
+      "campaign_id": "120253265643270631",
+      "campaign_name": "LEADS-IFW-Broad-Q3-2026 - Application LP",
+      "current_daily_cents": 15000,
+      "change_cents": 1800,
+      "change_pct": 0.12,
+      "post_change_cents": 16800,
+      "classification": "stable",
+      "cpl": 11.33,
+      "total_leads": 428,
+      "vertical_spend": 4850.82,
+      "remaining_headroom_pct": 0.12,
+      "allocation_weight_reason": "inverse-CPL weight 0.0441 of 0.1009 (secondary, 0.5x for stable)"
+    },
+    {
       "vertical": "broad",
       "campaign_id": "120253584584130631",
       "campaign_name": "LEADS-Broad-Q4-2026",
@@ -31,11 +47,11 @@
       "change_pct": 0.12,
       "post_change_cents": 16800,
       "classification": "scalable",
-      "cpl": 17.34,
-      "total_leads": 530,
-      "vertical_spend": 9190.28,
+      "cpl": 17.63,
+      "total_leads": 534,
+      "vertical_spend": 9414.16,
       "remaining_headroom_pct": 0.12,
-      "allocation_weight_reason": "inverse-CPL weight 0.0577 of 0.0577"
+      "allocation_weight_reason": "inverse-CPL weight 0.0567 of 0.1009"
     }
   ],
   "audience_actions": []
