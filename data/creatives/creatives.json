@@ -1,5 +1,5 @@
 {
-  "count": 486,
+  "count": 487,
   "creatives": [
     {
       "body": null,
@@ -5049,6 +5049,40 @@
         "Bar Owners: Prequalify Today.",
         "Banks See Bar Risk. Your Regulars Don\u2019t.",
         "Keep Your Bar Independent. Keep Control."
+      ]
+    },
+    {
+      "bodies": [
+        "Support women-owned businesses!\n\n500+ women-owned, small businesses have raised community-backed capital through IFW (ifundwomen) instead - turning loyal customers into investors. \n\nSee if your woman-owned business qualifies."
+      ],
+      "body": "Support women-owned businesses!\n\n500+ women-owned, small businesses have raised community-backed capital through IFW (ifundwomen) instead - turning loyal customers into investors. \n\nSee if your woman-owned business qualifies.",
+      "call_to_action_type": null,
+      "creative_id": "1750631179352630",
+      "cta_types": [],
+      "descriptions": [],
+      "effective_object_story_id": "527535544101765_1792409789313288",
+      "first_seen_date": "2026-10-15",
+      "image_hash": "6819fb379fa68d11ca861e94e14a48fa",
+      "image_hashes": [
+        "6819fb379fa68d11ca861e94e14a48fa",
+        "ec9956b9a42e9ae50a8fe2c58244f3cd",
+        "32b5df44a16081ad01198225d32c1d1c",
+        "c31df0ad6d928b8e6feaf7e7ba79ff2b",
+        "f5d24ae49920e4d49ad36a1fd6c9fa6e",
+        "90823e0ccb674e3a2a0b5bc8ce511a36"
+      ],
+      "image_url": "https://scontent-dfw6-2.xx.fbcdn.net/v/t45.1600-4/719908309_10104676526699849_4031079144797171518_n.png?_nc_cat=109&ccb=1-7&_nc_ohc=BQjaelUVVM4Q7kNvwFCkpYn&_nc_oc=Adrx2ITsbyI4Z2B9vuIBmPmbLWXvW2VfIJrW4lqU3gs02veHUlg0oIuDO--2ghmQVsE&_nc_zt=1&_nc_ht=scontent-dfw6-2.xx&edm=ALfz3TcEAAAA&_nc_gid=WR0y6ZcaPNS_RkDwn6qjfg&_nc_tpa=Q5bMBQLqrvulFXa_H727RAXEQIDzROqoM8874jPV_2Y79GZLfFPN_9OpqBVJvUCH8mVV2SBE7sVbE53W0Zo&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=52f3c4&_nc_sid=58080a&oh=00_AQNL5izN_nymG5JsyTocI80Yz_Y9SQyGlaB5-IsrqtFonQ&oe=6AD830D1",
+      "last_seen_date": "2026-10-15",
+      "link_url": "https://honeycomb-credit.typeform.com/to/yIvjIXvv",
+      "link_urls": [
+        "https://honeycomb-credit.typeform.com/to/yIvjIXvv"
+      ],
+      "name": "{{product.name}} 2026-10-15-d896919db13468cb57438189fac6ecb9",
+      "thumbnail_url": "https://scontent-dfw6-2.xx.fbcdn.net/v/t45.1600-4/719908309_10104676526699849_4031079144797171518_n.png?_nc_cat=109&ccb=1-7&_nc_ohc=BQjaelUVVM4Q7kNvwFCkpYn&_nc_oc=Adrx2ITsbyI4Z2B9vuIBmPmbLWXvW2VfIJrW4lqU3gs02veHUlg0oIuDO--2ghmQVsE&_nc_zt=1&_nc_ht=scontent-dfw6-2.xx&edm=ALfz3TcEAAAA&_nc_gid=WR0y6ZcaPNS_RkDwn6qjfg&_nc_tpa=Q5bMBQLqrvulFXa_H727RAXEQIDzROqoM8874jPV_2Y79GZLfFPN_9OpqBVJvUCH8mVV2SBE7sVbE53W0Zo&stp=c0.5000x0.5000f_dst-emg0_p64x64_q75_tt6&ur=52f3c4&_nc_sid=58080a&oh=00_AQNL5izN_nymG5JsyTocI80Yz_Y9SQyGlaB5-IsrqtFonQ&oe=6AD830D1",
+      "title": "Does Your Business Qualify?",
+      "titles": [
+        "Does Your Business Qualify?",
+        "Growth Solutions for Women-Owned Businesses"
       ]
     },
     {
@@ -12601,5 +12635,5 @@
       "title": null
     }
   ],
-  "updated_at": "2026-10-15T17:18:51.274204+00:00"
+  "updated_at": "2026-10-16T16:54:30.437656+00:00"
 }
