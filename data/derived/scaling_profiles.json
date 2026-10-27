@@ -1,7 +1,7 @@
 {
-  "computed_at": "2026-10-20T18:06:05.661991+00:00",
-  "today": "2026-10-20",
-  "previous_tuesday": "2026-10-13",
+  "computed_at": "2026-10-27T18:56:47.690730+00:00",
+  "today": "2026-10-27",
+  "previous_tuesday": "2026-10-20",
   "elasticity_window_weeks": 12,
   "benchmarks": {
     "max_weekly_total_change_pct": 0.12,
@@ -23,41 +23,75 @@
     "current_total_daily_cents": 10000,
     "current_total_weekly_dollars": 700.0,
     "active_campaign_count": 1,
-    "paused_total_daily_cents": 367824,
+    "paused_total_daily_cents": 377824,
     "target_weekly_spend": 9000.0,
     "weekly_spend_tolerance": 50.0,
     "tolerance_headroom_daily_cents": 714,
-    "total_leads": 1584,
-    "total_spend": 22066.51,
-    "cpl": 13.93,
-    "median_cpl": 12.23,
-    "total_ic_conversions": 22,
-    "median_cpicp": 1872.44,
-    "median_ic_rate": 0.006,
+    "total_leads": 1491,
+    "total_spend": 20537.41,
+    "cpl": 13.77,
+    "median_cpl": 11.26,
+    "total_ic_conversions": 3,
+    "median_cpicp": 4954.45,
+    "median_ic_rate": 0.0,
     "optimizer_cycles_this_week": 0
   },
   "verticals": {
-    "health, fitness & personal care": {
+    "leads-ifw-broad-q4-2026-typeform": {
       "weeks_in_window": 2,
       "weeks_with_conversions": 2,
-      "elasticity_r": -1.0,
+      "elasticity_r": 1.0,
       "elasticity_n_weeks": 2,
       "high_spend_cpl_degradation_pct": null,
-      "cpl": 9.47,
-      "ic_rate": 0.0916,
-      "cpicp": 103.4,
-      "total_spend": 1240.75,
-      "total_conversions": 131,
-      "total_ic_conversions": 12,
-      "avg_frequency": 1.145,
-      "frequency_trend": "flat",
-      "cpm_trend": "rising",
+      "cpl": 6.59,
+      "ic_rate": 0.0,
+      "cpicp": null,
+      "total_spend": 573.55,
+      "total_conversions": 87,
+      "total_ic_conversions": 0,
+      "avg_frequency": 1.161,
+      "frequency_trend": "falling",
+      "cpm_trend": "falling",
       "frequency_series": [
-        1.121,
+        1.173,
+        1.111
+      ],
+      "cpm_series": [
+        36.45,
+        28.23
+      ],
+      "campaign_ids": [
+        "120253853872750631"
+      ],
+      "campaign_names": [
+        "LEADS-IFW-Broad-Q4-2026-Typeform"
+      ],
+      "active_campaign_count": 1,
+      "optimizer_eligible": true,
+      "classification": "insufficient",
+      "new_audience_needed": false,
+      "confidence": "insufficient",
+      "spend_share_pct": 2.79
+    },
+    "health, fitness & personal care": {
+      "weeks_in_window": 1,
+      "weeks_with_conversions": 1,
+      "elasticity_r": null,
+      "elasticity_n_weeks": 1,
+      "high_spend_cpl_degradation_pct": null,
+      "cpl": 10.48,
+      "ic_rate": 0.0192,
+      "cpicp": 544.92,
+      "total_spend": 544.92,
+      "total_conversions": 52,
+      "total_ic_conversions": 1,
+      "avg_frequency": 1.175,
+      "frequency_trend": "flat",
+      "cpm_trend": "flat",
+      "frequency_series": [
         1.175
       ],
       "cpm_series": [
-        43.43,
         47.44
       ],
       "campaign_ids": [
@@ -71,7 +105,41 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 5.62
+      "spend_share_pct": 2.65
+    },
+    "craft producers & bars": {
+      "weeks_in_window": 1,
+      "weeks_with_conversions": 1,
+      "elasticity_r": null,
+      "elasticity_n_weeks": 1,
+      "high_spend_cpl_degradation_pct": null,
+      "cpl": 10.53,
+      "ic_rate": 0.0,
+      "cpicp": null,
+      "total_spend": 105.31,
+      "total_conversions": 10,
+      "total_ic_conversions": 0,
+      "avg_frequency": 1.135,
+      "frequency_trend": "flat",
+      "cpm_trend": "flat",
+      "frequency_series": [
+        1.135
+      ],
+      "cpm_series": [
+        45.7
+      ],
+      "campaign_ids": [
+        "120245893173800631"
+      ],
+      "campaign_names": [
+        "ICD-Craft Producers & Bars-Q2-2026"
+      ],
+      "active_campaign_count": 0,
+      "optimizer_eligible": true,
+      "classification": "insufficient",
+      "new_audience_needed": false,
+      "confidence": "insufficient",
+      "spend_share_pct": 0.51
     },
     "leads-ifw-broad-q3-2026 - application lp": {
       "weeks_in_window": 6,
@@ -111,7 +179,7 @@
       "classification": "stable",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 22.45
+      "spend_share_pct": 24.12
     },
     "ifw-broad": {
       "weeks_in_window": 5,
@@ -151,56 +219,20 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 24.21
-    },
-    "craft producers & bars": {
-      "weeks_in_window": 2,
-      "weeks_with_conversions": 2,
-      "elasticity_r": 1.0,
-      "elasticity_n_weeks": 2,
-      "high_spend_cpl_degradation_pct": null,
-      "cpl": 12.31,
-      "ic_rate": 0.06,
-      "cpicp": 205.2,
-      "total_spend": 615.59,
-      "total_conversions": 50,
-      "total_ic_conversions": 3,
-      "avg_frequency": 1.126,
-      "frequency_trend": "flat",
-      "cpm_trend": "rising",
-      "frequency_series": [
-        1.125,
-        1.135
-      ],
-      "cpm_series": [
-        38.7,
-        45.7
-      ],
-      "campaign_ids": [
-        "120245893173800631"
-      ],
-      "campaign_names": [
-        "ICD-Craft Producers & Bars-Q2-2026"
-      ],
-      "active_campaign_count": 0,
-      "optimizer_eligible": true,
-      "classification": "insufficient",
-      "new_audience_needed": false,
-      "confidence": "insufficient",
-      "spend_share_pct": 2.79
+      "spend_share_pct": 26.01
     },
     "broad": {
-      "weeks_in_window": 11,
-      "weeks_with_conversions": 9,
-      "elasticity_r": -0.1001,
-      "elasticity_n_weeks": 9,
+      "weeks_in_window": 10,
+      "weeks_with_conversions": 8,
+      "elasticity_r": -0.103,
+      "elasticity_n_weeks": 8,
       "high_spend_cpl_degradation_pct": -0.0433,
-      "cpl": 18.39,
-      "ic_rate": 0.0098,
-      "cpicp": 1872.44,
-      "total_spend": 9362.18,
-      "total_conversions": 509,
-      "total_ic_conversions": 5,
+      "cpl": 18.61,
+      "ic_rate": 0.0,
+      "cpicp": null,
+      "total_spend": 8337.36,
+      "total_conversions": 448,
+      "total_ic_conversions": 0,
       "avg_frequency": 1.167,
       "frequency_trend": "flat",
       "cpm_trend": "rising",
@@ -218,8 +250,8 @@
       ],
       "campaign_ids": [
         "120252841681010631",
-        "120249802543740631",
-        "120253584584130631"
+        "120253584584130631",
+        "120249802543740631"
       ],
       "campaign_names": [
         "ICD-Broad-Q2-2026",
@@ -231,7 +263,7 @@
       "classification": "scalable",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 42.43
+      "spend_share_pct": 40.6
     },
     "leads-ifw-broad-q4-2026 - typeform test": {
       "weeks_in_window": 2,
@@ -239,22 +271,22 @@
       "elasticity_r": null,
       "elasticity_n_weeks": 1,
       "high_spend_cpl_degradation_pct": null,
-      "cpl": 39.36,
+      "cpl": 48.52,
       "ic_rate": 0.0,
       "cpicp": null,
-      "total_spend": 551.03,
+      "total_spend": 679.31,
       "total_conversions": 14,
       "total_ic_conversions": 0,
-      "avg_frequency": 1.096,
-      "frequency_trend": "falling",
+      "avg_frequency": 1.102,
+      "frequency_trend": "flat",
       "cpm_trend": "falling",
       "frequency_series": [
         1.121,
-        1.035
+        1.077
       ],
       "cpm_series": [
         52.92,
-        46.22
+        44.85
       ],
       "campaign_ids": [
         "120253733910690631"
@@ -262,19 +294,30 @@
       "campaign_names": [
         "LEADS-IFW-Broad-Q4-2026 - Typeform Test"
       ],
-      "active_campaign_count": 1,
+      "active_campaign_count": 0,
       "optimizer_eligible": true,
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 2.5
+      "spend_share_pct": 3.31
     }
   },
   "campaigns": {
+    "120253853872750631": {
+      "campaign_id": "120253853872750631",
+      "campaign_name": "LEADS-IFW-Broad-Q4-2026-Typeform",
+      "effective_status": "ACTIVE",
+      "daily_budget_cents": 10000,
+      "lifetime_leads": 87,
+      "vertical": "leads-ifw-broad-q4-2026-typeform",
+      "weekly_consumed_pct": 0.0,
+      "weekly_remaining_pct": 0.12,
+      "knockdown_applied_this_week": false
+    },
     "120253733910690631": {
       "campaign_id": "120253733910690631",
       "campaign_name": "LEADS-IFW-Broad-Q4-2026 - Typeform Test",
-      "effective_status": "ACTIVE",
+      "effective_status": "PAUSED",
       "daily_budget_cents": 10000,
       "lifetime_leads": 14,
       "vertical": "leads-ifw-broad-q4-2026 - typeform test",
