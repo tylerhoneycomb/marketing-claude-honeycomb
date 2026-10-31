@@ -1,0 +1,24 @@
+[
+  {
+    "ad_id": null,
+    "ad_name": null,
+    "adset_id": "120253853872760631",
+    "adset_name": "broad_IFW_Q4_typeform_dynamic",
+    "campaign_id": "120253853872750631",
+    "campaign_name": "LEADS-IFW-Broad-Q4-2026-Typeform",
+    "clicks": 113,
+    "conversions": 21,
+    "cpc": 0.745752,
+    "cpm": 35.966709,
+    "ctr": 4.822877,
+    "date": "2026-10-30",
+    "frequency": 1.128069,
+    "ic_conversions": 0,
+    "impressions": 2343,
+    "leads": 21,
+    "prequal_decisions": 0,
+    "reach": 2077,
+    "rewards_conversions": 0,
+    "spend": 84.27
+  }
+]

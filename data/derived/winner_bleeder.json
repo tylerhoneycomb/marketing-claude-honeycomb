@@ -1,18 +1,18 @@
 {
-  "computed_at": "2026-10-30T18:10:16.682232+00:00",
+  "computed_at": "2026-10-31T17:20:52.865271+00:00",
   "window_days": 7,
   "rows": [
     {
       "adset_id": "120253853872760631",
       "ad_id": "120253853872770631",
       "ad_name": "ifw_broad_typeform_oct21",
-      "spend": 707.6,
+      "spend": 681.69,
       "spend_share": 1.0,
-      "leads": 139,
+      "leads": 134,
       "cpl": 5.09,
       "cpl_vs_adset_avg": 1.0,
       "cpl_vs_target": 0.318,
-      "ctr": 0.0422,
+      "ctr": 0.0426,
       "ctr_vs_adset_avg": 1.0,
       "peers_delivering": 1,
       "label": null,
