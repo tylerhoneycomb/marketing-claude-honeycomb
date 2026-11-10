@@ -1,7 +1,7 @@
 {
-  "computed_at": "2026-11-03T20:15:51.440807+00:00",
-  "today": "2026-11-03",
-  "previous_tuesday": "2026-10-27",
+  "computed_at": "2026-11-10T20:35:40.626119+00:00",
+  "today": "2026-11-10",
+  "previous_tuesday": "2026-11-03",
   "elasticity_window_weeks": 12,
   "benchmarks": {
     "max_weekly_total_change_pct": 0.12,
@@ -27,9 +27,9 @@
     "target_weekly_spend": 9000.0,
     "weekly_spend_tolerance": 50.0,
     "tolerance_headroom_daily_cents": 714,
-    "total_leads": 1512,
-    "total_spend": 19692.18,
-    "cpl": 13.02,
+    "total_leads": 1584,
+    "total_spend": 18315.17,
+    "cpl": 11.56,
     "median_cpl": 12.14,
     "total_ic_conversions": 2,
     "median_cpicp": 5148.48,
@@ -38,29 +38,31 @@
   },
   "verticals": {
     "leads-ifw-broad-q4-2026-typeform": {
-      "weeks_in_window": 3,
-      "weeks_with_conversions": 3,
-      "elasticity_r": -0.0186,
-      "elasticity_n_weeks": 3,
-      "high_spend_cpl_degradation_pct": null,
-      "cpl": 5.41,
+      "weeks_in_window": 4,
+      "weeks_with_conversions": 4,
+      "elasticity_r": -0.0822,
+      "elasticity_n_weeks": 4,
+      "high_spend_cpl_degradation_pct": -0.2331,
+      "cpl": 4.87,
       "ic_rate": 0.0,
       "cpicp": null,
-      "total_spend": 1265.71,
-      "total_conversions": 234,
+      "total_spend": 1937.67,
+      "total_conversions": 398,
       "total_ic_conversions": 0,
-      "avg_frequency": 1.154,
+      "avg_frequency": 1.16,
       "frequency_trend": "flat",
-      "cpm_trend": "falling",
+      "cpm_trend": "flat",
       "frequency_series": [
         1.173,
         1.145,
-        1.128
+        1.156,
+        1.241
       ],
       "cpm_series": [
         36.45,
         34.33,
-        27.04
+        28.55,
+        36.98
       ],
       "campaign_ids": [
         "120253853872750631"
@@ -73,7 +75,7 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 6.43
+      "spend_share_pct": 10.58
     },
     "leads-ifw-broad-q3-2026 - application lp": {
       "weeks_in_window": 6,
@@ -113,7 +115,7 @@
       "classification": "stable",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 25.16
+      "spend_share_pct": 27.05
     },
     "ifw-broad": {
       "weeks_in_window": 5,
@@ -153,19 +155,19 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 27.13
+      "spend_share_pct": 29.17
     },
     "broad": {
-      "weeks_in_window": 9,
-      "weeks_with_conversions": 7,
-      "elasticity_r": -0.1558,
-      "elasticity_n_weeks": 7,
-      "high_spend_cpl_degradation_pct": -0.0577,
-      "cpl": 19.4,
+      "weeks_in_window": 8,
+      "weeks_with_conversions": 6,
+      "elasticity_r": -0.2906,
+      "elasticity_n_weeks": 6,
+      "high_spend_cpl_degradation_pct": -0.1735,
+      "cpl": 18.5,
       "ic_rate": 0.0,
       "cpicp": null,
-      "total_spend": 7450.2,
-      "total_conversions": 384,
+      "total_spend": 5401.23,
+      "total_conversions": 292,
       "total_ic_conversions": 0,
       "avg_frequency": 1.167,
       "frequency_trend": "flat",
@@ -183,9 +185,9 @@
         103.21
       ],
       "campaign_ids": [
-        "120249802543740631",
+        "120253584584130631",
         "120252841681010631",
-        "120253584584130631"
+        "120249802543740631"
       ],
       "campaign_names": [
         "ICD-Broad-Q2-2026",
@@ -194,10 +196,10 @@
       ],
       "active_campaign_count": 0,
       "optimizer_eligible": true,
-      "classification": "scalable",
+      "classification": "stable",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 37.83
+      "spend_share_pct": 29.49
     },
     "leads-ifw-broad-q4-2026 - typeform test": {
       "weeks_in_window": 2,
@@ -233,7 +235,7 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 3.45
+      "spend_share_pct": 3.71
     }
   },
   "campaigns": {
@@ -242,7 +244,7 @@
       "campaign_name": "LEADS-IFW-Broad-Q4-2026-Typeform",
       "effective_status": "ACTIVE",
       "daily_budget_cents": 10000,
-      "lifetime_leads": 234,
+      "lifetime_leads": 398,
       "vertical": "leads-ifw-broad-q4-2026-typeform",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
