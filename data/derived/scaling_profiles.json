@@ -1,7 +1,7 @@
 {
-  "computed_at": "2026-11-10T20:35:40.626119+00:00",
-  "today": "2026-11-10",
-  "previous_tuesday": "2026-11-03",
+  "computed_at": "2026-11-17T21:53:30.215059+00:00",
+  "today": "2026-11-17",
+  "previous_tuesday": "2026-11-10",
   "elasticity_window_weeks": 12,
   "benchmarks": {
     "max_weekly_total_change_pct": 0.12,
@@ -27,42 +27,42 @@
     "target_weekly_spend": 9000.0,
     "weekly_spend_tolerance": 50.0,
     "tolerance_headroom_daily_cents": 714,
-    "total_leads": 1584,
-    "total_spend": 18315.17,
-    "cpl": 11.56,
-    "median_cpl": 12.14,
+    "total_leads": 1626,
+    "total_spend": 16826.58,
+    "cpl": 10.35,
+    "median_cpl": 11.35,
     "total_ic_conversions": 2,
-    "median_cpicp": 5148.48,
+    "median_cpicp": 4837.43,
     "median_ic_rate": 0.0,
     "optimizer_cycles_this_week": 0
   },
   "verticals": {
     "leads-ifw-broad-q4-2026-typeform": {
-      "weeks_in_window": 4,
-      "weeks_with_conversions": 4,
-      "elasticity_r": -0.0822,
-      "elasticity_n_weeks": 4,
-      "high_spend_cpl_degradation_pct": -0.2331,
-      "cpl": 4.87,
+      "weeks_in_window": 5,
+      "weeks_with_conversions": 5,
+      "elasticity_r": -0.1266,
+      "elasticity_n_weeks": 5,
+      "high_spend_cpl_degradation_pct": -0.198,
+      "cpl": 4.74,
       "ic_rate": 0.0,
       "cpicp": null,
-      "total_spend": 1937.67,
-      "total_conversions": 398,
+      "total_spend": 2658.53,
+      "total_conversions": 561,
       "total_ic_conversions": 0,
-      "avg_frequency": 1.16,
+      "avg_frequency": 1.165,
       "frequency_trend": "flat",
-      "cpm_trend": "flat",
+      "cpm_trend": "rising",
       "frequency_series": [
-        1.173,
         1.145,
         1.156,
-        1.241
+        1.187,
+        1.212
       ],
       "cpm_series": [
-        36.45,
         34.33,
         28.55,
-        36.98
+        38.39,
+        42.18
       ],
       "campaign_ids": [
         "120253853872750631"
@@ -75,7 +75,7 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 10.58
+      "spend_share_pct": 15.8
     },
     "leads-ifw-broad-q3-2026 - application lp": {
       "weeks_in_window": 6,
@@ -115,19 +115,19 @@
       "classification": "stable",
       "new_audience_needed": false,
       "confidence": "directional",
-      "spend_share_pct": 27.05
+      "spend_share_pct": 29.44
     },
     "ifw-broad": {
-      "weeks_in_window": 5,
-      "weeks_with_conversions": 5,
-      "elasticity_r": -0.2843,
-      "elasticity_n_weeks": 5,
-      "high_spend_cpl_degradation_pct": -0.273,
-      "cpl": 12.14,
-      "ic_rate": 0.0023,
-      "cpicp": 5342.51,
-      "total_spend": 5342.51,
-      "total_conversions": 440,
+      "weeks_in_window": 4,
+      "weeks_with_conversions": 4,
+      "elasticity_r": 0.9615,
+      "elasticity_n_weeks": 4,
+      "high_spend_cpl_degradation_pct": 0.3246,
+      "cpl": 11.35,
+      "ic_rate": 0.0024,
+      "cpicp": 4720.41,
+      "total_spend": 4720.41,
+      "total_conversions": 416,
       "total_ic_conversions": 1,
       "avg_frequency": 1.15,
       "frequency_trend": "flat",
@@ -155,19 +155,19 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 29.17
+      "spend_share_pct": 28.05
     },
     "broad": {
-      "weeks_in_window": 8,
-      "weeks_with_conversions": 6,
-      "elasticity_r": -0.2906,
-      "elasticity_n_weeks": 6,
-      "high_spend_cpl_degradation_pct": -0.1735,
-      "cpl": 18.5,
+      "weeks_in_window": 7,
+      "weeks_with_conversions": 5,
+      "elasticity_r": -0.1027,
+      "elasticity_n_weeks": 5,
+      "high_spend_cpl_degradation_pct": -0.1212,
+      "cpl": 19.56,
       "ic_rate": 0.0,
       "cpicp": null,
-      "total_spend": 5401.23,
-      "total_conversions": 292,
+      "total_spend": 3813.88,
+      "total_conversions": 195,
       "total_ic_conversions": 0,
       "avg_frequency": 1.167,
       "frequency_trend": "flat",
@@ -185,9 +185,9 @@
         103.21
       ],
       "campaign_ids": [
-        "120253584584130631",
         "120252841681010631",
-        "120249802543740631"
+        "120249802543740631",
+        "120253584584130631"
       ],
       "campaign_names": [
         "ICD-Broad-Q2-2026",
@@ -196,10 +196,10 @@
       ],
       "active_campaign_count": 0,
       "optimizer_eligible": true,
-      "classification": "stable",
+      "classification": "insufficient",
       "new_audience_needed": false,
-      "confidence": "directional",
-      "spend_share_pct": 29.49
+      "confidence": "insufficient",
+      "spend_share_pct": 22.67
     },
     "leads-ifw-broad-q4-2026 - typeform test": {
       "weeks_in_window": 2,
@@ -235,7 +235,7 @@
       "classification": "insufficient",
       "new_audience_needed": false,
       "confidence": "insufficient",
-      "spend_share_pct": 3.71
+      "spend_share_pct": 4.04
     }
   },
   "campaigns": {
@@ -244,7 +244,7 @@
       "campaign_name": "LEADS-IFW-Broad-Q4-2026-Typeform",
       "effective_status": "ACTIVE",
       "daily_budget_cents": 10000,
-      "lifetime_leads": 398,
+      "lifetime_leads": 561,
       "vertical": "leads-ifw-broad-q4-2026-typeform",
       "weekly_consumed_pct": 0.0,
       "weekly_remaining_pct": 0.12,
